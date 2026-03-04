@@ -348,6 +348,102 @@
     }
     .screen-flash.flash { opacity: 1; transition: opacity 0ms; }
 
+    /* Floating pedestal control */
+    .pedestal-float {
+      position: fixed;
+      z-index: 65;
+      pointer-events: none;
+      width: 140px;
+      height: 320px;
+      filter: drop-shadow(0 20px 40px rgba(22,28,38,0.25))
+              drop-shadow(0 4px 12px rgba(143,23,23,0.2));
+      transition: filter 300ms ease;
+      will-change: transform;
+    }
+    .pedestal-float.pressed-glow {
+      filter: drop-shadow(0 20px 40px rgba(22,28,38,0.25))
+              drop-shadow(0 0 40px rgba(223,44,44,0.45))
+              drop-shadow(0 4px 12px rgba(143,23,23,0.3));
+    }
+    .pedestal-float svg {
+      width: 100%;
+      height: 100%;
+      pointer-events: auto;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    .dome-group {
+      transition: transform 100ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform-origin: 70px 68px;
+    }
+    .dome-group.pushed {
+      transform: translateY(10px) scaleY(0.82);
+    }
+    .shockwave {
+      position: fixed;
+      pointer-events: none;
+      z-index: 64;
+      border-radius: 50%;
+      border: 3px solid var(--red);
+      opacity: 0;
+      width: 40px;
+      height: 40px;
+    }
+    .shockwave.go {
+      animation: shockExpand 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @keyframes shockExpand {
+      0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0.7; }
+      100% { transform: translate(-50%, -50%) scale(12); opacity: 0; }
+    }
+    .sparkle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 63;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--red-hot);
+    }
+    .sparkle.go {
+      animation: sparkleFly 700ms ease-out forwards;
+    }
+    @keyframes sparkleFly {
+      0% { transform: translate(0, 0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--sx), var(--sy)) scale(0); opacity: 0; }
+    }
+    .scroll-hint {
+      position: fixed;
+      z-index: 66;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 200ms ease;
+      color: var(--red);
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 0.85rem;
+      text-align: center;
+      line-height: 1.2;
+      text-transform: lowercase;
+    }
+    .scroll-hint.show {
+      opacity: 1;
+      animation: hintBob 600ms ease-in-out 2;
+    }
+    .scroll-hint svg {
+      display: block;
+      margin: 0.2rem auto 0;
+      width: 20px;
+      height: 20px;
+    }
+    @keyframes hintBob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(6px); }
+    }
+
     @media (max-width: 980px) {
       .hero-top { grid-template-columns: minmax(0,1fr) clamp(160px,22vw,240px); }
       .lab-layout { grid-template-columns: 1fr; }
@@ -362,6 +458,10 @@
       .press-note { order: 4; width: 100%; }
       .division-grid, .methods-grid { grid-template-columns: 1fr; }
       .hero-latour { max-width: 300px; justify-self: end; transform: none; }
+      .pedestal-float {
+        width: 118px;
+        height: 270px;
+      }
     }
     @media (hover: none) and (pointer: coarse) {
       .press-btn:hover {
@@ -377,12 +477,132 @@
       .hero-top { grid-template-columns: 1fr; }
       .hero-latour { max-width: 100%; justify-self: stretch; }
       .viz-column { grid-template-columns: 1fr; }
+      .pedestal-float {
+        width: 100px;
+        height: 230px;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .pedestal-float,
+      .dome-group,
+      .shockwave,
+      .sparkle,
+      .scroll-hint {
+        animation: none !important;
+        transition: none !important;
+      }
     }
   </style>
 </head>
 <body>
   <canvas id="ambientCanvas"></canvas>
   <div class="screen-flash" id="screenFlash"></div>
+  <div class="shockwave" id="pedestalShockwave"></div>
+  <div class="scroll-hint" id="pedestalScrollHint" aria-hidden="true">
+    <span>scrolling...</span>
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 4 L10 16 M5 11 L10 16 L15 11"></path>
+    </svg>
+  </div>
+  <div class="pedestal-float" id="pedestalFloat" aria-label="Floating pedestal button">
+    <svg viewBox="0 0 140 320" xmlns="http://www.w3.org/2000/svg" role="button" tabindex="0" aria-label="Press for science and scroll">
+      <defs>
+        <radialGradient id="domeGrad" cx="42%" cy="32%" r="58%" fx="38%" fy="28%">
+          <stop offset="0%" stop-color="#ff8a8a"></stop>
+          <stop offset="28%" stop-color="#ff5252"></stop>
+          <stop offset="58%" stop-color="#df2c2c"></stop>
+          <stop offset="85%" stop-color="#a01515"></stop>
+          <stop offset="100%" stop-color="#6b0a0a"></stop>
+        </radialGradient>
+        <radialGradient id="domeHighlight" cx="38%" cy="25%" r="35%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.7)"></stop>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"></stop>
+        </radialGradient>
+        <linearGradient id="pedestalGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#c4b8a0"></stop>
+          <stop offset="18%" stop-color="#e8ddc6"></stop>
+          <stop offset="40%" stop-color="#f5eedd"></stop>
+          <stop offset="60%" stop-color="#f7f0e0"></stop>
+          <stop offset="82%" stop-color="#e0d5be"></stop>
+          <stop offset="100%" stop-color="#b8ab94"></stop>
+        </linearGradient>
+        <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#8a7d6a"></stop>
+          <stop offset="20%" stop-color="#c9bc9f"></stop>
+          <stop offset="45%" stop-color="#e8dcc0"></stop>
+          <stop offset="55%" stop-color="#e8dcc0"></stop>
+          <stop offset="80%" stop-color="#c0b395"></stop>
+          <stop offset="100%" stop-color="#7d7262"></stop>
+        </linearGradient>
+        <linearGradient id="baseGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#d4c9b2"></stop>
+          <stop offset="100%" stop-color="#a89b84"></stop>
+        </linearGradient>
+        <radialGradient id="domeShadow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="rgba(80,20,20,0.35)"></stop>
+          <stop offset="100%" stop-color="rgba(80,20,20,0)"></stop>
+        </radialGradient>
+        <radialGradient id="ambientGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="rgba(223,44,44,0.18)"></stop>
+          <stop offset="100%" stop-color="rgba(223,44,44,0)"></stop>
+        </radialGradient>
+        <pattern id="decoLines" x="0" y="0" width="140" height="16" patternUnits="userSpaceOnUse">
+          <line x1="50" y1="0" x2="50" y2="16" stroke="rgba(160,140,110,0.2)" stroke-width="0.5"></line>
+          <line x1="70" y1="0" x2="70" y2="16" stroke="rgba(160,140,110,0.15)" stroke-width="0.5"></line>
+          <line x1="90" y1="0" x2="90" y2="16" stroke="rgba(160,140,110,0.2)" stroke-width="0.5"></line>
+        </pattern>
+        <clipPath id="domeClip">
+          <rect x="0" y="0" width="140" height="320"></rect>
+        </clipPath>
+      </defs>
+
+      <ellipse cx="70" cy="55" rx="55" ry="45" fill="url(#ambientGlow)" opacity="0.7">
+        <animate attributeName="rx" values="55;60;55" dur="3s" repeatCount="indefinite"></animate>
+        <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite"></animate>
+      </ellipse>
+
+      <ellipse cx="70" cy="310" rx="58" ry="8" fill="rgba(60,40,20,0.15)"></ellipse>
+      <path d="M12,295 L128,295 L122,310 Q70,316 18,310 Z" fill="url(#baseGrad)" stroke="#a89b84" stroke-width="0.5"></path>
+      <ellipse cx="70" cy="295" rx="58" ry="9" fill="#ddd2bb" stroke="#b8ab94" stroke-width="0.5"></ellipse>
+      <ellipse cx="70" cy="295" rx="42" ry="6" fill="none" stroke="rgba(143,130,105,0.35)" stroke-width="0.8"></ellipse>
+
+      <rect x="30" y="282" width="80" height="13" rx="2" fill="url(#ringGrad)" stroke="#9e9280" stroke-width="0.4"></rect>
+      <ellipse cx="70" cy="282" rx="40" ry="5" fill="#ddd2bb" stroke="#b8ab94" stroke-width="0.4"></ellipse>
+
+      <path d="M38,282 L38,130 Q38,125 43,122 L97,122 Q102,125 102,130 L102,282" fill="url(#pedestalGrad)" stroke="#b8ab94" stroke-width="0.5"></path>
+      <path d="M38,282 L38,130 Q38,125 43,122 L97,122 Q102,125 102,130 L102,282" fill="url(#decoLines)"></path>
+      <line x1="55" y1="135" x2="55" y2="275" stroke="rgba(140,125,100,0.18)" stroke-width="1.2"></line>
+      <line x1="70" y1="130" x2="70" y2="278" stroke="rgba(140,125,100,0.12)" stroke-width="1"></line>
+      <line x1="85" y1="135" x2="85" y2="275" stroke="rgba(140,125,100,0.18)" stroke-width="1.2"></line>
+      <rect x="34" y="200" width="72" height="8" rx="1.5" fill="url(#ringGrad)" stroke="#9e9280" stroke-width="0.3" opacity="0.7"></rect>
+      <rect x="34" y="165" width="72" height="5" rx="1" fill="url(#ringGrad)" stroke="#9e9280" stroke-width="0.3" opacity="0.5"></rect>
+
+      <rect x="32" y="116" width="76" height="12" rx="3" fill="url(#ringGrad)" stroke="#9e9280" stroke-width="0.5"></rect>
+      <ellipse cx="70" cy="116" rx="38" ry="6" fill="#e0d5be" stroke="#b8ab94" stroke-width="0.5"></ellipse>
+      <circle cx="70" cy="116" r="2.5" fill="none" stroke="rgba(143,130,105,0.3)" stroke-width="0.6"></circle>
+      <circle cx="70" cy="116" r="6" fill="none" stroke="rgba(143,130,105,0.2)" stroke-width="0.4"></circle>
+
+      <path d="M28,110 Q28,100 36,96 L104,96 Q112,100 112,110 L112,116 L28,116 Z" fill="#c4b8a0" stroke="#a89b84" stroke-width="0.5"></path>
+      <path d="M32,110 Q32,102 38,99 L102,99 Q108,102 108,110" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"></path>
+      <ellipse cx="70" cy="98" rx="36" ry="6" fill="url(#domeShadow)"></ellipse>
+
+      <g class="dome-group" id="domeGroup" clip-path="url(#domeClip)">
+        <ellipse cx="70" cy="72" rx="42" ry="38" fill="url(#domeGrad)"></ellipse>
+        <ellipse cx="70" cy="95" rx="42" ry="8" fill="#8b1818" opacity="0.6"></ellipse>
+        <ellipse cx="70" cy="93" rx="40" ry="6" fill="#a01515" opacity="0.4"></ellipse>
+        <ellipse cx="58" cy="55" rx="22" ry="18" fill="url(#domeHighlight)" opacity="0.85"></ellipse>
+        <path d="M35,80 Q70,100 105,80" fill="none" stroke="rgba(255,180,180,0.25)" stroke-width="1.2"></path>
+        <circle cx="55" cy="48" r="4" fill="rgba(255,255,255,0.5)">
+          <animate attributeName="r" values="4;5;4" dur="2.5s" repeatCount="indefinite"></animate>
+          <animate attributeName="opacity" values="0.5;0.7;0.5" dur="2.5s" repeatCount="indefinite"></animate>
+        </circle>
+        <circle cx="52" cy="45" r="1.8" fill="rgba(255,255,255,0.7)"></circle>
+      </g>
+
+      <text x="70" y="250" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="6.5" fill="rgba(100,88,70,0.5)" letter-spacing="0.15em" font-weight="600">PRESS</text>
+      <text x="70" y="260" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="5" fill="rgba(100,88,70,0.35)" letter-spacing="0.1em">FOR SCIENCE</text>
+    </svg>
+  </div>
 
   <div class="shell">
     <header class="hero reveal">
@@ -609,6 +829,35 @@
     var statEntropy = document.getElementById("statEntropy");
     var statAvgInterval = document.getElementById("statAvgInterval");
     var statBurst = document.getElementById("statBurst");
+    var pedestal = document.getElementById("pedestalFloat");
+    var dome = document.getElementById("domeGroup");
+    var pedestalShockwave = document.getElementById("pedestalShockwave");
+    var pedestalScrollHint = document.getElementById("pedestalScrollHint");
+    var pedestalSvg = pedestal ? pedestal.querySelector("svg") : null;
+    var pedestalScrollTargets = [];
+    var pedestalScrollIdx = 0;
+    var pedestalActive = false;
+    var pedestalDownAt = 0;
+    var pedestalPointerId = null;
+    var pedestalLastTouchStart = 0;
+    var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var pedestalState = {
+      baseX: 78,
+      baseY: 32,
+      x: 0,
+      y: 0,
+      rotation: 0,
+      driftPhase1: Math.random() * Math.PI * 2,
+      driftPhase2: Math.random() * Math.PI * 2,
+      driftPhase3: Math.random() * Math.PI * 2,
+      driftPhase4: Math.random() * Math.PI * 2,
+      shiftTimer: 0,
+      shiftTargetX: 0,
+      shiftTargetY: 0,
+      shiftCurrentX: 0,
+      shiftCurrentY: 0,
+      nextShift: 4000 + Math.random() * 7000
+    };
 
     // â”€â”€ AMBIENT â”€â”€
     var ambientC = document.getElementById("ambientCanvas");
@@ -665,7 +914,13 @@
       drawAllViz();
     }
     setTimeout(initCanvases,300);
-    window.addEventListener("resize",function(){vizReady=false;setTimeout(initCanvases,100);});
+    window.addEventListener("resize",function(){
+      vizReady=false;
+      setTimeout(initCanvases,100);
+      rebuildPedestalTargets();
+      updatePedestalAnchor();
+      if (reducedMotion) animatePedestal();
+    });
 
     var waveData=[], wavePhase=0;
     function drawWave() {
@@ -754,6 +1009,181 @@
     }
 
     function drawAllViz(){if(!vizReady)return;drawWave();drawIntervals();drawEntropy();drawBurst();requestAnimationFrame(drawAllViz);}
+
+    function updatePedestalAnchor() {
+      if (window.innerWidth <= 650) {
+        pedestalState.baseX = 76;
+        pedestalState.baseY = 72;
+      } else if (window.innerWidth <= 980) {
+        pedestalState.baseX = 80;
+        pedestalState.baseY = 56;
+      } else {
+        pedestalState.baseX = 78;
+        pedestalState.baseY = 32;
+      }
+    }
+
+    function rebuildPedestalTargets() {
+      var panels = document.querySelectorAll("main .panel");
+      var targets = [labPanel];
+      if (panels.length > 0) targets.push(panels[0]);
+      var methods = document.querySelector(".methods-wrap");
+      if (methods) targets.push(methods);
+      if (panels.length > 1) targets.push(panels[panels.length - 1]);
+      var footer = document.querySelector(".footer");
+      if (footer) targets.push(footer);
+      targets.push(document.body);
+      pedestalScrollTargets = targets.filter(function (node, idx, arr) {
+        return !!node && arr.indexOf(node) === idx;
+      });
+    }
+
+    function placePedestal(px, py, rot) {
+      if (!pedestal) return;
+      pedestal.style.transform = "translate(" + px + "px, " + py + "px) rotate(" + rot + "deg)";
+      pedestalState.x = px;
+      pedestalState.y = py;
+      pedestalState.rotation = rot;
+    }
+
+    function animatePedestal() {
+      if (!pedestal) return;
+      updatePedestalAnchor();
+      var s = pedestalState;
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      var pw = pedestal.offsetWidth || 140;
+      var ph = pedestal.offsetHeight || 320;
+
+      if (reducedMotion) {
+        var baseX = (s.baseX / 100) * vw;
+        var baseY = (s.baseY / 100) * vh;
+        var minX = 8;
+        var minY = 8;
+        var maxX = Math.max(minX, vw - pw - 8);
+        var maxY = Math.max(minY, vh - ph - 8);
+        placePedestal(Math.max(minX, Math.min(maxX, baseX)), Math.max(minY, Math.min(maxY, baseY)), 0);
+        return;
+      }
+
+      s.driftPhase1 += 0.008;
+      s.driftPhase2 += 0.011;
+      s.driftPhase3 += 0.006;
+      s.driftPhase4 += 0.0035;
+
+      var driftX = Math.sin(s.driftPhase1) * 18 + Math.sin(s.driftPhase2 * 0.7) * 10;
+      var driftY = Math.cos(s.driftPhase3) * 14 + Math.sin(s.driftPhase4 * 1.3) * 8;
+      var rot = Math.sin(s.driftPhase1 * 0.6) * 4 + Math.sin(s.driftPhase2 * 0.4) * 2.5;
+
+      s.shiftTimer += 16;
+      if (s.shiftTimer > s.nextShift) {
+        s.shiftTimer = 0;
+        s.nextShift = 4000 + Math.random() * 7000;
+        s.shiftTargetX = (Math.random() - 0.5) * 120;
+        s.shiftTargetY = (Math.random() - 0.5) * 80;
+      }
+
+      s.shiftCurrentX += (s.shiftTargetX - s.shiftCurrentX) * 0.008;
+      s.shiftCurrentY += (s.shiftTargetY - s.shiftCurrentY) * 0.008;
+
+      var px = (s.baseX / 100) * vw + driftX + s.shiftCurrentX;
+      var py = (s.baseY / 100) * vh + driftY + s.shiftCurrentY;
+
+      var minX2 = 8;
+      var minY2 = 8;
+      var maxX2 = Math.max(minX2, vw - pw - 8);
+      var maxY2 = Math.max(minY2, vh - ph - 8);
+      px = Math.max(minX2, Math.min(maxX2, px));
+      py = Math.max(minY2, Math.min(maxY2, py));
+
+      placePedestal(px, py, rot);
+      requestAnimationFrame(animatePedestal);
+    }
+
+    function spawnPedestalSparkles(cx, cy, count) {
+      for (var si = 0; si < count; si++) {
+        var sp = document.createElement("div");
+        sp.className = "sparkle";
+        var angle = (Math.PI * 2 / count) * si + (Math.random() - 0.5) * 0.5;
+        var dist = 40 + Math.random() * 60;
+        sp.style.left = cx + "px";
+        sp.style.top = cy + "px";
+        sp.style.setProperty("--sx", Math.cos(angle) * dist + "px");
+        sp.style.setProperty("--sy", Math.sin(angle) * dist - 20 + "px");
+        sp.style.width = (3 + Math.random() * 5) + "px";
+        sp.style.height = sp.style.width;
+        sp.style.background = ["#ff4444", "#ff7744", "#ffaa44", "#df2c2c"][Math.floor(Math.random() * 4)];
+        document.body.appendChild(sp);
+        void sp.offsetWidth;
+        sp.classList.add("go");
+        (function (node) {
+          setTimeout(function () { node.remove(); }, 800);
+        })(sp);
+      }
+    }
+
+    function advancePedestalScroll() {
+      if (pedestalScrollTargets.length === 0) return;
+      var target = pedestalScrollTargets[pedestalScrollIdx % pedestalScrollTargets.length];
+      if (target === document.body) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      pedestalScrollIdx++;
+    }
+
+    function runPedestalEffects() {
+      if (!pedestal) return;
+      var pw = pedestal.offsetWidth || 140;
+      var ph = pedestal.offsetHeight || 320;
+      var domeWorldX = pedestalState.x + pw * 0.5;
+      var domeWorldY = pedestalState.y + ph * 0.2125;
+
+      pedestal.classList.add("pressed-glow");
+      setTimeout(function () { pedestal.classList.remove("pressed-glow"); }, 420);
+
+      if (pedestalShockwave) {
+        pedestalShockwave.style.left = domeWorldX + "px";
+        pedestalShockwave.style.top = domeWorldY + "px";
+        pedestalShockwave.classList.remove("go");
+        void pedestalShockwave.offsetWidth;
+        pedestalShockwave.classList.add("go");
+      }
+
+      spawnPedestalSparkles(domeWorldX, domeWorldY, 14);
+      spawnParticles(domeWorldX, domeWorldY, 10);
+
+      if (pedestalScrollHint) {
+        pedestalScrollHint.style.left = (domeWorldX - 32) + "px";
+        pedestalScrollHint.style.top = (domeWorldY + 52) + "px";
+        pedestalScrollHint.classList.add("show");
+        setTimeout(function () { pedestalScrollHint.classList.remove("show"); }, 520);
+      }
+
+      setTimeout(advancePedestalScroll, 250);
+    }
+
+    function beginPedestalPress() {
+      if (!pedestal || !dome || pedestalActive) return;
+      pedestalActive = true;
+      pedestalDownAt = Date.now();
+      dome.classList.add("pushed");
+    }
+
+    function endPedestalPress(cancelled) {
+      if (!pedestalActive) return;
+      pedestalActive = false;
+      if (dome) dome.classList.remove("pushed");
+      if (cancelled) return;
+      var holdMs = Math.max(40, Math.min(Date.now() - pedestalDownAt, 1600));
+      runPedestalEffects();
+      if (window.BRB && typeof window.BRB.triggerPress === "function") {
+        window.BRB.triggerPress(holdMs);
+      } else {
+        triggerExternalPress(holdMs);
+      }
+    }
 
     function computeEntropy(arr){
       if(arr.length<3)return 0;var bins={},recent=arr.slice(-20);
@@ -844,6 +1274,85 @@
 
     window.BRB = window.BRB || {};
     window.BRB.triggerPress = triggerExternalPress;
+
+    rebuildPedestalTargets();
+    updatePedestalAnchor();
+    animatePedestal();
+
+    if (pedestalSvg) {
+      if ("PointerEvent" in window) {
+        pedestalSvg.addEventListener("pointerdown", function (e) {
+          if (e.pointerType === "mouse" && e.button !== 0) return;
+          e.preventDefault();
+          pedestalPointerId = e.pointerId;
+          if (pedestalSvg.setPointerCapture) {
+            try { pedestalSvg.setPointerCapture(e.pointerId); } catch (_) {}
+          }
+          beginPedestalPress();
+        });
+        pedestalSvg.addEventListener("pointerup", function (e) {
+          if (pedestalPointerId !== null && e.pointerId !== pedestalPointerId) return;
+          endPedestalPress(false);
+          pedestalPointerId = null;
+        });
+        pedestalSvg.addEventListener("pointercancel", function (e) {
+          if (pedestalPointerId !== null && e.pointerId !== pedestalPointerId) return;
+          endPedestalPress(true);
+          pedestalPointerId = null;
+        });
+        pedestalSvg.addEventListener("lostpointercapture", function () {
+          pedestalPointerId = null;
+          endPedestalPress(true);
+        });
+      } else {
+        pedestalSvg.addEventListener("touchstart", function (e) {
+          pedestalLastTouchStart = Date.now();
+          e.preventDefault();
+          beginPedestalPress();
+        }, { passive: false });
+        pedestalSvg.addEventListener("touchend", function (e) {
+          e.preventDefault();
+          endPedestalPress(false);
+        }, { passive: false });
+        pedestalSvg.addEventListener("touchcancel", function () {
+          endPedestalPress(true);
+        });
+        pedestalSvg.addEventListener("click", function () {
+          if (Date.now() - pedestalLastTouchStart < 700) return;
+          beginPedestalPress();
+          endPedestalPress(false);
+        });
+      }
+
+      pedestalSvg.addEventListener("keydown", function (e) {
+        if (e.repeat) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          beginPedestalPress();
+        }
+      });
+      pedestalSvg.addEventListener("keyup", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          endPedestalPress(false);
+        }
+      });
+      pedestalSvg.addEventListener("blur", function () {
+        endPedestalPress(true);
+      });
+
+      if (window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+        pedestalSvg.addEventListener("mouseenter", function () {
+          if (!dome || dome.classList.contains("pushed")) return;
+          dome.style.transition = "transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)";
+          dome.style.transform = "scale(1.04)";
+        });
+        pedestalSvg.addEventListener("mouseleave", function () {
+          if (!dome || dome.classList.contains("pushed")) return;
+          dome.style.transform = "";
+        });
+      }
+    }
 
     if("PointerEvent" in window){
       btn.addEventListener("pointerdown",function(e){
