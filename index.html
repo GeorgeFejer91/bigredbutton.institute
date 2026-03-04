@@ -777,18 +777,34 @@
     }
 
     // â”€â”€ PRESS â”€â”€
-    function handlePress(){
+    function injectWaveFromHold(holdMs){
+      var clamped=Math.max(40,Math.min(holdMs,1600));
+      var holdNorm=(clamped-40)/1560;
+      var peak=0.85+holdNorm*1.15;
+      var tailCount=5+Math.round(holdNorm*7);
+      var freq=1.05+holdNorm*0.5;
+      var decayBase=0.34-holdNorm*0.08;
+      waveData.push(peak);
+      setTimeout(function(){
+        for(var i=0;i<tailCount;i++){
+          var step=i+1;
+          var decay=Math.exp(-step*decayBase);
+          waveData.push(Math.sin(step*freq)*decay*peak*0.72);
+        }
+      },30);
+    }
+
+    function handlePress(holdMs){
       var now=Date.now();count++;pressTimestamps.push(now);
       if(pressTimestamps.length>1)intervals.push(now-pressTimestamps[pressTimestamps.length-2]);
       countEl.textContent=count;
       countEl.classList.add("bump");setTimeout(function(){countEl.classList.remove("bump");},200);
-      btn.classList.add("is-pressed");setTimeout(function(){btn.classList.remove("is-pressed");},140);
       var ring=ripples[rippleIdx%ripples.length];ring.classList.remove("animate");void ring.offsetWidth;ring.classList.add("animate");rippleIdx++;
       pressCol.classList.add("glow");setTimeout(function(){pressCol.classList.remove("glow");},400);
       labPanel.classList.add("pulse");setTimeout(function(){labPanel.classList.remove("pulse");},500);
       flash.classList.add("flash");setTimeout(function(){flash.classList.remove("flash");},120);
       var rect=btn.getBoundingClientRect();spawnParticles(rect.left+rect.width/2,rect.top+rect.height/2,14);
-      waveData.push(1);setTimeout(function(){for(var i=0;i<5;i++)waveData.push(Math.sin(i*1.2)*Math.exp(-i*0.3)*0.6);},50);
+      injectWaveFromHold(holdMs);
       var elapsed=(now-sessionStart)/1000,totalW=Math.max(elapsed,30);
       var binIdx=Math.min(Math.floor((elapsed/totalW)*burstBins.length),burstBins.length-1);
       burstBins[binIdx]+=1;
@@ -796,30 +812,94 @@
       updateStats();
     }
 
+    var pressActive=false;
+    var pressStartTs=0;
+    var activePointerId=null;
     var lastTouchStart=0;
+
+    function beginPress(){
+      if(pressActive)return;
+      pressActive=true;
+      pressStartTs=Date.now();
+      btn.classList.add("is-pressed");
+    }
+
+    function endPress(){
+      if(!pressActive)return;
+      pressActive=false;
+      btn.classList.remove("is-pressed");
+      var holdMs=Math.max(40,Date.now()-pressStartTs);
+      handlePress(holdMs);
+    }
+
+    function triggerExternalPress(holdMs){
+      if(pressActive)return;
+      var ms=Number(holdMs);
+      if(!Number.isFinite(ms))ms=120;
+      ms=Math.max(40,Math.min(ms,1600));
+      btn.classList.add("is-pressed");
+      setTimeout(function(){btn.classList.remove("is-pressed");},140);
+      handlePress(ms);
+    }
+
+    window.BRB = window.BRB || {};
+    window.BRB.triggerPress = triggerExternalPress;
 
     if("PointerEvent" in window){
       btn.addEventListener("pointerdown",function(e){
         if(e.pointerType==="mouse" && e.button!==0)return;
         e.preventDefault();
-        handlePress();
+        activePointerId=e.pointerId;
+        if(btn.setPointerCapture){
+          try{btn.setPointerCapture(e.pointerId);}catch(_){}
+        }
+        beginPress();
+      });
+      btn.addEventListener("pointerup",function(e){
+        if(activePointerId!==null && e.pointerId!==activePointerId)return;
+        endPress();
+        activePointerId=null;
+      });
+      btn.addEventListener("pointercancel",function(e){
+        if(activePointerId!==null && e.pointerId!==activePointerId)return;
+        endPress();
+        activePointerId=null;
+      });
+      btn.addEventListener("lostpointercapture",function(){
+        activePointerId=null;
+        endPress();
       });
     } else {
       btn.addEventListener("touchstart",function(e){
         lastTouchStart=Date.now();
         e.preventDefault();
-        handlePress();
+        beginPress();
       },{passive:false});
+      btn.addEventListener("touchend",function(e){
+        e.preventDefault();
+        endPress();
+      },{passive:false});
+      btn.addEventListener("touchcancel",function(){
+        endPress();
+      });
       btn.addEventListener("click",function(){
         if(Date.now()-lastTouchStart<700)return;
-        handlePress();
+        beginPress();
+        endPress();
       });
     }
 
     btn.addEventListener("keydown",function(e){
+      if(e.repeat)return;
       if(e.key==="Enter" || e.key===" "){
         e.preventDefault();
-        handlePress();
+        beginPress();
+      }
+    });
+    btn.addEventListener("keyup",function(e){
+      if(e.key==="Enter" || e.key===" "){
+        e.preventDefault();
+        endPress();
       }
     });
 
