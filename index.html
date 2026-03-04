@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -51,7 +51,7 @@
       margin: 1rem auto 2.5rem;
     }
 
-    /* ── HERO ── */
+    /* â”€â”€ HERO â”€â”€ */
     .hero {
       border: 1px solid var(--line);
       border-radius: var(--radius-lg);
@@ -111,7 +111,7 @@
     .hero-mission { margin-top: 0.8rem; max-width: 72ch; }
     .hero-mission p { margin: 0.3rem 0; font-size: 0.95rem; }
 
-    /* ── COMBINED LAB PANEL ── */
+    /* â”€â”€ COMBINED LAB PANEL â”€â”€ */
     .lab-panel {
       margin-top: 1rem;
       border: 1px solid rgba(60,50,40,0.25);
@@ -233,7 +233,7 @@
       font-size: 0.65rem; color: #4a5568; text-align: center;
     }
 
-    /* Right: viz 2×2 */
+    /* Right: viz 2Ã—2 */
     .viz-column {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -261,7 +261,7 @@
       border-radius: 4px;
     }
 
-    /* ── CONTENT ── */
+    /* â”€â”€ CONTENT â”€â”€ */
     .mono {
       font-family: "IBM Plex Mono", monospace;
       color: #3c4452; font-size: 0.88rem;
@@ -322,7 +322,7 @@
       box-shadow: var(--shadow-soft);
     }
 
-    /* ── ANIMATIONS ── */
+    /* â”€â”€ ANIMATIONS â”€â”€ */
     .reveal {
       opacity: 0; transform: translateY(14px);
       animation: rise 700ms ease forwards;
@@ -379,8 +379,7 @@
           <p class="subhead">Advancing the Frontiers of Pressability Research</p>
         </div>
         <figure class="hero-latour">
-          <img src="Latour.png" alt="Comic panel referencing a bright red alarm button and Bruno Latour.">
-          <figcaption>Latour reference panel, BRB orientation archive.</figcaption>
+          <img src="Images/Latour.png" alt="Bruno Latour comic panel with a bright red alarm button.">
         </figure>
       </div>
       <div class="hero-mission">
@@ -388,7 +387,7 @@
       </div>
     </header>
 
-    <!-- ── COMBINED PRESS + VIZ ── -->
+    <!-- â”€â”€ COMBINED PRESS + VIZ â”€â”€ -->
     <section class="lab-panel reveal" id="labPanel">
       <div class="lab-layout">
         <div class="press-column" id="pressColumn">
@@ -447,7 +446,8 @@
     <main class="stack">
       <section class="panel reveal">
         <h2>Theoretical Framework</h2>
-        <p>If the world already contains such buttons — hidden in plain sight, charged with social meaning, and capable of reorganizing collective attention — then the public question is straightforward: what happens when anyone can press?</p>
+        <p>Following the Latour comic panel above, BRB treats the red button as both object and provocation: a device that converts collective thought into measurable action.</p>
+        <p>If the world already contains such buttons â€” hidden in plain sight, charged with social meaning, and capable of reorganizing collective attention â€” then the public question is straightforward: what happens when anyone can press?</p>
         <p>BRB approaches this as a practical and conceptual problem. What counts as a press? Which design variables alter pressing behavior? How does repeated pressing change the public atmosphere of a place?</p>
       </section>
 
@@ -556,7 +556,7 @@
           <p>If neural activity at peak complexity often sits near criticality, BRB asks the corresponding civic question: does the crowd?</p>
         </section>
         <div class="callout">
-          <strong>Scientific Advisory Board:</strong> Reggie Watts — musician, comedian, and theorist of nonsense-as-method.
+          <strong>Scientific Advisory Board:</strong> Reggie Watts â€” musician, comedian, and theorist of nonsense-as-method.
         </div>
       </section>
 
@@ -571,7 +571,7 @@
     <footer class="footer reveal">
       <p><strong>The Big Red Button Institute</strong><br>A Research Collective for Pressability Studies</p>
       <p>Contact: <a href="mailto:inquiries@bigredbutton.institute">inquiries@bigredbutton.institute</a></p>
-      <p><em>"The question is not whether to press. The question is what pressing means."</em> — BRB Founding Charter, Article I</p>
+      <p><em>"The question is not whether to press. The question is what pressing means."</em> â€” BRB Founding Charter, Article I</p>
     </footer>
   </div>
 
@@ -596,7 +596,7 @@
     var statAvgInterval = document.getElementById("statAvgInterval");
     var statBurst = document.getElementById("statBurst");
 
-    // ── AMBIENT ──
+    // â”€â”€ AMBIENT â”€â”€
     var ambientC = document.getElementById("ambientCanvas");
     var ambientCtx = ambientC.getContext("2d");
     var floaters = [];
@@ -632,7 +632,7 @@
       }
     }
 
-    // ── VIZ ──
+    // â”€â”€ VIZ â”€â”€
     var waveC=document.getElementById("waveCanvas"), waveCtx=waveC.getContext("2d");
     var intervalC=document.getElementById("intervalCanvas"), intervalCtx=intervalC.getContext("2d");
     var entropyC=document.getElementById("entropyCanvas"), entropyCtx=entropyC.getContext("2d");
@@ -762,7 +762,7 @@
       var b=computeBurst();if(b>maxBurst)maxBurst=b;statBurst.textContent=maxBurst;
     }
 
-    // ── PRESS ──
+    // â”€â”€ PRESS â”€â”€
     btn.addEventListener("click",function(){
       var now=Date.now();count++;pressTimestamps.push(now);
       if(pressTimestamps.length>1)intervals.push(now-pressTimestamps[pressTimestamps.length-2]);
@@ -792,3 +792,4 @@
   </script>
 </body>
 </html>
+
