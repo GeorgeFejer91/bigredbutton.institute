@@ -11,396 +11,365 @@
   <style>
     :root {
       --paper: #f5f0e3;
-      --ink: #202530;
+      --ink: #1a1e28;
       --muted: #5f6775;
       --red: #df2c2c;
+      --red-hot: #ff4444;
       --red-deep: #8f1717;
+      --red-glow: rgba(223, 44, 44, 0.35);
       --steel: #8ea3bf;
-      --panel: #ffffffde;
       --line: #c9c1b0;
-      --shadow: 0 18px 44px rgba(22, 28, 38, 0.16);
+      --shadow: 0 18px 44px rgba(22, 28, 38, 0.18);
       --shadow-soft: 0 10px 24px rgba(23, 28, 37, 0.11);
+      --shadow-red: 0 0 60px rgba(223, 44, 44, 0.15);
       --radius-lg: 20px;
       --radius-md: 14px;
       --radius-sm: 10px;
       --max: 1080px;
     }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-    }
-
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
     body {
       font-family: "Manrope", "Segoe UI", sans-serif;
       color: var(--ink);
       background:
         radial-gradient(1200px 560px at 104% -12%, #b8c8de 0%, transparent 60%),
         radial-gradient(900px 460px at -5% 18%, #ecc0bc 0%, transparent 55%),
-        repeating-linear-gradient(
-          0deg,
-          rgba(255, 255, 255, 0.12) 0 1px,
-          rgba(255, 255, 255, 0) 1px 28px
-        ),
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.12) 0 1px, rgba(255,255,255,0) 1px 28px),
         linear-gradient(180deg, #efe9da 0%, #f7f3ea 100%);
       line-height: 1.55;
+      overflow-x: hidden;
     }
-
+    #ambientCanvas {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+    }
     .shell {
+      position: relative; z-index: 1;
       width: min(calc(100% - 2rem), var(--max));
       margin: 1rem auto 2.5rem;
     }
 
+    /* ── HERO ── */
     .hero {
       border: 1px solid var(--line);
       border-radius: var(--radius-lg);
-      padding: clamp(1.25rem, 2vw + 0.8rem, 2.3rem);
+      padding: clamp(1rem, 1.5vw + 0.6rem, 1.8rem);
       box-shadow: var(--shadow);
       background:
-        linear-gradient(145deg, rgba(255, 255, 255, 0.93), rgba(255, 255, 255, 0.86)),
-        repeating-linear-gradient(
-          -45deg,
-          rgba(124, 146, 169, 0.11) 0 14px,
-          rgba(124, 146, 169, 0) 14px 28px
-        );
-      overflow: hidden;
-      position: relative;
+        linear-gradient(145deg, rgba(255,255,255,0.93), rgba(255,255,255,0.86)),
+        repeating-linear-gradient(-45deg, rgba(124,146,169,0.11) 0 14px, rgba(124,146,169,0) 14px 28px);
+      overflow: hidden; position: relative;
     }
-
     .hero::after {
-      content: "";
-      position: absolute;
-      width: 300px;
-      height: 300px;
-      border-radius: 50%;
-      right: -110px;
-      top: -130px;
-      background: radial-gradient(circle, rgba(223, 44, 44, 0.24) 0%, rgba(223, 44, 44, 0) 70%);
+      content: ""; position: absolute;
+      width: 300px; height: 300px; border-radius: 50%;
+      right: -110px; top: -130px;
+      background: radial-gradient(circle, rgba(223,44,44,0.24) 0%, rgba(223,44,44,0) 70%);
       pointer-events: none;
     }
-
     .hero-top {
-      display: grid;
-      gap: 1rem;
-      grid-template-columns: minmax(0, 1fr) clamp(200px, 28vw, 330px);
+      display: grid; gap: 1rem;
+      grid-template-columns: minmax(0, 1fr) clamp(180px, 24vw, 280px);
       align-items: start;
     }
-
-    .hero-intro {
-      min-width: 0;
-    }
-
+    .hero-intro { min-width: 0; }
     .eyebrow {
       display: inline-block;
       font-family: "IBM Plex Mono", monospace;
-      font-size: 0.82rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      background: #ffffff;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 0.2rem 0.65rem;
-      margin-bottom: 0.7rem;
+      font-size: 0.82rem; letter-spacing: 0.14em;
+      text-transform: uppercase; background: #fff;
+      border: 1px solid var(--line); border-radius: 999px;
+      padding: 0.2rem 0.65rem; margin-bottom: 0.5rem;
     }
-
-    h1,
-    h2,
-    h3 {
-      margin: 0;
-      font-family: "Fraunces", Georgia, serif;
-      letter-spacing: -0.01em;
-      line-height: 1.12;
+    h1, h2, h3 {
+      margin: 0; font-family: "Fraunces", Georgia, serif;
+      letter-spacing: -0.01em; line-height: 1.12;
     }
-
-    h1 {
-      font-size: clamp(2rem, 4vw, 3.65rem);
-      max-width: 13ch;
-    }
-
+    h1 { font-size: clamp(1.8rem, 3.5vw, 3.2rem); max-width: 13ch; }
     .subhead {
-      margin: 0.65rem 0 1.1rem;
-      font-size: clamp(1rem, 1vw + 0.85rem, 1.32rem);
-      color: var(--muted);
-      max-width: 46ch;
+      margin: 0.4rem 0 0.6rem;
+      font-size: clamp(0.95rem, 1vw + 0.8rem, 1.2rem);
+      color: var(--muted); max-width: 46ch;
     }
-
     .hero-latour {
-      margin: 0;
-      border: 1px solid #bac2d2;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #f7f9ff;
-      box-shadow: var(--shadow-soft);
-      transform: rotate(1.4deg);
+      margin: 0; border: 1px solid #bac2d2; border-radius: 12px;
+      overflow: hidden; background: #f7f9ff;
+      box-shadow: var(--shadow-soft); transform: rotate(1.4deg);
+      transition: transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-
+    .hero-latour:hover { transform: rotate(0deg) scale(1.02); }
     .hero-latour img {
-      display: block;
-      width: 100%;
-      height: auto;
-      aspect-ratio: 9 / 12;
-      object-fit: cover;
-      object-position: 50% 18%;
+      display: block; width: 100%; height: auto;
+      aspect-ratio: 9 / 12; object-fit: cover; object-position: 50% 18%;
     }
-
     .hero-latour figcaption {
-      padding: 0.42rem 0.62rem;
-      font-size: 0.75rem;
-      color: #4c5768;
-      border-top: 1px solid #c6cedd;
-      background: #ecf1fa;
+      padding: 0.35rem 0.55rem; font-size: 0.72rem; color: #4c5768;
+      border-top: 1px solid #c6cedd; background: #ecf1fa;
     }
+    .hero-mission { margin-top: 0.8rem; max-width: 72ch; }
+    .hero-mission p { margin: 0.3rem 0; font-size: 0.95rem; }
 
-    .hero-grid {
+    /* ── COMBINED LAB PANEL ── */
+    .lab-panel {
+      margin-top: 1rem;
+      border: 1px solid rgba(60,50,40,0.25);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(180deg, #1a1e28 0%, #12151c 100%);
+      box-shadow: var(--shadow);
+      padding: clamp(0.8rem, 1.2vw + 0.5rem, 1.3rem);
+      overflow: hidden; position: relative;
+      transition: box-shadow 400ms ease;
+    }
+    .lab-panel.pulse {
+      box-shadow: var(--shadow), var(--shadow-red);
+    }
+    .lab-layout {
       display: grid;
+      grid-template-columns: 250px 1fr;
       gap: 1rem;
-      grid-template-columns: 1.35fr 1fr;
-      margin-top: 1.1rem;
+      align-items: stretch;
     }
 
-    .hero-card,
-    .press-lab {
-      border: 1px solid var(--line);
+    /* Left column */
+    .press-column {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
       border-radius: var(--radius-md);
-      background: #fffdf8;
-      padding: 1rem;
-      box-shadow: var(--shadow-soft);
+      padding: 1rem 0.8rem;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0.5rem; position: relative; overflow: hidden;
     }
-
-    .press-lab {
-      background:
-        linear-gradient(180deg, #fffefb 0%, #fff7f7 100%);
-      display: grid;
-      align-content: start;
-      gap: 0.7rem;
+    .press-column::before {
+      content: ""; position: absolute; inset: 0;
+      border-radius: inherit; opacity: 0;
+      background: radial-gradient(circle at 50% 45%, rgba(223,44,44,0.15) 0%, transparent 70%);
+      transition: opacity 300ms ease; pointer-events: none;
     }
-
+    .press-column.glow::before { opacity: 1; }
+    .press-column h2 {
+      color: #d4d0c6; font-size: 1.1rem; text-align: center;
+    }
+    .counter-display { text-align: center; }
+    .counter-number {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 2.6rem; font-weight: 800;
+      color: var(--red-hot); line-height: 1;
+      display: inline-block;
+      transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .counter-number.bump { transform: scale(1.3); }
+    .counter-label {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.7rem; color: #6b7a8f; margin-top: 0.15rem;
+    }
+    .press-btn-wrap {
+      position: relative; display: flex;
+      justify-content: center; padding: 0.4rem 0;
+    }
     .press-btn {
+      position: relative; z-index: 2;
       font: 700 1.05rem/1 "Manrope", sans-serif;
-      color: #fff;
-      border: 0;
-      border-radius: 999px;
-      padding: 0.92rem 1.2rem;
+      color: #fff; border: 0; border-radius: 999px;
+      padding: 1rem 1.8rem;
       background: radial-gradient(circle at 35% 28%, #ff6868 0%, #df2c2c 55%, #7f1010 100%);
       box-shadow:
-        inset 0 -7px 14px rgba(68, 0, 0, 0.3),
-        0 8px 16px rgba(129, 23, 23, 0.38);
+        inset 0 -7px 14px rgba(68,0,0,0.3),
+        0 8px 16px rgba(129,23,23,0.38);
       cursor: pointer;
-      transition: transform 120ms ease, box-shadow 120ms ease;
+      transition: transform 120ms ease, box-shadow 300ms ease;
+      -webkit-tap-highlight-color: transparent;
     }
-
     .press-btn:hover {
-      transform: translateY(-1px);
+      transform: translateY(-2px) scale(1.03);
       box-shadow:
-        inset 0 -7px 14px rgba(68, 0, 0, 0.35),
-        0 10px 18px rgba(129, 23, 23, 0.46);
+        inset 0 -7px 14px rgba(68,0,0,0.35),
+        0 12px 24px rgba(129,23,23,0.46),
+        0 0 30px rgba(223,44,44,0.25);
+    }
+    .press-btn:active, .press-btn.is-pressed {
+      transform: translateY(3px) scale(0.96);
+      box-shadow:
+        inset 0 4px 9px rgba(56,0,0,0.45),
+        0 4px 8px rgba(129,23,23,0.26),
+        0 0 50px rgba(223,44,44,0.35);
+    }
+    .ripple-ring {
+      position: absolute; top: 50%; left: 50%;
+      width: 50px; height: 50px; margin: -25px 0 0 -25px;
+      border-radius: 50%; border: 2px solid var(--red);
+      opacity: 0; pointer-events: none; z-index: 1;
+    }
+    .ripple-ring.animate { animation: rippleOut 800ms ease-out forwards; }
+    @keyframes rippleOut {
+      0% { transform: scale(0.5); opacity: 0.7; }
+      100% { transform: scale(4); opacity: 0; }
+    }
+    .press-mini-stats {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0.35rem; width: 100%;
+    }
+    .mini-stat {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px; padding: 0.35rem; text-align: center;
+    }
+    .mini-stat-value {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.95rem; font-weight: 700;
+      color: #e8e4da; line-height: 1;
+    }
+    .mini-stat-value.red { color: var(--red-hot); }
+    .mini-stat-label {
+      font-size: 0.58rem; color: #5a6578;
+      font-family: "IBM Plex Mono", monospace;
+      text-transform: uppercase; letter-spacing: 0.04em;
+      margin-top: 0.15rem;
+    }
+    .press-note {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.65rem; color: #4a5568; text-align: center;
     }
 
-    .press-btn:active,
-    .press-btn.is-pressed {
-      transform: translateY(2px);
-      box-shadow:
-        inset 0 4px 9px rgba(56, 0, 0, 0.45),
-        0 4px 8px rgba(129, 23, 23, 0.26);
+    /* Right: viz 2×2 */
+    .viz-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 0.55rem;
+    }
+    .viz-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius-sm);
+      padding: 0.45rem 0.5rem;
+      overflow: hidden; display: flex;
+      flex-direction: column;
+    }
+    .viz-card h3 {
+      color: #7a7568; font-size: 0.65rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.06em; margin: 0 0 0.3rem;
+      flex-shrink: 0;
+    }
+    .viz-card canvas {
+      display: block; width: 100%;
+      flex: 1; min-height: 0;
+      border-radius: 4px;
     }
 
+    /* ── CONTENT ── */
     .mono {
       font-family: "IBM Plex Mono", monospace;
-      color: #3c4452;
-      font-size: 0.88rem;
+      color: #3c4452; font-size: 0.88rem;
     }
-
-    .stack {
-      display: grid;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
+    .stack { display: grid; gap: 1rem; margin-top: 1rem; }
     .panel {
-      border: 1px solid var(--line);
-      border-radius: var(--radius-lg);
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 252, 246, 0.9) 100%);
+      border: 1px solid var(--line); border-radius: var(--radius-lg);
+      background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,252,246,0.9) 100%);
       box-shadow: var(--shadow);
       padding: clamp(1rem, 1.5vw + 0.7rem, 1.5rem);
     }
-
-    .panel h2 {
-      font-size: clamp(1.45rem, 2.1vw, 2.2rem);
-      margin-bottom: 0.72rem;
-    }
-
-    .panel p {
-      margin: 0.42rem 0;
-      max-width: 72ch;
-    }
-
+    .panel h2 { font-size: clamp(1.45rem, 2.1vw, 2.2rem); margin-bottom: 0.72rem; }
+    .panel p { margin: 0.42rem 0; max-width: 72ch; }
     .division-grid {
-      display: grid;
-      gap: 0.9rem;
+      display: grid; gap: 0.9rem;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       margin-top: 0.75rem;
     }
-
     .division {
-      border: 1px solid var(--line);
-      border-radius: var(--radius-md);
-      background: #fffdf8;
-      padding: 0.95rem;
-      display: grid;
-      gap: 0.45rem;
+      border: 1px solid var(--line); border-radius: var(--radius-md);
+      background: #fffdf8; padding: 0.95rem;
+      display: grid; gap: 0.45rem;
+      transition: transform 250ms ease, box-shadow 250ms ease;
     }
-
-    .division h3 {
-      font-size: 1.17rem;
-    }
-
-    .division ul {
-      margin: 0.2rem 0 0;
-      padding-left: 1.1rem;
-      display: grid;
-      gap: 0.35rem;
-    }
-
+    .division:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .division h3 { font-size: 1.17rem; }
+    .division ul { margin: 0.2rem 0 0; padding-left: 1.1rem; display: grid; gap: 0.35rem; }
     .methods-wrap {
-      margin-top: 0.95rem;
-      border: 1px solid var(--line);
-      border-radius: var(--radius-md);
-      background: #fff8ec;
-      padding: 0.95rem;
-      display: grid;
-      gap: 0.7rem;
+      margin-top: 0.95rem; border: 1px solid var(--line);
+      border-radius: var(--radius-md); background: #fff8ec;
+      padding: 0.95rem; display: grid; gap: 0.7rem;
     }
-
-    .methods-wrap h3 {
-      font-size: 1.22rem;
-    }
-
-    .methods-wrap p {
-      margin: 0;
-    }
-
+    .methods-wrap h3 { font-size: 1.22rem; }
+    .methods-wrap p { margin: 0; }
     .methods-grid {
-      display: grid;
-      gap: 0.7rem;
+      display: grid; gap: 0.7rem;
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
     .method {
-      border: 1px solid var(--line);
-      border-radius: var(--radius-sm);
-      background: #fffdf8;
-      padding: 0.8rem;
+      border: 1px solid var(--line); border-radius: var(--radius-sm);
+      background: #fffdf8; padding: 0.8rem;
+      transition: transform 200ms ease;
     }
-
+    .method:hover { transform: translateY(-1px); }
     .method h4 {
-      margin: 0 0 0.45rem;
-      font-family: "Fraunces", Georgia, serif;
-      font-size: 1.02rem;
-      line-height: 1.2;
+      margin: 0 0 0.45rem; font-family: "Fraunces", Georgia, serif;
+      font-size: 1.02rem; line-height: 1.2;
     }
-
-    .method ul {
-      margin: 0;
-      padding-left: 1.02rem;
-      display: grid;
-      gap: 0.3rem;
-    }
-
+    .method ul { margin: 0; padding-left: 1.02rem; display: grid; gap: 0.3rem; }
     .callout {
-      border-left: 6px solid var(--red);
-      background: #fff4f4;
-      border-radius: 8px;
-      padding: 0.7rem 0.85rem;
-      margin-top: 0.8rem;
+      border-left: 6px solid var(--red); background: #fff4f4;
+      border-radius: 8px; padding: 0.7rem 0.85rem; margin-top: 0.8rem;
     }
-
-    .board {
-      border: 1px solid var(--line);
-      border-radius: var(--radius-md);
-      background: #fcfbf8;
-      padding: 0.95rem;
-      margin-top: 0.8rem;
-    }
-
     .footer {
-      margin-top: 1.2rem;
-      padding: 1rem;
-      border: 1px solid var(--line);
-      border-radius: var(--radius-md);
-      background: #fbf6eb;
-      font-size: 0.98rem;
+      margin-top: 1.2rem; padding: 1rem;
+      border: 1px solid var(--line); border-radius: var(--radius-md);
+      background: #fbf6eb; font-size: 0.98rem;
       box-shadow: var(--shadow-soft);
     }
 
+    /* ── ANIMATIONS ── */
     .reveal {
-      opacity: 0;
-      transform: translateY(14px);
+      opacity: 0; transform: translateY(14px);
       animation: rise 700ms ease forwards;
     }
+    .reveal:nth-child(2) { animation-delay: 120ms; }
+    .reveal:nth-child(3) { animation-delay: 210ms; }
+    .reveal:nth-child(4) { animation-delay: 290ms; }
+    .reveal:nth-child(5) { animation-delay: 360ms; }
+    .reveal:nth-child(6) { animation-delay: 430ms; }
+    @keyframes rise { to { opacity: 1; transform: translateY(0); } }
 
-    .reveal:nth-child(2) {
-      animation-delay: 120ms;
+    .screen-flash {
+      position: fixed; inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(223,44,44,0.15) 0%, transparent 70%);
+      pointer-events: none; z-index: 100; opacity: 0;
+      transition: opacity 100ms ease;
     }
-
-    .reveal:nth-child(3) {
-      animation-delay: 210ms;
-    }
-
-    .reveal:nth-child(4) {
-      animation-delay: 290ms;
-    }
-
-    .reveal:nth-child(5) {
-      animation-delay: 360ms;
-    }
-
-    @keyframes rise {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+    .screen-flash.flash { opacity: 1; transition: opacity 0ms; }
 
     @media (max-width: 980px) {
-      .hero-top,
-      .hero-grid,
-      .division-grid,
-      .methods-grid {
-        grid-template-columns: 1fr;
+      .hero-top { grid-template-columns: minmax(0,1fr) clamp(160px,22vw,240px); }
+      .lab-layout { grid-template-columns: 1fr; }
+      .press-column {
+        flex-direction: row; flex-wrap: wrap; justify-content: center;
+        padding: 0.8rem;
       }
-
-      .hero-latour {
-        max-width: 360px;
-        justify-self: end;
-        transform: none;
-      }
+      .press-column h2 { width: 100%; }
+      .counter-display { order: 1; }
+      .press-btn-wrap { order: 2; }
+      .press-mini-stats { order: 3; max-width: 300px; }
+      .press-note { order: 4; width: 100%; }
+      .division-grid, .methods-grid { grid-template-columns: 1fr; }
+      .hero-latour { max-width: 300px; justify-self: end; transform: none; }
     }
-
     @media (max-width: 650px) {
-      .shell {
-        width: min(calc(100% - 1rem), var(--max));
-        margin: 0.5rem auto 1.5rem;
-      }
-
-      .hero,
-      .panel {
-        border-radius: 14px;
-      }
-
-      .hero-latour {
-        max-width: 100%;
-        justify-self: stretch;
-      }
+      .shell { width: min(calc(100% - 1rem), var(--max)); margin: 0.5rem auto 1.5rem; }
+      .hero, .panel, .lab-panel { border-radius: 14px; }
+      .hero-top { grid-template-columns: 1fr; }
+      .hero-latour { max-width: 100%; justify-self: stretch; }
+      .viz-column { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
+  <canvas id="ambientCanvas"></canvas>
+  <div class="screen-flash" id="screenFlash"></div>
+
   <div class="shell">
     <header class="hero reveal">
       <div class="hero-top">
@@ -410,31 +379,75 @@
           <p class="subhead">Advancing the Frontiers of Pressability Research</p>
         </div>
         <figure class="hero-latour">
-          <img src="Images/Latour.png" alt="Comic panel referencing a bright red alarm button and Bruno Latour.">
+          <img src="Latour.png" alt="Comic panel referencing a bright red alarm button and Bruno Latour.">
           <figcaption>Latour reference panel, BRB orientation archive.</figcaption>
         </figure>
       </div>
-      <div class="hero-grid">
-        <section class="hero-card">
-          <h2>Mission Statement</h2>
-          <p>The Big Red Button Institute (BRB) is a transdisciplinary research collective dedicated to the empirical study of human-button interaction dynamics.</p>
-          <p>Working in public spaces, we deploy full-scale button installations to generate longitudinal datasets on press intervals, participation patterns, and the social life of collective curiosity.</p>
-          <p>At BRB, the press is treated as a full-spectrum event: intention meeting resistance, individual agency becoming public rhythm, and measurement becoming interpretation.</p>
-        </section>
-        <aside class="press-lab">
-          <h2>Live Demonstration</h2>
-          <p class="mono">Session Press Counter</p>
-          <button id="pressBtn" class="press-btn" type="button">Press For Science</button>
-          <p><strong id="pressCount">0</strong> verified presses in this browser session.</p>
-          <p class="mono">Data quality note: methodology pending peer review.</p>
-        </aside>
+      <div class="hero-mission">
+        <p>The Big Red Button Institute (BRB) is a transdisciplinary research collective dedicated to the empirical study of human-button interaction dynamics. Working in public spaces, we deploy full-scale button installations to generate longitudinal datasets on press intervals, participation patterns, and the social life of collective curiosity.</p>
       </div>
     </header>
+
+    <!-- ── COMBINED PRESS + VIZ ── -->
+    <section class="lab-panel reveal" id="labPanel">
+      <div class="lab-layout">
+        <div class="press-column" id="pressColumn">
+          <h2>Live Lab</h2>
+          <div class="counter-display">
+            <div class="counter-number" id="pressCount">0</div>
+            <div class="counter-label">verified presses</div>
+          </div>
+          <div class="press-btn-wrap">
+            <div class="ripple-ring" id="ripple1"></div>
+            <div class="ripple-ring" id="ripple2"></div>
+            <div class="ripple-ring" id="ripple3"></div>
+            <button id="pressBtn" class="press-btn" type="button">Press For Science</button>
+          </div>
+          <div class="press-mini-stats">
+            <div class="mini-stat">
+              <div class="mini-stat-value red" id="statRate">0.0</div>
+              <div class="mini-stat-label">Press/min</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-value" id="statEntropy">&mdash;</div>
+              <div class="mini-stat-label">Entropy</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-value" id="statAvgInterval">&mdash;</div>
+              <div class="mini-stat-label">Avg ms</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-value" id="statBurst">0</div>
+              <div class="mini-stat-label">Max Burst</div>
+            </div>
+          </div>
+          <p class="press-note">Methodology pending peer review.</p>
+        </div>
+        <div class="viz-column">
+          <div class="viz-card">
+            <h3>Temporal Waveform</h3>
+            <canvas id="waveCanvas"></canvas>
+          </div>
+          <div class="viz-card">
+            <h3>Inter-Press Intervals</h3>
+            <canvas id="intervalCanvas"></canvas>
+          </div>
+          <div class="viz-card">
+            <h3>Entropy Field</h3>
+            <canvas id="entropyCanvas"></canvas>
+          </div>
+          <div class="viz-card">
+            <h3>Press Burst Map</h3>
+            <canvas id="burstCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <main class="stack">
       <section class="panel reveal">
         <h2>Theoretical Framework</h2>
-        <p>If the world already contains such buttons - hidden in plain sight, charged with social meaning, and capable of reorganizing collective attention - then the public question is straightforward: what happens when anyone can press?</p>
+        <p>If the world already contains such buttons — hidden in plain sight, charged with social meaning, and capable of reorganizing collective attention — then the public question is straightforward: what happens when anyone can press?</p>
         <p>BRB approaches this as a practical and conceptual problem. What counts as a press? Which design variables alter pressing behavior? How does repeated pressing change the public atmosphere of a place?</p>
       </section>
 
@@ -543,7 +556,7 @@
           <p>If neural activity at peak complexity often sits near criticality, BRB asks the corresponding civic question: does the crowd?</p>
         </section>
         <div class="callout">
-          <strong>Scientific Advisory Board:</strong> Reggie Watts - musician, comedian, and theorist of nonsense-as-method.
+          <strong>Scientific Advisory Board:</strong> Reggie Watts — musician, comedian, and theorist of nonsense-as-method.
         </div>
       </section>
 
@@ -558,37 +571,224 @@
     <footer class="footer reveal">
       <p><strong>The Big Red Button Institute</strong><br>A Research Collective for Pressability Studies</p>
       <p>Contact: <a href="mailto:inquiries@bigredbutton.institute">inquiries@bigredbutton.institute</a></p>
-      <p><em>"The question is not whether to press. The question is what pressing means."</em> - BRB Founding Charter, Article I</p>
+      <p><em>"The question is not whether to press. The question is what pressing means."</em> — BRB Founding Charter, Article I</p>
     </footer>
   </div>
 
   <script>
-    (function () {
-      var button = document.getElementById("pressBtn");
-      var countNode = document.getElementById("pressCount");
-      var key = "brb_press_count";
+  (function () {
+    var pressTimestamps = [];
+    var intervals = [];
+    var count = 0;
+    var sessionStart = Date.now();
+    var maxBurst = 0;
+    var particles = [];
 
-      function readCount() {
-        var value = Number(window.localStorage.getItem(key) || "0");
-        return Number.isFinite(value) && value >= 0 ? value : 0;
+    var btn = document.getElementById("pressBtn");
+    var countEl = document.getElementById("pressCount");
+    var labPanel = document.getElementById("labPanel");
+    var pressCol = document.getElementById("pressColumn");
+    var flash = document.getElementById("screenFlash");
+    var ripples = [document.getElementById("ripple1"), document.getElementById("ripple2"), document.getElementById("ripple3")];
+    var rippleIdx = 0;
+    var statRate = document.getElementById("statRate");
+    var statEntropy = document.getElementById("statEntropy");
+    var statAvgInterval = document.getElementById("statAvgInterval");
+    var statBurst = document.getElementById("statBurst");
+
+    // ── AMBIENT ──
+    var ambientC = document.getElementById("ambientCanvas");
+    var ambientCtx = ambientC.getContext("2d");
+    var floaters = [];
+    function resizeAmbient() { ambientC.width = window.innerWidth; ambientC.height = window.innerHeight; }
+    resizeAmbient();
+    window.addEventListener("resize", resizeAmbient);
+    for (var i = 0; i < 35; i++) {
+      floaters.push({ x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight, r: Math.random()*2.5+0.5, vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3, alpha: Math.random()*0.12+0.03 });
+    }
+    function drawAmbient() {
+      ambientCtx.clearRect(0,0,ambientC.width,ambientC.height);
+      for (var i=0;i<floaters.length;i++) {
+        var f=floaters[i]; f.x+=f.vx; f.y+=f.vy;
+        if(f.x<-10)f.x=ambientC.width+10; if(f.x>ambientC.width+10)f.x=-10;
+        if(f.y<-10)f.y=ambientC.height+10; if(f.y>ambientC.height+10)f.y=-10;
+        ambientCtx.beginPath(); ambientCtx.arc(f.x,f.y,f.r,0,Math.PI*2);
+        ambientCtx.fillStyle="rgba(223,44,44,"+f.alpha+")"; ambientCtx.fill();
       }
-
-      function render() {
-        countNode.textContent = String(readCount());
+      for (var j=particles.length-1;j>=0;j--) {
+        var p=particles[j]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.04; p.life-=0.015;
+        if(p.life<=0){particles.splice(j,1);continue;}
+        ambientCtx.beginPath(); ambientCtx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);
+        ambientCtx.fillStyle="rgba("+p.color+","+(p.life*0.6)+")"; ambientCtx.fill();
       }
+      requestAnimationFrame(drawAmbient);
+    }
+    drawAmbient();
+    function spawnParticles(x,y,n) {
+      for(var i=0;i<n;i++){
+        var angle=Math.random()*Math.PI*2,speed=Math.random()*4+1.5;
+        var colors=["223,44,44","255,100,70","255,160,80","200,30,30"];
+        particles.push({x:x,y:y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-2,r:Math.random()*4+1.5,life:1,color:colors[Math.floor(Math.random()*colors.length)]});
+      }
+    }
 
-      button.addEventListener("click", function () {
-        var next = readCount() + 1;
-        window.localStorage.setItem(key, String(next));
-        render();
-        button.classList.add("is-pressed");
-        window.setTimeout(function () {
-          button.classList.remove("is-pressed");
-        }, 140);
-      });
+    // ── VIZ ──
+    var waveC=document.getElementById("waveCanvas"), waveCtx=waveC.getContext("2d");
+    var intervalC=document.getElementById("intervalCanvas"), intervalCtx=intervalC.getContext("2d");
+    var entropyC=document.getElementById("entropyCanvas"), entropyCtx=entropyC.getContext("2d");
+    var burstC=document.getElementById("burstCanvas"), burstCtx=burstC.getContext("2d");
 
-      render();
-    })();
+    function setupCanvas(c) {
+      var r=c.getBoundingClientRect(), d=window.devicePixelRatio||1;
+      c.width=r.width*d; c.height=r.height*d;
+      c.getContext("2d").scale(d,d);
+      c.style.width=r.width+"px"; c.style.height=r.height+"px";
+    }
+    var vizReady=false;
+    function initCanvases() {
+      if(vizReady)return; vizReady=true;
+      setupCanvas(waveC);setupCanvas(intervalC);setupCanvas(entropyC);setupCanvas(burstC);
+      drawAllViz();
+    }
+    setTimeout(initCanvases,300);
+    window.addEventListener("resize",function(){vizReady=false;setTimeout(initCanvases,100);});
+
+    var waveData=[], wavePhase=0;
+    function drawWave() {
+      var w=waveC.getBoundingClientRect().width, h=waveC.getBoundingClientRect().height;
+      waveCtx.clearRect(0,0,w,h);
+      waveCtx.strokeStyle="rgba(255,255,255,0.04)"; waveCtx.lineWidth=1;
+      for(var gy=20;gy<h;gy+=20){waveCtx.beginPath();waveCtx.moveTo(0,gy);waveCtx.lineTo(w,gy);waveCtx.stroke();}
+      waveCtx.strokeStyle="rgba(255,255,255,0.08)";
+      waveCtx.beginPath();waveCtx.moveTo(0,h/2);waveCtx.lineTo(w,h/2);waveCtx.stroke();
+      if(waveData.length<2){
+        waveCtx.beginPath();waveCtx.strokeStyle="rgba(223,44,44,0.2)";waveCtx.lineWidth=1.5;
+        for(var x=0;x<w;x++){var y=h/2+Math.sin(x*0.03+wavePhase)*6;x===0?waveCtx.moveTo(x,y):waveCtx.lineTo(x,y);}
+        waveCtx.stroke();wavePhase+=0.02;
+      } else {
+        waveCtx.beginPath();
+        var grad=waveCtx.createLinearGradient(0,0,w,0);
+        grad.addColorStop(0,"rgba(223,44,44,0.15)");grad.addColorStop(1,"rgba(223,44,44,0.9)");
+        waveCtx.strokeStyle=grad;waveCtx.lineWidth=2;
+        var maxPts=80,pts=waveData.slice(-maxPts);
+        for(var i=0;i<pts.length;i++){var px=(i/(maxPts-1))*w,py=h/2-pts[i]*(h*0.4);i===0?waveCtx.moveTo(px,py):waveCtx.lineTo(px,py);}
+        waveCtx.stroke();
+        waveCtx.lineTo(w,h/2);waveCtx.lineTo(0,h/2);waveCtx.closePath();
+        var gf=waveCtx.createLinearGradient(0,0,0,h);
+        gf.addColorStop(0,"rgba(223,44,44,0.1)");gf.addColorStop(0.5,"rgba(223,44,44,0)");gf.addColorStop(1,"rgba(223,44,44,0.06)");
+        waveCtx.fillStyle=gf;waveCtx.fill();
+      }
+    }
+
+    function drawIntervals() {
+      var w=intervalC.getBoundingClientRect().width, h=intervalC.getBoundingClientRect().height;
+      intervalCtx.clearRect(0,0,w,h);
+      intervalCtx.strokeStyle="rgba(255,255,255,0.04)";
+      for(var gy=20;gy<h;gy+=20){intervalCtx.beginPath();intervalCtx.moveTo(0,gy);intervalCtx.lineTo(w,gy);intervalCtx.stroke();}
+      if(intervals.length===0){
+        intervalCtx.fillStyle="rgba(255,255,255,0.07)";intervalCtx.font="11px 'IBM Plex Mono',monospace";
+        intervalCtx.textAlign="center";intervalCtx.fillText("Awaiting data\u2026",w/2,h/2);return;
+      }
+      var maxBars=25,data=intervals.slice(-maxBars),maxVal=Math.max.apply(null,data)||1;
+      var barW=(w-8)/maxBars,gap=2;
+      for(var i=0;i<data.length;i++){
+        var barH=(data[i]/maxVal)*(h-16),x=4+i*barW,y=h-8-barH;
+        var t=1-(data[i]/maxVal);
+        intervalCtx.fillStyle="rgba("+(223+Math.round(t*32))+","+(44+Math.round(t*56))+","+(44+Math.round(t*36))+",0.8)";
+        intervalCtx.beginPath();intervalCtx.roundRect(x+gap/2,y,barW-gap,barH,2);intervalCtx.fill();
+      }
+    }
+
+    var entropyParticles=[], entropyVal=0;
+    function initEP(w,h){entropyParticles=[];for(var i=0;i<50;i++)entropyParticles.push({x:Math.random()*w,y:Math.random()*h,vx:0,vy:0,r:Math.random()*2+0.8});}
+    function drawEntropy() {
+      var w=entropyC.getBoundingClientRect().width,h=entropyC.getBoundingClientRect().height;
+      entropyCtx.clearRect(0,0,w,h);
+      if(entropyParticles.length===0)initEP(w,h);
+      var chaos=Math.min(entropyVal/3,1);
+      for(var i=0;i<entropyParticles.length;i++){
+        var p=entropyParticles[i];
+        p.vx+=(Math.random()-0.5)*chaos*1.5;p.vy+=(Math.random()-0.5)*chaos*1.5;
+        p.vx*=0.92;p.vy*=0.92;p.vx+=(w/2-p.x)*0.001;p.vy+=(h/2-p.y)*0.001;
+        p.x+=p.vx;p.y+=p.vy;
+        for(var j=i+1;j<entropyParticles.length;j++){
+          var q=entropyParticles[j],dx=q.x-p.x,dy=q.y-p.y,dist=Math.sqrt(dx*dx+dy*dy);
+          if(dist<45+chaos*25){
+            entropyCtx.strokeStyle="rgba(223,44,44,"+((1-dist/(45+chaos*25))*0.2)+")";
+            entropyCtx.lineWidth=0.5;entropyCtx.beginPath();entropyCtx.moveTo(p.x,p.y);entropyCtx.lineTo(q.x,q.y);entropyCtx.stroke();
+          }
+        }
+        entropyCtx.beginPath();entropyCtx.arc(p.x,p.y,p.r+chaos*1.5,0,Math.PI*2);
+        entropyCtx.fillStyle="rgba(223,80,60,"+(0.3+chaos*0.5)+")";entropyCtx.fill();
+      }
+    }
+
+    var burstBins=new Array(40).fill(0);
+    function drawBurst() {
+      var w=burstC.getBoundingClientRect().width,h=burstC.getBoundingClientRect().height;
+      burstCtx.clearRect(0,0,w,h);
+      var binW=w/burstBins.length,maxB=Math.max.apply(null,burstBins)||1;
+      for(var i=0;i<burstBins.length;i++){
+        var t=burstBins[i]/maxB;
+        burstCtx.fillStyle="rgb("+(30+Math.round(t*200))+","+(18+Math.round(t*30))+","+(24+Math.round(t*20))+")";
+        burstCtx.fillRect(i*binW,0,binW,h);
+        if(t>0.3){burstCtx.fillStyle="rgba(255,68,68,"+(t*0.4)+")";burstCtx.fillRect(i*binW,0,binW,h);}
+      }
+      var scanX=((Date.now()%8000)/8000)*w;
+      burstCtx.fillStyle="rgba(255,255,255,0.1)";burstCtx.fillRect(scanX-1,0,2,h);
+      for(var k=0;k<burstBins.length;k++)burstBins[k]*=0.997;
+    }
+
+    function drawAllViz(){if(!vizReady)return;drawWave();drawIntervals();drawEntropy();drawBurst();requestAnimationFrame(drawAllViz);}
+
+    function computeEntropy(arr){
+      if(arr.length<3)return 0;var bins={},recent=arr.slice(-20);
+      for(var i=0;i<recent.length;i++){var b=Math.round(recent[i]/200)*200;bins[b]=(bins[b]||0)+1;}
+      var total=recent.length,ent=0,keys=Object.keys(bins);
+      for(var j=0;j<keys.length;j++){var p=bins[keys[j]]/total;if(p>0)ent-=p*Math.log2(p);}
+      return ent;
+    }
+    function computeBurst(){
+      if(pressTimestamps.length<2)return 0;var b=1,best=1;
+      for(var i=1;i<pressTimestamps.length;i++){if(pressTimestamps[i]-pressTimestamps[i-1]<600){b++;if(b>best)best=b;}else b=1;}
+      return best;
+    }
+    function updateStats(){
+      var now=Date.now();
+      statRate.textContent=pressTimestamps.filter(function(t){return now-t<60000;}).length.toFixed(1);
+      var ent=computeEntropy(intervals);entropyVal=ent;
+      statEntropy.textContent=ent>0?ent.toFixed(2):"\u2014";
+      if(intervals.length>0){var s=0,r=intervals.slice(-10);for(var i=0;i<r.length;i++)s+=r[i];statAvgInterval.textContent=Math.round(s/r.length);}
+      var b=computeBurst();if(b>maxBurst)maxBurst=b;statBurst.textContent=maxBurst;
+    }
+
+    // ── PRESS ──
+    btn.addEventListener("click",function(){
+      var now=Date.now();count++;pressTimestamps.push(now);
+      if(pressTimestamps.length>1)intervals.push(now-pressTimestamps[pressTimestamps.length-2]);
+      countEl.textContent=count;
+      countEl.classList.add("bump");setTimeout(function(){countEl.classList.remove("bump");},200);
+      btn.classList.add("is-pressed");setTimeout(function(){btn.classList.remove("is-pressed");},140);
+      var ring=ripples[rippleIdx%ripples.length];ring.classList.remove("animate");void ring.offsetWidth;ring.classList.add("animate");rippleIdx++;
+      pressCol.classList.add("glow");setTimeout(function(){pressCol.classList.remove("glow");},400);
+      labPanel.classList.add("pulse");setTimeout(function(){labPanel.classList.remove("pulse");},500);
+      flash.classList.add("flash");setTimeout(function(){flash.classList.remove("flash");},120);
+      var rect=btn.getBoundingClientRect();spawnParticles(rect.left+rect.width/2,rect.top+rect.height/2,14);
+      waveData.push(1);setTimeout(function(){for(var i=0;i<5;i++)waveData.push(Math.sin(i*1.2)*Math.exp(-i*0.3)*0.6);},50);
+      var elapsed=(now-sessionStart)/1000,totalW=Math.max(elapsed,30);
+      var binIdx=Math.min(Math.floor((elapsed/totalW)*burstBins.length),burstBins.length-1);
+      burstBins[binIdx]+=1;
+      for(var i=0;i<entropyParticles.length;i++){entropyParticles[i].vx+=(Math.random()-0.5)*6;entropyParticles[i].vy+=(Math.random()-0.5)*6;}
+      updateStats();
+    });
+
+    setInterval(function(){
+      if(waveData.length>0){waveData.push(waveData[waveData.length-1]*0.85);
+      if(waveData.length>120)waveData.splice(0,waveData.length-120);
+      if(Math.abs(waveData[waveData.length-1])<0.01)waveData.push(0);}
+    },60);
+    setInterval(updateStats,1000);
+  })();
   </script>
 </body>
 </html>
