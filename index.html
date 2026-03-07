@@ -500,12 +500,7 @@
       }
     }
     @media (prefers-reduced-motion: reduce) {
-      .pedestal-float,
-      .dome-group,
-      .shockwave,
-      .sparkle,
-      .scroll-hint {
-        animation: none !important;
+      .pedestal-float {
         transition: none !important;
       }
     }
@@ -864,7 +859,7 @@
     var pedestalDragStartY = 0;
     var pedestalOriginX = 0;
     var pedestalOriginY = 0;
-    var pedestalDragThreshold = 10;
+    var pedestalDragThreshold = 18;
     var pedestalReleaseTimer = null;
     var pedestalPinned = false;
     var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
