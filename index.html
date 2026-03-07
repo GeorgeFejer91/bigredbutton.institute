@@ -1019,6 +1019,7 @@
     }
 
     var burstBins=new Array(40).fill(0);
+    var burstWindowSec=30;
     function drawBurst() {
       var w=burstC.getBoundingClientRect().width,h=burstC.getBoundingClientRect().height;
       burstCtx.clearRect(0,0,w,h);
@@ -1029,9 +1030,9 @@
         burstCtx.fillRect(i*binW,0,binW,h);
         if(t>0.3){burstCtx.fillStyle="rgba(255,68,68,"+(t*0.4)+")";burstCtx.fillRect(i*binW,0,binW,h);}
       }
-      var scanX=((Date.now()%8000)/8000)*w;
+      var scanX=(((Date.now()/1000)%burstWindowSec)/burstWindowSec)*w;
       burstCtx.fillStyle="rgba(255,255,255,0.1)";burstCtx.fillRect(scanX-1,0,2,h);
-      for(var k=0;k<burstBins.length;k++)burstBins[k]*=0.997;
+      for(var k=0;k<burstBins.length;k++)burstBins[k]*=0.9985;
     }
 
     function drawAllViz(){if(!vizReady)return;drawWave();drawIntervals();drawEntropy();drawBurst();requestAnimationFrame(drawAllViz);}
@@ -1391,8 +1392,10 @@
         spawnParticles(window.innerWidth/2, Math.max(70, window.innerHeight*0.25), 14);
       }
       injectWaveFromHold(holdMs);
-      var elapsed=(now-sessionStart)/1000,totalW=Math.max(elapsed,30);
-      var binIdx=Math.min(Math.floor((elapsed/totalW)*burstBins.length),burstBins.length-1);
+      var elapsed=(now-sessionStart)/1000;
+      var burstPos=(elapsed%burstWindowSec)/burstWindowSec;
+      var binIdx=Math.floor(burstPos*burstBins.length);
+      binIdx=Math.max(0,Math.min(binIdx,burstBins.length-1));
       burstBins[binIdx]+=1;
       for(var i=0;i<entropyParticles.length;i++){entropyParticles[i].vx+=(Math.random()-0.5)*6;entropyParticles[i].vy+=(Math.random()-0.5)*6;}
       updateStats();
