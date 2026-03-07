@@ -502,13 +502,13 @@
   <div class="screen-flash" id="screenFlash"></div>
   <div class="shockwave" id="pedestalShockwave"></div>
   <div class="scroll-hint" id="pedestalScrollHint" aria-hidden="true">
-    <span>scrolling...</span>
+    <span>visualizations</span>
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <path d="M10 4 L10 16 M5 11 L10 16 L15 11"></path>
     </svg>
   </div>
-  <div class="pedestal-float" id="pedestalFloat" aria-label="Floating pedestal button">
-    <svg viewBox="0 0 140 320" xmlns="http://www.w3.org/2000/svg" role="button" tabindex="0" aria-label="Press for science and scroll">
+  <div class="pedestal-float" id="pedestalFloat" aria-label="Floating button that jumps to visualizations">
+    <svg viewBox="0 0 140 320" xmlns="http://www.w3.org/2000/svg" role="button" tabindex="0" aria-label="Jump to visualizations">
       <defs>
         <radialGradient id="domeGrad" cx="42%" cy="32%" r="58%" fx="38%" fy="28%">
           <stop offset="0%" stop-color="#ff8a8a"></stop>
@@ -633,12 +633,7 @@
             <div class="counter-number" id="pressCount">0</div>
             <div class="counter-label">verified presses</div>
           </div>
-          <div class="press-btn-wrap">
-            <div class="ripple-ring" id="ripple1"></div>
-            <div class="ripple-ring" id="ripple2"></div>
-            <div class="ripple-ring" id="ripple3"></div>
-            <button id="pressBtn" class="press-btn" type="button">Press For Science</button>
-          </div>
+          <p class="press-note">Use the floating red button to jump here.</p>
           <div class="press-mini-stats">
             <div class="mini-stat">
               <div class="mini-stat-value red" id="statRate">0.0</div>
@@ -659,7 +654,7 @@
           </div>
           <p class="press-note">Methodology pending peer review.</p>
         </div>
-        <div class="viz-column">
+        <div class="viz-column" id="visualizations" aria-label="Visualizations">
           <div class="viz-card">
             <h3>Temporal Waveform</h3>
             <canvas id="waveCanvas"></canvas>
@@ -803,6 +798,13 @@
         <p>If you encounter a Big Red Button in your city, your contribution enters the dataset, shifts the model, and helps define the next phase of pressability research.</p>
         <p><strong>Press, and be counted.</strong></p>
       </section>
+
+      <section class="panel reveal">
+        <h2>Publications</h2>
+        <p><strong>Big Red Button: a pressing issue</strong></p>
+        <p>This is our first publication and framing document for the BRB program.</p>
+        <p>For this publication cycle, we are actively searching for collaborations with researchers, institutions, artists, and civic partners.</p>
+      </section>
     </main>
 
     <footer class="footer reveal">
@@ -826,7 +828,7 @@
     var labPanel = document.getElementById("labPanel");
     var pressCol = document.getElementById("pressColumn");
     var flash = document.getElementById("screenFlash");
-    var ripples = [document.getElementById("ripple1"), document.getElementById("ripple2"), document.getElementById("ripple3")];
+    var ripples = [document.getElementById("ripple1"), document.getElementById("ripple2"), document.getElementById("ripple3")].filter(Boolean);
     var rippleIdx = 0;
     var statRate = document.getElementById("statRate");
     var statEntropy = document.getElementById("statEntropy");
@@ -836,6 +838,7 @@
     var dome = document.getElementById("domeGroup");
     var pedestalShockwave = document.getElementById("pedestalShockwave");
     var pedestalScrollHint = document.getElementById("pedestalScrollHint");
+    var visualizations = document.getElementById("visualizations");
     var pedestalSvg = pedestal ? pedestal.querySelector("svg") : null;
     var pedestalActive = false;
     var pedestalDownAt = 0;
@@ -1149,23 +1152,12 @@
       }
     }
 
-    function scrollToRandomDifferentPart() {
-      var maxScroll = Math.max(
-        document.documentElement.scrollHeight,
-        document.body.scrollHeight
-      ) - window.innerHeight;
-      if (maxScroll <= 4) return;
-      var current = window.scrollY || window.pageYOffset || 0;
-      var minDelta = Math.max(220, Math.round(window.innerHeight * 0.45));
-      var next = current;
-      for (var tries = 0; tries < 12; tries++) {
-        next = Math.random() * maxScroll;
-        if (Math.abs(next - current) >= minDelta) break;
-      }
-      if (Math.abs(next - current) < minDelta) {
-        next = (current + minDelta + Math.random() * minDelta) % maxScroll;
-      }
-      window.scrollTo({ top: next, behavior: "smooth" });
+    function scrollToVisualizations() {
+      if (!visualizations) return;
+      visualizations.scrollIntoView({
+        behavior: reducedMotion ? "auto" : "smooth",
+        block: "start"
+      });
     }
 
     function runPedestalEffects() {
@@ -1196,7 +1188,7 @@
         setTimeout(function () { pedestalScrollHint.classList.remove("show"); }, 520);
       }
 
-      setTimeout(scrollToRandomDifferentPart, 250);
+      setTimeout(scrollToVisualizations, 160);
     }
 
     function beginPedestalPress() {
@@ -1261,13 +1253,7 @@
       pedestalActive = false;
       if (dome) dome.classList.remove("pushed");
       if (cancelled) return;
-      var holdMs = Math.max(40, Math.min(Date.now() - pedestalDownAt, 1600));
       runPedestalEffects();
-      if (window.BRB && typeof window.BRB.triggerPress === "function") {
-        window.BRB.triggerPress(holdMs);
-      } else {
-        triggerExternalPress(holdMs);
-      }
     }
 
     function endPedestalGesture(cancelled) {
@@ -1326,11 +1312,22 @@
       if(pressTimestamps.length>1)intervals.push(now-pressTimestamps[pressTimestamps.length-2]);
       countEl.textContent=count;
       countEl.classList.add("bump");setTimeout(function(){countEl.classList.remove("bump");},200);
-      var ring=ripples[rippleIdx%ripples.length];ring.classList.remove("animate");void ring.offsetWidth;ring.classList.add("animate");rippleIdx++;
+      if(ripples.length){
+        var ring=ripples[rippleIdx%ripples.length];
+        ring.classList.remove("animate");
+        void ring.offsetWidth;
+        ring.classList.add("animate");
+        rippleIdx++;
+      }
       pressCol.classList.add("glow");setTimeout(function(){pressCol.classList.remove("glow");},400);
       labPanel.classList.add("pulse");setTimeout(function(){labPanel.classList.remove("pulse");},500);
       flash.classList.add("flash");setTimeout(function(){flash.classList.remove("flash");},120);
-      var rect=btn.getBoundingClientRect();spawnParticles(rect.left+rect.width/2,rect.top+rect.height/2,14);
+      if(btn){
+        var rect=btn.getBoundingClientRect();
+        spawnParticles(rect.left+rect.width/2,rect.top+rect.height/2,14);
+      } else {
+        spawnParticles(window.innerWidth/2, Math.max(70, window.innerHeight*0.25), 14);
+      }
       injectWaveFromHold(holdMs);
       var elapsed=(now-sessionStart)/1000,totalW=Math.max(elapsed,30);
       var binIdx=Math.min(Math.floor((elapsed/totalW)*burstBins.length),burstBins.length-1);
@@ -1348,13 +1345,13 @@
       if(pressActive)return;
       pressActive=true;
       pressStartTs=Date.now();
-      btn.classList.add("is-pressed");
+      if(btn)btn.classList.add("is-pressed");
     }
 
     function endPress(){
       if(!pressActive)return;
       pressActive=false;
-      btn.classList.remove("is-pressed");
+      if(btn)btn.classList.remove("is-pressed");
       var holdMs=Math.max(40,Date.now()-pressStartTs);
       handlePress(holdMs);
     }
@@ -1364,8 +1361,10 @@
       var ms=Number(holdMs);
       if(!Number.isFinite(ms))ms=120;
       ms=Math.max(40,Math.min(ms,1600));
-      btn.classList.add("is-pressed");
-      setTimeout(function(){btn.classList.remove("is-pressed");},140);
+      if(btn){
+        btn.classList.add("is-pressed");
+        setTimeout(function(){btn.classList.remove("is-pressed");},140);
+      }
       handlePress(ms);
     }
 
@@ -1475,63 +1474,65 @@
       }
     }
 
-    if("PointerEvent" in window){
-      btn.addEventListener("pointerdown",function(e){
-        if(e.pointerType==="mouse" && e.button!==0)return;
-        e.preventDefault();
-        activePointerId=e.pointerId;
-        if(btn.setPointerCapture){
-          try{btn.setPointerCapture(e.pointerId);}catch(_){}
+    if(btn){
+      if("PointerEvent" in window){
+        btn.addEventListener("pointerdown",function(e){
+          if(e.pointerType==="mouse" && e.button!==0)return;
+          e.preventDefault();
+          activePointerId=e.pointerId;
+          if(btn.setPointerCapture){
+            try{btn.setPointerCapture(e.pointerId);}catch(_){}
+          }
+          beginPress();
+        });
+        btn.addEventListener("pointerup",function(e){
+          if(activePointerId!==null && e.pointerId!==activePointerId)return;
+          endPress();
+          activePointerId=null;
+        });
+        btn.addEventListener("pointercancel",function(e){
+          if(activePointerId!==null && e.pointerId!==activePointerId)return;
+          endPress();
+          activePointerId=null;
+        });
+        btn.addEventListener("lostpointercapture",function(){
+          activePointerId=null;
+          endPress();
+        });
+      } else {
+        btn.addEventListener("touchstart",function(e){
+          lastTouchStart=Date.now();
+          e.preventDefault();
+          beginPress();
+        },{passive:false});
+        btn.addEventListener("touchend",function(e){
+          e.preventDefault();
+          endPress();
+        },{passive:false});
+        btn.addEventListener("touchcancel",function(){
+          endPress();
+        });
+        btn.addEventListener("click",function(){
+          if(Date.now()-lastTouchStart<700)return;
+          beginPress();
+          endPress();
+        });
+      }
+
+      btn.addEventListener("keydown",function(e){
+        if(e.repeat)return;
+        if(e.key==="Enter" || e.key===" "){
+          e.preventDefault();
+          beginPress();
         }
-        beginPress();
       });
-      btn.addEventListener("pointerup",function(e){
-        if(activePointerId!==null && e.pointerId!==activePointerId)return;
-        endPress();
-        activePointerId=null;
-      });
-      btn.addEventListener("pointercancel",function(e){
-        if(activePointerId!==null && e.pointerId!==activePointerId)return;
-        endPress();
-        activePointerId=null;
-      });
-      btn.addEventListener("lostpointercapture",function(){
-        activePointerId=null;
-        endPress();
-      });
-    } else {
-      btn.addEventListener("touchstart",function(e){
-        lastTouchStart=Date.now();
-        e.preventDefault();
-        beginPress();
-      },{passive:false});
-      btn.addEventListener("touchend",function(e){
-        e.preventDefault();
-        endPress();
-      },{passive:false});
-      btn.addEventListener("touchcancel",function(){
-        endPress();
-      });
-      btn.addEventListener("click",function(){
-        if(Date.now()-lastTouchStart<700)return;
-        beginPress();
-        endPress();
+      btn.addEventListener("keyup",function(e){
+        if(e.key==="Enter" || e.key===" "){
+          e.preventDefault();
+          endPress();
+        }
       });
     }
-
-    btn.addEventListener("keydown",function(e){
-      if(e.repeat)return;
-      if(e.key==="Enter" || e.key===" "){
-        e.preventDefault();
-        beginPress();
-      }
-    });
-    btn.addEventListener("keyup",function(e){
-      if(e.key==="Enter" || e.key===" "){
-        e.preventDefault();
-        endPress();
-      }
-    });
 
     setInterval(function(){
       if(waveData.length>0){waveData.push(waveData[waveData.length-1]*0.85);
