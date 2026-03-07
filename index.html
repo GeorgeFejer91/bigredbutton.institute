@@ -1203,7 +1203,14 @@
     }
 
     function beginPedestalPress() {
-      if (!pedestal || !dome || pedestalActive) return;
+      if (!pedestal || !dome) return;
+      // If a prior quick tap is waiting on the visibility timer, finalize it now
+      // so rapid successive taps still register consistently.
+      if (pedestalActive && pedestalReleaseTimer !== null) {
+        finalizePedestalPress(false);
+      } else if (pedestalActive) {
+        return;
+      }
       if (pedestalReleaseTimer !== null) {
         clearTimeout(pedestalReleaseTimer);
         pedestalReleaseTimer = null;
@@ -1301,7 +1308,7 @@
         finalizePedestalPress(true);
         return;
       }
-      var minPressVisibleMs = 140;
+      var minPressVisibleMs = 90;
       var elapsedMs = Date.now() - pedestalDownAt;
       if (elapsedMs >= minPressVisibleMs) {
         finalizePedestalPress(false);
