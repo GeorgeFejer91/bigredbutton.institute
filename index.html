@@ -865,6 +865,7 @@
     var pedestalOriginX = 0;
     var pedestalOriginY = 0;
     var pedestalDragThreshold = 10;
+    var pedestalReleaseTimer = null;
     var pedestalPinned = false;
     var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var pedestalState = {
@@ -1207,6 +1208,10 @@
 
     function beginPedestalPress() {
       if (!pedestal || !dome || pedestalActive) return;
+      if (pedestalReleaseTimer !== null) {
+        clearTimeout(pedestalReleaseTimer);
+        pedestalReleaseTimer = null;
+      }
       pedestalActive = true;
       pedestalDownAt = Date.now();
       dome.style.transform = "";
@@ -1267,8 +1272,12 @@
       savePedestalAnchor();
     }
 
-    function endPedestalPress(cancelled) {
+    function finalizePedestalPress(cancelled) {
       if (!pedestalActive) return;
+      if (pedestalReleaseTimer !== null) {
+        clearTimeout(pedestalReleaseTimer);
+        pedestalReleaseTimer = null;
+      }
       pedestalActive = false;
       if (dome) {
         dome.classList.remove("pushed");
@@ -1288,6 +1297,25 @@
       } else {
         triggerExternalPress(holdMs);
       }
+    }
+
+    function endPedestalPress(cancelled) {
+      if (!pedestalActive) return;
+      if (cancelled) {
+        finalizePedestalPress(true);
+        return;
+      }
+      var minPressVisibleMs = 140;
+      var elapsedMs = Date.now() - pedestalDownAt;
+      if (elapsedMs >= minPressVisibleMs) {
+        finalizePedestalPress(false);
+        return;
+      }
+      if (pedestalReleaseTimer !== null) return;
+      pedestalReleaseTimer = setTimeout(function () {
+        pedestalReleaseTimer = null;
+        finalizePedestalPress(false);
+      }, minPressVisibleMs - elapsedMs);
     }
 
     function endPedestalGesture(cancelled) {
