@@ -1253,7 +1253,13 @@
       pedestalActive = false;
       if (dome) dome.classList.remove("pushed");
       if (cancelled) return;
+      var holdMs = Math.max(40, Math.min(Date.now() - pedestalDownAt, 1600));
       runPedestalEffects();
+      if (window.BRB && typeof window.BRB.triggerPress === "function") {
+        window.BRB.triggerPress(holdMs);
+      } else {
+        triggerExternalPress(holdMs);
+      }
     }
 
     function endPedestalGesture(cancelled) {
