@@ -791,7 +791,38 @@
 
   function setReggieBubbleVisible(visible) {
     if (!person4Bubble) return;
-    person4Bubble.style.opacity = visible ? "1" : "0";
+    person4Bubble.setAttribute("display", visible ? "inline" : "none");
+    person4Bubble.setAttribute("opacity", visible ? "1" : "0");
+  }
+
+  function renderReggieQuote(text) {
+    if (!person4Quote) return;
+    while (person4Quote.firstChild) person4Quote.removeChild(person4Quote.firstChild);
+    var words = String(text || "").split(/\s+/);
+    var lines = [];
+    var currentLine = "";
+    var maxChars = 28;
+    for (var i = 0; i < words.length; i++) {
+      var candidate = currentLine ? currentLine + " " + words[i] : words[i];
+      if (currentLine && candidate.length > maxChars) {
+        lines.push(currentLine);
+        currentLine = words[i];
+      } else {
+        currentLine = candidate;
+      }
+    }
+    if (currentLine) lines.push(currentLine);
+    while (lines.length > 4) {
+      lines[lines.length - 2] += " " + lines[lines.length - 1];
+      lines.pop();
+    }
+    for (var j = 0; j < lines.length; j++) {
+      var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+      tspan.setAttribute("x", "36");
+      tspan.setAttribute("dy", j === 0 ? "0" : "11");
+      tspan.textContent = lines[j];
+      person4Quote.appendChild(tspan);
+    }
   }
 
   function setReggieQuote() {
@@ -799,7 +830,7 @@
     var nextIndex = Math.floor(Math.random() * reggieQuotes.length);
     if (reggieQuotes.length > 1 && nextIndex === reggieQuoteIndex) nextIndex = (nextIndex + 1) % reggieQuotes.length;
     reggieQuoteIndex = nextIndex;
-    person4Quote.textContent = reggieQuotes[nextIndex];
+    renderReggieQuote(reggieQuotes[nextIndex]);
   }
 
   function startReggieQuotes() {
@@ -997,8 +1028,10 @@
     addBurstSample(now);
     nudgeEntropy(entropyParticlesMain);
     nudgeEntropy(entropyParticlesMini);
-    if (source === "pedestal" && isDocked && sceneStatus) {
+    if (source === "pedestal" && isDocked) {
       interruptReggieQuote();
+    }
+    if (source === "pedestal" && isDocked && sceneStatus) {
       fieldPressCount++;
       sceneStatus.textContent = "PRESS #" + fieldPressCount + " RECORDED - FIELD DATA LOGGED";
       sceneStatus.classList.add("show");
