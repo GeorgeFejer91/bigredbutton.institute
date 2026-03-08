@@ -95,22 +95,22 @@
   var redWordSpans = [];
   var crowdPeople = [];
   var crowdSlots = [
-    { x: 392, y: 336 },
-    { x: 608, y: 336 },
-    { x: 432, y: 316 },
-    { x: 568, y: 316 },
-    { x: 356, y: 348 },
-    { x: 644, y: 348 },
-    { x: 500, y: 302 },
-    { x: 388, y: 308 },
-    { x: 612, y: 308 },
-    { x: 332, y: 330 },
-    { x: 668, y: 330 },
-    { x: 430, y: 360 },
-    { x: 570, y: 360 },
-    { x: 500, y: 286 },
-    { x: 360, y: 316 },
-    { x: 640, y: 316 }
+    { x: 388, y: 344 },
+    { x: 612, y: 344 },
+    { x: 430, y: 336 },
+    { x: 570, y: 336 },
+    { x: 350, y: 352 },
+    { x: 650, y: 352 },
+    { x: 322, y: 360 },
+    { x: 678, y: 360 },
+    { x: 406, y: 360 },
+    { x: 594, y: 360 },
+    { x: 372, y: 332 },
+    { x: 628, y: 332 },
+    { x: 446, y: 350 },
+    { x: 554, y: 350 },
+    { x: 420, y: 328 },
+    { x: 580, y: 328 }
   ];
   var crowdStyles = [
     { skin: "#d8c0a0", shirt: "#4a6a8a", limbs: "#3a4a5a", hair: "#5a4030", hairRx: "4", hairRy: "2.5", hairCx: "-1", hairCy: "-25", scale: 0.96 },
@@ -715,7 +715,7 @@
     var startX = slot.x < 500 ? 28 + Math.random() * 36 : 896 - Math.random() * 36;
     var startY = 338 + (Math.random() - 0.5) * 10;
     var scale = style.scale + ((crowdPeople.length % 3) - 1) * 0.03;
-    sceneSvg.appendChild(node);
+    sceneSvg.insertBefore(node, person1 || landingSpot || null);
     crowdPeople.push({
       node: node,
       x: startX,
