@@ -1,0 +1,980 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BRB — Field Deployment Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,800&family=IBM+Plex+Mono:wght@400;600&family=Manrope:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #1a1e28;
+      --muted: #5f6775;
+      --red: #df2c2c;
+      --red-hot: #ff4444;
+      --line: #c9c1b0;
+      --shadow: 0 18px 44px rgba(22,28,38,0.18);
+      --shadow-soft: 0 10px 24px rgba(23,28,37,0.11);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --max: 1080px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: auto; /* we control scrolling manually */ }
+    body {
+      margin: 0; padding: 0;
+      font-family: "Manrope", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 560px at 104% -12%, #b8c8de 0%, transparent 60%),
+        radial-gradient(900px 460px at -5% 18%, #ecc0bc 0%, transparent 55%),
+        linear-gradient(180deg, #efe9da 0%, #f7f3ea 100%);
+      overflow-x: hidden;
+      line-height: 1.55;
+    }
+
+    .shell {
+      width: min(calc(100% - 2rem), var(--max));
+      margin: 0 auto;
+    }
+
+    /* ── PLACEHOLDER SECTIONS ── */
+    .section-spacer {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .section-spacer .inner {
+      max-width: 540px; text-align: center;
+    }
+    .section-spacer h2 {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: clamp(1.8rem, 3.5vw, 3rem);
+      margin: 0 0 0.5rem; line-height: 1.1;
+    }
+    .section-spacer p {
+      color: var(--muted); font-size: 1.05rem; margin: 0.3rem 0;
+    }
+    .mono {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.82rem; color: #8a8577;
+    }
+
+    /* ══════════════════════════════════════════
+       FIELD DEPLOYMENT SCENE
+       ══════════════════════════════════════════ */
+    .field-section {
+      position: relative;
+      padding: 2rem 0 3rem;
+    }
+
+    .field-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .field-header h2 {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: clamp(1.6rem, 3vw, 2.6rem);
+      margin: 0; line-height: 1.1;
+    }
+    .field-header p {
+      color: var(--muted); margin: 0.4rem 0 0;
+      font-size: 1rem; max-width: 50ch;
+      display: inline-block;
+    }
+
+    .scene-wrap {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: linear-gradient(180deg, #c8ddf0 0%, #e4ddd0 55%, #d5cfc2 100%);
+      box-shadow: var(--shadow);
+      aspect-ratio: 16 / 7;
+      max-height: 520px;
+    }
+
+    .scene-wrap svg {
+      display: block;
+      width: 100%; height: 100%;
+    }
+
+    /* The dock target — invisible anchor point inside the scene */
+    .dock-target {
+      position: absolute;
+      /* positioned via JS based on scene layout */
+      width: 1px; height: 1px;
+      pointer-events: none;
+    }
+
+    /* Status overlay on scene */
+    .scene-status {
+      position: absolute;
+      bottom: 0.8rem; left: 50%;
+      transform: translateX(-50%);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.85);
+      background: rgba(26,30,40,0.7);
+      backdrop-filter: blur(8px);
+      padding: 0.35rem 0.8rem;
+      border-radius: 999px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 500ms ease;
+      pointer-events: none;
+    }
+    .scene-status.show { opacity: 1; }
+
+    .field-caption {
+      text-align: center;
+      margin-top: 1rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.78rem;
+      color: #8a8577;
+    }
+
+    /* ══════════════════════════════════════════
+       FLOATING PEDESTAL
+       ══════════════════════════════════════════ */
+    .pedestal-float {
+      position: fixed;
+      z-index: 50;
+      pointer-events: none;
+      width: 140px;
+      height: 320px;
+      filter: drop-shadow(0 20px 40px rgba(22,28,38,0.25))
+              drop-shadow(0 4px 12px rgba(143,23,23,0.2));
+      /* smooth transition for the dock animation */
+      transition: none;
+      will-change: transform, width, height;
+    }
+
+    .pedestal-float.docking {
+      transition: transform 1200ms cubic-bezier(0.34, 1.2, 0.64, 1),
+                  width 1200ms cubic-bezier(0.34, 1.2, 0.64, 1),
+                  height 1200ms cubic-bezier(0.34, 1.2, 0.64, 1),
+                  filter 800ms ease;
+      pointer-events: none;
+    }
+
+    .pedestal-float.docked {
+      transition: transform 200ms ease, filter 300ms ease;
+      pointer-events: none;
+      filter: drop-shadow(0 6px 12px rgba(22,28,38,0.2))
+              drop-shadow(0 2px 6px rgba(143,23,23,0.15));
+    }
+
+    .pedestal-float.undocking {
+      transition: transform 900ms cubic-bezier(0.34, 1.2, 0.64, 1),
+                  width 900ms cubic-bezier(0.34, 1.2, 0.64, 1),
+                  height 900ms cubic-bezier(0.34, 1.2, 0.64, 1),
+                  filter 600ms ease;
+    }
+
+    .pedestal-float svg {
+      width: 100%; height: 100%;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    .dome-group {
+      transition: transform 100ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform-origin: 70px 68px;
+    }
+    .dome-group.pushed {
+      transform: translateY(10px) scaleY(0.82);
+    }
+
+    .pedestal-float.pressed-glow {
+      filter: drop-shadow(0 20px 40px rgba(22,28,38,0.25))
+              drop-shadow(0 0 40px rgba(223,44,44,0.45))
+              drop-shadow(0 4px 12px rgba(143,23,23,0.3));
+    }
+
+    /* Shockwave */
+    .shockwave {
+      position: fixed; pointer-events: none; z-index: 49;
+      border-radius: 50%; border: 3px solid var(--red);
+      opacity: 0; width: 40px; height: 40px;
+    }
+    .shockwave.go {
+      animation: shockExpand 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @keyframes shockExpand {
+      0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0.7; }
+      100% { transform: translate(-50%, -50%) scale(12); opacity: 0; }
+    }
+
+    /* Sparkle */
+    .sparkle {
+      position: fixed; pointer-events: none; z-index: 48;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--red-hot);
+    }
+    .sparkle.go { animation: sparkleFly 700ms ease-out forwards; }
+    @keyframes sparkleFly {
+      0% { transform: translate(0,0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--sx), var(--sy)) scale(0); opacity: 0; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .scene-wrap { aspect-ratio: 16 / 9; }
+      .pedestal-float { width: 100px; height: 230px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="shockwave" id="shockwave"></div>
+
+  <!-- ═══ THE FLOATING SVG PEDESTAL ═══ -->
+  <div class="pedestal-float" id="pedestalFloat">
+    <svg viewBox="0 0 140 320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="domeGrad" cx="42%" cy="32%" r="58%" fx="38%" fy="28%">
+          <stop offset="0%" stop-color="#ff8a8a"/>
+          <stop offset="28%" stop-color="#ff5252"/>
+          <stop offset="58%" stop-color="#df2c2c"/>
+          <stop offset="85%" stop-color="#a01515"/>
+          <stop offset="100%" stop-color="#6b0a0a"/>
+        </radialGradient>
+        <radialGradient id="domeHL" cx="38%" cy="25%" r="35%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.7)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </radialGradient>
+        <linearGradient id="pedGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#c4b8a0"/>
+          <stop offset="18%" stop-color="#e8ddc6"/>
+          <stop offset="50%" stop-color="#f5eedd"/>
+          <stop offset="82%" stop-color="#e0d5be"/>
+          <stop offset="100%" stop-color="#b8ab94"/>
+        </linearGradient>
+        <linearGradient id="ringG" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#8a7d6a"/>
+          <stop offset="20%" stop-color="#c9bc9f"/>
+          <stop offset="50%" stop-color="#e8dcc0"/>
+          <stop offset="80%" stop-color="#c0b395"/>
+          <stop offset="100%" stop-color="#7d7262"/>
+        </linearGradient>
+        <linearGradient id="baseG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#d4c9b2"/>
+          <stop offset="100%" stop-color="#a89b84"/>
+        </linearGradient>
+        <radialGradient id="domeSh" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="rgba(80,20,20,0.35)"/>
+          <stop offset="100%" stop-color="rgba(80,20,20,0)"/>
+        </radialGradient>
+        <radialGradient id="ambGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="rgba(223,44,44,0.18)"/>
+          <stop offset="100%" stop-color="rgba(223,44,44,0)"/>
+        </radialGradient>
+        <pattern id="decoL" x="0" y="0" width="140" height="16" patternUnits="userSpaceOnUse">
+          <line x1="50" y1="0" x2="50" y2="16" stroke="rgba(160,140,110,0.2)" stroke-width="0.5"/>
+          <line x1="70" y1="0" x2="70" y2="16" stroke="rgba(160,140,110,0.15)" stroke-width="0.5"/>
+          <line x1="90" y1="0" x2="90" y2="16" stroke="rgba(160,140,110,0.2)" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+
+      <ellipse cx="70" cy="55" rx="55" ry="45" fill="url(#ambGlow)" opacity="0.7">
+        <animate attributeName="rx" values="55;60;55" dur="3s" repeatCount="indefinite"/>
+      </ellipse>
+
+      <!-- Base -->
+      <ellipse cx="70" cy="310" rx="58" ry="8" fill="rgba(60,40,20,0.15)"/>
+      <path d="M12,295 L128,295 L122,310 Q70,316 18,310 Z" fill="url(#baseG)" stroke="#a89b84" stroke-width="0.5"/>
+      <ellipse cx="70" cy="295" rx="58" ry="9" fill="#ddd2bb" stroke="#b8ab94" stroke-width="0.5"/>
+      <ellipse cx="70" cy="295" rx="42" ry="6" fill="none" stroke="rgba(143,130,105,0.35)" stroke-width="0.8"/>
+
+      <!-- Lower ring -->
+      <rect x="30" y="282" width="80" height="13" rx="2" fill="url(#ringG)" stroke="#9e9280" stroke-width="0.4"/>
+      <ellipse cx="70" cy="282" rx="40" ry="5" fill="#ddd2bb" stroke="#b8ab94" stroke-width="0.4"/>
+
+      <!-- Shaft -->
+      <path d="M38,282 L38,130 Q38,125 43,122 L97,122 Q102,125 102,130 L102,282" fill="url(#pedGrad)" stroke="#b8ab94" stroke-width="0.5"/>
+      <path d="M38,282 L38,130 Q38,125 43,122 L97,122 Q102,125 102,130 L102,282" fill="url(#decoL)"/>
+      <line x1="55" y1="135" x2="55" y2="275" stroke="rgba(140,125,100,0.18)" stroke-width="1.2"/>
+      <line x1="70" y1="130" x2="70" y2="278" stroke="rgba(140,125,100,0.12)" stroke-width="1"/>
+      <line x1="85" y1="135" x2="85" y2="275" stroke="rgba(140,125,100,0.18)" stroke-width="1.2"/>
+      <rect x="34" y="200" width="72" height="8" rx="1.5" fill="url(#ringG)" stroke="#9e9280" stroke-width="0.3" opacity="0.7"/>
+      <rect x="34" y="165" width="72" height="5" rx="1" fill="url(#ringG)" stroke="#9e9280" stroke-width="0.3" opacity="0.5"/>
+
+      <!-- Capital -->
+      <rect x="32" y="116" width="76" height="12" rx="3" fill="url(#ringG)" stroke="#9e9280" stroke-width="0.5"/>
+      <ellipse cx="70" cy="116" rx="38" ry="6" fill="#e0d5be" stroke="#b8ab94" stroke-width="0.5"/>
+      <circle cx="70" cy="116" r="2.5" fill="none" stroke="rgba(143,130,105,0.3)" stroke-width="0.6"/>
+
+      <!-- Housing -->
+      <path d="M28,110 Q28,100 36,96 L104,96 Q112,100 112,110 L112,116 L28,116 Z" fill="#c4b8a0" stroke="#a89b84" stroke-width="0.5"/>
+      <ellipse cx="70" cy="98" rx="36" ry="6" fill="url(#domeSh)"/>
+
+      <!-- Dome -->
+      <g class="dome-group" id="domeGroup">
+        <ellipse cx="70" cy="72" rx="42" ry="38" fill="url(#domeGrad)"/>
+        <ellipse cx="70" cy="95" rx="42" ry="8" fill="#8b1818" opacity="0.6"/>
+        <ellipse cx="70" cy="93" rx="40" ry="6" fill="#a01515" opacity="0.4"/>
+        <ellipse cx="58" cy="55" rx="22" ry="18" fill="url(#domeHL)" opacity="0.85"/>
+        <path d="M35,80 Q70,100 105,80" fill="none" stroke="rgba(255,180,180,0.25)" stroke-width="1.2"/>
+        <circle cx="55" cy="48" r="4" fill="rgba(255,255,255,0.5)">
+          <animate attributeName="r" values="4;5;4" dur="2.5s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="52" cy="45" r="1.8" fill="rgba(255,255,255,0.7)"/>
+      </g>
+
+      <text x="70" y="250" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="6.5" fill="rgba(100,88,70,0.5)" letter-spacing="0.15em" font-weight="600">PRESS</text>
+      <text x="70" y="260" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="5" fill="rgba(100,88,70,0.35)" letter-spacing="0.1em">FOR SCIENCE</text>
+    </svg>
+  </div>
+
+  <!-- ═══ PAGE CONTENT ═══ -->
+  <div class="shell">
+
+    <section class="section-spacer">
+      <div class="inner">
+        <p class="mono">BRB / Field Deployment Prototype</p>
+        <h2>The Button Drifts</h2>
+        <p>The pedestal floats freely across the viewport. Scroll down to see what happens when it encounters the street.</p>
+        <p class="mono" style="margin-top:1.5rem;">↓ Scroll down ↓</p>
+      </div>
+    </section>
+
+    <!-- ═══ FIELD DEPLOYMENT SCENE ═══ -->
+    <section class="field-section" id="fieldSection">
+      <div class="field-header">
+        <h2>Field Deployment</h2>
+        <p>BRB installs buttons in public spaces to study how collective pressing behavior emerges in the wild.</p>
+      </div>
+
+      <div class="scene-wrap" id="sceneWrap">
+        <!-- Dock target marker — the button flies to this point -->
+        <div class="dock-target" id="dockTarget" style="left: 52%; bottom: 27%;"></div>
+
+        <svg id="streetScene" viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <!-- Sky gradient -->
+            <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#a8c4e0"/>
+              <stop offset="60%" stop-color="#cdd9e8"/>
+              <stop offset="100%" stop-color="#ddd8cc"/>
+            </linearGradient>
+            <!-- Building gradients -->
+            <linearGradient id="bldgA" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#b0a898"/>
+              <stop offset="50%" stop-color="#c7bfb0"/>
+              <stop offset="100%" stop-color="#a8a090"/>
+            </linearGradient>
+            <linearGradient id="bldgB" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#8b9aaa"/>
+              <stop offset="50%" stop-color="#a0b0c0"/>
+              <stop offset="100%" stop-color="#8090a0"/>
+            </linearGradient>
+            <linearGradient id="bldgC" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#c4b09a"/>
+              <stop offset="100%" stop-color="#b0a08a"/>
+            </linearGradient>
+            <!-- Sidewalk -->
+            <linearGradient id="sidewalkG" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#d4cfc2"/>
+              <stop offset="100%" stop-color="#bfb8a8"/>
+            </linearGradient>
+            <!-- Road -->
+            <linearGradient id="roadG" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#6a6a6a"/>
+              <stop offset="100%" stop-color="#585858"/>
+            </linearGradient>
+            <!-- Tree foliage -->
+            <radialGradient id="treeG" cx="50%" cy="40%" r="55%">
+              <stop offset="0%" stop-color="#7aab65"/>
+              <stop offset="70%" stop-color="#5a8a48"/>
+              <stop offset="100%" stop-color="#4a7a3a"/>
+            </radialGradient>
+            <!-- Warm window glow -->
+            <linearGradient id="winG" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#e8dcc0"/>
+              <stop offset="100%" stop-color="#c8bca0"/>
+            </linearGradient>
+            <!-- Shadow on ground -->
+            <linearGradient id="groundSh" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(60,50,40,0.15)"/>
+              <stop offset="100%" stop-color="rgba(60,50,40,0)"/>
+            </linearGradient>
+          </defs>
+
+          <!-- SKY -->
+          <rect x="0" y="0" width="960" height="420" fill="url(#skyG)"/>
+
+          <!-- Distant clouds -->
+          <ellipse cx="180" cy="60" rx="90" ry="22" fill="rgba(255,255,255,0.5)"/>
+          <ellipse cx="220" cy="55" rx="60" ry="18" fill="rgba(255,255,255,0.6)"/>
+          <ellipse cx="700" cy="45" rx="70" ry="16" fill="rgba(255,255,255,0.4)"/>
+          <ellipse cx="750" cy="40" rx="50" ry="14" fill="rgba(255,255,255,0.5)"/>
+
+          <!-- ── BACKGROUND BUILDINGS ── -->
+          <!-- Tall building left -->
+          <rect x="30" y="80" width="160" height="260" rx="2" fill="url(#bldgA)"/>
+          <rect x="32" y="82" width="156" height="4" fill="rgba(160,150,135,0.6)"/>
+          <!-- Windows -->
+          <g fill="url(#winG)" opacity="0.7">
+            <rect x="48" y="105" width="18" height="24" rx="1"/>
+            <rect x="78" y="105" width="18" height="24" rx="1"/>
+            <rect x="108" y="105" width="18" height="24" rx="1"/>
+            <rect x="138" y="105" width="18" height="24" rx="1"/>
+            <rect x="48" y="145" width="18" height="24" rx="1"/>
+            <rect x="78" y="145" width="18" height="24" rx="1"/>
+            <rect x="108" y="145" width="18" height="24" rx="1"/>
+            <rect x="138" y="145" width="18" height="24" rx="1"/>
+            <rect x="48" y="185" width="18" height="24" rx="1"/>
+            <rect x="78" y="185" width="18" height="24" rx="1"/>
+            <rect x="108" y="185" width="18" height="24" rx="1"/>
+            <rect x="138" y="185" width="18" height="24" rx="1"/>
+            <rect x="48" y="225" width="18" height="24" rx="1"/>
+            <rect x="78" y="225" width="18" height="24" rx="1"/>
+            <rect x="108" y="225" width="18" height="24" rx="1"/>
+            <rect x="138" y="225" width="18" height="24" rx="1"/>
+            <rect x="48" y="265" width="18" height="24" rx="1"/>
+            <rect x="78" y="265" width="18" height="24" rx="1"/>
+            <rect x="108" y="265" width="18" height="24" rx="1"/>
+            <rect x="138" y="265" width="18" height="24" rx="1"/>
+          </g>
+          <!-- Awning -->
+          <path d="M30,310 L190,310 L185,320 L35,320 Z" fill="#8a5a3a" opacity="0.6"/>
+
+          <!-- Mid building -->
+          <rect x="200" y="140" width="130" height="200" rx="2" fill="url(#bldgB)"/>
+          <rect x="202" y="142" width="126" height="3" fill="rgba(120,140,160,0.5)"/>
+          <g fill="url(#winG)" opacity="0.6">
+            <rect x="216" y="162" width="16" height="22" rx="1"/>
+            <rect x="244" y="162" width="16" height="22" rx="1"/>
+            <rect x="272" y="162" width="16" height="22" rx="1"/>
+            <rect x="300" y="162" width="16" height="22" rx="1"/>
+            <rect x="216" y="200" width="16" height="22" rx="1"/>
+            <rect x="244" y="200" width="16" height="22" rx="1"/>
+            <rect x="272" y="200" width="16" height="22" rx="1"/>
+            <rect x="300" y="200" width="16" height="22" rx="1"/>
+            <rect x="216" y="238" width="16" height="22" rx="1"/>
+            <rect x="244" y="238" width="16" height="22" rx="1"/>
+            <rect x="272" y="238" width="16" height="22" rx="1"/>
+            <rect x="300" y="238" width="16" height="22" rx="1"/>
+            <rect x="216" y="276" width="16" height="22" rx="1"/>
+            <rect x="244" y="276" width="16" height="22" rx="1"/>
+            <rect x="272" y="276" width="16" height="22" rx="1"/>
+            <rect x="300" y="276" width="16" height="22" rx="1"/>
+          </g>
+
+          <!-- Corner shop building -->
+          <rect x="340" y="170" width="180" height="170" rx="2" fill="url(#bldgC)"/>
+          <!-- Shop front -->
+          <rect x="370" y="290" width="60" height="48" rx="2" fill="#3a4a5a" opacity="0.7"/>
+          <rect x="374" y="294" width="52" height="38" rx="1" fill="#87a5c0" opacity="0.35"/>
+          <!-- Sign -->
+          <rect x="355" y="278" width="150" height="14" rx="2" fill="#6a5040"/>
+          <text x="430" y="290" text-anchor="middle" font-family="'Manrope',sans-serif" font-size="8" fill="#e8dcc0" font-weight="700">CAFÉ &amp; BOOKS</text>
+          <!-- Windows above -->
+          <g fill="url(#winG)" opacity="0.65">
+            <rect x="358" y="190" width="20" height="26" rx="1"/>
+            <rect x="392" y="190" width="20" height="26" rx="1"/>
+            <rect x="426" y="190" width="20" height="26" rx="1"/>
+            <rect x="460" y="190" width="20" height="26" rx="1"/>
+            <rect x="494" y="190" width="16" height="26" rx="1"/>
+            <rect x="358" y="232" width="20" height="26" rx="1"/>
+            <rect x="392" y="232" width="20" height="26" rx="1"/>
+            <rect x="426" y="232" width="20" height="26" rx="1"/>
+            <rect x="460" y="232" width="20" height="26" rx="1"/>
+          </g>
+          <!-- Door -->
+          <rect x="448" y="298" width="30" height="40" rx="2" fill="#4a3a2a"/>
+          <circle cx="474" cy="320" r="2" fill="#c0a880"/>
+
+          <!-- Right building -->
+          <rect x="530" y="100" width="190" height="240" rx="2" fill="#a09888"/>
+          <rect x="532" y="102" width="186" height="4" fill="rgba(140,130,118,0.5)"/>
+          <g fill="url(#winG)" opacity="0.6">
+            <rect x="548" y="125" width="20" height="26" rx="1"/>
+            <rect x="582" y="125" width="20" height="26" rx="1"/>
+            <rect x="616" y="125" width="20" height="26" rx="1"/>
+            <rect x="650" y="125" width="20" height="26" rx="1"/>
+            <rect x="684" y="125" width="20" height="26" rx="1"/>
+            <rect x="548" y="168" width="20" height="26" rx="1"/>
+            <rect x="582" y="168" width="20" height="26" rx="1"/>
+            <rect x="616" y="168" width="20" height="26" rx="1"/>
+            <rect x="650" y="168" width="20" height="26" rx="1"/>
+            <rect x="684" y="168" width="20" height="26" rx="1"/>
+            <rect x="548" y="211" width="20" height="26" rx="1"/>
+            <rect x="582" y="211" width="20" height="26" rx="1"/>
+            <rect x="616" y="211" width="20" height="26" rx="1"/>
+            <rect x="650" y="211" width="20" height="26" rx="1"/>
+            <rect x="684" y="211" width="20" height="26" rx="1"/>
+            <rect x="548" y="254" width="20" height="26" rx="1"/>
+            <rect x="582" y="254" width="20" height="26" rx="1"/>
+            <rect x="616" y="254" width="20" height="26" rx="1"/>
+            <rect x="650" y="254" width="20" height="26" rx="1"/>
+            <rect x="684" y="254" width="20" height="26" rx="1"/>
+          </g>
+
+          <!-- Far right building -->
+          <rect x="730" y="160" width="230" height="180" rx="2" fill="#b4a898"/>
+          <g fill="url(#winG)" opacity="0.5">
+            <rect x="750" y="180" width="18" height="22" rx="1"/>
+            <rect x="782" y="180" width="18" height="22" rx="1"/>
+            <rect x="814" y="180" width="18" height="22" rx="1"/>
+            <rect x="846" y="180" width="18" height="22" rx="1"/>
+            <rect x="878" y="180" width="18" height="22" rx="1"/>
+            <rect x="910" y="180" width="18" height="22" rx="1"/>
+            <rect x="750" y="218" width="18" height="22" rx="1"/>
+            <rect x="782" y="218" width="18" height="22" rx="1"/>
+            <rect x="814" y="218" width="18" height="22" rx="1"/>
+            <rect x="846" y="218" width="18" height="22" rx="1"/>
+            <rect x="878" y="218" width="18" height="22" rx="1"/>
+            <rect x="910" y="218" width="18" height="22" rx="1"/>
+            <rect x="750" y="256" width="18" height="22" rx="1"/>
+            <rect x="782" y="256" width="18" height="22" rx="1"/>
+            <rect x="814" y="256" width="18" height="22" rx="1"/>
+            <rect x="846" y="256" width="18" height="22" rx="1"/>
+          </g>
+
+          <!-- ── SIDEWALK ── -->
+          <rect x="0" y="340" width="960" height="35" fill="url(#sidewalkG)"/>
+          <!-- Sidewalk edge -->
+          <rect x="0" y="338" width="960" height="3" fill="#c0b8a5"/>
+          <!-- Paving lines -->
+          <line x1="120" y1="342" x2="120" y2="375" stroke="rgba(160,150,135,0.3)" stroke-width="0.8"/>
+          <line x1="240" y1="342" x2="240" y2="375" stroke="rgba(160,150,135,0.3)" stroke-width="0.8"/>
+          <line x1="360" y1="342" x2="360" y2="375" stroke="rgba(160,150,135,0.3)" stroke-width="0.8"/>
+          <line x1="480" y1="342" x2="480" y2="375" stroke="rgba(160,150,135,0.3)" stroke-width="0.8"/>
+          <line x1="600" y1="342" x2="600" y2="375" stroke="rgba(160,150,135,0.3)" stroke-width="0.8"/>
+          <line x1="720" y1="342" x2="720" y2="375" stroke="rgba(160,150,135,0.3)" stroke-width="0.8"/>
+          <line x1="840" y1="342" x2="840" y2="375" stroke="rgba(160,150,135,0.3)" stroke-width="0.8"/>
+
+          <!-- ── ROAD ── -->
+          <rect x="0" y="375" width="960" height="45" fill="url(#roadG)"/>
+          <!-- Road markings -->
+          <g stroke="#d4cc60" stroke-width="1.5" stroke-dasharray="20 15" opacity="0.4">
+            <line x1="0" y1="397" x2="960" y2="397"/>
+          </g>
+          <!-- Curb -->
+          <rect x="0" y="373" width="960" height="3" fill="#8a8070"/>
+
+          <!-- ── LAMPPOST ── -->
+          <rect x="418" y="260" width="4" height="80" rx="1" fill="#5a5a5a"/>
+          <rect x="414" y="258" width="12" height="6" rx="2" fill="#6a6a6a"/>
+          <!-- Lamp arm -->
+          <path d="M420,262 L420,255 Q420,248 428,248 L438,248" fill="none" stroke="#5a5a5a" stroke-width="3" stroke-linecap="round"/>
+          <!-- Lamp head -->
+          <rect x="434" y="243" width="12" height="8" rx="2" fill="#707070"/>
+          <rect x="436" y="250" width="8" height="2" fill="#ffeeaa" opacity="0.4"/>
+
+          <!-- ── TREE ── -->
+          <rect x="268" y="280" width="6" height="60" rx="2" fill="#6a5a4a"/>
+          <!-- Foliage clusters -->
+          <circle cx="271" cy="265" r="28" fill="url(#treeG)" opacity="0.9"/>
+          <circle cx="252" cy="275" r="20" fill="#5a8a48" opacity="0.8"/>
+          <circle cx="290" cy="272" r="22" fill="#68964a" opacity="0.85"/>
+          <circle cx="271" cy="250" r="18" fill="#7aab65" opacity="0.7"/>
+
+          <!-- ── BENCH ── -->
+          <g transform="translate(620, 328)">
+            <rect x="0" y="0" width="40" height="3" rx="1" fill="#7a6a5a"/>
+            <rect x="0" y="5" width="40" height="3" rx="1" fill="#7a6a5a"/>
+            <rect x="2" y="8" width="3" height="8" fill="#6a5a4a"/>
+            <rect x="35" y="8" width="3" height="8" fill="#6a5a4a"/>
+          </g>
+
+          <!-- ── BIKE RACK ── -->
+          <g transform="translate(155, 332)">
+            <path d="M0,14 L0,0 Q0,-4 4,-4 L16,-4 Q20,-4 20,0 L20,14" fill="none" stroke="#808080" stroke-width="2"/>
+            <path d="M24,14 L24,0 Q24,-4 28,-4 L40,-4 Q44,-4 44,0 L44,14" fill="none" stroke="#808080" stroke-width="2"/>
+          </g>
+
+          <!-- ── TRASH BIN ── -->
+          <g transform="translate(700, 325)">
+            <rect x="0" y="4" width="14" height="16" rx="1" fill="#5a6a5a"/>
+            <rect x="-1" y="2" width="16" height="4" rx="1.5" fill="#6a7a6a"/>
+          </g>
+
+          <!-- ── PEDESTRIANS ── -->
+          <!-- Person 1: walking left -->
+          <g id="person1" transform="translate(140, 320)">
+            <circle cx="0" cy="-22" r="5" fill="#e0c8a0"/>
+            <rect x="-4" y="-17" width="8" height="14" rx="2" fill="#4a6a8a"/>
+            <line x1="-2" y1="-3" x2="-4" y2="8" stroke="#3a4a5a" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="2" y1="-3" x2="4" y2="8" stroke="#3a4a5a" stroke-width="2.5" stroke-linecap="round"/>
+          </g>
+
+          <!-- Person 2: standing, looking at phone -->
+          <g id="person2" transform="translate(560, 318)">
+            <circle cx="0" cy="-24" r="5.5" fill="#d4b090"/>
+            <rect x="-5" y="-18" width="10" height="16" rx="2" fill="#c04040"/>
+            <line x1="-3" y1="-2" x2="-5" y2="10" stroke="#4a4a6a" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="3" y1="-2" x2="5" y2="10" stroke="#4a4a6a" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Phone -->
+            <rect x="4" y="-14" width="4" height="7" rx="0.5" fill="#2a2a2a"/>
+          </g>
+
+          <!-- Person 3: walking right -->
+          <g id="person3" transform="translate(800, 322)">
+            <circle cx="0" cy="-22" r="5" fill="#c0a888"/>
+            <rect x="-4" y="-17" width="8" height="14" rx="2" fill="#5a5a7a"/>
+            <line x1="-2" y1="-3" x2="-3" y2="8" stroke="#4a4a5a" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="2" y1="-3" x2="4" y2="8" stroke="#4a4a5a" stroke-width="2.5" stroke-linecap="round"/>
+          </g>
+
+          <!-- ── BUTTON LANDING SPOT (subtle ground marker) ── -->
+          <ellipse id="landingSpot" cx="500" cy="345" rx="20" ry="4" fill="rgba(223,44,44,0)" stroke="rgba(223,44,44,0)" stroke-width="1" stroke-dasharray="3 2">
+            <animate id="spotPulse" attributeName="fill" values="rgba(223,44,44,0);rgba(223,44,44,0)" dur="1s" repeatCount="1"/>
+          </ellipse>
+
+          <!-- Building shadow strip on sidewalk -->
+          <rect x="0" y="340" width="960" height="8" fill="url(#groundSh)"/>
+
+        </svg>
+
+        <div class="scene-status" id="sceneStatus">FIELD UNIT DEPLOYING…</div>
+      </div>
+
+      <p class="field-caption" id="fieldCaption">Scroll this section into view to deploy the field unit.</p>
+    </section>
+
+    <section class="section-spacer">
+      <div class="inner">
+        <h2>Data Collection Begins</h2>
+        <p>Once deployed, the button records every press — who approaches, how long they hesitate, and whether one press triggers another.</p>
+        <p class="mono">Scroll back up to see the button return to its floating state.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+  (function () {
+
+    /* ══════════════════════════════════════
+       REFS
+       ══════════════════════════════════════ */
+    var pedestal    = document.getElementById("pedestalFloat");
+    var dome        = document.getElementById("domeGroup");
+    var shockwave   = document.getElementById("shockwave");
+    var sceneWrap   = document.getElementById("sceneWrap");
+    var dockTarget  = document.getElementById("dockTarget");
+    var sceneStatus = document.getElementById("sceneStatus");
+    var fieldCaption= document.getElementById("fieldCaption");
+    var landingSpot = document.getElementById("landingSpot");
+
+    /* ══════════════════════════════════════
+       FLOAT STATE
+       ══════════════════════════════════════ */
+    var fl = {
+      baseX: 80, baseY: 28,
+      phase1: Math.random() * 6.28, phase2: Math.random() * 6.28,
+      phase3: Math.random() * 6.28, phase4: Math.random() * 6.28,
+      shiftTimer: 0, shiftTargetX: 0, shiftTargetY: 0,
+      shiftCurX: 0, shiftCurY: 0,
+      nextShift: 3000 + Math.random() * 5000,
+      x: 0, y: 0, rot: 0
+    };
+
+    var isDocked   = false;
+    var isDocking  = false;
+    var isUndocking= false;
+    var isPressed  = false;
+
+    /* ══════════════════════════════════════
+       FLOATING ANIMATION
+       ══════════════════════════════════════ */
+    function tickFloat() {
+      if (isDocked || isDocking || isUndocking) return;
+
+      fl.phase1 += 0.008;  fl.phase2 += 0.011;
+      fl.phase3 += 0.006;  fl.phase4 += 0.0035;
+
+      var dx = Math.sin(fl.phase1) * 18 + Math.sin(fl.phase2 * 0.7) * 10;
+      var dy = Math.cos(fl.phase3) * 14 + Math.sin(fl.phase4 * 1.3) * 8;
+      fl.rot = Math.sin(fl.phase1 * 0.6) * 4 + Math.sin(fl.phase2 * 0.4) * 2.5;
+
+      fl.shiftTimer += 16;
+      if (fl.shiftTimer > fl.nextShift) {
+        fl.shiftTimer = 0;
+        fl.nextShift = 4000 + Math.random() * 7000;
+        fl.shiftTargetX = (Math.random() - 0.5) * 120;
+        fl.shiftTargetY = (Math.random() - 0.5) * 80;
+      }
+      fl.shiftCurX += (fl.shiftTargetX - fl.shiftCurX) * 0.008;
+      fl.shiftCurY += (fl.shiftTargetY - fl.shiftCurY) * 0.008;
+
+      var vw = window.innerWidth, vh = window.innerHeight;
+      var px = (fl.baseX / 100) * vw + dx + fl.shiftCurX;
+      var py = (fl.baseY / 100) * vh + dy + fl.shiftCurY;
+      px = Math.max(20, Math.min(vw - 160, px));
+      py = Math.max(20, Math.min(vh - 340, py));
+
+      fl.x = px; fl.y = py;
+      pedestal.style.transform = "translate(" + px + "px," + py + "px) rotate(" + fl.rot + "deg)";
+    }
+
+    function loopFloat() {
+      tickFloat();
+      requestAnimationFrame(loopFloat);
+    }
+    loopFloat();
+
+    /* ══════════════════════════════════════
+       DOCK / UNDOCK
+       ══════════════════════════════════════ */
+    // Where should the button land inside the scene?
+    // The landing spot is at SVG coords (500, 345) in a 960×420 viewBox
+    function getDockScreenPos() {
+      var rect = sceneWrap.getBoundingClientRect();
+      // Map SVG coords to screen coords
+      var scaleX = rect.width / 960;
+      var scaleY = rect.height / 420;
+      // Use the smaller to account for preserveAspectRatio slice
+      var scale = Math.max(scaleX, scaleY);
+      var svgW = 960 * scale, svgH = 420 * scale;
+      var offX = rect.left + (rect.width - svgW) / 2;
+      var offY = rect.top + (rect.height - svgH) / 2;
+      return {
+        x: offX + 500 * scale - 22,  // center the shrunken pedestal (44px wide / 2)
+        y: offY + 345 * scale - 100,  // anchor to base of pedestal
+        scale: scale
+      };
+    }
+
+    var dockedSize = { w: 44, h: 100 };  // shrunken pedestal dimensions
+
+    function dockButton() {
+      if (isDocked || isDocking) return;
+      isDocking = true;
+
+      // Activate landing spot indicator
+      landingSpot.setAttribute("stroke", "rgba(223,44,44,0.5)");
+      landingSpot.setAttribute("fill", "rgba(223,44,44,0.08)");
+
+      // Show status
+      sceneStatus.textContent = "FIELD UNIT DEPLOYING…";
+      sceneStatus.classList.add("show");
+
+      pedestal.classList.add("docking");
+
+      var target = getDockScreenPos();
+
+      pedestal.style.width = dockedSize.w + "px";
+      pedestal.style.height = dockedSize.h + "px";
+      pedestal.style.transform = "translate(" + target.x + "px," + target.y + "px) rotate(0deg)";
+
+      setTimeout(function () {
+        pedestal.classList.remove("docking");
+        pedestal.classList.add("docked");
+        isDocking = false;
+        isDocked = true;
+
+        sceneStatus.textContent = "FIELD UNIT ACTIVE — AWAITING PRESSES";
+        fieldCaption.textContent = "Button deployed at intersection. Observation in progress.";
+
+        // Gentle idle bob when docked
+        startDockedBob();
+
+        // Animate people noticing
+        animateCuriosity();
+      }, 1250);
+    }
+
+    function undockButton() {
+      if (!isDocked || isUndocking) return;
+      isUndocking = true;
+      stopDockedBob();
+
+      // Fade landing spot
+      landingSpot.setAttribute("stroke", "rgba(223,44,44,0)");
+      landingSpot.setAttribute("fill", "rgba(223,44,44,0)");
+
+      sceneStatus.textContent = "FIELD UNIT RETRACTING…";
+
+      pedestal.classList.remove("docked");
+      pedestal.classList.add("undocking");
+
+      pedestal.style.width = "140px";
+      pedestal.style.height = "320px";
+      pedestal.style.transform = "translate(" + fl.x + "px," + fl.y + "px) rotate(" + fl.rot + "deg)";
+
+      setTimeout(function () {
+        pedestal.classList.remove("undocking");
+        isUndocking = false;
+        isDocked = false;
+
+        sceneStatus.classList.remove("show");
+        fieldCaption.textContent = "Scroll this section into view to deploy the field unit.";
+
+        // Reset people
+        resetPeople();
+      }, 950);
+    }
+
+    /* ── Docked idle bob ── */
+    var bobRAF = null;
+    var bobPhase = 0;
+    function startDockedBob() {
+      function bob() {
+        if (!isDocked) return;
+        bobPhase += 0.02;
+        var target = getDockScreenPos();
+        var by = Math.sin(bobPhase) * 2;
+        pedestal.style.transform = "translate(" + target.x + "px," + (target.y + by) + "px) rotate(0deg)";
+        bobRAF = requestAnimationFrame(bob);
+      }
+      bob();
+    }
+    function stopDockedBob() {
+      if (bobRAF) cancelAnimationFrame(bobRAF);
+    }
+
+    /* ── People react to deployment ── */
+    var person2El = document.getElementById("person2");
+    var curiosityTimer = null;
+
+    function animateCuriosity() {
+      // Person 2 turns toward the button
+      curiosityTimer = setTimeout(function () {
+        if (!isDocked) return;
+        // Walk person2 closer
+        person2El.style.transition = "transform 2s ease-in-out";
+        person2El.style.transform = "translate(520px, 318px)";
+
+        setTimeout(function () {
+          if (!isDocked) return;
+          person2El.style.transform = "translate(508px, 318px)";
+        }, 2500);
+      }, 800);
+    }
+
+    function resetPeople() {
+      clearTimeout(curiosityTimer);
+      person2El.style.transition = "transform 1s ease";
+      person2El.style.transform = "translate(560px, 318px)";
+    }
+
+    /* ══════════════════════════════════════
+       SCROLL DETECTION
+       ══════════════════════════════════════ */
+    var fieldSection = document.getElementById("fieldSection");
+
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.45) {
+          dockButton();
+        } else if (!entry.isIntersecting || entry.intersectionRatio < 0.15) {
+          if (isDocked) undockButton();
+        }
+      });
+    }, {
+      threshold: [0, 0.15, 0.3, 0.45, 0.6]
+    });
+
+    observer.observe(fieldSection);
+
+    // Also handle resize (recalc dock position)
+    window.addEventListener("resize", function () {
+      if (isDocked) {
+        var target = getDockScreenPos();
+        pedestal.style.transform = "translate(" + target.x + "px," + target.y + "px) rotate(0deg)";
+      }
+    });
+
+    /* ══════════════════════════════════════
+       PRESS HANDLER
+       ══════════════════════════════════════ */
+    function spawnSparkles(cx, cy, count) {
+      for (var i = 0; i < count; i++) {
+        var el = document.createElement("div");
+        el.className = "sparkle";
+        var angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.5;
+        var dist = 30 + Math.random() * 50;
+        el.style.left = cx + "px"; el.style.top = cy + "px";
+        el.style.setProperty("--sx", Math.cos(angle) * dist + "px");
+        el.style.setProperty("--sy", Math.sin(angle) * dist - 15 + "px");
+        el.style.width = (2 + Math.random() * 4) + "px";
+        el.style.height = el.style.width;
+        el.style.background = ["#ff4444","#ff7744","#ffaa44","#df2c2c"][Math.floor(Math.random()*4)];
+        document.body.appendChild(el);
+        void el.offsetWidth;
+        el.classList.add("go");
+        (function(e){ setTimeout(function(){ e.remove(); }, 800); })(el);
+      }
+    }
+
+    pedestal.addEventListener("click", function () {
+      if (isPressed || isDocking || isUndocking) return;
+      isPressed = true;
+
+      dome.classList.add("pushed");
+      pedestal.classList.add("pressed-glow");
+
+      // Shockwave position
+      var rect = pedestal.getBoundingClientRect();
+      var cx = rect.left + rect.width * 0.5;
+      var cy = rect.top + rect.height * 0.22;
+
+      shockwave.style.left = cx + "px";
+      shockwave.style.top = cy + "px";
+      shockwave.classList.remove("go");
+      void shockwave.offsetWidth;
+      shockwave.classList.add("go");
+
+      spawnSparkles(cx, cy, isDocked ? 8 : 14);
+
+      // If docked, update status with press count
+      if (isDocked) {
+        var c = parseInt(sceneStatus.dataset.count || "0") + 1;
+        sceneStatus.dataset.count = c;
+        sceneStatus.textContent = "PRESS #" + c + " RECORDED — FIELD DATA LOGGED";
+      }
+
+      setTimeout(function () {
+        dome.classList.remove("pushed");
+        pedestal.classList.remove("pressed-glow");
+        isPressed = false;
+      }, 400);
+    });
+
+    /* ── Hover ── */
+    var svgEl = pedestal.querySelector("svg");
+    svgEl.addEventListener("mouseenter", function () {
+      if (!dome.classList.contains("pushed")) {
+        dome.style.transition = "transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)";
+        dome.style.transform = "scale(1.04)";
+      }
+    });
+    svgEl.addEventListener("mouseleave", function () {
+      if (!dome.classList.contains("pushed")) {
+        dome.style.transform = "";
+      }
+    });
+
+    /* ══════════════════════════════════════
+       WALKING PEOPLE ANIMATION
+       ══════════════════════════════════════ */
+    var person1 = document.getElementById("person1");
+    var person3 = document.getElementById("person3");
+    var walkPhase = 0;
+
+    function walkPeople() {
+      walkPhase += 0.3;
+
+      // Person 1 walks left to right
+      var p1x = 140 + ((walkPhase * 0.8) % 900) - 50;
+      if (p1x > 980) p1x -= 1030;
+      person1.setAttribute("transform", "translate(" + p1x + ", 320)");
+
+      // Person 3 walks right to left
+      var p3x = 800 - ((walkPhase * 0.5) % 900) + 50;
+      if (p3x < -50) p3x += 1050;
+      person3.setAttribute("transform", "translate(" + p3x + ", 322)");
+
+      requestAnimationFrame(walkPeople);
+    }
+    walkPeople();
+
+  })();
+  </script>
+</body>
+</html>

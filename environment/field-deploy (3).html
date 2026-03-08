@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Big Red Button Institute (BRB)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&family=Manrope:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#1a1e28;--muted:#5f6775;--red:#df2c2c;--red-hot:#ff4444;
+      --line:#c9c1b0;--shadow:0 18px 44px rgba(22,28,38,.18);
+      --shadow-soft:0 10px 24px rgba(23,28,37,.11);
+      --radius-lg:20px;--radius-md:14px;--radius-sm:10px;--max:1080px;
+    }
+    *,*::before,*::after{box-sizing:border-box;}
+    body{margin:0;padding:0;font-family:"Manrope",sans-serif;color:var(--ink);
+      background:radial-gradient(1200px 560px at 104% -12%,#b8c8de 0%,transparent 60%),
+        radial-gradient(900px 460px at -5% 18%,#ecc0bc 0%,transparent 55%),
+        linear-gradient(180deg,#efe9da,#f7f3ea);
+      overflow-x:hidden;line-height:1.55;}
+    .shell{width:min(calc(100% - 2rem),var(--max));margin:0 auto;}
+    h1,h2,h3{margin:0;font-family:"Fraunces",Georgia,serif;letter-spacing:-.01em;line-height:1.12;}
+    .mono{font-family:"IBM Plex Mono",monospace;font-size:.82rem;color:#8a8577;}
+
+    /* ═══ HERO ═══ */
+    .hero{border:1px solid var(--line);border-radius:var(--radius-lg);
+      padding:clamp(1rem,1.5vw+.6rem,1.8rem);box-shadow:var(--shadow);
+      background:linear-gradient(145deg,rgba(255,255,255,.93),rgba(255,255,255,.86));
+      overflow:hidden;position:relative;margin-top:1rem;}
+    .hero::after{content:"";position:absolute;width:300px;height:300px;border-radius:50%;
+      right:-110px;top:-130px;background:radial-gradient(circle,rgba(223,44,44,.24) 0%,rgba(223,44,44,0) 70%);pointer-events:none;}
+    .hero-top{display:grid;gap:1rem;grid-template-columns:minmax(0,1fr) clamp(180px,24vw,280px);align-items:start;}
+    .eyebrow{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:.82rem;letter-spacing:.14em;
+      text-transform:uppercase;background:#fff;border:1px solid var(--line);border-radius:999px;padding:.2rem .65rem;margin-bottom:.5rem;}
+    h1{font-size:clamp(1.8rem,3.5vw,3.2rem);max-width:13ch;}
+    .subhead{margin:.4rem 0 .6rem;font-size:clamp(.95rem,1vw+.8rem,1.2rem);color:var(--muted);max-width:46ch;}
+    .hero-latour{margin:0;border:1px solid #bac2d2;border-radius:12px;overflow:hidden;background:#f7f9ff;
+      box-shadow:var(--shadow-soft);transform:rotate(1.4deg);transition:transform 500ms cubic-bezier(.34,1.56,.64,1);}
+    .hero-latour:hover{transform:rotate(0) scale(1.02);}
+    .hero-latour img{display:block;width:100%;height:auto;aspect-ratio:9/12;object-fit:cover;object-position:50% 18%;}
+    .hero-latour figcaption{padding:.35rem .55rem;font-size:.72rem;color:#4c5768;border-top:1px solid #c6cedd;background:#ecf1fa;}
+    .hero-mission{margin-top:.8rem;max-width:72ch;}
+    .hero-mission p{margin:.3rem 0;font-size:.95rem;}
+
+    /* ═══ LAB PANEL (button + viz) ═══ */
+    .lab-panel{margin-top:1rem;border:1px solid rgba(60,50,40,.25);border-radius:var(--radius-lg);
+      background:linear-gradient(180deg,#1a1e28,#12151c);box-shadow:var(--shadow);
+      padding:clamp(.8rem,1.2vw+.5rem,1.3rem);overflow:hidden;position:relative;}
+    .lab-layout{display:grid;grid-template-columns:250px 1fr;gap:1rem;align-items:stretch;}
+    .press-column{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+      border-radius:var(--radius-md);padding:1rem .8rem;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:.5rem;position:relative;overflow:hidden;}
+    .press-column::before{content:"";position:absolute;inset:0;border-radius:inherit;opacity:0;
+      background:radial-gradient(circle at 50% 45%,rgba(223,44,44,.15) 0%,transparent 70%);
+      transition:opacity 300ms ease;pointer-events:none;}
+    .press-column.glow::before{opacity:1;}
+    .press-column h2{color:#d4d0c6;font-size:1.1rem;text-align:center;}
+    .counter-display{text-align:center;}
+    .counter-number{font-family:"IBM Plex Mono",monospace;font-size:2.6rem;font-weight:800;
+      color:var(--red-hot);line-height:1;display:inline-block;transition:transform 150ms cubic-bezier(.34,1.56,.64,1);}
+    .counter-number.bump{transform:scale(1.3);}
+    .counter-label{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:#6b7a8f;margin-top:.15rem;}
+    .press-btn-wrap{position:relative;display:flex;justify-content:center;padding:.4rem 0;}
+    .press-btn{position:relative;z-index:2;font:700 1.05rem/1 "Manrope",sans-serif;color:#fff;border:0;
+      border-radius:999px;padding:1rem 1.8rem;
+      background:radial-gradient(circle at 35% 28%,#ff6868 0%,#df2c2c 55%,#7f1010 100%);
+      box-shadow:inset 0 -7px 14px rgba(68,0,0,.3),0 8px 16px rgba(129,23,23,.38);
+      cursor:pointer;transition:transform 120ms ease,box-shadow 300ms ease;-webkit-tap-highlight-color:transparent;}
+    .press-btn:hover{transform:translateY(-2px) scale(1.03);
+      box-shadow:inset 0 -7px 14px rgba(68,0,0,.35),0 12px 24px rgba(129,23,23,.46),0 0 30px rgba(223,44,44,.25);}
+    .press-btn:active,.press-btn.is-pressed{transform:translateY(3px) scale(.96);
+      box-shadow:inset 0 4px 9px rgba(56,0,0,.45),0 4px 8px rgba(129,23,23,.26),0 0 50px rgba(223,44,44,.35);}
+    .ripple-ring{position:absolute;top:50%;left:50%;width:50px;height:50px;margin:-25px 0 0 -25px;
+      border-radius:50%;border:2px solid var(--red);opacity:0;pointer-events:none;z-index:1;}
+    .ripple-ring.animate{animation:rippleOut 800ms ease-out forwards;}
+    @keyframes rippleOut{0%{transform:scale(.5);opacity:.7;}100%{transform:scale(4);opacity:0;}}
+    .press-mini-stats{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;width:100%;}
+    .mini-stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);
+      border-radius:8px;padding:.35rem;text-align:center;}
+    .mini-stat-value{font-family:"IBM Plex Mono",monospace;font-size:.95rem;font-weight:700;color:#e8e4da;line-height:1;}
+    .mini-stat-value.red{color:var(--red-hot);}
+    .mini-stat-label{font-size:.58rem;color:#5a6578;font-family:"IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.04em;margin-top:.15rem;}
+    .press-note{font-family:"IBM Plex Mono",monospace;font-size:.65rem;color:#4a5568;text-align:center;}
+
+    /* Viz grid (shared between lab + mini) */
+    .viz-column{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:.55rem;}
+    .viz-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+      border-radius:var(--radius-sm);padding:.45rem .5rem;overflow:hidden;display:flex;flex-direction:column;}
+    .viz-card h3{color:#7a7568;font-size:.65rem;font-family:"IBM Plex Mono",monospace;font-weight:600;
+      text-transform:uppercase;letter-spacing:.06em;margin:0 0 .3rem;flex-shrink:0;}
+    .viz-card canvas{display:block;width:100%;flex:1;min-height:0;border-radius:4px;}
+
+    /* ═══ FIELD SECTION ═══ */
+    .field-section{position:relative;padding:2rem 0 0;}
+    .field-header{text-align:center;margin-bottom:1.5rem;}
+    .field-header h2{font-size:clamp(1.6rem,3vw,2.6rem);line-height:1.1;}
+    .field-header p{color:var(--muted);margin:.4rem 0 0;font-size:1rem;max-width:50ch;display:inline-block;}
+    .scene-wrap{position:relative;border:1px solid var(--line);border-radius:var(--radius-lg);
+      overflow:hidden;background:#c8ddf0;box-shadow:var(--shadow);aspect-ratio:16/7;max-height:520px;}
+    .scene-wrap svg.street-svg{display:block;width:100%;height:100%;}
+    .scene-status{position:absolute;bottom:.8rem;left:50%;transform:translateX(-50%);
+      font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:rgba(255,255,255,.85);
+      background:rgba(26,30,40,.72);backdrop-filter:blur(8px);padding:.35rem .8rem;
+      border-radius:999px;white-space:nowrap;opacity:0;transition:opacity 500ms ease;pointer-events:none;}
+    .scene-status.show{opacity:1;}
+    .field-caption{text-align:center;margin-top:.8rem;font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:#8a8577;}
+
+    /* ═══ MINI DASHBOARD (appears below scene) ═══ */
+    .mini-dashboard{
+      margin-top:.8rem;border:1px solid rgba(60,50,40,.25);border-radius:var(--radius-md);
+      background:linear-gradient(180deg,#1a1e28,#12151c);box-shadow:var(--shadow-soft);
+      padding:.7rem;overflow:hidden;
+      opacity:0;transform:translateY(12px);
+      transition:opacity 600ms ease,transform 600ms ease;
+      pointer-events:none;
+    }
+    .mini-dashboard.visible{opacity:1;transform:translateY(0);pointer-events:auto;}
+    .mini-dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;}
+    .mini-dash-header h3{color:#c0bbb0;font-size:.78rem;font-family:"IBM Plex Mono",monospace;font-weight:600;
+      text-transform:uppercase;letter-spacing:.06em;}
+    .mini-dash-stats{display:flex;gap:.5rem;}
+    .md-stat{text-align:center;}
+    .md-stat-val{font-family:"IBM Plex Mono",monospace;font-size:.85rem;font-weight:700;color:#e8e4da;line-height:1;}
+    .md-stat-val.red{color:var(--red-hot);}
+    .md-stat-lbl{font-size:.52rem;color:#5a6578;font-family:"IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.04em;margin-top:.1rem;}
+    .mini-viz-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.45rem;}
+    .mini-viz-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+      border-radius:8px;padding:.35rem;overflow:hidden;}
+    .mini-viz-card h4{color:#6a6560;font-size:.55rem;font-family:"IBM Plex Mono",monospace;font-weight:600;
+      text-transform:uppercase;letter-spacing:.05em;margin:0 0 .2rem;}
+    .mini-viz-card canvas{display:block;width:100%;height:60px;border-radius:4px;}
+
+    /* ═══ CONTENT PANELS ═══ */
+    .stack{display:grid;gap:1rem;margin-top:1rem;}
+    .panel{border:1px solid var(--line);border-radius:var(--radius-lg);
+      background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,252,246,.9));
+      box-shadow:var(--shadow);padding:clamp(1rem,1.5vw+.7rem,1.5rem);}
+    .panel h2{font-size:clamp(1.45rem,2.1vw,2.2rem);margin-bottom:.72rem;}
+    .panel p{margin:.42rem 0;max-width:72ch;}
+    .footer{margin:1.2rem auto 2.5rem;padding:1rem;border:1px solid var(--line);border-radius:var(--radius-md);
+      background:#fbf6eb;font-size:.98rem;box-shadow:var(--shadow-soft);
+      width:min(calc(100% - 2rem),var(--max));}
+
+    /* ═══ PEDESTAL ═══ */
+    .pedestal-float{position:fixed;z-index:50;pointer-events:none;width:140px;height:320px;
+      filter:drop-shadow(0 20px 40px rgba(22,28,38,.25)) drop-shadow(0 4px 12px rgba(143,23,23,.2));
+      will-change:transform,width,height,filter;}
+    .pedestal-float svg{width:100%;height:100%;pointer-events:auto;cursor:pointer;}
+    .dome-group{transition:transform 100ms cubic-bezier(.34,1.56,.64,1);transform-origin:70px 68px;}
+    .dome-group.pushed{transform:translateY(10px) scaleY(.82);}
+    .pedestal-float.docked{position:absolute!important;z-index:10;pointer-events:auto;
+      filter:drop-shadow(0 3px 6px rgba(22,28,38,.25)) drop-shadow(0 1px 3px rgba(143,23,23,.15));}
+    .pedestal-float.undocking{
+      transition:transform 1200ms cubic-bezier(.34,1.2,.64,1),
+        width 1200ms cubic-bezier(.34,1.2,.64,1),height 1200ms cubic-bezier(.34,1.2,.64,1),filter 800ms ease;}
+    .pedestal-float.pressed-glow{
+      filter:drop-shadow(0 20px 40px rgba(22,28,38,.25)) drop-shadow(0 0 40px rgba(223,44,44,.45)) drop-shadow(0 4px 12px rgba(143,23,23,.3))!important;}
+
+    .shockwave{position:fixed;pointer-events:none;z-index:49;border-radius:50%;border:3px solid var(--red);opacity:0;width:40px;height:40px;}
+    .shockwave.go{animation:shockExpand 900ms cubic-bezier(.22,1,.36,1) forwards;}
+    @keyframes shockExpand{0%{transform:translate(-50%,-50%) scale(.3);opacity:.7;}100%{transform:translate(-50%,-50%) scale(12);opacity:0;}}
+    .sparkle{position:fixed;pointer-events:none;z-index:48;width:6px;height:6px;border-radius:50%;background:var(--red-hot);}
+    .sparkle.go{animation:sparkleFly 700ms ease-out forwards;}
+    @keyframes sparkleFly{0%{transform:translate(0,0) scale(1);opacity:1;}100%{transform:translate(var(--sx),var(--sy)) scale(0);opacity:0;}}
+
+    .reveal{opacity:0;transform:translateY(14px);animation:rise 700ms ease forwards;}
+    .reveal:nth-child(2){animation-delay:120ms;}.reveal:nth-child(3){animation-delay:210ms;}
+    .reveal:nth-child(4){animation-delay:290ms;}.reveal:nth-child(5){animation-delay:360ms;}
+    @keyframes rise{to{opacity:1;transform:translateY(0);}}
+
+    @media(max-width:980px){
+      .hero-top{grid-template-columns:minmax(0,1fr) clamp(160px,22vw,240px);}
+      .lab-layout{grid-template-columns:1fr;}
+      .press-column{flex-direction:row;flex-wrap:wrap;justify-content:center;padding:.8rem;}
+      .press-column h2{width:100%;}.counter-display{order:1;}.press-btn-wrap{order:2;}
+      .press-mini-stats{order:3;max-width:300px;}.press-note{order:4;width:100%;}
+      .mini-viz-row{grid-template-columns:1fr 1fr;}
+    }
+    @media(max-width:650px){
+      .shell{width:min(calc(100% - 1rem),var(--max));}
+      .hero,.panel,.lab-panel,.scene-wrap,.mini-dashboard{border-radius:14px;}
+      .hero-top{grid-template-columns:1fr;}
+      .hero-latour{max-width:100%;justify-self:stretch;transform:none;}
+      .viz-column{grid-template-columns:1fr;}
+      .mini-viz-row{grid-template-columns:1fr 1fr;}
+      .pedestal-float{width:100px;height:230px;}
+      .scene-wrap{aspect-ratio:16/9;}
+    }
+  </style>
+</head>
+<body>
+<div class="shockwave" id="shockwave"></div>
+
+<!-- ═══ FLOATING PEDESTAL ═══ -->
+<div class="pedestal-float" id="pedestalFloat">
+  <svg viewBox="0 0 140 320" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="domeGrad" cx="42%" cy="32%" r="58%" fx="38%" fy="28%">
+        <stop offset="0%" stop-color="#ff8a8a"/><stop offset="28%" stop-color="#ff5252"/>
+        <stop offset="58%" stop-color="#df2c2c"/><stop offset="85%" stop-color="#a01515"/>
+        <stop offset="100%" stop-color="#6b0a0a"/>
+      </radialGradient>
+      <radialGradient id="domeHL" cx="38%" cy="25%" r="35%">
+        <stop offset="0%" stop-color="rgba(255,255,255,.7)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+      </radialGradient>
+      <linearGradient id="pedGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#c4b8a0"/><stop offset="18%" stop-color="#e8ddc6"/>
+        <stop offset="50%" stop-color="#f5eedd"/><stop offset="82%" stop-color="#e0d5be"/>
+        <stop offset="100%" stop-color="#b8ab94"/>
+      </linearGradient>
+      <linearGradient id="ringG" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#8a7d6a"/><stop offset="20%" stop-color="#c9bc9f"/>
+        <stop offset="50%" stop-color="#e8dcc0"/><stop offset="80%" stop-color="#c0b395"/>
+        <stop offset="100%" stop-color="#7d7262"/>
+      </linearGradient>
+      <linearGradient id="baseG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#d4c9b2"/><stop offset="100%" stop-color="#a89b84"/>
+      </linearGradient>
+      <radialGradient id="domeSh" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="rgba(80,20,20,.35)"/><stop offset="100%" stop-color="rgba(80,20,20,0)"/>
+      </radialGradient>
+      <radialGradient id="ambGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="rgba(223,44,44,.18)"/><stop offset="100%" stop-color="rgba(223,44,44,0)"/>
+      </radialGradient>
+      <pattern id="decoL" x="0" y="0" width="140" height="16" patternUnits="userSpaceOnUse">
+        <line x1="50" y1="0" x2="50" y2="16" stroke="rgba(160,140,110,.2)" stroke-width=".5"/>
+        <line x1="70" y1="0" x2="70" y2="16" stroke="rgba(160,140,110,.15)" stroke-width=".5"/>
+        <line x1="90" y1="0" x2="90" y2="16" stroke="rgba(160,140,110,.2)" stroke-width=".5"/>
+      </pattern>
+    </defs>
+    <ellipse cx="70" cy="55" rx="55" ry="45" fill="url(#ambGlow)" opacity=".7"><animate attributeName="rx" values="55;60;55" dur="3s" repeatCount="indefinite"/></ellipse>
+    <ellipse cx="70" cy="310" rx="58" ry="8" fill="rgba(60,40,20,.15)"/>
+    <path d="M12,295 L128,295 L122,310 Q70,316 18,310 Z" fill="url(#baseG)" stroke="#a89b84" stroke-width=".5"/>
+    <ellipse cx="70" cy="295" rx="58" ry="9" fill="#ddd2bb" stroke="#b8ab94" stroke-width=".5"/>
+    <ellipse cx="70" cy="295" rx="42" ry="6" fill="none" stroke="rgba(143,130,105,.35)" stroke-width=".8"/>
+    <rect x="30" y="282" width="80" height="13" rx="2" fill="url(#ringG)" stroke="#9e9280" stroke-width=".4"/>
+    <ellipse cx="70" cy="282" rx="40" ry="5" fill="#ddd2bb" stroke="#b8ab94" stroke-width=".4"/>
+    <path d="M38,282 L38,130 Q38,125 43,122 L97,122 Q102,125 102,130 L102,282" fill="url(#pedGrad)" stroke="#b8ab94" stroke-width=".5"/>
+    <path d="M38,282 L38,130 Q38,125 43,122 L97,122 Q102,125 102,130 L102,282" fill="url(#decoL)"/>
+    <line x1="55" y1="135" x2="55" y2="275" stroke="rgba(140,125,100,.18)" stroke-width="1.2"/>
+    <line x1="70" y1="130" x2="70" y2="278" stroke="rgba(140,125,100,.12)" stroke-width="1"/>
+    <line x1="85" y1="135" x2="85" y2="275" stroke="rgba(140,125,100,.18)" stroke-width="1.2"/>
+    <rect x="34" y="200" width="72" height="8" rx="1.5" fill="url(#ringG)" stroke="#9e9280" stroke-width=".3" opacity=".7"/>
+    <rect x="34" y="165" width="72" height="5" rx="1" fill="url(#ringG)" stroke="#9e9280" stroke-width=".3" opacity=".5"/>
+    <rect x="32" y="116" width="76" height="12" rx="3" fill="url(#ringG)" stroke="#9e9280" stroke-width=".5"/>
+    <ellipse cx="70" cy="116" rx="38" ry="6" fill="#e0d5be" stroke="#b8ab94" stroke-width=".5"/>
+    <circle cx="70" cy="116" r="2.5" fill="none" stroke="rgba(143,130,105,.3)" stroke-width=".6"/>
+    <path d="M28,110 Q28,100 36,96 L104,96 Q112,100 112,110 L112,116 L28,116 Z" fill="#c4b8a0" stroke="#a89b84" stroke-width=".5"/>
+    <ellipse cx="70" cy="98" rx="36" ry="6" fill="url(#domeSh)"/>
+    <g class="dome-group" id="domeGroup">
+      <ellipse cx="70" cy="72" rx="42" ry="38" fill="url(#domeGrad)"/>
+      <ellipse cx="70" cy="95" rx="42" ry="8" fill="#8b1818" opacity=".6"/>
+      <ellipse cx="70" cy="93" rx="40" ry="6" fill="#a01515" opacity=".4"/>
+      <ellipse cx="58" cy="55" rx="22" ry="18" fill="url(#domeHL)" opacity=".85"/>
+      <path d="M35,80 Q70,100 105,80" fill="none" stroke="rgba(255,180,180,.25)" stroke-width="1.2"/>
+      <circle cx="55" cy="48" r="4" fill="rgba(255,255,255,.5)"><animate attributeName="r" values="4;5;4" dur="2.5s" repeatCount="indefinite"/></circle>
+      <circle cx="52" cy="45" r="1.8" fill="rgba(255,255,255,.7)"/>
+    </g>
+    <text x="70" y="250" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="6.5" fill="rgba(100,88,70,.5)" letter-spacing=".15em" font-weight="600">PRESS</text>
+    <text x="70" y="260" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="5" fill="rgba(100,88,70,.35)" letter-spacing=".1em">FOR SCIENCE</text>
+  </svg>
+</div>
+
+<div class="shell">
+  <!-- ═══ HERO ═══ -->
+  <header class="hero reveal">
+    <div class="hero-top">
+      <div class="hero-intro">
+        <span class="eyebrow">BRB</span>
+        <h1>The Big Red Button Institute</h1>
+        <p class="subhead">Advancing the Frontiers of Pressability Research</p>
+      </div>
+      <figure class="hero-latour">
+        <img src="Latour.png" alt="Latour reference panel.">
+        <figcaption>Latour reference panel, BRB orientation archive.</figcaption>
+      </figure>
+    </div>
+    <div class="hero-mission">
+      <p>BRB is a transdisciplinary research collective dedicated to the empirical study of human-button interaction dynamics, deploying full-scale button installations to generate longitudinal datasets on press intervals, participation patterns, and the social life of collective curiosity.</p>
+    </div>
+  </header>
+
+  <!-- ═══ LAB PANEL ═══ -->
+  <section class="lab-panel reveal" id="labPanel">
+    <div class="lab-layout">
+      <div class="press-column" id="pressColumn">
+        <h2>Live Lab</h2>
+        <div class="counter-display">
+          <div class="counter-number" id="pressCount">0</div>
+          <div class="counter-label">verified presses</div>
+        </div>
+        <div class="press-btn-wrap">
+          <div class="ripple-ring" id="ripple1"></div>
+          <div class="ripple-ring" id="ripple2"></div>
+          <div class="ripple-ring" id="ripple3"></div>
+          <button id="pressBtn" class="press-btn" type="button">Press For Science</button>
+        </div>
+        <div class="press-mini-stats">
+          <div class="mini-stat"><div class="mini-stat-value red" id="statRate">0.0</div><div class="mini-stat-label">Press/min</div></div>
+          <div class="mini-stat"><div class="mini-stat-value" id="statEntropy">&mdash;</div><div class="mini-stat-label">Entropy</div></div>
+          <div class="mini-stat"><div class="mini-stat-value" id="statAvgInterval">&mdash;</div><div class="mini-stat-label">Avg ms</div></div>
+          <div class="mini-stat"><div class="mini-stat-value" id="statBurst">0</div><div class="mini-stat-label">Max Burst</div></div>
+        </div>
+        <p class="press-note">Methodology pending peer review.</p>
+      </div>
+      <div class="viz-column">
+        <div class="viz-card"><h3>Temporal Waveform</h3><canvas id="waveCanvas"></canvas></div>
+        <div class="viz-card"><h3>Inter-Press Intervals</h3><canvas id="intervalCanvas"></canvas></div>
+        <div class="viz-card"><h3>Entropy Field</h3><canvas id="entropyCanvas"></canvas></div>
+        <div class="viz-card"><h3>Press Burst Map</h3><canvas id="burstCanvas"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FIELD DEPLOYMENT ═══ -->
+  <section class="field-section reveal" id="fieldSection">
+    <div class="field-header">
+      <h2>Field Deployment</h2>
+      <p>BRB installs buttons in public spaces to study how collective pressing behavior emerges in the wild.</p>
+    </div>
+    <div class="scene-wrap" id="sceneWrap">
+      <svg class="street-svg" viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a8c4e0"/><stop offset="55%" stop-color="#cdd9e8"/><stop offset="100%" stop-color="#ddd8cc"/></linearGradient>
+          <linearGradient id="bldgA" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#b0a898"/><stop offset="50%" stop-color="#c7bfb0"/><stop offset="100%" stop-color="#a8a090"/></linearGradient>
+          <linearGradient id="bldgB" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8b9aaa"/><stop offset="50%" stop-color="#a0b0c0"/><stop offset="100%" stop-color="#8090a0"/></linearGradient>
+          <linearGradient id="bldgC" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#c4b09a"/><stop offset="100%" stop-color="#b0a08a"/></linearGradient>
+          <linearGradient id="sidewalkG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d4cfc2"/><stop offset="100%" stop-color="#bfb8a8"/></linearGradient>
+          <linearGradient id="roadG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6a6a6a"/><stop offset="100%" stop-color="#585858"/></linearGradient>
+          <radialGradient id="treeG" cx="50%" cy="40%" r="55%"><stop offset="0%" stop-color="#7aab65"/><stop offset="70%" stop-color="#5a8a48"/><stop offset="100%" stop-color="#4a7a3a"/></radialGradient>
+          <linearGradient id="winG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e8dcc0"/><stop offset="100%" stop-color="#c8bca0"/></linearGradient>
+          <linearGradient id="groundSh" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(60,50,40,.15)"/><stop offset="100%" stop-color="rgba(60,50,40,0)"/></linearGradient>
+        </defs>
+        <rect width="960" height="420" fill="url(#skyG)"/>
+        <ellipse cx="180" cy="60" rx="90" ry="22" fill="rgba(255,255,255,.5)"/><ellipse cx="220" cy="55" rx="60" ry="18" fill="rgba(255,255,255,.6)"/>
+        <ellipse cx="700" cy="45" rx="70" ry="16" fill="rgba(255,255,255,.4)"/><ellipse cx="750" cy="40" rx="50" ry="14" fill="rgba(255,255,255,.5)"/>
+        <rect x="30" y="80" width="160" height="260" rx="2" fill="url(#bldgA)"/><rect x="32" y="82" width="156" height="4" fill="rgba(160,150,135,.6)"/>
+        <g fill="url(#winG)" opacity=".7"><rect x="48" y="105" width="18" height="24" rx="1"/><rect x="78" y="105" width="18" height="24" rx="1"/><rect x="108" y="105" width="18" height="24" rx="1"/><rect x="138" y="105" width="18" height="24" rx="1"/><rect x="48" y="145" width="18" height="24" rx="1"/><rect x="78" y="145" width="18" height="24" rx="1"/><rect x="108" y="145" width="18" height="24" rx="1"/><rect x="138" y="145" width="18" height="24" rx="1"/><rect x="48" y="185" width="18" height="24" rx="1"/><rect x="78" y="185" width="18" height="24" rx="1"/><rect x="108" y="185" width="18" height="24" rx="1"/><rect x="138" y="185" width="18" height="24" rx="1"/><rect x="48" y="225" width="18" height="24" rx="1"/><rect x="78" y="225" width="18" height="24" rx="1"/><rect x="108" y="225" width="18" height="24" rx="1"/><rect x="138" y="225" width="18" height="24" rx="1"/><rect x="48" y="265" width="18" height="24" rx="1"/><rect x="78" y="265" width="18" height="24" rx="1"/><rect x="108" y="265" width="18" height="24" rx="1"/><rect x="138" y="265" width="18" height="24" rx="1"/></g>
+        <path d="M30,310 L190,310 L185,320 L35,320 Z" fill="#8a5a3a" opacity=".6"/>
+        <rect x="200" y="140" width="130" height="200" rx="2" fill="url(#bldgB)"/><rect x="202" y="142" width="126" height="3" fill="rgba(120,140,160,.5)"/>
+        <g fill="url(#winG)" opacity=".6"><rect x="216" y="162" width="16" height="22" rx="1"/><rect x="244" y="162" width="16" height="22" rx="1"/><rect x="272" y="162" width="16" height="22" rx="1"/><rect x="300" y="162" width="16" height="22" rx="1"/><rect x="216" y="200" width="16" height="22" rx="1"/><rect x="244" y="200" width="16" height="22" rx="1"/><rect x="272" y="200" width="16" height="22" rx="1"/><rect x="300" y="200" width="16" height="22" rx="1"/><rect x="216" y="238" width="16" height="22" rx="1"/><rect x="244" y="238" width="16" height="22" rx="1"/><rect x="272" y="238" width="16" height="22" rx="1"/><rect x="300" y="238" width="16" height="22" rx="1"/><rect x="216" y="276" width="16" height="22" rx="1"/><rect x="244" y="276" width="16" height="22" rx="1"/><rect x="272" y="276" width="16" height="22" rx="1"/><rect x="300" y="276" width="16" height="22" rx="1"/></g>
+        <rect x="340" y="170" width="180" height="170" rx="2" fill="url(#bldgC)"/>
+        <rect x="370" y="296" width="60" height="42" rx="2" fill="#3a4a5a" opacity=".7"/><rect x="374" y="300" width="52" height="32" rx="1" fill="#87a5c0" opacity=".35"/>
+        <rect x="355" y="284" width="150" height="14" rx="2" fill="#6a5040"/><text x="430" y="295" text-anchor="middle" font-family="'Manrope',sans-serif" font-size="8" fill="#e8dcc0" font-weight="700">CAFÉ &amp; BOOKS</text>
+        <g fill="url(#winG)" opacity=".65"><rect x="358" y="190" width="20" height="26" rx="1"/><rect x="392" y="190" width="20" height="26" rx="1"/><rect x="426" y="190" width="20" height="26" rx="1"/><rect x="460" y="190" width="20" height="26" rx="1"/><rect x="494" y="190" width="16" height="26" rx="1"/><rect x="358" y="232" width="20" height="26" rx="1"/><rect x="392" y="232" width="20" height="26" rx="1"/><rect x="426" y="232" width="20" height="26" rx="1"/><rect x="460" y="232" width="20" height="26" rx="1"/></g>
+        <rect x="448" y="304" width="30" height="34" rx="2" fill="#4a3a2a"/><circle cx="474" cy="322" r="2" fill="#c0a880"/>
+        <rect x="530" y="100" width="190" height="240" rx="2" fill="#a09888"/><rect x="532" y="102" width="186" height="4" fill="rgba(140,130,118,.5)"/>
+        <g fill="url(#winG)" opacity=".6"><rect x="548" y="125" width="20" height="26" rx="1"/><rect x="582" y="125" width="20" height="26" rx="1"/><rect x="616" y="125" width="20" height="26" rx="1"/><rect x="650" y="125" width="20" height="26" rx="1"/><rect x="684" y="125" width="20" height="26" rx="1"/><rect x="548" y="168" width="20" height="26" rx="1"/><rect x="582" y="168" width="20" height="26" rx="1"/><rect x="616" y="168" width="20" height="26" rx="1"/><rect x="650" y="168" width="20" height="26" rx="1"/><rect x="684" y="168" width="20" height="26" rx="1"/><rect x="548" y="211" width="20" height="26" rx="1"/><rect x="582" y="211" width="20" height="26" rx="1"/><rect x="616" y="211" width="20" height="26" rx="1"/><rect x="650" y="211" width="20" height="26" rx="1"/><rect x="684" y="211" width="20" height="26" rx="1"/><rect x="548" y="254" width="20" height="26" rx="1"/><rect x="582" y="254" width="20" height="26" rx="1"/><rect x="616" y="254" width="20" height="26" rx="1"/><rect x="650" y="254" width="20" height="26" rx="1"/><rect x="684" y="254" width="20" height="26" rx="1"/></g>
+        <rect x="730" y="160" width="230" height="180" rx="2" fill="#b4a898"/>
+        <g fill="url(#winG)" opacity=".5"><rect x="750" y="180" width="18" height="22" rx="1"/><rect x="782" y="180" width="18" height="22" rx="1"/><rect x="814" y="180" width="18" height="22" rx="1"/><rect x="846" y="180" width="18" height="22" rx="1"/><rect x="878" y="180" width="18" height="22" rx="1"/><rect x="910" y="180" width="18" height="22" rx="1"/><rect x="750" y="218" width="18" height="22" rx="1"/><rect x="782" y="218" width="18" height="22" rx="1"/><rect x="814" y="218" width="18" height="22" rx="1"/><rect x="846" y="218" width="18" height="22" rx="1"/><rect x="878" y="218" width="18" height="22" rx="1"/><rect x="910" y="218" width="18" height="22" rx="1"/><rect x="750" y="256" width="18" height="22" rx="1"/><rect x="782" y="256" width="18" height="22" rx="1"/><rect x="814" y="256" width="18" height="22" rx="1"/><rect x="846" y="256" width="18" height="22" rx="1"/></g>
+        <rect x="0" y="340" width="960" height="35" fill="url(#sidewalkG)"/><rect x="0" y="338" width="960" height="3" fill="#c0b8a5"/>
+        <g stroke="rgba(160,150,135,.3)" stroke-width=".8"><line x1="120" y1="342" x2="120" y2="375"/><line x1="240" y1="342" x2="240" y2="375"/><line x1="360" y1="342" x2="360" y2="375"/><line x1="480" y1="342" x2="480" y2="375"/><line x1="600" y1="342" x2="600" y2="375"/><line x1="720" y1="342" x2="720" y2="375"/><line x1="840" y1="342" x2="840" y2="375"/></g>
+        <rect x="0" y="340" width="960" height="8" fill="url(#groundSh)"/>
+        <rect x="0" y="375" width="960" height="45" fill="url(#roadG)"/>
+        <g stroke="#d4cc60" stroke-width="1.5" stroke-dasharray="20 15" opacity=".4"><line x1="0" y1="397" x2="960" y2="397"/></g>
+        <rect x="0" y="373" width="960" height="3" fill="#8a8070"/>
+        <rect x="418" y="275" width="4" height="65" rx="1" fill="#5a5a5a"/><rect x="414" y="273" width="12" height="5" rx="2" fill="#6a6a6a"/>
+        <path d="M420,276 L420,270 Q420,263 428,263 L438,263" fill="none" stroke="#5a5a5a" stroke-width="3" stroke-linecap="round"/>
+        <rect x="434" y="258" width="12" height="8" rx="2" fill="#707070"/><rect x="436" y="265" width="8" height="2" fill="#ffeeaa" opacity=".4"/>
+        <rect x="268" y="296" width="6" height="44" rx="2" fill="#6a5a4a"/>
+        <circle cx="271" cy="282" r="26" fill="url(#treeG)" opacity=".9"/><circle cx="253" cy="291" r="18" fill="#5a8a48" opacity=".8"/><circle cx="289" cy="288" r="20" fill="#68964a" opacity=".85"/><circle cx="271" cy="268" r="16" fill="#7aab65" opacity=".7"/>
+        <g transform="translate(620,348)"><rect x="0" y="0" width="40" height="3" rx="1" fill="#7a6a5a"/><rect x="0" y="5" width="40" height="3" rx="1" fill="#7a6a5a"/><rect x="2" y="8" width="3" height="10" fill="#6a5a4a"/><rect x="35" y="8" width="3" height="10" fill="#6a5a4a"/></g>
+        <g transform="translate(155,352)"><path d="M0,12 L0,0 Q0,-4 4,-4 L16,-4 Q20,-4 20,0 L20,12" fill="none" stroke="#808080" stroke-width="2"/><path d="M24,12 L24,0 Q24,-4 28,-4 L40,-4 Q44,-4 44,0 L44,12" fill="none" stroke="#808080" stroke-width="2"/></g>
+        <g transform="translate(700,348)"><rect x="0" y="4" width="14" height="16" rx="1" fill="#5a6a5a"/><rect x="-1" y="2" width="16" height="4" rx="1.5" fill="#6a7a6a"/></g>
+        <ellipse id="landingSpot" cx="500" cy="362" rx="16" ry="3" fill="rgba(223,44,44,0)" stroke="rgba(223,44,44,0)" stroke-width="1" stroke-dasharray="3 2"/>
+        <g id="person1"><circle cx="0" cy="-24" r="6" fill="#e0c8a0"/><ellipse cx="-1" cy="-25" rx="3" ry="2" fill="#5a4030" opacity=".7"/><rect x="-5" y="-18" width="10" height="16" rx="2.5" fill="#4a6a8a"/><line x1="-3" y1="-2" x2="-5" y2="10" stroke="#3a4a5a" stroke-width="3" stroke-linecap="round"/><line x1="3" y1="-2" x2="5" y2="10" stroke="#3a4a5a" stroke-width="3" stroke-linecap="round"/><line x1="-5" y1="-14" x2="-9" y2="-4" stroke="#4a6a8a" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="-14" x2="9" y2="-4" stroke="#4a6a8a" stroke-width="2.5" stroke-linecap="round"/></g>
+        <g id="person2"><circle cx="0" cy="-26" r="6.5" fill="#d4b090"/><ellipse cx="1" cy="-27" rx="4" ry="2.5" fill="#3a2a1a" opacity=".6"/><rect x="-6" y="-19" width="12" height="17" rx="2.5" fill="#c04040"/><line x1="-4" y1="-2" x2="-5" y2="10" stroke="#4a4a6a" stroke-width="3" stroke-linecap="round"/><line x1="4" y1="-2" x2="5" y2="10" stroke="#4a4a6a" stroke-width="3" stroke-linecap="round"/><line x1="-6" y1="-14" x2="-10" y2="-5" stroke="#c04040" stroke-width="2.5" stroke-linecap="round"/><line x1="6" y1="-14" x2="6" y2="-6" stroke="#c04040" stroke-width="2.5" stroke-linecap="round"/><rect x="4" y="-12" width="5" height="8" rx=".5" fill="#2a2a2a"/></g>
+        <g id="person3"><circle cx="0" cy="-24" r="6" fill="#c0a888"/><ellipse cx="0" cy="-26" rx="5" ry="3" fill="#2a2a3a" opacity=".5"/><rect x="-5" y="-18" width="10" height="16" rx="2.5" fill="#5a5a7a"/><line x1="-3" y1="-2" x2="-4" y2="10" stroke="#4a4a5a" stroke-width="3" stroke-linecap="round"/><line x1="3" y1="-2" x2="5" y2="10" stroke="#4a4a5a" stroke-width="3" stroke-linecap="round"/><line x1="-5" y1="-14" x2="-8" y2="-3" stroke="#5a5a7a" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="-14" x2="8" y2="-3" stroke="#5a5a7a" stroke-width="2.5" stroke-linecap="round"/></g>
+        <g transform="translate(636,344)"><circle cx="0" cy="-14" r="5.5" fill="#d0b898"/><rect x="-5" y="-8" width="10" height="12" rx="2" fill="#6a8a5a"/><line x1="-4" y1="4" x2="-6" y2="12" stroke="#4a4a5a" stroke-width="2.5" stroke-linecap="round"/><line x1="4" y1="4" x2="6" y2="12" stroke="#4a4a5a" stroke-width="2.5" stroke-linecap="round"/></g>
+        <g transform="translate(68,332)"><circle cx="0" cy="-24" r="5.5" fill="#d8c0a0"/><rect x="-5" y="-18" width="10" height="15" rx="2" fill="#8a5a6a"/><line x1="-3" y1="-3" x2="-4" y2="10" stroke="#5a4a5a" stroke-width="2.5" stroke-linecap="round"/><line x1="3" y1="-3" x2="4" y2="10" stroke="#5a4a5a" stroke-width="2.5" stroke-linecap="round"/></g>
+        <g transform="translate(82,332)"><circle cx="0" cy="-24" r="5.5" fill="#c8b090"/><rect x="-5" y="-18" width="10" height="15" rx="2" fill="#5a6a8a"/><line x1="-3" y1="-3" x2="-4" y2="10" stroke="#3a4a5a" stroke-width="2.5" stroke-linecap="round"/><line x1="3" y1="-3" x2="4" y2="10" stroke="#3a4a5a" stroke-width="2.5" stroke-linecap="round"/></g>
+      </svg>
+      <div class="scene-status" id="sceneStatus">FIELD UNIT DEPLOYING…</div>
+    </div>
+    <p class="field-caption" id="fieldCaption">Scroll this section into view to deploy the field unit.</p>
+
+    <!-- ═══ MINI DASHBOARD ═══ -->
+    <div class="mini-dashboard" id="miniDash">
+      <div class="mini-dash-header">
+        <h3>Field Telemetry</h3>
+        <div class="mini-dash-stats">
+          <div class="md-stat"><div class="md-stat-val red" id="mdRate">0.0</div><div class="md-stat-lbl">Press/min</div></div>
+          <div class="md-stat"><div class="md-stat-val" id="mdEntropy">&mdash;</div><div class="md-stat-lbl">Entropy</div></div>
+          <div class="md-stat"><div class="md-stat-val" id="mdAvg">&mdash;</div><div class="md-stat-lbl">Avg ms</div></div>
+          <div class="md-stat"><div class="md-stat-val" id="mdBurst">0</div><div class="md-stat-lbl">Burst</div></div>
+        </div>
+      </div>
+      <div class="mini-viz-row">
+        <div class="mini-viz-card"><h4>Waveform</h4><canvas id="mWave"></canvas></div>
+        <div class="mini-viz-card"><h4>Intervals</h4><canvas id="mInterval"></canvas></div>
+        <div class="mini-viz-card"><h4>Entropy</h4><canvas id="mEntropy"></canvas></div>
+        <div class="mini-viz-card"><h4>Bursts</h4><canvas id="mBurst"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ MORE CONTENT ═══ -->
+  <main class="stack">
+    <section class="panel reveal">
+      <h2>Participate</h2>
+      <p>BRB is currently seeking installation sites, partner institutions, resident artists, and dedicated pressers.</p>
+      <p>If you encounter a Big Red Button in your city, your contribution enters the dataset, shifts the model, and helps define the next phase of pressability research.</p>
+      <p><strong>Press, and be counted.</strong></p>
+    </section>
+  </main>
+</div>
+
+<footer class="footer reveal">
+  <p><strong>The Big Red Button Institute</strong><br>A Research Collective for Pressability Studies</p>
+  <p>Contact: <a href="mailto:inquiries@bigredbutton.institute">inquiries@bigredbutton.institute</a></p>
+  <p><em>"The question is not whether to press. The question is what pressing means."</em> — BRB Founding Charter, Article I</p>
+</footer>
+
+<script>
+(function(){
+
+/* ═══ SHARED DATA ═══ */
+var pressTimestamps=[],intervals=[],count=0,sessionStart=Date.now(),maxBurst=0;
+var waveData=[],wavePhase=0,entropyVal=0,burstBins=new Array(40).fill(0);
+var entropyParticlesMain=[],entropyParticlesMini=[];
+
+/* ═══ DOM ═══ */
+var pedestal=document.getElementById("pedestalFloat"),dome=document.getElementById("domeGroup");
+var shockwave=document.getElementById("shockwave"),sceneWrap=document.getElementById("sceneWrap");
+var sceneStatus=document.getElementById("sceneStatus"),fieldCaption=document.getElementById("fieldCaption");
+var landingSpot=document.getElementById("landingSpot"),fieldSection=document.getElementById("fieldSection");
+var pressCol=document.getElementById("pressColumn"),miniDash=document.getElementById("miniDash");
+var person1=document.getElementById("person1"),person2=document.getElementById("person2"),person3=document.getElementById("person3");
+var btn=document.getElementById("pressBtn"),countEl=document.getElementById("pressCount");
+var ripples=[document.getElementById("ripple1"),document.getElementById("ripple2"),document.getElementById("ripple3")];
+var rippleIdx=0;
+
+// Stats elements (both sets)
+var statRate=document.getElementById("statRate"),statEntropy=document.getElementById("statEntropy");
+var statAvg=document.getElementById("statAvgInterval"),statBurst=document.getElementById("statBurst");
+var mdRate=document.getElementById("mdRate"),mdEntropy=document.getElementById("mdEntropy");
+var mdAvg=document.getElementById("mdAvg"),mdBurst=document.getElementById("mdBurst");
+
+// Main canvases
+var wC=document.getElementById("waveCanvas"),wCtx=wC.getContext("2d");
+var iC=document.getElementById("intervalCanvas"),iCtx=iC.getContext("2d");
+var eC=document.getElementById("entropyCanvas"),eCtx=eC.getContext("2d");
+var bC=document.getElementById("burstCanvas"),bCtx=bC.getContext("2d");
+// Mini canvases
+var mwC=document.getElementById("mWave"),mwCtx=mwC.getContext("2d");
+var miC=document.getElementById("mInterval"),miCtx=miC.getContext("2d");
+var meC=document.getElementById("mEntropy"),meCtx=meC.getContext("2d");
+var mbC=document.getElementById("mBurst"),mbCtx=mbC.getContext("2d");
+
+/* ═══ CANVAS SETUP ═══ */
+function setupCanvas(c){var r=c.getBoundingClientRect(),d=window.devicePixelRatio||1;
+  c.width=r.width*d;c.height=r.height*d;c.getContext("2d").scale(d,d);
+  c.style.width=r.width+"px";c.style.height=r.height+"px";}
+var vizReady=false;
+function initAllCanvases(){
+  vizReady=false;
+  [wC,iC,eC,bC,mwC,miC,meC,mbC].forEach(setupCanvas);
+  vizReady=true;
+}
+setTimeout(initAllCanvases,300);
+window.addEventListener("resize",function(){setTimeout(initAllCanvases,100);capturedFloatPos=null;
+  if(isDocked){var a=getDockAbsolutePos();pedestal.style.left=a.left+"px";pedestal.style.top=a.top+"px";pedestal.style.width=a.width+"px";pedestal.style.height=a.height+"px";}});
+
+/* ═══ VIZ DRAW FUNCTIONS (parameterized by canvas) ═══ */
+function drawWave(ctx,canvas){
+  var w=canvas.getBoundingClientRect().width,h=canvas.getBoundingClientRect().height;
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle="rgba(255,255,255,.04)";ctx.lineWidth=1;
+  for(var gy=20;gy<h;gy+=20){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(w,gy);ctx.stroke();}
+  ctx.strokeStyle="rgba(255,255,255,.08)";ctx.beginPath();ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);ctx.stroke();
+  if(waveData.length<2){ctx.beginPath();ctx.strokeStyle="rgba(223,44,44,.2)";ctx.lineWidth=1.5;
+    for(var x=0;x<w;x++){var y=h/2+Math.sin(x*.03+wavePhase)*6;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+    ctx.stroke();wavePhase+=.02;
+  }else{ctx.beginPath();var g=ctx.createLinearGradient(0,0,w,0);g.addColorStop(0,"rgba(223,44,44,.15)");g.addColorStop(1,"rgba(223,44,44,.9)");
+    ctx.strokeStyle=g;ctx.lineWidth=2;var mp=80,pts=waveData.slice(-mp);
+    for(var i=0;i<pts.length;i++){var px=(i/(mp-1))*w,py=h/2-pts[i]*(h*.4);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+    ctx.stroke();ctx.lineTo(w,h/2);ctx.lineTo(0,h/2);ctx.closePath();
+    var gf=ctx.createLinearGradient(0,0,0,h);gf.addColorStop(0,"rgba(223,44,44,.1)");gf.addColorStop(.5,"rgba(223,44,44,0)");gf.addColorStop(1,"rgba(223,44,44,.06)");ctx.fillStyle=gf;ctx.fill();}
+}
+function drawIntervals(ctx,canvas){
+  var w=canvas.getBoundingClientRect().width,h=canvas.getBoundingClientRect().height;
+  ctx.clearRect(0,0,w,h);ctx.strokeStyle="rgba(255,255,255,.04)";
+  for(var gy=20;gy<h;gy+=20){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(w,gy);ctx.stroke();}
+  if(!intervals.length){ctx.fillStyle="rgba(255,255,255,.07)";ctx.font="11px 'IBM Plex Mono',monospace";ctx.textAlign="center";ctx.fillText("Awaiting data\u2026",w/2,h/2);return;}
+  var mb=25,data=intervals.slice(-mb),mx=Math.max.apply(null,data)||1,bw=(w-8)/mb,gap=2;
+  for(var i=0;i<data.length;i++){var bh=(data[i]/mx)*(h-16),x=4+i*bw,y=h-8-bh,t=1-(data[i]/mx);
+    ctx.fillStyle="rgba("+(223+Math.round(t*32))+","+(44+Math.round(t*56))+","+(44+Math.round(t*36))+",.8)";
+    ctx.beginPath();ctx.roundRect(x+gap/2,y,bw-gap,bh,2);ctx.fill();}
+}
+function drawEntropy(ctx,canvas,particles){
+  var w=canvas.getBoundingClientRect().width,h=canvas.getBoundingClientRect().height;
+  ctx.clearRect(0,0,w,h);
+  if(!particles.length){for(var i=0;i<50;i++)particles.push({x:Math.random()*w,y:Math.random()*h,vx:0,vy:0,r:Math.random()*2+.8});}
+  var chaos=Math.min(entropyVal/3,1);
+  for(var i=0;i<particles.length;i++){var p=particles[i];
+    p.vx+=(Math.random()-.5)*chaos*1.5;p.vy+=(Math.random()-.5)*chaos*1.5;
+    p.vx*=.92;p.vy*=.92;p.vx+=(w/2-p.x)*.001;p.vy+=(h/2-p.y)*.001;p.x+=p.vx;p.y+=p.vy;
+    for(var j=i+1;j<particles.length;j++){var q=particles[j],dx=q.x-p.x,dy=q.y-p.y,dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<45+chaos*25){ctx.strokeStyle="rgba(223,44,44,"+((1-dist/(45+chaos*25))*.2)+")";ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();}}
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r+chaos*1.5,0,Math.PI*2);ctx.fillStyle="rgba(223,80,60,"+(.3+chaos*.5)+")";ctx.fill();}
+}
+function drawBurst(ctx,canvas){
+  var w=canvas.getBoundingClientRect().width,h=canvas.getBoundingClientRect().height;
+  ctx.clearRect(0,0,w,h);var bw=w/burstBins.length,mx=Math.max.apply(null,burstBins)||1;
+  for(var i=0;i<burstBins.length;i++){var t=burstBins[i]/mx;
+    ctx.fillStyle="rgb("+(30+Math.round(t*200))+","+(18+Math.round(t*30))+","+(24+Math.round(t*20))+")";ctx.fillRect(i*bw,0,bw,h);
+    if(t>.3){ctx.fillStyle="rgba(255,68,68,"+(t*.4)+")";ctx.fillRect(i*bw,0,bw,h);}}
+  var sx=((Date.now()%8000)/8000)*w;ctx.fillStyle="rgba(255,255,255,.1)";ctx.fillRect(sx-1,0,2,h);
+  for(var k=0;k<burstBins.length;k++)burstBins[k]*=.997;
+}
+
+function drawAllViz(){
+  if(!vizReady)return;
+  drawWave(wCtx,wC);drawIntervals(iCtx,iC);drawEntropy(eCtx,eC,entropyParticlesMain);drawBurst(bCtx,bC);
+  drawWave(mwCtx,mwC);drawIntervals(miCtx,miC);drawEntropy(meCtx,meC,entropyParticlesMini);drawBurst(mbCtx,mbC);
+  requestAnimationFrame(drawAllViz);
+}
+setTimeout(drawAllViz,400);
+
+/* ═══ STATS ═══ */
+function computeEntropy(arr){if(arr.length<3)return 0;var bins={},r=arr.slice(-20);
+  for(var i=0;i<r.length;i++){var b=Math.round(r[i]/200)*200;bins[b]=(bins[b]||0)+1;}
+  var total=r.length,ent=0,ks=Object.keys(bins);for(var j=0;j<ks.length;j++){var p=bins[ks[j]]/total;if(p>0)ent-=p*Math.log2(p);}return ent;}
+function computeBurst(){if(pressTimestamps.length<2)return 0;var b=1,best=1;
+  for(var i=1;i<pressTimestamps.length;i++){if(pressTimestamps[i]-pressTimestamps[i-1]<600){b++;if(b>best)best=b;}else b=1;}return best;}
+function updateStats(){
+  var now=Date.now(),rp=pressTimestamps.filter(function(t){return now-t<60000;}).length;
+  var rv=rp.toFixed(1),ent=computeEntropy(intervals);entropyVal=ent;
+  var ev=ent>0?ent.toFixed(2):"\u2014",av="\u2014";
+  if(intervals.length>0){var s=0,r10=intervals.slice(-10);for(var i=0;i<r10.length;i++)s+=r10[i];av=Math.round(s/r10.length);}
+  var b=computeBurst();if(b>maxBurst)maxBurst=b;var bv=maxBurst;
+  statRate.textContent=rv;statEntropy.textContent=ev;statAvg.textContent=av;statBurst.textContent=bv;
+  mdRate.textContent=rv;mdEntropy.textContent=ev;mdAvg.textContent=av;mdBurst.textContent=bv;
+}
+setInterval(updateStats,1000);
+setInterval(function(){if(waveData.length>0){waveData.push(waveData[waveData.length-1]*.85);
+  if(waveData.length>120)waveData.splice(0,waveData.length-120);
+  if(Math.abs(waveData[waveData.length-1])<.01)waveData.push(0);}},60);
+
+/* ═══ PEDESTAL CONFIG ═══ */
+var FLOAT_W=140,FLOAT_H=320,LAND_X=500,LAND_Y=362,PED_H=34,p2Home=560;
+
+/* ═══ FLOAT STATE ═══ */
+var fl={baseX:80,baseY:28,phase1:Math.random()*6.28,phase2:Math.random()*6.28,
+  phase3:Math.random()*6.28,phase4:Math.random()*6.28,
+  shiftTimer:0,shiftTargetX:0,shiftTargetY:0,shiftCurX:0,shiftCurY:0,
+  nextShift:3000+Math.random()*5000,x:0,y:0,rot:0};
+var isDocked=false,isUndocking=false,isPressed=false,capturedFloatPos=null;
+
+function smoothstep(t){return t*t*(3-2*t);}
+
+function tickFloat(){
+  fl.phase1+=.008;fl.phase2+=.011;fl.phase3+=.006;fl.phase4+=.0035;
+  var dx=Math.sin(fl.phase1)*18+Math.sin(fl.phase2*.7)*10;
+  var dy=Math.cos(fl.phase3)*14+Math.sin(fl.phase4*1.3)*8;
+  fl.rot=Math.sin(fl.phase1*.6)*4+Math.sin(fl.phase2*.4)*2.5;
+  fl.shiftTimer+=16;if(fl.shiftTimer>fl.nextShift){fl.shiftTimer=0;fl.nextShift=4000+Math.random()*7000;
+    fl.shiftTargetX=(Math.random()-.5)*120;fl.shiftTargetY=(Math.random()-.5)*80;}
+  fl.shiftCurX+=(fl.shiftTargetX-fl.shiftCurX)*.008;fl.shiftCurY+=(fl.shiftTargetY-fl.shiftCurY)*.008;
+  var vw=window.innerWidth,vh=window.innerHeight;
+  var px=(fl.baseX/100)*vw+dx+fl.shiftCurX,py=(fl.baseY/100)*vh+dy+fl.shiftCurY;
+  fl.x=Math.max(20,Math.min(vw-160,px));fl.y=Math.max(20,Math.min(vh-340,py));
+}
+
+function getSceneMapping(){var r=sceneWrap.getBoundingClientRect();var sx=r.width/960,sy=r.height/420;
+  var s=Math.max(sx,sy);return{scale:s,offX:(r.width-960*s)/2,offY:(r.height-420*s)/2,rect:r};}
+function getDockScreenPos(){var m=getSceneMapping(),h=PED_H*m.scale,w=h*(FLOAT_W/FLOAT_H);
+  return{x:m.rect.left+m.offX+LAND_X*m.scale-w/2,y:m.rect.top+m.offY+LAND_Y*m.scale-h,w:w,h:h};}
+function getDockAbsolutePos(){var m=getSceneMapping(),h=PED_H*m.scale,w=h*(FLOAT_W/FLOAT_H);
+  return{left:m.offX+LAND_X*m.scale-w/2,top:m.offY+LAND_Y*m.scale-h,width:w,height:h};}
+
+function getScrollProgress(){var sr=sceneWrap.getBoundingClientRect(),vh=window.innerHeight;
+  var raw=(vh*.9-sr.top)/(vh*.9-vh*.3);return Math.max(0,Math.min(1,raw));}
+
+function applyDockProgress(progress){
+  var t=smoothstep(progress);
+  if(progress>0&&progress<1&&!capturedFloatPos)capturedFloatPos={x:fl.x,y:fl.y,rot:fl.rot};
+  if(progress===0)capturedFloatPos=null;
+  if(isDocked||isUndocking)return;
+
+  // Mini dashboard visibility
+  if(t>.6)miniDash.classList.add("visible");else miniDash.classList.remove("visible");
+
+  if(progress<=0){pedestal.style.transform="translate("+fl.x+"px,"+fl.y+"px) rotate("+fl.rot+"deg)";
+    pedestal.style.width=FLOAT_W+"px";pedestal.style.height=FLOAT_H+"px";pedestal.style.filter="";
+    landingSpot.setAttribute("stroke","rgba(223,44,44,0)");landingSpot.setAttribute("fill","rgba(223,44,44,0)");
+    sceneStatus.classList.remove("show");return;}
+
+  var dock=getDockScreenPos(),src=capturedFloatPos||{x:fl.x,y:fl.y,rot:fl.rot};
+  pedestal.style.width=(FLOAT_W+(dock.w-FLOAT_W)*t)+"px";
+  pedestal.style.height=(FLOAT_H+(dock.h-FLOAT_H)*t)+"px";
+  pedestal.style.transform="translate("+(src.x+(dock.x-src.x)*t)+"px,"+(src.y+(dock.y-src.y)*t)+"px) rotate("+(src.rot*(1-t))+"deg)";
+  var bs=20*(1-t)+3*t,bb=40*(1-t)+6*t;
+  pedestal.style.filter="drop-shadow(0 "+bs+"px "+bb+"px rgba(22,28,38,.25)) drop-shadow(0 "+(4*(1-t)+1*t)+"px "+(12*(1-t)+3*t)+"px rgba(143,23,23,.2))";
+
+  var sa=Math.max(0,(t-.3)/.7);
+  landingSpot.setAttribute("stroke","rgba(223,44,44,"+(sa*.6)+")");landingSpot.setAttribute("fill","rgba(223,44,44,"+(sa*.1)+")");
+  if(t>.2){sceneStatus.textContent="FIELD UNIT DEPLOYING\u2026 "+Math.round(t*100)+"%";sceneStatus.classList.add("show");}
+  if(progress>=1&&!isDocked)finalizeDock();
+}
+
+function finalizeDock(){isDocked=true;var a=getDockAbsolutePos();
+  pedestal.style.position="absolute";pedestal.style.left=a.left+"px";pedestal.style.top=a.top+"px";
+  pedestal.style.width=a.width+"px";pedestal.style.height=a.height+"px";pedestal.style.transform="rotate(0deg)";
+  sceneWrap.appendChild(pedestal);pedestal.classList.add("docked");
+  sceneStatus.textContent="FIELD UNIT ACTIVE \u2014 AWAITING PRESSES";
+  fieldCaption.textContent="Button deployed. Press it and watch telemetry below.";
+  miniDash.classList.add("visible");startDockedBob();animateCuriosity();}
+
+function undockFromScene(){if(!isDocked||isUndocking)return;isUndocking=true;stopDockedBob();
+  landingSpot.setAttribute("stroke","rgba(223,44,44,0)");landingSpot.setAttribute("fill","rgba(223,44,44,0)");
+  sceneStatus.textContent="FIELD UNIT RETRACTING\u2026";miniDash.classList.remove("visible");
+  var cr=pedestal.getBoundingClientRect();document.body.appendChild(pedestal);pedestal.classList.remove("docked");
+  pedestal.style.position="fixed";pedestal.style.left="0";pedestal.style.top="0";pedestal.style.transition="none";
+  pedestal.style.transform="translate("+cr.left+"px,"+cr.top+"px) rotate(0deg)";
+  pedestal.style.width=cr.width+"px";pedestal.style.height=cr.height+"px";void pedestal.offsetWidth;
+  pedestal.classList.add("undocking");pedestal.style.width=FLOAT_W+"px";pedestal.style.height=FLOAT_H+"px";
+  pedestal.style.filter="";pedestal.style.transform="translate("+fl.x+"px,"+fl.y+"px) rotate("+fl.rot+"deg)";
+  setTimeout(function(){pedestal.classList.remove("undocking");pedestal.style.transition="";
+    isUndocking=false;isDocked=false;capturedFloatPos=null;
+    sceneStatus.classList.remove("show");fieldCaption.textContent="Scroll this section into view to deploy the field unit.";resetPeople();},1250);}
+
+var bobRAF=null,bobPhase=0;
+function startDockedBob(){function bob(){if(!isDocked)return;bobPhase+=.025;var a=getDockAbsolutePos();
+  pedestal.style.left=a.left+"px";pedestal.style.top=(a.top+Math.sin(bobPhase)*1.2)+"px";
+  pedestal.style.width=a.width+"px";pedestal.style.height=a.height+"px";bobRAF=requestAnimationFrame(bob);}bob();}
+function stopDockedBob(){if(bobRAF)cancelAnimationFrame(bobRAF);}
+
+/* ═══ MAIN LOOP ═══ */
+function mainLoop(){tickFloat();var p=getScrollProgress();
+  if(isDocked){if(p<.5)undockFromScene();}
+  else if(!isUndocking){applyDockProgress(p);if(p<=0)pedestal.style.transform="translate("+fl.x+"px,"+fl.y+"px) rotate("+fl.rot+"deg)";}
+  requestAnimationFrame(mainLoop);}
+mainLoop();
+
+/* ═══ PEDESTRIANS ═══ */
+var walkPhase=0;
+function walkPeople(){walkPhase+=.3;
+  person1.setAttribute("transform","translate("+(((walkPhase*.8)%1060)-50)+",332)");
+  person3.setAttribute("transform","translate("+(1010-((walkPhase*.5)%1060))+",332)");
+  if(!isDocked)person2.setAttribute("transform","translate("+p2Home+",332)");
+  requestAnimationFrame(walkPeople);}walkPeople();
+var curiosityTimer=null;
+function animateCuriosity(){curiosityTimer=setTimeout(function(){if(!isDocked)return;
+  var sx=p2Home,ex=512,t0=performance.now();
+  function step(now){if(!isDocked)return;var t=Math.min((now-t0)/2200,1);t=smoothstep(t);
+    person2.setAttribute("transform","translate("+(sx+(ex-sx)*t)+",332)");if(t<1)requestAnimationFrame(step);}
+  requestAnimationFrame(step);},600);}
+function resetPeople(){clearTimeout(curiosityTimer);var c=person2.getAttribute("transform"),m=c&&c.match(/translate\(([\d.]+)/);
+  var sx=m?parseFloat(m[1]):p2Home,t0=performance.now();
+  function step(now){var t=Math.min((now-t0)/800,1);t=smoothstep(t);
+    person2.setAttribute("transform","translate("+(sx+(p2Home-sx)*t)+",332)");if(t<1)requestAnimationFrame(step);}
+  requestAnimationFrame(step);}
+
+/* ═══ PRESS (unified — both lab button + pedestal) ═══ */
+function handlePress(){
+  var now=Date.now();count++;pressTimestamps.push(now);
+  if(pressTimestamps.length>1)intervals.push(now-pressTimestamps[pressTimestamps.length-2]);
+  countEl.textContent=count;countEl.classList.add("bump");setTimeout(function(){countEl.classList.remove("bump");},200);
+  waveData.push(1);setTimeout(function(){for(var i=0;i<5;i++)waveData.push(Math.sin(i*1.2)*Math.exp(-i*.3)*.6);},50);
+  var elapsed=(now-sessionStart)/1000,tw=Math.max(elapsed,30);
+  burstBins[Math.min(Math.floor((elapsed/tw)*burstBins.length),burstBins.length-1)]+=1;
+  [entropyParticlesMain,entropyParticlesMini].forEach(function(ps){for(var i=0;i<ps.length;i++){ps[i].vx+=(Math.random()-.5)*6;ps[i].vy+=(Math.random()-.5)*6;}});
+  updateStats();
+}
+
+// Lab button
+btn.addEventListener("click",function(){
+  handlePress();btn.classList.add("is-pressed");setTimeout(function(){btn.classList.remove("is-pressed");},140);
+  pressCol.classList.add("glow");setTimeout(function(){pressCol.classList.remove("glow");},400);
+  var ring=ripples[rippleIdx%ripples.length];ring.classList.remove("animate");void ring.offsetWidth;ring.classList.add("animate");rippleIdx++;
+});
+
+// Pedestal click
+function spawnSparkles(cx,cy,n){for(var i=0;i<n;i++){var el=document.createElement("div");el.className="sparkle";
+  var a=(Math.PI*2/n)*i+(Math.random()-.5)*.5,d=20+Math.random()*40;
+  el.style.left=cx+"px";el.style.top=cy+"px";
+  el.style.setProperty("--sx",Math.cos(a)*d+"px");el.style.setProperty("--sy",(Math.sin(a)*d-10)+"px");
+  el.style.width=(2+Math.random()*4)+"px";el.style.height=el.style.width;
+  el.style.background=["#ff4444","#ff7744","#ffaa44","#df2c2c"][~~(Math.random()*4)];
+  document.body.appendChild(el);void el.offsetWidth;el.classList.add("go");
+  (function(e){setTimeout(function(){e.remove();},800);})(el);}}
+
+pedestal.addEventListener("click",function(){
+  if(isPressed||isUndocking)return;isPressed=true;
+  handlePress();
+  dome.classList.add("pushed");pedestal.classList.add("pressed-glow");
+  var r=pedestal.getBoundingClientRect(),cx=r.left+r.width*.5,cy=r.top+r.height*.22;
+  shockwave.style.left=cx+"px";shockwave.style.top=cy+"px";
+  shockwave.classList.remove("go");void shockwave.offsetWidth;shockwave.classList.add("go");
+  spawnSparkles(cx,cy,isDocked?6:14);
+  if(isDocked){var c=parseInt(sceneStatus.dataset.count||"0")+1;sceneStatus.dataset.count=c;
+    sceneStatus.textContent="PRESS #"+c+" RECORDED \u2014 FIELD DATA LOGGED";}
+  setTimeout(function(){dome.classList.remove("pushed");pedestal.classList.remove("pressed-glow");isPressed=false;},400);});
+
+pedestal.querySelector("svg").addEventListener("mouseenter",function(){
+  if(!dome.classList.contains("pushed")){dome.style.transition="transform 300ms cubic-bezier(.34,1.56,.64,1)";dome.style.transform="scale(1.04)";}});
+pedestal.querySelector("svg").addEventListener("mouseleave",function(){
+  if(!dome.classList.contains("pushed"))dome.style.transform="";});
+
+})();
+</script>
+</body>
+</html>

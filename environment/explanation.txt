@@ -1,0 +1,15 @@
+This is a fantastic concept — the button leaving the UI layer and entering the "world" of the research. Let me build a full working prototype of this.Now let me create the integration guide:Here's the full working prototype. Open it and scroll down to see the interaction in action. Here's how it works:
+
+**The scene**: An SVG street corner with five buildings (including a "Café & Books" shop), a tree with clustered foliage, a lamppost, bench, bike rack, trash bin, and three pedestrians — two walking in opposite directions, one standing with a phone.
+
+**The dock mechanic** (scroll-triggered via IntersectionObserver):
+
+1. When the Field Deployment section hits ~45% visibility, the floating pedestal **stops drifting** and enters `docking` state
+2. It **flies across the screen** to a landing spot on the sidewalk (SVG coord 500, 345), with a spring-overshoot easing curve (`cubic-bezier(0.34, 1.2, 0.64, 1)`)
+3. It **shrinks from 140×320 → 44×100px** during the flight, becoming street-furniture scale
+4. A pulsing landing-spot marker appears on the sidewalk, a HUD status bar reads "FIELD UNIT DEPLOYING…" then "FIELD UNIT ACTIVE"
+5. Once docked, it does a **gentle idle bob** and the phone-person **walks closer** to investigate
+6. Pressing it while docked logs numbered presses in the HUD
+7. **Scrolling away** reverses everything — it scales back up, flies to its last floating position, and resumes the fairy drift
+
+The integration guide covers exactly where to paste the CSS, HTML, and JS into your existing `index.html`, how to adjust the landing coordinates, docked size, timing, and how to wire it into your live dashboard press counter.
