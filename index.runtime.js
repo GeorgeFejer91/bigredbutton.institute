@@ -959,6 +959,15 @@
     person4Bubble.setAttribute("opacity", visible ? "1" : "0");
   }
 
+  function updateReggieBubbleLayout() {
+    if (!person4Bubble) return;
+    if (window.innerWidth <= 650) {
+      person4Bubble.setAttribute("transform", "translate(-20,-20) scale(1.22)");
+    } else {
+      person4Bubble.setAttribute("transform", "translate(0,0) scale(1)");
+    }
+  }
+
   function renderReggieQuote(text) {
     if (!person4Quote) return;
     while (person4Quote.firstChild) person4Quote.removeChild(person4Quote.firstChild);
@@ -1328,6 +1337,7 @@
   window.BRB.triggerPress = triggerExternalPress;
 
   collectRedWords();
+  updateReggieBubbleLayout();
   initAmbient();
   resizeAmbient();
   resizeCanvases();
@@ -1338,6 +1348,7 @@
   renderPedestalLoop();
 
   window.addEventListener("resize", function () {
+    updateReggieBubbleLayout();
     resizeAmbient();
     resizeCanvases();
     if (isDocked && pedestal) {
