@@ -4,8 +4,8 @@ This folder is organized around the final deliverables for the first Big Red But
 
 ## Final deliverables
 
-- `final/Instructions3_with_background_mix_louder_instructions.mp3`
-- `final/Media1_leftcrop_1280x720_slow_with_instructions.mp4`
+- `final/first-big-red-button-vr-study-instructions-final.mp3`
+- `final/first-big-red-button-vr-study-demo-final-1280x720.mp4`
 
 ## Reusable assets
 
@@ -16,6 +16,10 @@ This folder is organized around the final deliverables for the first Big Red But
 - `reusable/models/` - 3D model source files
 - `reusable/audio/local-only/` - oversized local assets kept out of GitHub
 
+## Naming convention
+
+Files use lowercase kebab-case names with explicit roles such as `source`, `derived`, and `final`.
+
 ## GitHub note
 
-The raw `Accounting+  Full Game Walkthrough  No Commentary - 99TH VR.mp3` source is stored under `reusable/audio/local-only/` and ignored in Git because it exceeds GitHub's standard file size limit.
+The raw `reusable/audio/local-only/accounting-plus-full-source.mp3` asset is ignored in Git because it exceeds GitHub's standard file size limit.
