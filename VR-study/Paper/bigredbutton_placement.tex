@@ -1,0 +1,29 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{natbib}
+\bibliographystyle{apalike}
+\usepackage{hyperref}
+
+\title{Placement of the Big Red Button in Virtual Reality}
+\author{George Fejer}
+\date{}
+
+\begin{document}
+\maketitle
+
+The Big Red Button was rendered as a view-locked element, fixed to the participant's head-mounted display at a constant position in the visual field regardless of head orientation, thereby standardizing the cumulative duration of visual exposure across all participants and conditions.
+Its placement was determined by jointly optimizing attentional capture and motor comfort.
+Following empirical guidelines for interactive elements in head-worn displays, the button was centered on the horizontal midline (0\textdegree{} azimuth) and offset 15\textdegree{} below eye level, a region that falls within the broadly recommended 0--35\textdegree{} inferior and 0--10\textdegree{} lateral zone for comfortable, high-accuracy interaction \citep{Lin2021, Mirbagheri2024}.
+To ensure that participants could comfortably reach and press the button at full arm extension, its virtual distance was set to 0.75\,m from the viewpoint, corresponding to the approximate mean functional arm length (acromion to fingertip) reported for European working-age adults in 3D-scan anthropometric surveys \citep{Bonin2022}.
+While no single nationally representative study reports a definitive ``average arm length'' for Germany, Western Europe, or the global population, available segment data from the German working-age sample place median shoulder-to-elbow length at approximately 36--39\,cm and median forearm-to-fingertip length at approximately 45--49\,cm for men and women combined, yielding an estimated functional reach on the order of 72--80\,cm \citep{Bonin2022, Stolzenberg2007, Minetto2022}.
+We chose 0.75\,m as a conservative value within this range to accommodate shorter-armed individuals.
+At this distance the button subtended a visual angle of approximately 7.6\textdegree{}, corresponding to a diameter of 10\,cm, substantially exceeding the 1--2\textdegree{} minimum shown to support reliable target selection in AR and VR gaze studies \citep{Mirbagheri2024, Castellana2025} and thereby ensuring high perceptual salience.
+The button was rendered in saturated red against a uniform, low-contrast background, functioning as a chromatic feature singleton known to capture both covert and overt attention in a bottom-up fashion \citep{Xi2025, Castellotti2022, Li2008}.
+Taken together, these parameters were chosen on the basis that no single ``golden'' angle or distance universally maximizes attention in virtual environments \citep{Luck2020, Haas2018}; instead, we selected a configuration within the convergent empirically supported ranges for comfort, reach, and salience, and augmented it with a view-locked design to control for individual differences in gaze behavior and head movement \citep{Alghofaili2019, McNamara2019}.
+
+\bibliography{bigredbutton_placement}
+
+\end{document}

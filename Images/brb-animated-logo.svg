@@ -1,0 +1,413 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">The Big Red Button Institute animated logo</title>
+  <desc id="desc">An animated 2D badge logo for the Big Red Button Institute featuring a pulsing red button, telemetry graphics, and a bold wordmark.</desc>
+  <defs>
+    <linearGradient id="paperGlow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fffdf8"/>
+      <stop offset="100%" stop-color="#f1ead9"/>
+    </linearGradient>
+    <linearGradient id="panelSheen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#242936"/>
+      <stop offset="100%" stop-color="#12151c"/>
+    </linearGradient>
+    <linearGradient id="buttonRim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff7d7d"/>
+      <stop offset="100%" stop-color="#7f1010"/>
+    </linearGradient>
+    <radialGradient id="buttonFace" cx="38%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#ff9a9a"/>
+      <stop offset="34%" stop-color="#ff5252"/>
+      <stop offset="68%" stop-color="#df2c2c"/>
+      <stop offset="100%" stop-color="#8f1717"/>
+    </radialGradient>
+    <radialGradient id="haloGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(223,44,44,0.34)"/>
+      <stop offset="100%" stop-color="rgba(223,44,44,0)"/>
+    </radialGradient>
+    <linearGradient id="signalFill" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#8ea3bf"/>
+      <stop offset="100%" stop-color="#df2c2c"/>
+    </linearGradient>
+    <pattern id="microGrid" width="22" height="22" patternUnits="userSpaceOnUse">
+      <path d="M 22 0 L 0 0 0 22" fill="none" stroke="rgba(26,30,40,0.06)" stroke-width="1"/>
+    </pattern>
+    <clipPath id="panelClip">
+      <rect x="369" y="188" width="132" height="132" rx="34"/>
+    </clipPath>
+    <style>
+      .bg {
+        fill: url(#paperGlow);
+        stroke: #c9c1b0;
+        stroke-width: 2;
+      }
+
+      .inner-border {
+        fill: none;
+        stroke: rgba(26, 30, 40, 0.08);
+        stroke-width: 1.5;
+      }
+
+      .dash-rail {
+        stroke: rgba(95, 103, 117, 0.22);
+        stroke-width: 2;
+        stroke-dasharray: 4 10;
+        animation: railShift 18s linear infinite;
+      }
+
+      .mono {
+        font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        letter-spacing: 0.18em;
+      }
+
+      .label {
+        fill: #5f6775;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .eyebrow {
+        fill: #1a1e28;
+        font-size: 19px;
+        font-weight: 700;
+      }
+
+      .display {
+        font-family: "Arial Black", Impact, Haettenschweiler, "Franklin Gothic Heavy", sans-serif;
+        font-size: 96px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+      }
+
+      .word-dark {
+        fill: #1a1e28;
+      }
+
+      .word-red {
+        fill: #df2c2c;
+      }
+
+      .tagline {
+        fill: #5f6775;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .wordmark {
+        transform: skewX(-8deg);
+        transform-origin: 240px 220px;
+      }
+
+      .institute-pill {
+        fill: #1a1e28;
+        stroke: rgba(142, 163, 191, 0.4);
+        stroke-width: 1.5;
+      }
+
+      .institute-text {
+        fill: #f5f0e3;
+        font-size: 24px;
+        font-weight: 800;
+      }
+
+      .panel-body {
+        fill: rgba(255, 255, 255, 0.52);
+        stroke: rgba(95, 103, 117, 0.2);
+        stroke-width: 1.5;
+      }
+
+      .panel-copy {
+        fill: #5f6775;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .panel-copy-strong {
+        fill: #1a1e28;
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .panel-line {
+        stroke: rgba(95, 103, 117, 0.2);
+        stroke-width: 1.5;
+      }
+
+      .plate {
+        fill: url(#panelSheen);
+        stroke: rgba(142, 163, 191, 0.24);
+        stroke-width: 1.5;
+      }
+
+      .plate-detail {
+        stroke: rgba(142, 163, 191, 0.16);
+        stroke-width: 1.2;
+      }
+
+      .plate-scan {
+        fill: rgba(255, 255, 255, 0.1);
+        animation: plateScan 4.6s ease-in-out infinite;
+      }
+
+      .halo {
+        fill: url(#haloGlow);
+        animation: glowPulse 2.8s ease-in-out infinite;
+        transform-origin: 435px 254px;
+      }
+
+      .ripple {
+        fill: none;
+        stroke: rgba(223, 44, 44, 0.48);
+        stroke-width: 2;
+        transform-origin: 435px 254px;
+      }
+
+      .ripple.one {
+        animation: ringExpand 2.8s ease-out infinite;
+      }
+
+      .ripple.two {
+        animation: ringExpand 2.8s ease-out 1.4s infinite;
+      }
+
+      .button-rim {
+        fill: url(#buttonRim);
+      }
+
+      .button-shadow {
+        fill: rgba(80, 20, 20, 0.32);
+      }
+
+      .button-face {
+        fill: url(#buttonFace);
+        animation: buttonPulse 2.8s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+        transform-origin: 435px 246px;
+      }
+
+      .button-highlight {
+        fill: rgba(255, 255, 255, 0.42);
+        animation: highlightDrift 2.8s ease-in-out infinite;
+        transform-origin: 419px 229px;
+      }
+
+      .status-dot {
+        fill: #ff4444;
+        animation: blink 1.8s steps(1, end) infinite;
+      }
+
+      .orbit {
+        fill: none;
+        stroke: rgba(95, 103, 117, 0.38);
+        stroke-width: 2;
+        stroke-dasharray: 10 12;
+        animation: orbitSpin 12s linear infinite;
+        transform-origin: 920px 208px;
+      }
+
+      .target-ring {
+        fill: none;
+        stroke: rgba(142, 163, 191, 0.6);
+        stroke-width: 2;
+      }
+
+      .target-pulse {
+        fill: none;
+        stroke: rgba(223, 44, 44, 0.4);
+        stroke-width: 2;
+        transform-origin: 920px 208px;
+        animation: targetPulse 2.6s ease-out infinite;
+      }
+
+      .crosshair {
+        stroke: rgba(26, 30, 40, 0.24);
+        stroke-width: 1.5;
+      }
+
+      .signal-sweep {
+        fill: rgba(223, 44, 44, 0.1);
+        animation: signalSweep 4.8s ease-in-out infinite;
+      }
+
+      .meter {
+        fill: url(#signalFill);
+        transform-origin: center bottom;
+      }
+
+      .meter.one { animation: meterBeat 1.7s ease-in-out infinite; }
+      .meter.two { animation: meterBeat 1.7s ease-in-out 0.2s infinite; }
+      .meter.three { animation: meterBeat 1.7s ease-in-out 0.4s infinite; }
+      .meter.four { animation: meterBeat 1.7s ease-in-out 0.6s infinite; }
+      .meter.five { animation: meterBeat 1.7s ease-in-out 0.8s infinite; }
+      .meter.six { animation: meterBeat 1.7s ease-in-out 1s infinite; }
+
+      .wave {
+        fill: none;
+        stroke: url(#signalFill);
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 10 12;
+        animation: railShift 8s linear infinite;
+      }
+
+      @keyframes buttonPulse {
+        0%, 100% { transform: translateY(0) scale(1); }
+        18% { transform: translateY(2px) scale(0.985); }
+        28% { transform: translateY(-1px) scale(1.02); }
+        42% { transform: translateY(0) scale(1); }
+      }
+
+      @keyframes glowPulse {
+        0%, 100% { opacity: 0.5; transform: scale(0.94); }
+        35% { opacity: 0.95; transform: scale(1.08); }
+      }
+
+      @keyframes ringExpand {
+        0% { opacity: 0; transform: scale(0.55); }
+        15% { opacity: 0.55; }
+        100% { opacity: 0; transform: scale(1.3); }
+      }
+
+      @keyframes highlightDrift {
+        0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+        50% { transform: translate(3px, -2px) scale(1.06); opacity: 0.8; }
+      }
+
+      @keyframes blink {
+        0%, 35%, 100% { opacity: 0.22; }
+        36%, 55% { opacity: 1; }
+      }
+
+      @keyframes orbitSpin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+
+      @keyframes targetPulse {
+        0% { opacity: 0; transform: scale(0.35); }
+        18% { opacity: 0.5; }
+        100% { opacity: 0; transform: scale(1.2); }
+      }
+
+      @keyframes signalSweep {
+        0%, 100% { transform: translateY(-96px); opacity: 0; }
+        15% { opacity: 0.35; }
+        50% { transform: translateY(118px); opacity: 0.2; }
+      }
+
+      @keyframes meterBeat {
+        0%, 100% { transform: scaleY(0.35); opacity: 0.45; }
+        50% { transform: scaleY(1); opacity: 1; }
+      }
+
+      @keyframes railShift {
+        from { stroke-dashoffset: 0; }
+        to { stroke-dashoffset: -240; }
+      }
+
+      @keyframes plateScan {
+        0%, 100% { transform: translateX(-90px); opacity: 0; }
+        18% { opacity: 0; }
+        34% { opacity: 0.35; }
+        62% { transform: translateX(170px); opacity: 0.1; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .dash-rail,
+        .plate-scan,
+        .halo,
+        .ripple,
+        .button-face,
+        .button-highlight,
+        .status-dot,
+        .orbit,
+        .target-pulse,
+        .signal-sweep,
+        .meter,
+        .wave {
+          animation: none !important;
+        }
+      }
+    </style>
+  </defs>
+
+  <rect class="bg" x="16" y="16" width="1168" height="388" rx="44"/>
+  <rect class="inner-border" x="30" y="30" width="1140" height="360" rx="34"/>
+  <path class="dash-rail" d="M 52 54 H 1148"/>
+  <path class="dash-rail" d="M 52 366 H 1148"/>
+
+  <rect x="112" y="42" width="124" height="36" rx="18" fill="#fffdf8" stroke="#c9c1b0"/>
+  <text class="mono label" x="68" y="69">THE</text>
+  <text class="mono eyebrow" x="174" y="67" text-anchor="middle">BRB</text>
+  <circle class="status-dot" cx="262" cy="60" r="6"/>
+
+  <g class="wordmark">
+    <text class="display word-dark" x="66" y="172">BIG</text>
+    <text class="display word-red" x="266" y="172">RED</text>
+    <text class="display word-dark" x="66" y="286">BUTT</text>
+    <text class="display word-dark" x="522" y="286">N</text>
+  </g>
+
+  <g>
+    <circle class="halo" cx="435" cy="254" r="78"/>
+    <circle class="ripple one" cx="435" cy="254" r="62"/>
+    <circle class="ripple two" cx="435" cy="254" r="62"/>
+
+    <rect class="plate" x="369" y="188" width="132" height="132" rx="34"/>
+    <rect x="369" y="188" width="132" height="132" rx="34" fill="url(#microGrid)" opacity="0.32"/>
+    <g clip-path="url(#panelClip)">
+      <path class="plate-detail" d="M 354 216 L 528 216"/>
+      <path class="plate-detail" d="M 354 244 L 528 244"/>
+      <path class="plate-detail" d="M 354 272 L 528 272"/>
+      <path class="plate-detail" d="M 354 300 L 528 300"/>
+      <rect class="plate-scan" x="350" y="188" width="38" height="132" rx="18"/>
+    </g>
+    <path class="plate-detail" d="M 456 206 C 474 208 487 216 496 232" fill="none"/>
+    <path class="plate-detail" d="M 449 213 C 466 216 476 224 483 238" fill="none"/>
+
+    <ellipse class="button-shadow" cx="435" cy="270" rx="40" ry="16"/>
+    <ellipse class="button-rim" cx="435" cy="250" rx="47" ry="40"/>
+    <circle class="button-face" cx="435" cy="244" r="42"/>
+    <ellipse class="button-highlight" cx="420" cy="226" rx="18" ry="12"/>
+    <circle cx="414" cy="220" r="4" fill="rgba(255,255,255,0.75)"/>
+  </g>
+
+  <rect class="institute-pill" x="68" y="315" width="430" height="52" rx="26"/>
+  <text class="mono institute-text" x="283" y="349" text-anchor="middle">INSTITUTE</text>
+  <text class="mono tagline" x="68" y="392">ADVANCING THE FRONTIERS OF PRESSABILITY RESEARCH</text>
+
+  <g>
+    <rect class="panel-body" x="716" y="62" width="402" height="294" rx="28"/>
+    <rect x="716" y="62" width="402" height="294" rx="28" fill="url(#microGrid)" opacity="0.3"/>
+    <path class="panel-line" d="M 748 142 H 1088"/>
+    <path class="panel-line" d="M 748 302 H 1088"/>
+    <text class="mono panel-copy-strong" x="750" y="102">PUBLIC BUTTON RESEARCH</text>
+    <text class="mono panel-copy" x="750" y="126">SIGNAL ACTIVE // INSTITUTE TRANSMISSION</text>
+    <text class="mono panel-copy" x="750" y="330">MEASURING CURIOSITY, HESITATION, CONTACT</text>
+
+    <g>
+      <circle class="target-ring" cx="920" cy="208" r="22"/>
+      <circle class="target-ring" cx="920" cy="208" r="48"/>
+      <circle class="target-ring" cx="920" cy="208" r="76"/>
+      <circle class="orbit" cx="920" cy="208" r="96"/>
+      <circle class="target-pulse" cx="920" cy="208" r="90"/>
+      <path class="crosshair" d="M 920 106 V 310"/>
+      <path class="crosshair" d="M 818 208 H 1022"/>
+      <circle cx="920" cy="208" r="10" fill="#df2c2c"/>
+      <circle cx="920" cy="208" r="5" fill="#fff4f4"/>
+    </g>
+
+    <g>
+      <rect class="signal-sweep" x="742" y="146" width="350" height="26" rx="13"/>
+      <path class="wave" d="M 748 289 C 770 268 786 268 806 289 C 826 310 845 310 866 289 C 887 268 906 268 926 289 C 946 310 966 310 986 289 C 1008 268 1027 268 1048 289"/>
+    </g>
+
+    <g>
+      <rect class="meter one" x="750" y="230" width="20" height="58" rx="10"/>
+      <rect class="meter two" x="778" y="212" width="20" height="76" rx="10"/>
+      <rect class="meter three" x="806" y="246" width="20" height="42" rx="10"/>
+      <rect class="meter four" x="1034" y="222" width="20" height="66" rx="10"/>
+      <rect class="meter five" x="1062" y="242" width="20" height="46" rx="10"/>
+      <rect class="meter six" x="1090" y="206" width="20" height="82" rx="10"/>
+    </g>
+  </g>
+</svg>

@@ -5,7 +5,8 @@ This folder is organized around the final deliverables for the first Big Red But
 ## Final deliverables
 
 - `final/first-big-red-button-vr-study-instructions-final.mp3`
-- `final/first-big-red-button-vr-study-demo-final-1280x720.mp4`
+- `final/first-big-red-button-vr-study-demo-button-pressing-behavior-in-virtual-reality.mp4`
+- `final/first-big-red-button-vr-study-demo-second-condition-button-pressing-behavior-in-virtual-reality.mp4`
 
 ## Reusable assets
 

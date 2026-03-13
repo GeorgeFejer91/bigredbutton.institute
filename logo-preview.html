@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BRB Animated Logo Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Mono:wght@400;600&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #f5f0e3;
+      --ink: #1a1e28;
+      --muted: #5f6775;
+      --line: #c9c1b0;
+      --red: #df2c2c;
+      --red-deep: #8f1717;
+      --steel: #8ea3bf;
+      --shadow: 0 20px 44px rgba(22, 28, 38, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: "Manrope", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1000px 480px at 110% -10%, rgba(142,163,191,0.38) 0%, transparent 62%),
+        radial-gradient(820px 420px at -10% 12%, rgba(223,44,44,0.16) 0%, transparent 58%),
+        linear-gradient(180deg, #efe8d8 0%, #f8f4ea 100%);
+      padding: 2rem;
+    }
+
+    .wrap {
+      width: min(1200px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .header {
+      padding: 1rem 1.1rem 0.25rem;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.55rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: "Fraunces", Georgia, serif;
+      font-size: clamp(1.8rem, 3.8vw, 3rem);
+      line-height: 1.05;
+    }
+
+    .intro {
+      max-width: 60ch;
+      color: var(--muted);
+      margin: 0.6rem 0 0;
+    }
+
+    .grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 1rem;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card.light {
+      background: rgba(255,255,255,0.7);
+    }
+
+    .card.dark {
+      background:
+        radial-gradient(circle at 50% 0%, rgba(223,44,44,0.12), transparent 42%),
+        linear-gradient(180deg, #1c212c 0%, #11141b 100%);
+      border-color: rgba(255,255,255,0.08);
+      color: #f4efe4;
+    }
+
+    .meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .meta h2 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: 0.02em;
+    }
+
+    .meta code {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.76rem;
+      color: inherit;
+      opacity: 0.75;
+    }
+
+    .logo-frame {
+      border-radius: 18px;
+      overflow: hidden;
+      min-height: 240px;
+    }
+
+    .card.light .logo-frame {
+      background:
+        repeating-linear-gradient(90deg, rgba(26,30,40,0.025) 0 1px, transparent 1px 36px),
+        linear-gradient(180deg, #fffdf8 0%, #f5efdf 100%);
+    }
+
+    .card.dark .logo-frame {
+      background:
+        radial-gradient(circle at 50% 48%, rgba(223,44,44,0.12), transparent 34%),
+        linear-gradient(180deg, #242936 0%, #13161d 100%);
+    }
+
+    object {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 20 / 7;
+    }
+
+    @media (max-width: 720px) {
+      body { padding: 1rem; }
+      .card { border-radius: 18px; padding: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="header">
+      <span class="eyebrow">BRB Identity</span>
+      <h1>Animated 2D Logo Preview</h1>
+      <p class="intro">This preview shows the new reusable animated SVG lockup on both a light field and a dark field so we can quickly judge contrast, motion, and overall presence.</p>
+    </header>
+
+    <section class="grid">
+      <article class="card light">
+        <div class="meta">
+          <h2>Light Surface</h2>
+          <code>Images/brb-animated-logo.svg</code>
+        </div>
+        <div class="logo-frame">
+          <object data="Images/brb-animated-logo.svg" type="image/svg+xml" aria-label="Animated BRB logo on light background"></object>
+        </div>
+      </article>
+
+      <article class="card dark">
+        <div class="meta">
+          <h2>Dark Surface</h2>
+          <code>Images/brb-animated-logo.svg</code>
+        </div>
+        <div class="logo-frame">
+          <object data="Images/brb-animated-logo.svg" type="image/svg+xml" aria-label="Animated BRB logo on dark background"></object>
+        </div>
+      </article>
+    </section>
+  </div>
+</body>
+</html>
