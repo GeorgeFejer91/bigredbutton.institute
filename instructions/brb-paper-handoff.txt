@@ -6,6 +6,10 @@ Canonical execution instruction: `instructions/BRB_Paper_WritingPlan.md`
 
 Use that file for end-to-end execution. This file remains supporting context and archival detail.
 
+For multi-person collaboration, also read and update:
+- `VR-study/Paper/PROJECT_STATE.md`
+- `VR-study/Paper/SESSION_LOG.md`
+
 MISSION
 
 Write the introduction and discussion for a hybrid HCI/STS/humanities paper on red-button pressability.
