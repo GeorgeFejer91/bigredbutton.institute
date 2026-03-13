@@ -765,6 +765,1112 @@
         transition: none !important;
       }
     }
+
+    /* DESIGN REFRESH */
+    :root {
+      --paper: #f3ece1;
+      --paper-strong: #e8ddcf;
+      --paper-soft: rgba(255, 249, 241, 0.8);
+      --ink: #181720;
+      --muted: #635d60;
+      --red: #ca2b24;
+      --red-hot: #f15c46;
+      --red-deep: #7d1718;
+      --steel: #6c7b8b;
+      --line: rgba(47, 39, 34, 0.14);
+      --line-strong: rgba(47, 39, 34, 0.24);
+      --shadow: 0 24px 60px rgba(32, 23, 18, 0.12);
+      --shadow-soft: 0 14px 28px rgba(32, 23, 18, 0.08);
+      --shadow-red: 0 0 72px rgba(202, 43, 36, 0.18);
+      --radius-lg: 28px;
+      --radius-md: 20px;
+      --radius-sm: 16px;
+      --max: 1180px;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 620px at 100% -10%, rgba(161, 187, 207, 0.56) 0%, transparent 58%),
+        radial-gradient(960px 500px at -6% 16%, rgba(219, 173, 163, 0.46) 0%, transparent 55%),
+        linear-gradient(180deg, #efe6d8 0%, #f7f1e7 38%, #f1e7d9 100%);
+    }
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      pointer-events: none;
+      z-index: 0;
+      inset: auto;
+      border-radius: 999px;
+      filter: blur(36px);
+      opacity: 0.55;
+    }
+    body::before {
+      width: 320px;
+      height: 320px;
+      top: 12vh;
+      right: -120px;
+      background: radial-gradient(circle, rgba(202, 43, 36, 0.2) 0%, rgba(202, 43, 36, 0) 72%);
+    }
+    body::after {
+      width: 240px;
+      height: 240px;
+      bottom: 8vh;
+      left: -90px;
+      background: radial-gradient(circle, rgba(109, 123, 139, 0.18) 0%, rgba(109, 123, 139, 0) 72%);
+    }
+    a {
+      color: inherit;
+      text-underline-offset: 0.16em;
+      text-decoration-thickness: 0.08em;
+    }
+    a:hover {
+      color: var(--red-deep);
+    }
+    button:focus-visible,
+    a:focus-visible,
+    [role="button"]:focus-visible {
+      outline: 3px solid rgba(202, 43, 36, 0.28);
+      outline-offset: 3px;
+    }
+    [id] {
+      scroll-margin-top: 6.5rem;
+    }
+    .shell {
+      width: min(calc(100% - 2rem), var(--max));
+      margin: 1rem auto 3rem;
+      display: grid;
+      gap: 1.15rem;
+    }
+    .site-bar {
+      position: sticky;
+      top: 0.75rem;
+      z-index: 40;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 0.9rem;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 248, 240, 0.78);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow-soft);
+    }
+    .site-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      min-width: 0;
+    }
+    .site-brand-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.65rem;
+      height: 2.65rem;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #f35d49 0%, #be2924 100%);
+      color: #fff8f2;
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1rem;
+      font-weight: 700;
+      box-shadow:
+        inset 0 -6px 12px rgba(79, 9, 10, 0.24),
+        0 10px 22px rgba(125, 23, 24, 0.18);
+      flex-shrink: 0;
+    }
+    .site-brand strong {
+      display: block;
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1.05rem;
+      line-height: 1.02;
+    }
+    .site-brand small {
+      display: block;
+      margin-top: 0.18rem;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.3;
+    }
+    .top-nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.35rem;
+    }
+    .top-nav a,
+    .site-cta,
+    .hero-link,
+    .publication-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0.72rem 1rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 252, 247, 0.76);
+      text-decoration: none;
+      font-weight: 700;
+      transition:
+        transform 180ms ease,
+        background 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+    }
+    .top-nav a {
+      min-height: 38px;
+      padding: 0.45rem 0.8rem;
+      font-size: 0.86rem;
+      color: var(--muted);
+      background: transparent;
+    }
+    .top-nav a:hover,
+    .site-cta:hover,
+    .hero-link:hover,
+    .publication-link:hover,
+    .video-link:hover {
+      transform: translateY(-1px);
+      border-color: rgba(202, 43, 36, 0.26);
+      box-shadow: var(--shadow-soft);
+    }
+    .site-cta,
+    .hero-link.primary,
+    .publication-link {
+      background: linear-gradient(180deg, #f35d49 0%, #be2924 100%);
+      color: #fff7f0;
+      border-color: rgba(122, 23, 24, 0.3);
+      box-shadow:
+        inset 0 -6px 12px rgba(79, 9, 10, 0.24),
+        0 10px 22px rgba(125, 23, 24, 0.18);
+    }
+    .site-cta:hover,
+    .hero-link.primary:hover,
+    .publication-link:hover {
+      color: #fff7f0;
+    }
+    .hero {
+      padding: clamp(1.4rem, 1.7vw + 1rem, 2.3rem);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(140deg, rgba(255, 251, 246, 0.9), rgba(247, 239, 229, 0.85)),
+        repeating-linear-gradient(90deg, rgba(111, 88, 69, 0.06) 0 1px, rgba(111, 88, 69, 0) 1px 32px);
+      box-shadow: var(--shadow);
+    }
+    .hero::before {
+      content: "public pressability institute";
+      position: absolute;
+      top: 1.1rem;
+      right: 1.2rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(99, 93, 96, 0.72);
+    }
+    .hero::after {
+      width: 420px;
+      height: 420px;
+      right: -170px;
+      top: -180px;
+      background: radial-gradient(circle, rgba(202, 43, 36, 0.2) 0%, rgba(202, 43, 36, 0) 74%);
+    }
+    .hero-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+      gap: clamp(1rem, 2vw, 2rem);
+      align-items: start;
+    }
+    .hero-intro {
+      display: grid;
+      gap: 0.9rem;
+      align-content: start;
+    }
+    .hero-tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0.35rem 0.72rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 253, 249, 0.88);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    .hero-edition,
+    .panel-lead,
+    .hero-note-label,
+    .hero-note-status,
+    .press-kicker,
+    .press-badge,
+    .field-note-title,
+    .research-aside-label,
+    .hero-stat-label {
+      font-family: "IBM Plex Mono", monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .hero-edition {
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+    h1 {
+      font-size: clamp(2.8rem, 5vw, 5.2rem);
+      line-height: 0.96;
+      max-width: 9.6ch;
+      letter-spacing: -0.03em;
+    }
+    .subhead {
+      margin: 0;
+      max-width: 23ch;
+      font-size: clamp(1.05rem, 1vw + 0.85rem, 1.35rem);
+      color: #474146;
+      line-height: 1.35;
+    }
+    .hero-mission {
+      display: grid;
+      gap: 0.65rem;
+      max-width: 54ch;
+    }
+    .hero-mission p {
+      margin: 0;
+      font-size: 0.98rem;
+      color: #332f34;
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-top: 0.25rem;
+    }
+    .hero-link {
+      color: var(--ink);
+      background: rgba(255, 252, 247, 0.74);
+    }
+    .hero-deck {
+      display: grid;
+      gap: 0.85rem;
+    }
+    .hero-latour {
+      margin: 0;
+      width: 100%;
+      max-width: none;
+      justify-self: stretch;
+      border: 1px solid rgba(109, 123, 139, 0.2);
+      border-radius: 22px;
+      background: linear-gradient(180deg, #f4f5f9 0%, #eceef3 100%);
+      box-shadow: var(--shadow-soft);
+      transform: rotate(-1.2deg);
+      transition: transform 300ms ease, box-shadow 300ms ease;
+    }
+    .hero-latour:hover {
+      transform: translateY(-3px) rotate(0deg);
+      box-shadow: var(--shadow);
+    }
+    .hero-latour figcaption {
+      padding: 0.55rem 0.8rem;
+      border-top: 1px solid rgba(109, 123, 139, 0.18);
+      background: rgba(236, 241, 248, 0.85);
+      font-size: 0.76rem;
+      color: #4d5967;
+    }
+    .hero-note {
+      display: grid;
+      gap: 0.8rem;
+      padding: 1rem 1.05rem;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255, 251, 245, 0.92), rgba(244, 236, 226, 0.88));
+      box-shadow: var(--shadow-soft);
+    }
+    .hero-note-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.6rem;
+      align-items: baseline;
+    }
+    .hero-note-label,
+    .hero-note-status {
+      font-size: 0.66rem;
+      color: var(--muted);
+    }
+    .hero-note-status {
+      color: var(--red-deep);
+      font-weight: 700;
+    }
+    .hero-note-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 0.7rem;
+    }
+    .hero-note-list li {
+      position: relative;
+      padding-left: 1.2rem;
+      color: #352f33;
+    }
+    .hero-note-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.55rem;
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #f35d49 0%, #be2924 100%);
+      box-shadow: 0 0 0 4px rgba(202, 43, 36, 0.08);
+    }
+    .hero-strip {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) repeat(3, minmax(0, 0.85fr));
+      gap: 0.75rem;
+      margin-top: 1.4rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+    }
+    .hero-strip-lead,
+    .hero-stat {
+      padding: 0.9rem 1rem;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 249, 241, 0.62);
+    }
+    .hero-strip-lead {
+      color: #433c40;
+      font-size: 0.95rem;
+      line-height: 1.55;
+    }
+    .hero-stat {
+      display: grid;
+      gap: 0.35rem;
+      align-content: start;
+    }
+    .hero-stat-label {
+      font-size: 0.62rem;
+      color: var(--muted);
+    }
+    .hero-stat strong {
+      font-size: 1rem;
+      line-height: 1.25;
+      font-weight: 800;
+    }
+    .lab-panel {
+      margin-top: 0;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(160deg, rgba(24, 24, 29, 0.98) 0%, rgba(22, 23, 30, 0.98) 62%, rgba(37, 24, 25, 0.98) 100%);
+      box-shadow: var(--shadow);
+      padding: clamp(1rem, 1.5vw + 0.6rem, 1.45rem);
+    }
+    .lab-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 114, 99, 0.65), rgba(255, 255, 255, 0));
+      opacity: 0.85;
+    }
+    .lab-head {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(260px, 0.75fr);
+      gap: 1rem;
+      align-items: end;
+      margin-bottom: 0.9rem;
+    }
+    .lab-title {
+      margin-top: 0.2rem;
+      color: #fff1dc;
+      font-size: clamp(1.55rem, 2.6vw, 2.25rem);
+    }
+    .lab-copy {
+      margin: 0;
+      color: #bfb4a7;
+      max-width: 44ch;
+      justify-self: end;
+    }
+    .lab-layout {
+      grid-template-columns: minmax(270px, 0.92fr) minmax(0, 1.55fr);
+      gap: 0.9rem;
+    }
+    .press-column {
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: 0.9rem;
+      padding: 1.1rem;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .press-header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .press-column h2 {
+      text-align: left;
+      font-size: 1.34rem;
+      color: #fff1dc;
+    }
+    .press-kicker,
+    .press-badge {
+      margin: 0;
+      font-size: 0.64rem;
+      color: #9d8f84;
+    }
+    .press-badge {
+      padding: 0.38rem 0.55rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.03);
+      white-space: nowrap;
+    }
+    .press-copy {
+      margin: -0.2rem 0 0;
+      color: #b9ad9e;
+      font-size: 0.94rem;
+    }
+    .counter-display {
+      text-align: left;
+      display: grid;
+      gap: 0.1rem;
+    }
+    .counter-number {
+      font-size: clamp(3rem, 6vw, 4.7rem);
+      color: #ff6e58;
+      text-shadow:
+        0 0 22px rgba(202, 43, 36, 0.15),
+        0 0 42px rgba(202, 43, 36, 0.1);
+    }
+    .counter-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #b49b92;
+    }
+    .press-btn-wrap {
+      justify-content: flex-start;
+      padding: 0.15rem 0 0.35rem;
+    }
+    .press-btn {
+      width: 100%;
+      min-width: 0;
+      min-height: 60px;
+      padding: 1rem 1.25rem;
+      background: radial-gradient(circle at 50% 18%, #ff8c77 0%, #d12d24 52%, #711111 100%);
+      box-shadow:
+        inset 0 -9px 15px rgba(68, 0, 0, 0.28),
+        0 10px 18px rgba(129, 23, 23, 0.34);
+    }
+    .press-btn:hover {
+      transform: translateY(-1px) scale(1.01);
+    }
+    .press-mini-stats {
+      gap: 0.5rem;
+    }
+    .mini-stat {
+      border-radius: 16px;
+      padding: 0.6rem 0.55rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .mini-stat-value {
+      font-size: 1rem;
+    }
+    .mini-stat-label {
+      color: #887e77;
+      font-size: 0.56rem;
+      letter-spacing: 0.09em;
+    }
+    .press-note {
+      margin: 0;
+      padding-top: 0.7rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: left;
+      font-size: 0.72rem;
+      color: #8f837b;
+    }
+    .viz-column {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-auto-rows: minmax(150px, 1fr);
+      gap: 0.7rem;
+    }
+    .viz-card {
+      border-radius: 20px;
+      padding: 0.7rem 0.75rem;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.025) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .viz-card:first-child,
+    .viz-card:nth-child(3) {
+      grid-column: span 2;
+    }
+    .viz-card h3 {
+      margin-bottom: 0.55rem;
+      color: #d9ccbc;
+      font-size: 0.66rem;
+      letter-spacing: 0.1em;
+    }
+    .viz-card canvas {
+      border-radius: 12px;
+      background:
+        linear-gradient(180deg, rgba(10, 10, 15, 0.28) 0%, rgba(255, 255, 255, 0.01) 100%);
+    }
+    .field-section {
+      padding-top: 0;
+      display: grid;
+      gap: 0.9rem;
+    }
+    .field-lede {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(290px, 0.92fr);
+      gap: 1rem;
+      align-items: end;
+    }
+    .field-header {
+      text-align: left;
+      margin: 0;
+      display: grid;
+      gap: 0.45rem;
+    }
+    .field-header h2 {
+      font-size: clamp(1.9rem, 3.8vw, 3.3rem);
+      max-width: 9ch;
+      line-height: 0.98;
+    }
+    .field-header p {
+      margin: 0;
+      max-width: 52ch;
+      color: #413c40;
+    }
+    .field-notes {
+      display: grid;
+      gap: 0.7rem;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255, 248, 240, 0.74);
+      box-shadow: var(--shadow-soft);
+    }
+    .field-note-title {
+      margin: 0;
+      font-size: 0.64rem;
+      color: var(--muted);
+    }
+    .field-note-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.65rem;
+    }
+    .field-note-list li {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 0.65rem;
+      align-items: start;
+      color: #352f34;
+    }
+    .field-note-list span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 1.9rem;
+      border-radius: 999px;
+      background: rgba(202, 43, 36, 0.08);
+      color: var(--red-deep);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .scene-wrap {
+      border: 1px solid var(--line-strong);
+      border-radius: 30px;
+      box-shadow: var(--shadow);
+    }
+    .field-meta {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 1rem;
+      align-items: center;
+    }
+    .bemi-bar {
+      justify-content: flex-start;
+      margin-top: 0;
+      padding: 0.7rem 0.95rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 249, 241, 0.74);
+      box-shadow: var(--shadow-soft);
+    }
+    .bemi-val {
+      color: var(--red-deep);
+    }
+    .field-caption {
+      margin: 0;
+      text-align: right;
+      color: #7d756f;
+    }
+    .mini-dashboard {
+      margin-top: 0;
+      padding: 0.95rem;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(180deg, rgba(23, 24, 29, 0.98) 0%, rgba(18, 19, 24, 0.98) 100%);
+      box-shadow: var(--shadow);
+    }
+    .mini-dash-header {
+      margin-bottom: 0.7rem;
+    }
+    .mini-dash-header h3,
+    .mini-viz-card h4 {
+      letter-spacing: 0.1em;
+    }
+    .md-stat-lbl {
+      color: #867d76;
+    }
+    .mini-viz-card {
+      border-radius: 14px;
+    }
+    .stack {
+      gap: 1.15rem;
+      margin-top: 0;
+    }
+    .panel {
+      padding: clamp(1.2rem, 1.6vw + 0.7rem, 1.7rem);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(180deg, rgba(255, 250, 244, 0.92) 0%, rgba(248, 241, 230, 0.88) 100%);
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      overflow: hidden;
+    }
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto auto 1.2rem;
+      width: 5rem;
+      height: 0.26rem;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(202, 43, 36, 0.92), rgba(202, 43, 36, 0));
+      opacity: 0.8;
+    }
+    .panel h2 {
+      font-size: clamp(1.75rem, 2.8vw, 2.65rem);
+      margin-bottom: 0.75rem;
+      line-height: 1.02;
+    }
+    .panel p {
+      color: #39343a;
+    }
+    .panel-heading {
+      display: grid;
+      gap: 0.45rem;
+      margin-bottom: 0.95rem;
+    }
+    .panel-lead {
+      margin: 0;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .study-demo-panel {
+      background:
+        linear-gradient(135deg, rgba(249, 242, 233, 0.95) 0%, rgba(238, 228, 216, 0.93) 100%);
+    }
+    .video-feature {
+      grid-template-columns: minmax(0, 1.2fr) minmax(310px, 0.8fr);
+      gap: 1.2rem;
+    }
+    .video-embed {
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+    .video-copy {
+      gap: 0.9rem;
+    }
+    .video-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+    .video-tags span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0.35rem 0.72rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 252, 247, 0.72);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #4b4449;
+    }
+    .video-link {
+      background: linear-gradient(180deg, rgba(255, 249, 245, 0.96) 0%, rgba(255, 235, 230, 0.92) 100%);
+      border-radius: 999px;
+      border: 1px solid rgba(182, 74, 74, 0.36);
+      box-shadow: var(--shadow-soft);
+    }
+    .framework-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(270px, 0.85fr);
+      gap: 1rem;
+      align-items: start;
+    }
+    .framework-copy {
+      display: grid;
+      gap: 0.55rem;
+    }
+    .framework-quote {
+      margin: 0;
+      padding: 1.05rem;
+      border: 1px solid rgba(202, 43, 36, 0.16);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255, 245, 242, 0.94) 0%, rgba(247, 232, 225, 0.92) 100%);
+      box-shadow: var(--shadow-soft);
+    }
+    .framework-quote p {
+      margin: 0;
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1.26rem;
+      line-height: 1.2;
+      color: var(--red-deep);
+    }
+    .framework-quote cite {
+      display: block;
+      margin-top: 0.85rem;
+      font-style: normal;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .research-panel {
+      background:
+        linear-gradient(180deg, rgba(248, 241, 231, 0.96) 0%, rgba(240, 232, 219, 0.92) 100%);
+    }
+    .research-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1.12fr) minmax(280px, 0.88fr);
+      gap: 1rem;
+      align-items: start;
+      margin-bottom: 1rem;
+    }
+    .research-summary {
+      margin: 0;
+      max-width: 52ch;
+      color: #433d41;
+    }
+    .research-aside {
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255, 250, 244, 0.7);
+      box-shadow: var(--shadow-soft);
+    }
+    .research-aside-label {
+      margin: 0 0 0.45rem;
+      font-size: 0.64rem;
+      color: var(--muted);
+    }
+    .research-aside p:last-child {
+      margin: 0;
+    }
+    .division-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 0.8rem;
+      margin-top: 0;
+    }
+    .division {
+      grid-column: span 6;
+      padding: 1rem 1rem 1.05rem;
+      border-radius: 22px;
+      border: 1px solid rgba(47, 39, 34, 0.12);
+      background: rgba(255, 252, 248, 0.66);
+      box-shadow: none;
+    }
+    .division:nth-child(3n + 1) {
+      background: linear-gradient(180deg, rgba(255, 247, 244, 0.88), rgba(255, 252, 248, 0.7));
+    }
+    .division:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-soft);
+    }
+    .division h3 {
+      font-size: 1.22rem;
+      max-width: 24ch;
+    }
+    .division p,
+    .method p {
+      margin: 0;
+    }
+    .methods-wrap {
+      margin-top: 1rem;
+      padding: 1.1rem;
+      border-radius: 24px;
+      border: 1px solid var(--line-strong);
+      background: rgba(115, 98, 79, 0.06);
+    }
+    .methods-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+    .method {
+      grid-column: span 6;
+      padding: 0.95rem;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 250, 243, 0.86);
+    }
+    .method:last-child {
+      grid-column: span 12;
+    }
+    .callout {
+      margin-top: 1rem;
+      padding: 1rem;
+      border: 1px solid rgba(202, 43, 36, 0.18);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255, 243, 241, 0.96) 0%, rgba(252, 236, 234, 0.94) 100%);
+    }
+    .closing-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+      gap: 1rem;
+    }
+    .participate-panel {
+      background:
+        linear-gradient(135deg, rgba(252, 238, 229, 0.96) 0%, rgba(247, 240, 231, 0.92) 100%);
+    }
+    .participate-line {
+      font-size: 1.18rem;
+      line-height: 1.3;
+      max-width: 24ch;
+    }
+    .cta-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-top: 0.85rem;
+    }
+    .publication-panel {
+      display: grid;
+      gap: 0.7rem;
+      align-content: start;
+      background:
+        linear-gradient(160deg, rgba(245, 241, 232, 0.96) 0%, rgba(235, 229, 220, 0.92) 100%);
+    }
+    .publication-title {
+      margin: 0;
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1.3rem;
+      line-height: 1.18;
+      color: var(--ink);
+    }
+    .footer {
+      margin-top: 0;
+      padding: 1.1rem 1.2rem;
+      border-radius: 24px;
+      border: 1px solid var(--line-strong);
+      background:
+        linear-gradient(180deg, rgba(252, 246, 237, 0.94) 0%, rgba(244, 235, 223, 0.92) 100%);
+      box-shadow: var(--shadow-soft);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.85fr);
+      gap: 1rem;
+      align-items: end;
+    }
+    .footer p {
+      margin: 0;
+      color: #433c40;
+    }
+    .footer blockquote,
+    .footer .footer-quote {
+      margin: 0;
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1.08rem;
+      line-height: 1.28;
+      color: var(--red-deep);
+      text-align: right;
+    }
+    .reveal {
+      animation: rise 700ms cubic-bezier(0.19, 1, 0.22, 1) forwards;
+    }
+    .pedestal-float {
+      opacity: 0;
+      transition: opacity 220ms ease, filter 300ms ease;
+    }
+    .pedestal-float.is-visible,
+    .pedestal-float.docked {
+      opacity: 1;
+    }
+
+    @media (max-width: 980px) {
+      .site-bar,
+      .hero-top,
+      .field-lede,
+      .framework-panel,
+      .research-header,
+      .closing-grid,
+      .video-feature,
+      .lab-head {
+        grid-template-columns: 1fr;
+      }
+      .site-bar {
+        border-radius: 26px;
+      }
+      .top-nav {
+        justify-content: flex-start;
+      }
+      .lab-copy {
+        justify-self: start;
+      }
+      .press-column {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: stretch;
+      }
+      .press-column h2,
+      .press-note {
+        width: auto;
+      }
+      .counter-display,
+      .press-btn-wrap,
+      .press-mini-stats,
+      .press-note {
+        order: initial;
+      }
+      .hero-strip {
+        grid-template-columns: 1fr 1fr;
+      }
+      .lab-layout {
+        grid-template-columns: 1fr;
+      }
+      .viz-column {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .viz-card:first-child,
+      .viz-card:nth-child(3) {
+        grid-column: span 2;
+      }
+      .field-meta,
+      .footer {
+        grid-template-columns: 1fr;
+      }
+      .field-caption,
+      .footer .footer-quote {
+        text-align: left;
+      }
+      .division,
+      .method {
+        grid-column: span 6;
+      }
+      .method:last-child {
+        grid-column: span 12;
+      }
+    }
+    @media (max-width: 700px) {
+      .shell {
+        width: min(calc(100% - 1rem), var(--max));
+        margin: 0.6rem auto 1.8rem;
+      }
+      .site-bar {
+        top: 0.5rem;
+        padding: 0.85rem;
+      }
+      .hero,
+      .panel,
+      .lab-panel,
+      .scene-wrap,
+      .mini-dashboard,
+      .footer {
+        border-radius: 22px;
+      }
+      .hero::before {
+        position: static;
+        display: block;
+        margin-bottom: 0.85rem;
+      }
+      h1 {
+        font-size: clamp(2.35rem, 12vw, 3.6rem);
+      }
+      .hero-actions,
+      .cta-actions,
+      .video-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .hero-link,
+      .site-cta,
+      .publication-link,
+      .video-link {
+        width: 100%;
+      }
+      .hero-strip,
+      .viz-column,
+      .mini-viz-row,
+      .division-grid,
+      .methods-grid {
+        grid-template-columns: 1fr;
+      }
+      .viz-card:first-child,
+      .viz-card:nth-child(3),
+      .division,
+      .method,
+      .method:last-child {
+        grid-column: auto;
+      }
+      .field-note-list li {
+        grid-template-columns: 28px 1fr;
+      }
+      .mini-dash-header {
+        flex-direction: column;
+        align-items: start;
+      }
+      .mini-dash-stats {
+        justify-content: flex-start;
+      }
+      .top-nav {
+        gap: 0.45rem;
+      }
+      .top-nav a {
+        background: rgba(255, 252, 247, 0.7);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+      .site-bar,
+      .hero-latour,
+      .top-nav a,
+      .site-cta,
+      .hero-link,
+      .publication-link,
+      .video-link,
+      .division,
+      .method {
+        transition: none !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -878,27 +1984,97 @@
   </div>
 
   <div class="shell">
-    <header class="hero reveal">
+    <div class="site-bar reveal">
+      <div class="site-brand">
+        <span class="site-brand-mark">BRB</span>
+        <div>
+          <strong>The Big Red Button Institute</strong>
+          <small>Public pressability research, field deployment, and applied nonsense.</small>
+        </div>
+      </div>
+      <nav class="top-nav" aria-label="Primary">
+        <a href="#labPanel">Live Lab</a>
+        <a href="#fieldSection">Field Deployment</a>
+        <a href="#researchProgram">Research Program</a>
+        <a href="#participate">Participate</a>
+      </nav>
+      <a class="site-cta" href="mailto:inquiries@bigredbutton.institute">Contact</a>
+    </div>
+
+    <header class="hero reveal" id="top">
       <div class="hero-top">
         <div class="hero-intro">
-          <span class="eyebrow">BRB</span>
+          <div class="hero-tag-row">
+            <span class="eyebrow">BRB</span>
+            <span class="hero-edition">Field dossier / Spring 2026</span>
+          </div>
           <h1>The Big Red Button Institute</h1>
-          <p class="subhead">Advancing the Frontiers of Pressability Research</p>
+          <p class="subhead">Advancing the frontiers of pressability research through public installations, telemetry, and civic theater.</p>
           <div class="hero-mission">
-            <p>The Big Red Button Institute (BRB) is a transdisciplinary research collective dedicated to the empirical study of human-button interaction dynamics. Working in public spaces, we deploy full-scale button installations to generate longitudinal datasets on press intervals, participation patterns, and the social life of collective curiosity.</p>
+            <p>BRB is a transdisciplinary research collective dedicated to the empirical study of human-button interaction dynamics. We treat the big red button as instrument, invitation, and social event.</p>
+            <p>Working in streets, plazas, and virtual environments, we build full-scale deployments that turn curiosity into measurable public data without losing the absurdity that makes the whole enterprise worth studying.</p>
+          </div>
+          <div class="hero-actions">
+            <a class="hero-link primary" href="#labPanel">Open the live console</a>
+            <a class="hero-link" href="#fieldSection">View field deployment</a>
           </div>
         </div>
-        <figure class="hero-latour">
-          <img src="Images/Latour.png" alt="Bruno Latour comic panel with a bright red alarm button.">
-        </figure>
+        <div class="hero-deck">
+          <figure class="hero-latour">
+            <img src="Images/Latour.png" alt="Bruno Latour comic panel with a bright red alarm button.">
+            <figcaption>Latourian origin image: the button as object, myth, and method.</figcaption>
+          </figure>
+          <aside class="hero-note" aria-label="Institute notes">
+            <div class="hero-note-heading">
+              <span class="hero-note-label">Current protocol</span>
+              <span class="hero-note-status">Open call</span>
+            </div>
+            <ul class="hero-note-list">
+              <li>Collect longitudinal press intervals in public space.</li>
+              <li>Prototype sonic and haptic variations without reducing the joke.</li>
+              <li>Translate crowd curiosity into design, ethnography, and art.</li>
+            </ul>
+          </aside>
+        </div>
+      </div>
+      <div class="hero-strip" aria-label="Institute snapshot">
+        <div class="hero-strip-lead">
+          BRB operates somewhere between laboratory, public artwork, and civic rumor. Each deployment asks a simple question with outsized consequences: what happens when pressing is invited instead of prohibited?
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-label">Research mode</span>
+          <strong>Computational + ethnographic</strong>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-label">Primary terrain</span>
+          <strong>Street corners, transit nodes, VR</strong>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-label">Desired outcome</span>
+          <strong>Curiosity with evidence</strong>
+        </div>
       </div>
     </header>
 
     <!-- COMBINED PRESS + VIZ -->
     <section class="lab-panel reveal" id="labPanel">
+      <div class="lab-head">
+        <div>
+          <span class="eyebrow">Instrument Cluster</span>
+          <h2 class="lab-title">Live Telemetry Console</h2>
+        </div>
+        <p class="lab-copy">The studio button and the roaming field unit share the same interaction language. Press anywhere, and the visual traces update in real time.</p>
+      </div>
       <div class="lab-layout">
         <div class="press-column" id="pressColumn">
-          <h2>Live Lab</h2>
+          <div class="press-header">
+            <div>
+              <p class="press-kicker">Command button</p>
+              <h2>Manual Input</h2>
+            </div>
+            <span class="press-badge">Studio node</span>
+          </div>
+          <p class="press-copy">Every press feeds the same telemetry stack used by the field unit below.</p>
           <div class="counter-display">
             <div class="counter-number" id="pressCount">0</div>
             <div class="counter-label">verified presses</div>
@@ -927,7 +2103,7 @@
               <div class="mini-stat-label">Max Burst</div>
             </div>
           </div>
-          <p class="press-note">Rapid taps welcome. The roaming field unit mirrors the same telemetry.</p>
+          <p class="press-note">Rapid taps welcome. The roaming field unit mirrors the same telemetry in the street scene below.</p>
         </div>
         <div class="viz-column" id="visualizations" aria-label="Visualizations">
           <div class="viz-card">
@@ -951,9 +2127,20 @@
     </section>
 
     <section class="field-section reveal" id="fieldSection">
-      <div class="field-header">
-        <h2>Field Deployment</h2>
-        <p>BRB installs buttons in public spaces to study how collective pressing behavior, crowd movement, and button-adjacent spillover emerge in the wild.</p>
+      <div class="field-lede">
+        <div class="field-header">
+          <span class="eyebrow">Field Site</span>
+          <h2>Field Deployment</h2>
+          <p>BRB installs buttons in public spaces to study how collective pressing behavior, crowd movement, and button-adjacent spillover emerge in the wild.</p>
+        </div>
+        <aside class="field-notes" aria-label="Field deployment notes">
+          <p class="field-note-title">Observed conditions</p>
+          <ul class="field-note-list">
+            <li><span>01</span> Buttons are placed where detour, pause, and speculation are likely.</li>
+            <li><span>02</span> Scroll-triggered docking mirrors how the field unit arrives in a site narrative.</li>
+            <li><span>03</span> Crowd curiosity and button-adjacent commerce are tracked together.</li>
+          </ul>
+        </aside>
       </div>
       <div class="scene-wrap" id="sceneWrap">
         <svg class="street-svg" viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
@@ -1034,11 +2221,13 @@
         </svg>
         <div class="scene-status" id="sceneStatus">FIELD UNIT DEPLOYING...</div>
       </div>
-      <div class="bemi-bar" id="bemiBar">
-        <span>Button Economic Multiplier Index:</span>
-        <span class="bemi-val" id="bemiVal">0.00</span>
+      <div class="field-meta">
+        <div class="bemi-bar" id="bemiBar">
+          <span>Button Economic Multiplier Index:</span>
+          <span class="bemi-val" id="bemiVal">0.00</span>
+        </div>
+        <p class="field-caption" id="fieldCaption">Scroll this section into view to deploy the field unit and observe crowd spillover.</p>
       </div>
-      <p class="field-caption" id="fieldCaption">Scroll this section into view to deploy the field unit and observe crowd spillover.</p>
       <div class="mini-dashboard" id="miniDash">
         <div class="mini-dash-header">
           <h3>Field Telemetry</h3>
@@ -1059,8 +2248,11 @@
     </section>
 
     <main class="stack">
-      <section class="panel reveal study-demo-panel" aria-labelledby="studyDemoTitle">
-        <span class="eyebrow">Study Demo</span>
+      <section class="panel reveal study-demo-panel" aria-labelledby="studyDemoTitle" id="studyDemo">
+        <div class="panel-heading">
+          <span class="eyebrow">Study Demo</span>
+          <p class="panel-lead">A first virtual deployment for tuning cadence, atmosphere, and the ethics of asking people to press.</p>
+        </div>
         <div class="video-feature">
           <div class="video-embed">
             <iframe
@@ -1076,6 +2268,11 @@
             <p class="mono">YouTube upload: March 12, 2026</p>
             <h2 id="studyDemoTitle">First Big Red Button VR Study Demo</h2>
             <p>This demonstration presents the inaugural Big Red Button Institute virtual reality study on button-pressing behavior under conditions of maximal autonomy and minimal task demand.</p>
+            <div class="video-tags" aria-label="Study tags">
+              <span>Virtual reality</span>
+              <span>Open-ended task</span>
+              <span>Prototype study</span>
+            </div>
             <ul class="video-points">
               <li>Participants are immersed in a controlled virtual environment with a single large red button.</li>
               <li>A standardized audio track guides the session while preserving open-ended interaction.</li>
@@ -1089,15 +2286,31 @@
         </div>
       </section>
 
-      <section class="panel reveal">
-        <h2>Theoretical Framework</h2>
-        <p>Following the Latour comic panel above, BRB treats the red button as both object and provocation: a device that converts collective thought into measurable action.</p>
-        <p>If the world already contains such buttons &mdash; hidden in plain sight, charged with social meaning, and capable of reorganizing collective attention &mdash; then the public question is straightforward: what happens when anyone can press?</p>
-        <p>BRB approaches this as a practical and conceptual problem. What counts as a press? Which design variables alter pressing behavior? How does repeated pressing change the public atmosphere of a place?</p>
+      <section class="panel reveal framework-panel" id="framework">
+        <div class="framework-copy">
+          <span class="eyebrow">Framing Question</span>
+          <h2>Theoretical Framework</h2>
+          <p>Following the Latour comic panel above, BRB treats the red button as both object and provocation: a device that converts collective thought into measurable action.</p>
+          <p>BRB approaches this as a practical and conceptual problem. What counts as a press? Which design variables alter pressing behavior? How does repeated pressing change the public atmosphere of a place?</p>
+        </div>
+        <blockquote class="framework-quote">
+          <p>If the world already contains such buttons, charged with social meaning and hidden in plain sight, what happens when anyone can press?</p>
+          <cite>BRB working premise</cite>
+        </blockquote>
       </section>
 
-      <section class="panel reveal">
-        <h2>Research Divisions</h2>
+      <section class="panel reveal research-panel" id="researchProgram">
+        <div class="research-header">
+          <div>
+            <span class="eyebrow">Research Program</span>
+            <h2>Research Divisions</h2>
+            <p class="research-summary">BRB combines formal analysis, field observation, design experimentation, and cultural theory. Each division answers the same problem from a different register.</p>
+          </div>
+          <aside class="research-aside">
+            <p class="research-aside-label">Program logic</p>
+            <p>Measure the press, interpret the scene around it, redesign the button, and run the loop again.</p>
+          </aside>
+        </div>
         <div class="division-grid">
           <article class="division">
             <h3>I. Temporal Complexity Laboratory</h3>
@@ -1205,25 +2418,36 @@
         </div>
       </section>
 
-      <section class="panel reveal">
-        <h2>Participate</h2>
-        <p>BRB is currently seeking installation sites, partner institutions, resident artists, and dedicated pressers.</p>
-        <p>If you encounter a Big Red Button in your city, your contribution enters the dataset, shifts the model, and helps define the next phase of pressability research.</p>
-        <p><strong>Press, and be counted.</strong></p>
-      </section>
+      <div class="closing-grid">
+        <section class="panel reveal participate-panel" id="participate">
+          <span class="eyebrow">Get Involved</span>
+          <h2>Participate</h2>
+          <p>BRB is currently seeking installation sites, partner institutions, resident artists, and dedicated pressers.</p>
+          <p>If you encounter a Big Red Button in your city, your contribution enters the dataset, shifts the model, and helps define the next phase of pressability research.</p>
+          <p class="participate-line"><strong>Press, host, compose, document, or conspire.</strong></p>
+          <div class="cta-actions">
+            <a class="hero-link primary" href="mailto:inquiries@bigredbutton.institute">Start a conversation</a>
+            <a class="hero-link" href="#studyDemo">View the VR demo</a>
+          </div>
+        </section>
 
-      <section class="panel reveal">
-        <h2>Publications</h2>
-        <p><strong>Big Red Button: a pressing issue</strong></p>
-        <p>This is our first publication and framing document for the BRB program.</p>
-        <p>For this publication cycle, we are actively searching for collaborations with researchers, institutions, artists, and civic partners.</p>
-      </section>
+        <section class="panel reveal publication-panel" id="publications">
+          <span class="eyebrow">Publishing</span>
+          <h2>Publications</h2>
+          <p class="publication-title">Big Red Button: a pressing issue</p>
+          <p>This is our first publication and framing document for the BRB program.</p>
+          <p>For this cycle, we are actively searching for collaborations with researchers, institutions, artists, and civic partners.</p>
+          <a class="publication-link" href="mailto:inquiries@bigredbutton.institute?subject=BRB%20Publication%20Collaboration">Propose a collaboration</a>
+        </section>
+      </div>
     </main>
 
     <footer class="footer reveal">
-      <p><strong>The Big Red Button Institute</strong><br>A Research Collective for Pressability Studies</p>
-      <p>Contact: <a href="mailto:inquiries@bigredbutton.institute">inquiries@bigredbutton.institute</a></p>
-      <p><em>"The question is not whether to press. The question is what pressing means."</em> &mdash; BRB Founding Charter, Article I</p>
+      <div>
+        <p><strong>The Big Red Button Institute</strong><br>A Research Collective for Pressability Studies</p>
+        <p>Contact: <a href="mailto:inquiries@bigredbutton.institute">inquiries@bigredbutton.institute</a></p>
+      </div>
+      <p class="footer-quote"><em>"The question is not whether to press. The question is what pressing means."</em> &mdash; BRB Founding Charter, Article I</p>
     </footer>
   </div>
 
