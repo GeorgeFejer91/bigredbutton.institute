@@ -1,0 +1,104 @@
+name: Sync GitHub Pages Branch
+
+on:
+  push:
+    branches:
+      - main
+      - "codex/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gh-pages-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare source snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p /tmp/site-src
+          rsync -av \
+            --exclude=".git/" \
+            --exclude=".github/" \
+            --exclude=".gitignore" \
+            ./ /tmp/site-src/
+
+      - name: Publish to gh-pages
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          slugify() {
+            printf '%s' "$1" |
+              tr '[:upper:]' '[:lower:]' |
+              sed 's#[^a-z0-9._/-]#-#g; s#/#-#g; s#--*#-#g; s#^-##; s#-$##'
+          }
+
+          remote_url="https://x-access-token:${TOKEN}@github.com/${REPOSITORY}.git"
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          workdir="$(mktemp -d)"
+
+          if git ls-remote --exit-code --heads "$remote_url" gh-pages >/dev/null 2>&1; then
+            git clone --branch gh-pages "$remote_url" "$workdir/site"
+          else
+            git init "$workdir/site"
+            cd "$workdir/site"
+            git checkout -b gh-pages
+            git remote add origin "$remote_url"
+            cd - >/dev/null
+          fi
+
+          cd "$workdir/site"
+
+          if [ "$REF_NAME" = "main" ]; then
+            mkdir -p previews
+            find . -mindepth 1 -maxdepth 1 ! -name ".git" ! -name "previews" -exec rm -rf {} +
+            rsync -av /tmp/site-src/ ./
+            publish_path="/"
+            commit_message="Deploy production site from main"
+          else
+            preview_slug="$(slugify "$REF_NAME")"
+            preview_dir="previews/$preview_slug"
+            rm -rf "$preview_dir"
+            mkdir -p "$preview_dir"
+            rsync -av /tmp/site-src/ "$preview_dir"/
+            publish_path="/$preview_dir/"
+            commit_message="Deploy preview for $REF_NAME"
+          fi
+
+          touch .nojekyll
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to publish."
+          else
+            git commit -m "$commit_message"
+            git push origin gh-pages
+          fi
+
+          {
+            echo "### GitHub Pages publish result"
+            echo ""
+            echo "- Source branch: \`$REF_NAME\`"
+            echo "- Published path: \`$publish_path\`"
+          } >> "$GITHUB_STEP_SUMMARY"

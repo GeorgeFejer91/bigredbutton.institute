@@ -1,0 +1,61 @@
+name: Remove Deleted Preview
+
+on:
+  delete:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.event.ref_type == 'branch' && startsWith(github.event.ref, 'codex/')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Remove preview directory from gh-pages
+        env:
+          DELETED_REF: ${{ github.event.ref }}
+          REPOSITORY: ${{ github.repository }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          slugify() {
+            printf '%s' "$1" |
+              tr '[:upper:]' '[:lower:]' |
+              sed 's#[^a-z0-9._/-]#-#g; s#/#-#g; s#--*#-#g; s#^-##; s#-$##'
+          }
+
+          remote_url="https://x-access-token:${TOKEN}@github.com/${REPOSITORY}.git"
+
+          if ! git ls-remote --exit-code --heads "$remote_url" gh-pages >/dev/null 2>&1; then
+            echo "No gh-pages branch exists yet."
+            exit 0
+          fi
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          workdir="$(mktemp -d)"
+          git clone --branch gh-pages "$remote_url" "$workdir/site"
+          cd "$workdir/site"
+
+          preview_slug="$(slugify "$DELETED_REF")"
+          preview_dir="previews/$preview_slug"
+
+          if [ ! -d "$preview_dir" ]; then
+            echo "No preview directory found for $DELETED_REF."
+            exit 0
+          fi
+
+          rm -rf "$preview_dir"
+          touch .nojekyll
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No cleanup changes to commit."
+          else
+            git commit -m "Remove preview for $DELETED_REF"
+            git push origin gh-pages
+          fi
