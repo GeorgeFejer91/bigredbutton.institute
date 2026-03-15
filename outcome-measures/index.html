@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BRB | Button Presence and Self-Button Proximity Measure</title>
+  <meta
+    name="description"
+    content="A BRB prototype pictorial outcome measure for felt button presence and self-button proximity."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&family=Manrope:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap"
+    rel="stylesheet"
+  >
+  <style>
+    :root {
+      --paper: #f5f0e3;
+      --ink: #1a1e28;
+      --muted: #5f6775;
+      --red: #df2c2c;
+      --red-hot: #ff4444;
+      --red-deep: #8f1717;
+      --line: #c9c1b0;
+      --card: rgba(255, 255, 255, 0.86);
+      --shadow: 0 18px 44px rgba(22, 28, 38, 0.18);
+      --shadow-soft: 0 10px 24px rgba(23, 28, 37, 0.11);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --max: 1120px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Manrope", "Segoe UI", sans-serif;
+      color: var(--ink);
+      line-height: 1.55;
+      background:
+        radial-gradient(1200px 560px at 104% -12%, #b8c8de 0%, transparent 60%),
+        radial-gradient(900px 460px at -5% 18%, #ecc0bc 0%, transparent 55%),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.12) 0 1px, rgba(255, 255, 255, 0) 1px 28px),
+        linear-gradient(180deg, #efe9da 0%, #f7f3ea 100%);
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .shell {
+      width: min(calc(100% - 2rem), var(--max));
+      margin: 1rem auto 2.5rem;
+    }
+
+    .hero {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: clamp(1rem, 1.5vw + 0.6rem, 1.8rem);
+      box-shadow: var(--shadow);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.93), rgba(255, 255, 255, 0.86)),
+        repeating-linear-gradient(-45deg, rgba(124, 146, 169, 0.11) 0 14px, rgba(124, 146, 169, 0) 14px 28px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      right: -110px;
+      top: -130px;
+      background: radial-gradient(circle, rgba(223, 44, 44, 0.24) 0%, rgba(223, 44, 44, 0) 70%);
+      pointer-events: none;
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .eyebrow,
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 40px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.82rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0.2rem 0.75rem;
+      background: rgba(255, 255, 255, 0.85);
+      text-decoration: none;
+    }
+
+    .back-link {
+      letter-spacing: 0.08em;
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .back-link:hover,
+    .back-link:focus-visible {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-soft);
+      background: #fff7f7;
+      outline: none;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      font-family: "Fraunces", Georgia, serif;
+      line-height: 1.12;
+      letter-spacing: -0.01em;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 4vw, 3.35rem);
+      max-width: 13ch;
+      margin-bottom: 0.7rem;
+    }
+
+    .hero-copy {
+      max-width: 70ch;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-copy p {
+      margin: 0.45rem 0;
+    }
+
+    .mono-note {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.8rem;
+      color: #756f63;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .instrument {
+      margin-top: 1rem;
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.9fr);
+      gap: 1rem;
+      align-items: stretch;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 251, 244, 0.98) 100%);
+      overflow: hidden;
+    }
+
+    .measure-card {
+      padding: 1rem;
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .measure-header,
+    .controls-header {
+      display: grid;
+      gap: 0.2rem;
+    }
+
+    .measure-header p,
+    .controls-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .visual-wrap {
+      border: 1px solid rgba(201, 193, 176, 0.9);
+      border-radius: var(--radius-md);
+      background:
+        radial-gradient(circle at 50% 20%, rgba(223, 44, 44, 0.08) 0%, transparent 45%),
+        linear-gradient(180deg, #fffef9 0%, #f7f1e6 100%);
+      padding: 0.75rem;
+    }
+
+    .visual-wrap svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .visual-note {
+      margin: 0;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .controls-card {
+      padding: 1rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .control-block {
+      display: grid;
+      gap: 0.5rem;
+      padding: 0.9rem;
+      border: 1px solid rgba(201, 193, 176, 0.95);
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.85);
+    }
+
+    .control-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: baseline;
+    }
+
+    .control-head label {
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .control-value {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.96rem;
+      color: var(--red-deep);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .control-desc {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      background: #fff1f1;
+      border: 1px solid rgba(182, 74, 74, 0.35);
+      color: var(--red-deep);
+      font-size: 0.84rem;
+      font-weight: 700;
+      text-transform: lowercase;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--red);
+    }
+
+    .range-scale {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.75rem;
+      color: #7e776a;
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .score-card {
+      border: 1px solid rgba(201, 193, 176, 0.95);
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.85);
+      padding: 0.9rem 0.8rem;
+      display: grid;
+      gap: 0.18rem;
+    }
+
+    .score-label {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #796f61;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .score-number {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--ink);
+      line-height: 1;
+    }
+
+    .score-text {
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-transform: lowercase;
+    }
+
+    .summary {
+      border-left: 6px solid var(--red);
+      background: #fff4f4;
+      border-radius: 10px;
+      padding: 0.85rem 0.9rem;
+      color: #4f5967;
+    }
+
+    .summary p {
+      margin: 0;
+    }
+
+    .citation-note {
+      margin-top: 1rem;
+      border: 1px solid rgba(201, 193, 176, 0.95);
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.72);
+      padding: 0.9rem 1rem;
+      color: #5a5f68;
+      font-size: 0.94rem;
+    }
+
+    .site-footer {
+      margin-top: 1rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-soft);
+      background: rgba(255, 251, 244, 0.92);
+      padding: 1rem;
+      font-size: 0.95rem;
+      color: #555d69;
+    }
+
+    .site-footer p {
+      margin: 0.3rem 0;
+    }
+
+    .comparison-line {
+      stroke: rgba(92, 88, 82, 0.62);
+      stroke-width: 3;
+      stroke-linecap: round;
+    }
+
+    .measure-circle {
+      fill: rgba(255, 255, 255, 0.52);
+      stroke: rgba(26, 30, 40, 0.72);
+      stroke-width: 3;
+      transition: cx 140ms ease, r 140ms ease;
+    }
+
+    .label-text {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 24px;
+      fill: #4d5560;
+      text-anchor: middle;
+    }
+
+    .self-figure {
+      stroke: rgba(26, 30, 40, 0.82);
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .button-pedestal {
+      fill: #b7aa94;
+    }
+
+    .button-base {
+      fill: #8d8270;
+    }
+
+    .button-dome {
+      fill: url(#buttonGlow);
+      stroke: #8d1414;
+      stroke-width: 4;
+    }
+
+    .button-shine {
+      fill: rgba(255, 255, 255, 0.38);
+    }
+
+    @media (max-width: 920px) {
+      .instrument {
+        grid-template-columns: 1fr;
+      }
+
+      .score-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        width: min(calc(100% - 1rem), var(--max));
+        margin: 0.5rem auto 1.5rem;
+      }
+
+      .hero,
+      .panel,
+      .site-footer {
+        border-radius: 14px;
+      }
+
+      .hero-top {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .score-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .control-head {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .measure-circle,
+      .back-link {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div class="hero-top">
+        <span class="eyebrow">BRB Outcome Measures</span>
+        <a class="back-link" href="/">Back to Institute</a>
+      </div>
+      <div class="hero-copy">
+        <p class="mono-note">Prototype research instrument</p>
+        <h1>Button Presence and Self-Button Proximity Measure</h1>
+        <p>
+          This prototype adapts pictorial overlap logic for the Big Red Button Institute's 5-minute button
+          press studies. It translates two subjective dimensions into a single visual field: how large the
+          button feels in experience, and how close the button feels to the self.
+        </p>
+        <p>
+          Larger button circles indicate stronger felt presence. Smaller distance and stronger overlap
+          indicate greater self-button proximity.
+        </p>
+      </div>
+    </header>
+
+    <main class="instrument">
+      <section class="panel measure-card" aria-labelledby="measureHeading">
+        <div class="measure-header">
+          <p class="mono-note">Pictorial measure</p>
+          <h2 id="measureHeading">Self and button in a shared reference frame</h2>
+          <p>
+            The diagram keeps the self fixed and lets the button grow and move as slider values change.
+          </p>
+        </div>
+        <div class="visual-wrap">
+          <svg
+            viewBox="0 0 900 420"
+            role="img"
+            aria-labelledby="measureSvgTitle measureSvgDesc"
+          >
+            <title id="measureSvgTitle">Button presence and self-button proximity visualization</title>
+            <desc id="measureSvgDesc">
+              A fixed self circle with a stick figure sits on the left. A button circle on the right grows or
+              shrinks and moves closer or farther away based on the sliders.
+            </desc>
+            <defs>
+              <radialGradient id="buttonGlow" cx="38%" cy="28%" r="58%">
+                <stop offset="0%" stop-color="#ff9a9a"></stop>
+                <stop offset="30%" stop-color="#ff5454"></stop>
+                <stop offset="72%" stop-color="#df2c2c"></stop>
+                <stop offset="100%" stop-color="#9d1212"></stop>
+              </radialGradient>
+            </defs>
+
+            <line class="comparison-line" x1="110" y1="210" x2="790" y2="210"></line>
+
+            <circle class="measure-circle" cx="280" cy="210" r="84"></circle>
+
+            <g aria-hidden="true" transform="translate(280 210)">
+              <circle class="self-figure" cx="0" cy="-34" r="17"></circle>
+              <line class="self-figure" x1="0" y1="-17" x2="0" y2="32"></line>
+              <line class="self-figure" x1="-28" y1="2" x2="28" y2="2"></line>
+              <line class="self-figure" x1="0" y1="32" x2="-22" y2="68"></line>
+              <line class="self-figure" x1="0" y1="32" x2="22" y2="68"></line>
+            </g>
+
+            <circle id="buttonCircle" class="measure-circle" cx="575" cy="210" r="84"></circle>
+
+            <g id="buttonIcon" aria-hidden="true" transform="translate(575 214) scale(1)">
+              <rect class="button-pedestal" x="-26" y="18" width="52" height="48" rx="8"></rect>
+              <rect class="button-base" x="-34" y="58" width="68" height="16" rx="7"></rect>
+              <ellipse class="button-dome" cx="0" cy="8" rx="34" ry="24"></ellipse>
+              <ellipse class="button-shine" cx="-10" cy="0" rx="14" ry="10"></ellipse>
+            </g>
+
+            <text class="label-text" x="280" y="330">self</text>
+            <text id="buttonLabel" class="label-text" x="575" y="330">button</text>
+          </svg>
+        </div>
+        <p class="visual-note">
+          Reference line, containment, and overlap are adapted from pictorial overlap measures used to
+          stabilize subjective spatial comparison.
+        </p>
+      </section>
+
+      <section class="panel controls-card" aria-labelledby="controlsHeading">
+        <div class="controls-header">
+          <p class="mono-note">Live scoring</p>
+          <h2 id="controlsHeading">Adjust the two subscales</h2>
+          <p>The numeric outputs update immediately and do not save or transmit any data.</p>
+        </div>
+
+        <div class="control-block">
+          <div class="control-head">
+            <label for="presenceSlider">Felt Button Presence</label>
+            <output id="presenceSliderValue" class="control-value" for="presenceSlider">60</output>
+          </div>
+          <div id="presenceDescriptor" class="control-desc">strong</div>
+          <input id="presenceSlider" type="range" min="0" max="100" value="60">
+          <div class="range-scale">
+            <span>faint</span>
+            <span>looming</span>
+          </div>
+        </div>
+
+        <div class="control-block">
+          <div class="control-head">
+            <label for="proximitySlider">Self-Button Proximity</label>
+            <output id="proximitySliderValue" class="control-value" for="proximitySlider">35</output>
+          </div>
+          <div id="proximityDescriptor" class="control-desc">approaching</div>
+          <input id="proximitySlider" type="range" min="0" max="100" value="35">
+          <div class="range-scale">
+            <span>distant</span>
+            <span>overlapping</span>
+          </div>
+        </div>
+
+        <div class="score-grid" aria-label="Live measure scores">
+          <article class="score-card">
+            <div class="score-label">Presence Score</div>
+            <div id="presenceScore" class="score-number">60</div>
+            <div id="presenceScoreText" class="score-text">strong</div>
+          </article>
+          <article class="score-card">
+            <div class="score-label">Proximity Score</div>
+            <div id="proximityScore" class="score-number">35</div>
+            <div id="proximityScoreText" class="score-text">approaching</div>
+          </article>
+          <article class="score-card">
+            <div class="score-label">Composite Index</div>
+            <div id="compositeScore" class="score-number">48</div>
+            <div id="compositeScoreText" class="score-text">moderate coupling</div>
+          </article>
+        </div>
+
+        <div class="summary" aria-live="polite">
+          <p id="liveSummary">
+            Current reading: the button feels strong and approaching, with a composite index of 48.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <aside class="citation-note">
+      Inspired by Schubert and Otten's pictorial overlap logic and adapted here as a BRB prototype for
+      button studies rather than as a validated psychometric deployment.
+    </aside>
+
+    <footer class="site-footer">
+      <p><strong>The Big Red Button Institute</strong></p>
+      <p>Prototype outcome-measure page for ongoing pressability research.</p>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      var presenceSlider = document.getElementById("presenceSlider");
+      var proximitySlider = document.getElementById("proximitySlider");
+
+      var presenceSliderValue = document.getElementById("presenceSliderValue");
+      var proximitySliderValue = document.getElementById("proximitySliderValue");
+      var presenceDescriptor = document.getElementById("presenceDescriptor");
+      var proximityDescriptor = document.getElementById("proximityDescriptor");
+
+      var presenceScore = document.getElementById("presenceScore");
+      var proximityScore = document.getElementById("proximityScore");
+      var compositeScore = document.getElementById("compositeScore");
+      var presenceScoreText = document.getElementById("presenceScoreText");
+      var proximityScoreText = document.getElementById("proximityScoreText");
+      var compositeScoreText = document.getElementById("compositeScoreText");
+      var liveSummary = document.getElementById("liveSummary");
+
+      var buttonCircle = document.getElementById("buttonCircle");
+      var buttonLabel = document.getElementById("buttonLabel");
+      var buttonIcon = document.getElementById("buttonIcon");
+
+      function descriptorFor(value, type) {
+        if (type === "presence") {
+          if (value < 25) return "faint";
+          if (value < 50) return "noticeable";
+          if (value < 75) return "strong";
+          return "looming";
+        }
+
+        if (type === "proximity") {
+          if (value < 25) return "distant";
+          if (value < 50) return "approaching";
+          if (value < 75) return "near";
+          return "overlapping";
+        }
+
+        if (value < 25) return "low coupling";
+        if (value < 50) return "moderate coupling";
+        if (value < 75) return "high coupling";
+        return "deep coupling";
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function updateMeasure() {
+        var presence = Number(presenceSlider.value);
+        var proximity = Number(proximitySlider.value);
+        var buttonRadius = 48 + (presence * 0.6);
+        var buttonCenterX = 680 - (proximity * 3.0);
+        var iconScale = clamp(buttonRadius / 84, 0.58, 1.32);
+        var composite = Math.round((presence + proximity) / 2);
+
+        var presenceText = descriptorFor(presence, "presence");
+        var proximityText = descriptorFor(proximity, "proximity");
+        var compositeText = descriptorFor(composite, "composite");
+
+        buttonCircle.setAttribute("r", buttonRadius.toFixed(1));
+        buttonCircle.setAttribute("cx", buttonCenterX.toFixed(1));
+        buttonLabel.setAttribute("x", buttonCenterX.toFixed(1));
+        buttonIcon.setAttribute(
+          "transform",
+          "translate(" + buttonCenterX.toFixed(1) + " 214) scale(" + iconScale.toFixed(3) + ")"
+        );
+
+        presenceSliderValue.textContent = String(presence);
+        proximitySliderValue.textContent = String(proximity);
+
+        presenceDescriptor.textContent = presenceText;
+        proximityDescriptor.textContent = proximityText;
+
+        presenceScore.textContent = String(presence);
+        proximityScore.textContent = String(proximity);
+        compositeScore.textContent = String(composite);
+
+        presenceScoreText.textContent = presenceText;
+        proximityScoreText.textContent = proximityText;
+        compositeScoreText.textContent = compositeText;
+
+        liveSummary.textContent =
+          "Current reading: the button feels " +
+          presenceText +
+          " and " +
+          proximityText +
+          ", with a composite index of " +
+          composite +
+          ".";
+      }
+
+      presenceSlider.addEventListener("input", updateMeasure);
+      proximitySlider.addEventListener("input", updateMeasure);
+      updateMeasure();
+    })();
+  </script>
+</body>
+</html>
