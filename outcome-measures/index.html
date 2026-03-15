@@ -504,13 +504,13 @@
               <line class="self-figure" x1="0" y1="32" x2="22" y2="68"></line>
             </g>
 
-            <circle id="buttonCircle" class="measure-circle" cx="575" cy="210" r="84"></circle>
+            <circle id="buttonCircle" class="measure-circle" cx="575" cy="210" r="96"></circle>
 
-            <g id="buttonIcon" aria-hidden="true" transform="translate(575 214) scale(1)">
-              <rect class="button-pedestal" x="-26" y="18" width="52" height="48" rx="8"></rect>
-              <rect class="button-base" x="-34" y="58" width="68" height="16" rx="7"></rect>
-              <ellipse class="button-dome" cx="0" cy="8" rx="34" ry="24"></ellipse>
-              <ellipse class="button-shine" cx="-10" cy="0" rx="14" ry="10"></ellipse>
+            <g id="buttonIcon" aria-hidden="true" transform="translate(575 210)">
+              <rect class="button-pedestal" x="-22" y="12" width="44" height="42" rx="8"></rect>
+              <rect class="button-base" x="-30" y="50" width="60" height="14" rx="7"></rect>
+              <ellipse class="button-dome" cx="0" cy="0" rx="34" ry="24"></ellipse>
+              <ellipse class="button-shine" cx="-10" cy="-8" rx="14" ry="10"></ellipse>
             </g>
 
             <text class="label-text" x="280" y="330">self</text>
@@ -636,16 +636,11 @@
         return "deep coupling";
       }
 
-      function clamp(value, min, max) {
-        return Math.max(min, Math.min(max, value));
-      }
-
       function updateMeasure() {
         var presence = Number(presenceSlider.value);
         var proximity = Number(proximitySlider.value);
-        var buttonRadius = 48 + (presence * 0.6);
+        var buttonRadius = 20 + (presence * 1.48);
         var buttonCenterX = 680 - (proximity * 3.0);
-        var iconScale = clamp(buttonRadius / 84, 0.58, 1.32);
         var composite = Math.round((presence + proximity) / 2);
 
         var presenceText = descriptorFor(presence, "presence");
@@ -657,7 +652,7 @@
         buttonLabel.setAttribute("x", buttonCenterX.toFixed(1));
         buttonIcon.setAttribute(
           "transform",
-          "translate(" + buttonCenterX.toFixed(1) + " 214) scale(" + iconScale.toFixed(3) + ")"
+          "translate(" + buttonCenterX.toFixed(1) + " 210)"
         );
 
         presenceSliderValue.textContent = String(presence);
