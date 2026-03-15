@@ -360,7 +360,6 @@
       fill: rgba(255, 255, 255, 0.52);
       stroke: rgba(26, 30, 40, 0.72);
       stroke-width: 3;
-      transition: cx 140ms ease, r 140ms ease;
     }
 
     .label-text {
@@ -640,7 +639,8 @@
         var presence = Number(presenceSlider.value);
         var proximity = Number(proximitySlider.value);
         var buttonRadius = 20 + (presence * 1.48);
-        var buttonCenterX = 680 - (proximity * 3.0);
+        var buttonCenterX = 680 - (proximity * 4.0);
+        var buttonLabelY = proximity >= 90 ? 364 : 330;
         var composite = Math.round((presence + proximity) / 2);
 
         var presenceText = descriptorFor(presence, "presence");
@@ -650,6 +650,7 @@
         buttonCircle.setAttribute("r", buttonRadius.toFixed(1));
         buttonCircle.setAttribute("cx", buttonCenterX.toFixed(1));
         buttonLabel.setAttribute("x", buttonCenterX.toFixed(1));
+        buttonLabel.setAttribute("y", String(buttonLabelY));
         buttonIcon.setAttribute(
           "transform",
           "translate(" + buttonCenterX.toFixed(1) + " 210)"
