@@ -230,6 +230,17 @@ data class RednessConversionChoreography(
     val finalDescriptor: String,
     val cueName: String,
     val audioAsset: String,
+    val microEvents: List<RednessConversionMicroEvent>,
+)
+
+data class RednessConversionMicroEvent(
+    val startMs: Long,
+    val endMs: Long,
+    val code: String,
+    val spokenCue: String,
+    val participantCaption: String,
+    val visualCue: String,
+    val intensity: Float,
 )
 
 private data class RednessConversionCue(
@@ -240,6 +251,7 @@ private data class RednessConversionCue(
     val swapAtMs: Long,
     val settleAtMs: Long,
     val transcriptPlan: String,
+    val microEvents: List<RednessConversionMicroEvent>,
 )
 
 data class PresenceItem(
@@ -962,6 +974,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     val sourceScale = if (order == REDNESS_ORDER_VAS_THEN_LIKERT) "vas" else "likert"
     val targetScale = if (order == REDNESS_ORDER_VAS_THEN_LIKERT) "likert" else "vas"
     val descriptor = rednessDescriptor(finalLikert)
+    val microTimeline = cue.microEvents.joinToString("|") { "${it.code}_${it.startMs}_${it.endMs}" }
     rednessConversionChoreographyState.value =
         RednessConversionChoreography(
             order = order,
@@ -976,12 +989,27 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             finalDescriptor = descriptor,
             cueName = cue.cueName,
             audioAsset = cue.audioAsset,
+            microEvents = cue.microEvents,
         )
     Log.i(
         TAG,
-        "BRB_REDNESS_SCALE_CONVERSION_CHOREOGRAPHY state=start condition=${activeConditionState.intValue} order=$order from=$sourceScale to=$targetScale reason=$reason audio=${cue.audioAsset} durationMs=${cue.durationMs} swapAtMs=${cue.swapAtMs} settleAtMs=${cue.settleAtMs} transcript=${cue.transcriptPlan}",
+        "BRB_REDNESS_SCALE_CONVERSION_CHOREOGRAPHY state=start condition=${activeConditionState.intValue} order=$order from=$sourceScale to=$targetScale reason=$reason audio=${cue.audioAsset} durationMs=${cue.durationMs} swapAtMs=${cue.swapAtMs} settleAtMs=${cue.settleAtMs} transcript=${cue.transcriptPlan} microTimeline=$microTimeline",
     )
     playRednessScaleConversionCue(order, validationShortcut = false)
+    cue.microEvents.forEach { event ->
+      mainHandler.postDelayed(
+          {
+            if (rednessConversionChoreographyToken != token || rednessConversionChoreographyState.value?.order != order) {
+              return@postDelayed
+            }
+            Log.i(
+                TAG,
+                "BRB_REDNESS_SCALE_CONVERSION_MICRO_EVENT condition=${activeConditionState.intValue} order=$order code=${event.code} startMs=${event.startMs} endMs=${event.endMs} spokenCue=\"${event.spokenCue}\" visualCue=\"${event.visualCue}\" intensity=${event.intensity}",
+            )
+          },
+          event.startMs,
+      )
+    }
     mainHandler.postDelayed(
         {
           if (rednessConversionChoreographyToken != token || rednessConversionChoreographyState.value?.order != order) {
@@ -3134,9 +3162,10 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
 
   fun playRednessScaleConversionCue(order: String, validationShortcut: Boolean = false) {
     val cue = rednessConversionCue(order)
+    val microTimeline = cue.microEvents.joinToString("|") { "${it.code}:${it.startMs}-${it.endMs}" }
     Log.i(
         TAG,
-        "BRB_REDNESS_SCALE_CONVERSION_CUE order=$order cue=${cue.cueName} placeholder=false audioAsset=${cue.audioAsset} durationMs=${cue.durationMs} swapAtMs=${cue.swapAtMs} validationShortcut=$validationShortcut",
+        "BRB_REDNESS_SCALE_CONVERSION_CUE order=$order cue=${cue.cueName} placeholder=false audioAsset=${cue.audioAsset} durationMs=${cue.durationMs} swapAtMs=${cue.swapAtMs} microTimeline=$microTimeline validationShortcut=$validationShortcut",
     )
     if (validationShortcut) {
       playRawOneShotCue(R.raw.ui_navigation_blip, "${cue.cueName}_validation_shortcut")
@@ -3155,6 +3184,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
           swapAtMs = FIRST_REDNESS_CHANGE_SWAP_MS,
           settleAtMs = FIRST_REDNESS_CHANGE_SETTLE_MS,
           transcriptPlan = "supervisor_request_0_6800ms|likert_request_6800_11760ms|answer_already_given_14000_19280ms|result_settle_19280_22988ms",
+          microEvents = firstRednessChangeMicroEvents(),
       )
     } else {
       RednessConversionCue(
@@ -3165,8 +3195,172 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
           swapAtMs = SECOND_REDNESS_CHANGE_SWAP_MS,
           settleAtMs = SECOND_REDNESS_CHANGE_SETTLE_MS,
           transcriptPlan = "unprofessional_swap_0_6560ms|restore_vas_6560_12120ms|data_important_12120_14640ms|settle_14640_16771ms",
+          microEvents = secondRednessChangeMicroEvents(),
       )
     }
+  }
+
+  private fun firstRednessChangeMicroEvents(): List<RednessConversionMicroEvent> {
+    return listOf(
+        RednessConversionMicroEvent(
+            startMs = 0L,
+            endMs = 900L,
+            code = "nervous_entry",
+            spokenCue = "Uh, actually",
+            participantCaption = "One moment...",
+            visualCue = "edge jitter enters",
+            intensity = 0.55f,
+        ),
+        RednessConversionMicroEvent(
+            startMs = 900L,
+            endMs = 3300L,
+            code = "supervisor_ping",
+            spokenCue = "talk with my supervisor",
+            participantCaption = "Checking with supervisor.",
+            visualCue = "small memo ticks",
+            intensity = 0.70f,
+        ),
+        RednessConversionMicroEvent(
+            startMs = 3300L,
+            endMs = 6800L,
+            code = "item_targeted",
+            spokenCue = "he really wants this item",
+            participantCaption = "This item is being singled out.",
+            visualCue = "redness row brackets tighten",
+            intensity = 0.82f,
+        ),
+        RednessConversionMicroEvent(
+            startMs = 6800L,
+            endMs = 7600L,
+            code = "swap_requested",
+            spokenCue = "Likert scale",
+            participantCaption = "A different response format is incoming.",
+            visualCue = "vertical swap tear",
+            intensity = 1.00f,
+        ),
+        RednessConversionMicroEvent(
+            startMs = 7600L,
+            endMs = 11760L,
+            code = "seven_boxes_assemble",
+            spokenCue = "validated that way",
+            participantCaption = "Seven boxes assemble.",
+            visualCue = "box grid assembles",
+            intensity = 0.92f,
+        ),
+        RednessConversionMicroEvent(
+            startMs = 11760L,
+            endMs = 14000L,
+            code = "awkward_pause",
+            spokenCue = "pause",
+            participantCaption = "Brief pause.",
+            visualCue = "low shimmer",
+            intensity = 0.38f,
+        ),
+        RednessConversionMicroEvent(
+            startMs = 14000L,
+            endMs = 16400L,
+            code = "answer_already_given",
+            spokenCue = "you already answered it",
+            participantCaption = "Your answer is held in place.",
+            visualCue = "ghost marker preserved",
+            intensity = 0.78f,
+        ),
+        RednessConversionMicroEvent(
+            startMs = 16400L,
+            endMs = 19300L,
+            code = "change_anyway",
+            spokenCue = "change it anyway",
+            participantCaption = "The new format snaps to that answer.",
+            visualCue = "selection snaps to carried answer",
+            intensity = 0.90f,
+        ),
+        RednessConversionMicroEvent(
+            startMs = 19300L,
+            endMs = FIRST_REDNESS_CHANGE_AUDIO_DURATION_MS,
+            code = "result_settle",
+            spokenCue = "won't change the end result",
+            participantCaption = "You can adjust the new response after the clip.",
+            visualCue = "settle and unlock",
+            intensity = 0.52f,
+        ),
+    )
+  }
+
+  private fun secondRednessChangeMicroEvents(): List<RednessConversionMicroEvent> {
+    return listOf(
+        RednessConversionMicroEvent(
+            startMs = 0L,
+            endMs = 2200L,
+            code = "nervous_return",
+            spokenCue = "Right, so apparently",
+            participantCaption = "Another adjustment...",
+            visualCue = "edge jitter returns",
+            intensity = 0.58f,
+        ),
+        RednessConversionMicroEvent(
+            startMs = 2200L,
+            endMs = 4420L,
+            code = "professional_warning",
+            spokenCue = "not professional",
+            participantCaption = "A warning interrupts the item.",
+            visualCue = "warning strike",
+            intensity = 0.82f,
+        ),
+        RednessConversionMicroEvent(
+            startMs = 4420L,
+            endMs = 6560L,
+            code = "mid_experiment_freeze",
+            spokenCue = "middle of an experiment",
+            participantCaption = "The row freezes mid-experiment.",
+            visualCue = "frozen boxes",
+            intensity = 0.88f,
+        ),
+        RednessConversionMicroEvent(
+            startMs = 6560L,
+            endMs = 7900L,
+            code = "restore_requested",
+            spokenCue = "turn this back into a visual analogue scale",
+            participantCaption = "The visual track is coming back.",
+            visualCue = "track wipe begins",
+            intensity = 1.00f,
+        ),
+        RednessConversionMicroEvent(
+            startMs = 7900L,
+            endMs = 10200L,
+            code = "boxes_erased",
+            spokenCue = "visual analogue scale",
+            participantCaption = "The boxes are erased.",
+            visualCue = "box eraser",
+            intensity = 0.92f,
+        ),
+        RednessConversionMicroEvent(
+            startMs = 10200L,
+            endMs = 12120L,
+            code = "pretend_never_happened",
+            spokenCue = "pretend it never happened",
+            participantCaption = "The track reconstructs under the answer.",
+            visualCue = "track reconstructs",
+            intensity = 0.82f,
+        ),
+        RednessConversionMicroEvent(
+            startMs = 12120L,
+            endMs = 14640L,
+            code = "data_importance",
+            spokenCue = "data is very important",
+            participantCaption = "The saved value is carried over.",
+            visualCue = "data ledger flicker",
+            intensity = 0.70f,
+        ),
+        RednessConversionMicroEvent(
+            startMs = 14640L,
+            endMs = SECOND_REDNESS_CHANGE_AUDIO_DURATION_MS,
+            code = "wrong_way_settle",
+            spokenCue = "massage it the wrong way",
+            participantCaption = "Final wobble, then control returns.",
+            visualCue = "elastic settle",
+            intensity = 0.76f,
+        ),
+    )
   }
 
   private fun playButtonPressCue() {
@@ -4945,12 +5139,24 @@ private fun RednessConversionChoreographyOverlay(
   val frame = (elapsedMs / 70L).toInt()
   val progress = (elapsedMs.toFloat() / choreography.durationMs.toFloat()).coerceIn(0f, 1f)
   val nearSwap = kotlin.math.abs(elapsedMs - choreography.swapAtMs) < 850L
+  val activeEvent =
+      choreography.microEvents.firstOrNull { elapsedMs >= it.startMs && elapsedMs < it.endMs }
+          ?: choreography.microEvents.lastOrNull { elapsedMs >= it.endMs }
+  val eventProgress =
+      activeEvent
+          ?.let { event ->
+            val duration = (event.endMs - event.startMs).coerceAtLeast(1L)
+            ((elapsedMs - event.startMs).toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+          }
+          ?: progress
+  val microIntensity = activeEvent?.intensity ?: if (nearSwap) 1f else 0.45f
   val phaseText =
-      when {
-        elapsedMs < choreography.swapAtMs -> "One moment..."
-        elapsedMs < choreography.settleAtMs -> "Updating item..."
-        else -> "You can adjust the new response."
-      }
+      activeEvent?.participantCaption
+          ?: when {
+            elapsedMs < choreography.swapAtMs -> "One moment..."
+            elapsedMs < choreography.settleAtMs -> "Updating item..."
+            else -> "You can adjust the new response."
+          }
   Box(
       modifier =
           Modifier.fillMaxSize()
@@ -4961,14 +5167,14 @@ private fun RednessConversionChoreographyOverlay(
               ) {}
   ) {
     Canvas(modifier = Modifier.fillMaxSize()) {
-      val baseAlpha = if (nearSwap) 0.42f else 0.25f
-      drawRect(Color(0xFF001B6D).copy(alpha = baseAlpha + progress * 0.10f))
-      val stripeCount = if (nearSwap) 18 else 11
+      val baseAlpha = (0.18f + microIntensity * 0.13f + if (nearSwap) 0.10f else 0f).coerceAtMost(0.48f)
+      drawRect(Color(0xFF001B6D).copy(alpha = baseAlpha + progress * 0.08f))
+      val stripeCount = (9f + microIntensity * 13f + if (nearSwap) 5f else 0f).roundToInt()
       for (index in 0 until stripeCount) {
         val y = (glitchHash(choreography.startedElapsedMs.toInt(), frame + index, 1231) % size.height.toInt().coerceAtLeast(1)).toFloat()
-        val height = 3f + (glitchHash(choreography.startedElapsedMs.toInt(), frame, 1249 + index) % 18)
-        val xShift = glitchSignedUnit(choreography.startedElapsedMs.toInt(), frame, 1277 + index) * size.width * 0.10f
-        val alpha = if (nearSwap) 0.30f else 0.16f
+        val height = 3f + (glitchHash(choreography.startedElapsedMs.toInt(), frame, 1249 + index) % (10 + (microIntensity * 14f).roundToInt()))
+        val xShift = glitchSignedUnit(choreography.startedElapsedMs.toInt(), frame, 1277 + index) * size.width * (0.06f + microIntensity * 0.08f)
+        val alpha = (0.10f + microIntensity * 0.18f + if (nearSwap) 0.08f else 0f).coerceAtMost(0.36f)
         drawRect(
             color = if (index % 3 == 0) Color.White.copy(alpha = alpha) else Color(0xFF00E8FF).copy(alpha = alpha),
             topLeft = Offset(xShift, y),
@@ -5000,6 +5206,14 @@ private fun RednessConversionChoreographyOverlay(
           topLeft = Offset(0f, size.height * (0.14f + 0.16f * progress)),
           size = Size(size.width, 2.5f + 5f * if (nearSwap) 1f else 0.2f),
       )
+      drawRednessMicroEventVisual(
+          event = activeEvent,
+          eventProgress = eventProgress,
+          choreography = choreography,
+          elapsedMs = elapsedMs,
+          frame = frame,
+          seed = choreography.startedElapsedMs.toInt(),
+      )
     }
     Text(
         phaseText,
@@ -5015,6 +5229,159 @@ private fun RednessConversionChoreographyOverlay(
                 .padding(horizontal = 8.dp, vertical = 4.dp),
     )
   }
+}
+
+private fun DrawScope.drawRednessMicroEventVisual(
+    event: RednessConversionMicroEvent?,
+    eventProgress: Float,
+    choreography: RednessConversionChoreography,
+    elapsedMs: Long,
+    frame: Int,
+    seed: Int,
+) {
+  if (event == null) {
+    return
+  }
+  val intensity = event.intensity.coerceIn(0f, 1f)
+  val rowTop = size.height * 0.18f
+  val rowMid = size.height * 0.52f
+  val rowBottom = size.height * 0.78f
+  val left = size.width * 0.06f
+  val right = size.width * 0.94f
+  val cyan = Color(0xFF67F3FF).copy(alpha = 0.24f + intensity * 0.34f)
+  val white = Color.White.copy(alpha = 0.22f + intensity * 0.38f)
+  val magenta = Color(0xFFFF2D7F).copy(alpha = 0.18f + intensity * 0.24f)
+  val jitter = glitchSignedUnit(seed, frame, 7001) * size.width * 0.018f * intensity
+  when (event.code) {
+    "nervous_entry",
+    "nervous_return" -> {
+      repeat(5) { index ->
+        val inset = 6f + index * 6f
+        val alpha = (0.18f + eventProgress * 0.28f - index * 0.025f).coerceIn(0.04f, 0.42f)
+        drawRect(
+            color = Color(0xFF8BEFFF).copy(alpha = alpha),
+            topLeft = Offset(inset + jitter, inset),
+            size = Size(size.width - inset * 2f, size.height - inset * 2f),
+            style = Stroke(width = 1.5f + intensity * 2f),
+        )
+      }
+    }
+    "supervisor_ping" -> {
+      repeat(4) { index ->
+        val reveal = eventProgress >= index * 0.18f
+        if (reveal) {
+          val x = left + index * 34f + jitter
+          val y = rowTop + index * 8f
+          drawRect(Color.White.copy(alpha = 0.22f + intensity * 0.18f), Offset(x, y), Size(26f, 20f))
+          drawRect(cyan, Offset(x + 5f, y + 6f), Size(16f, 2.5f))
+          drawRect(cyan.copy(alpha = 0.34f), Offset(x + 5f, y + 12f), Size(11f, 2f))
+        }
+      }
+      drawLine(cyan, Offset(left, rowTop + 58f), Offset(left + size.width * 0.32f * eventProgress, rowTop + 58f), strokeWidth = 3f)
+    }
+    "item_targeted" -> {
+      val bracketInset = 22f * (1f - eventProgress)
+      val top = rowMid - 64f + bracketInset
+      val bottom = rowMid + 72f - bracketInset
+      val bracket = 46f
+      drawLine(white, Offset(left + jitter, top), Offset(left + bracket + jitter, top), strokeWidth = 5f)
+      drawLine(white, Offset(left + jitter, top), Offset(left + jitter, bottom), strokeWidth = 5f)
+      drawLine(white, Offset(right + jitter, top), Offset(right - bracket + jitter, top), strokeWidth = 5f)
+      drawLine(white, Offset(right + jitter, top), Offset(right + jitter, bottom), strokeWidth = 5f)
+      drawRect(magenta, Offset(left + 28f, rowMid + 18f), Size((right - left - 56f) * eventProgress, 5f))
+    }
+    "swap_requested",
+    "restore_requested" -> {
+      val tearX = size.width * (0.50f + glitchSignedUnit(seed, frame, 7011) * 0.03f)
+      drawRect(Color.White.copy(alpha = 0.58f), Offset(tearX - 5f, 0f), Size(10f, size.height))
+      drawRect(cyan.copy(alpha = 0.54f), Offset(tearX + 8f + jitter, 0f), Size(6f + 12f * eventProgress, size.height))
+      drawLine(magenta, Offset(left, rowMid), Offset(right, rowMid + 30f * (1f - eventProgress)), strokeWidth = 7f + intensity * 5f)
+    }
+    "seven_boxes_assemble" -> {
+      val boxGap = size.width * 0.018f
+      val boxW = (right - left - boxGap * 6f) / 7f
+      repeat(7) { index ->
+        val reveal = ((eventProgress * 7.6f) - index).coerceIn(0f, 1f)
+        if (reveal > 0f) {
+          val x = left + index * (boxW + boxGap) + jitter * 0.45f
+          val y = rowMid - 22f + glitchSignedUnit(seed, frame, 7021 + index) * 5f * intensity
+          drawRect(Color.White.copy(alpha = 0.16f + reveal * 0.36f), Offset(x, y), Size(boxW, 50f * reveal))
+          drawRect(cyan.copy(alpha = 0.22f + reveal * 0.32f), Offset(x, y), Size(boxW, 50f * reveal), style = Stroke(width = 2.5f))
+        }
+      }
+    }
+    "awkward_pause" -> {
+      val lineAlpha = 0.06f + intensity * 0.18f
+      repeat(4) { index ->
+        val y = rowTop + 38f + index * 48f + glitchSignedUnit(seed, frame, 7031 + index) * 2f
+        drawLine(Color(0xFFB6F8FF).copy(alpha = lineAlpha), Offset(left, y), Offset(right, y), strokeWidth = 2f)
+      }
+    }
+    "answer_already_given",
+    "data_importance" -> {
+      val markerX = left + (right - left) * 0.62f
+      drawCircle(Color.White.copy(alpha = 0.18f + intensity * 0.26f), radius = 22f + eventProgress * 11f, center = Offset(markerX + jitter, rowMid), style = Stroke(width = 4f))
+      drawCircle(magenta.copy(alpha = 0.28f + eventProgress * 0.26f), radius = 8f + eventProgress * 5f, center = Offset(markerX + jitter, rowMid))
+      repeat(5) { index ->
+        val y = rowBottom - 34f + index * 9f
+        drawRect(cyan.copy(alpha = 0.16f + eventProgress * 0.18f), Offset(right - 156f, y), Size(112f - index * 10f, 3f))
+      }
+    }
+    "change_anyway",
+    "pretend_never_happened" -> {
+      val wipe = left + (right - left) * eventProgress
+      drawRect(Color.White.copy(alpha = 0.30f), Offset(left, rowMid - 5f), Size((wipe - left).coerceAtLeast(1f), 10f))
+      drawLine(magenta, Offset(wipe + jitter, rowTop), Offset(wipe - jitter, rowBottom), strokeWidth = 5f)
+      drawCircle(cyan, radius = 10f + intensity * 8f, center = Offset(wipe.coerceIn(left, right), rowMid))
+    }
+    "professional_warning" -> {
+      repeat(3) { index ->
+        val y = rowTop + 52f + index * 38f
+        drawLine(magenta, Offset(left + jitter, y), Offset(right - jitter, y + 24f), strokeWidth = 5f + index)
+        drawLine(white.copy(alpha = 0.18f), Offset(right - jitter, y), Offset(left + jitter, y + 20f), strokeWidth = 3f)
+      }
+    }
+    "mid_experiment_freeze" -> {
+      val boxGap = size.width * 0.018f
+      val boxW = (right - left - boxGap * 6f) / 7f
+      repeat(7) { index ->
+        val x = left + index * (boxW + boxGap)
+        drawRect(Color(0xFFB6F8FF).copy(alpha = 0.13f), Offset(x, rowMid - 22f), Size(boxW, 52f))
+        drawRect(white.copy(alpha = 0.34f), Offset(x, rowMid - 22f), Size(boxW, 52f), style = Stroke(width = 2f))
+      }
+      drawRect(Color.White.copy(alpha = 0.18f + intensity * 0.16f), Offset(left, rowMid + 50f), Size(right - left, 6f))
+    }
+    "boxes_erased" -> {
+      val boxGap = size.width * 0.018f
+      val boxW = (right - left - boxGap * 6f) / 7f
+      repeat(7) { index ->
+        val x = left + index * (boxW + boxGap)
+        val alpha = (0.40f - eventProgress * 0.30f).coerceAtLeast(0.06f)
+        drawRect(Color.White.copy(alpha = alpha), Offset(x, rowMid - 22f), Size(boxW, 52f), style = Stroke(width = 2.5f))
+        val eraserX = left + (right - left) * eventProgress
+        if (x < eraserX + boxW) {
+          drawLine(magenta, Offset(x, rowMid + 30f), Offset(x + boxW, rowMid - 28f), strokeWidth = 4f)
+        }
+      }
+    }
+    "result_settle",
+    "wrong_way_settle" -> {
+      val settle = kotlin.math.sin(eventProgress * PI.toFloat() * 3f) * (1f - eventProgress)
+      val y = rowMid + settle * 30f
+      drawLine(cyan.copy(alpha = 0.36f), Offset(left, y), Offset(right, y), strokeWidth = 5f)
+      repeat(6) { index ->
+        val x = left + (right - left) * (index / 5f)
+        drawCircle(white.copy(alpha = 0.18f + (1f - eventProgress) * 0.20f), radius = 4f + intensity * 5f, center = Offset(x, y + glitchSignedUnit(seed, frame, 7041 + index) * 4f))
+      }
+    }
+  }
+  val railTop = size.height - 14f
+  drawRect(Color.White.copy(alpha = 0.16f), Offset(left, railTop), Size(right - left, 2f))
+  val startX = left + (right - left) * (event.startMs.toFloat() / choreography.durationMs.toFloat()).coerceIn(0f, 1f)
+  val endX = left + (right - left) * (event.endMs.toFloat() / choreography.durationMs.toFloat()).coerceIn(0f, 1f)
+  val nowX = left + (right - left) * (elapsedMs.toFloat() / choreography.durationMs.toFloat()).coerceIn(0f, 1f)
+  drawRect(cyan.copy(alpha = 0.48f), Offset(startX, railTop - 2f), Size((endX - startX).coerceAtLeast(2f), 6f))
+  drawLine(Color.White.copy(alpha = 0.70f), Offset(nowX, railTop - 8f), Offset(nowX, railTop + 8f), strokeWidth = 2.5f)
 }
 
 @Composable

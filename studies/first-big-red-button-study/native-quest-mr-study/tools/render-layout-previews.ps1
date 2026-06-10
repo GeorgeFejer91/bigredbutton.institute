@@ -404,7 +404,8 @@ function Draw-RednessChangeoverFrame {
         [string]$SourceScale,
         [string]$TargetScale,
         [string]$SwapTiming,
-        [string]$SaveState
+        [string]$SaveState,
+        [string[]]$MicroEvents
     )
 
     $c = New-Canvas
@@ -452,6 +453,24 @@ function Draw-RednessChangeoverFrame {
     $g.DrawLine($pinkPen, 92, 286, 1088, 300)
     $pinkPen.Dispose()
 
+    Draw-Text $g 'Transcript micro-events' 124 632 12 190 24 $true (Brush 255 255 255)
+    $railX = 306
+    $railY = 642
+    $railW = 692
+    $railH = 22
+    $g.FillRectangle((Brush 255 255 255 35), $railX, $railY, $railW, 4)
+    if ($MicroEvents.Count -gt 0) {
+        $eventW = [Math]::Max(18, [int]($railW / $MicroEvents.Count))
+        for ($i = 0; $i -lt $MicroEvents.Count; $i++) {
+            $x = $railX + ($i * $eventW)
+            $brush = if ($i % 2 -eq 0) { Brush 103 243 255 110 } else { Brush 255 45 127 92 }
+            $g.FillRectangle($brush, $x, $railY - 4, [Math]::Max(12, $eventW - 3), 12)
+            $brush.Dispose()
+            $label = $MicroEvents[$i]
+            Draw-Text $g $label ($x - 3) ($railY + 12) 7 ([Math]::Min(100, $eventW + 30)) 22 $true (Brush 255 255 255)
+        }
+    }
+
     Draw-Text $g 'VISIBLE AFTER SWAP' 150 442 13 220 24 $true (Brush 255 255 255)
     if ($TargetScale -eq 'vas') {
         $g.DrawLine((Pen 255 247 247 12 165), $sliderX + 22, 500, ($sliderX + $sliderW - 22), 500)
@@ -477,8 +496,8 @@ function Draw-RednessChangeoverFrame {
 
 function Draw-RednessChangeoverPreviews {
     return @(
-        Draw-RednessChangeoverFrame 'redness-changeover-vas-to-likert-preview.png' 'Redness Changeover Preview | Condition 1' 'first_questionnaire_change.mp3' 'vas' 'likert' 'swap at 7.2 s; settle at 19.3 s' 'save blocked during changeover'
-        Draw-RednessChangeoverFrame 'redness-changeover-likert-to-vas-preview.png' 'Redness Changeover Preview | Condition 2' 'second_questionnaire_change_excuse.mp3' 'likert' 'vas' 'swap at 7.3 s; settle at 14.64 s' 'save blocked during changeover'
+        Draw-RednessChangeoverFrame 'redness-changeover-vas-to-likert-preview.png' 'Redness Changeover Preview | Condition 1' 'first_questionnaire_change.mp3' 'vas' 'likert' 'swap at 7.2 s; settle at 19.3 s' 'save blocked during changeover' @('nervous_entry','supervisor_ping','item_targeted','swap_requested','seven_boxes_assemble','answer_already_given','change_anyway','result_settle')
+        Draw-RednessChangeoverFrame 'redness-changeover-likert-to-vas-preview.png' 'Redness Changeover Preview | Condition 2' 'second_questionnaire_change_excuse.mp3' 'likert' 'vas' 'swap at 7.3 s; settle at 14.64 s' 'save blocked during changeover' @('nervous_return','professional_warning','mid_experiment_freeze','restore_requested','boxes_erased','pretend_never_happened','data_importance','wrong_way_settle')
     )
 }
 

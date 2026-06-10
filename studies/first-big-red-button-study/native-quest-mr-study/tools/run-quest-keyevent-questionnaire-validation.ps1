@@ -495,8 +495,8 @@ try {
     Add-Comparison $comparisons 'redness conversion cue observed' $true (
         $logText -match 'BRB_REDNESS_SCALE_CONVERSION condition=1 .*from=vas to=likert' -and
         $logText -match 'BRB_REDNESS_SCALE_CONVERSION condition=2 .*from=likert to=vas' -and
-        $logText -match 'BRB_REDNESS_SCALE_CONVERSION_CUE order=vas_then_likert .*cue=first_questionnaire_change .*placeholder=false .*validationShortcut=true' -and
-        $logText -match 'BRB_REDNESS_SCALE_CONVERSION_CUE order=likert_then_vas .*cue=second_questionnaire_change_excuse .*placeholder=false .*validationShortcut=true'
+        $logText -match 'BRB_REDNESS_SCALE_CONVERSION_CUE order=vas_then_likert .*cue=first_questionnaire_change .*placeholder=false .*microTimeline=.*supervisor_ping.*seven_boxes_assemble.*validationShortcut=true' -and
+        $logText -match 'BRB_REDNESS_SCALE_CONVERSION_CUE order=likert_then_vas .*cue=second_questionnaire_change_excuse .*placeholder=false .*microTimeline=.*professional_warning.*boxes_erased.*validationShortcut=true'
     ) 'logcat'
     Add-Comparison $comparisons 'panel-exit keyboard hide before condition 1 observed' $true ($logText -match 'BRB_SOFT_KEYBOARD_HIDE reason=before_condition_1') 'logcat'
     Add-Comparison $comparisons 'panel-exit keyboard hide before condition 2 observed' $true ($logText -match 'BRB_SOFT_KEYBOARD_HIDE reason=before_condition_2') 'logcat'

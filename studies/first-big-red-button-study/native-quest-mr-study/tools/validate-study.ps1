@@ -393,12 +393,26 @@ if (Test-Path $activity) {
         $activityText.Contains('convertRednessLikertToVas') -and
         $activityText.Contains('BRB_REDNESS_SCALE_CONVERSION') -and
         $activityText.Contains('BRB_REDNESS_SCALE_CONVERSION_CHOREOGRAPHY') -and
+        $activityText.Contains('RednessConversionMicroEvent') -and
+        $activityText.Contains('BRB_REDNESS_SCALE_CONVERSION_MICRO_EVENT') -and
         $activityText.Contains('RednessConversionChoreographyOverlay') -and
+        $activityText.Contains('drawRednessMicroEventVisual') -and
         $activityText.Contains('R.raw.first_questionnaire_change') -and
         $activityText.Contains('R.raw.second_questionnaire_change_excuse') -and
         $activityText.Contains('placeholder=false') -and
         -not $activityText.Contains('redness_scale_conversion_pending_apology')
     ) 'third redness control flips VAS to Likert in block 1 and Likert to VAS in block 2, with real questionnaire-change audio and timed visual choreography'
+    Add-Check 'redness changeover transcript micro-events' (
+        $activityText.Contains('supervisor_ping') -and
+        $activityText.Contains('seven_boxes_assemble') -and
+        $activityText.Contains('professional_warning') -and
+        $activityText.Contains('boxes_erased') -and
+        $activityText.Contains('wrong_way_settle') -and
+        $activityText.Contains('microTimeline=') -and
+        $activityText.Contains('participantCaption') -and
+        $activityText.Contains('spokenCue') -and
+        $activityText.Contains('visualCue')
+    ) 'questionnaire-change clips expose transcript-synced micro-events in source and runtime logs'
     Add-Check 'redness export fields' (
         $activityText.Contains('rednessVas0To100') -and
         $activityText.Contains('rednessLikert1To7') -and
@@ -910,8 +924,10 @@ if (Test-Path $keyeventValidationScript) {
         $keyeventValidationText.Contains('condition 2 redness VAS') -and
         $keyeventValidationText.Contains('condition 2 redness Likert') -and
         $keyeventValidationText.Contains('condition 2 redness order') -and
-        $keyeventValidationText.Contains('redness conversion cue observed')
-    ) 'fast replay now fails unless redness VAS/Likert conversion markers and exported values are present'
+        $keyeventValidationText.Contains('redness conversion cue observed') -and
+        $keyeventValidationText.Contains('microTimeline=.*supervisor_ping.*seven_boxes_assemble') -and
+        $keyeventValidationText.Contains('microTimeline=.*professional_warning.*boxes_erased')
+    ) 'fast replay now fails unless redness VAS/Likert conversion markers, transcript micro-timelines, and exported values are present'
     Add-Check 'Quest keyevent validation proves simulated ECG blink and flash path' (
         $keyeventValidationText.Contains('ECG sources counterbalanced complement') -and
         $keyeventValidationText.Contains('ECG assignment order matches condition sources') -and
@@ -1156,8 +1172,12 @@ if (Test-Path $layoutPreviewScript) {
         $layoutPreviewText.Contains('first_questionnaire_change.mp3') -and
         $layoutPreviewText.Contains('second_questionnaire_change_excuse.mp3') -and
         $layoutPreviewText.Contains('swap at 7.2 s') -and
-        $layoutPreviewText.Contains('swap at 7.3 s')
-    ) 'previews document the two timed redness-format changeover states'
+        $layoutPreviewText.Contains('swap at 7.3 s') -and
+        $layoutPreviewText.Contains('supervisor_ping') -and
+        $layoutPreviewText.Contains('seven_boxes_assemble') -and
+        $layoutPreviewText.Contains('professional_warning') -and
+        $layoutPreviewText.Contains('boxes_erased')
+    ) 'previews document the two timed redness-format changeover states with transcript micro-event rails'
 }
 
 if (-not $SkipBuild) {
