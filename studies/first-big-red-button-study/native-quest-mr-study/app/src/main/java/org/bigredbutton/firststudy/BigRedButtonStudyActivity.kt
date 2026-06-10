@@ -63,15 +63,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.focus.FocusDirection
@@ -3426,6 +3430,7 @@ fun StudyPanel(activity: BigRedButtonStudyActivity) {
   val glitchDurationMs by activity.panelGlitchDurationMsState
   val glitchSeed by activity.panelGlitchSeedState
   val glitchProgress = panelGlitchProgress(glitchActive, glitchStartElapsedMs, glitchDurationMs)
+  val panelShape = RoundedCornerShape(18.dp)
   MaterialTheme(
       colors =
           lightColors(
@@ -3457,14 +3462,44 @@ fun StudyPanel(activity: BigRedButtonStudyActivity) {
                     else -> false
                   }
                 }
-                .clip(RoundedCornerShape(18.dp))
-                .background(BrbPaper.copy(alpha = 0.94f))
-                .border(1.dp, BrbLine, RoundedCornerShape(18.dp))
-                .padding(18.dp),
+                .graphicsLayer {
+                  if (glitchActive) {
+                    translationX = panelGlitchShellJitter(frame = glitchFrame, mode = glitchMode, progress = glitchProgress, seed = glitchSeed, axisSalt = 101)
+                    translationY = panelGlitchShellJitter(frame = glitchFrame, mode = glitchMode, progress = glitchProgress, seed = glitchSeed, axisSalt = 137) * 0.42f
+                    rotationZ = panelGlitchShellRotation(frame = glitchFrame, mode = glitchMode, progress = glitchProgress, seed = glitchSeed)
+                    scaleX = 1f + panelGlitchEnvelope(glitchProgress, glitchMode) * 0.006f
+                    scaleY = 1f - panelGlitchEnvelope(glitchProgress, glitchMode) * 0.004f
+                  }
+                }
+                .then(
+                    if (glitchActive) {
+                      Modifier.drawWithContent {
+                        val contentDrawScope = this
+                        val intensity = panelGlitchEnvelope(glitchProgress, glitchMode)
+                        val silhouettePath =
+                            interruptedPanelClipPath(
+                                panelSize = size,
+                                frame = glitchFrame,
+                                mode = glitchMode,
+                                seed = glitchSeed,
+                                intensity = intensity,
+                            )
+                        drawPath(path = silhouettePath, color = BrbPaper.copy(alpha = 0.88f))
+                        clipPath(silhouettePath) { contentDrawScope.drawContent() }
+                        drawPath(
+                            path = silhouettePath,
+                            color = BrbLine.copy(alpha = 0.22f),
+                            style = Stroke(width = 1.dp.toPx()),
+                        )
+                      }
+                    } else {
+                      Modifier.clip(panelShape).background(BrbPaper.copy(alpha = 0.94f)).border(1.dp, BrbLine, panelShape)
+                    }),
     ) {
       Box(
           modifier =
               Modifier.fillMaxSize()
+                  .padding(18.dp)
                   .graphicsLayer {
                     if (glitchActive) {
                       translationX = panelGlitchContentJitter(frame = glitchFrame, mode = glitchMode, progress = glitchProgress, seed = glitchSeed, axisSalt = 17)
@@ -3484,6 +3519,7 @@ fun StudyPanel(activity: BigRedButtonStudyActivity) {
           StudyStage.Complete -> CompleteScreen(activity)
         }
       }
+      GlitchPanelFrameOverlay(active = glitchActive, frame = glitchFrame, mode = glitchMode, progress = glitchProgress, seed = glitchSeed)
       BlueFailureGlitchOverlay(
           active = glitchActive,
           frame = glitchFrame,
@@ -4310,6 +4346,17 @@ private fun ChoiceButtonGroup(
 }
 
 @Composable
+private fun GlitchPanelFrameOverlay(active: Boolean, frame: Int, mode: String, progress: Float, seed: Int) {
+  if (!active) {
+    return
+  }
+  Canvas(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(18.dp))) {
+    val intensity = panelGlitchEnvelope(progress, mode)
+    drawInterruptedPanelContour(frame = frame, mode = mode, seed = seed, intensity = intensity)
+  }
+}
+
+@Composable
 private fun BlueFailureGlitchOverlay(active: Boolean, frame: Int, mode: String, progress: Float, seed: Int) {
   if (!active) {
     return
@@ -4330,9 +4377,9 @@ private fun BlueFailureGlitchOverlay(active: Boolean, frame: Int, mode: String, 
     drawScanlineTears(frame = frame, mode = mode, phase = phase, seed = seed, intensity = intensity)
     drawMacroblockCorruption(frame = frame, mode = mode, phase = phase, seed = seed, intensity = intensity)
     drawColorBreakupTears(frame = frame, seed = seed, intensity = intensity)
-    drawGlitchedBufferSpinner(frame = frame, mode = mode, phase = phase, progress = progress, seed = seed, intensity = intensity)
     drawNoiseBursts(frame = frame, phase = phase, seed = seed, intensity = intensity)
     drawPanelBorderDesync(frame = frame, mode = mode, seed = seed, intensity = intensity)
+    drawGlitchedBufferSpinner(frame = frame, mode = mode, phase = phase, progress = progress, seed = seed, intensity = intensity)
   }
 }
 
@@ -4390,6 +4437,238 @@ private fun panelGlitchContentJitter(frame: Int, mode: String, progress: Float, 
         else -> 0.78f
       }
   return glitchSignedUnit(seed, frame, axisSalt) * 6.0f * panelGlitchEnvelope(progress, mode) * phaseMultiplier
+}
+
+private fun panelGlitchShellJitter(frame: Int, mode: String, progress: Float, seed: Int, axisSalt: Int): Float {
+  val phase = panelGlitchPhase(progress, mode)
+  val phaseMultiplier =
+      when (phase) {
+        "rupture", "dropout", "collapse" -> 1.0f
+        "dead_screen" -> 0.34f
+        else -> 0.62f
+      }
+  return glitchSignedUnit(seed, frame, axisSalt) * 9.0f * panelGlitchEnvelope(progress, mode) * phaseMultiplier
+}
+
+private fun panelGlitchShellRotation(frame: Int, mode: String, progress: Float, seed: Int): Float {
+  val phase = panelGlitchPhase(progress, mode)
+  val phaseMultiplier =
+      when (phase) {
+        "rupture", "dropout", "collapse" -> 1.0f
+        "dead_screen" -> 0.25f
+        else -> 0.55f
+      }
+  return glitchSignedUnit(seed, frame, 173) * 0.42f * panelGlitchEnvelope(progress, mode) * phaseMultiplier
+}
+
+private fun interruptedPanelClipPath(panelSize: Size, frame: Int, mode: String, seed: Int, intensity: Float): Path {
+  val width = panelSize.width.coerceAtLeast(1f)
+  val height = panelSize.height.coerceAtLeast(1f)
+  val segments = 22
+  val phaseShift = if (mode == "outro") 31 else 0
+  val collapseBoost = if (mode == "outro") 1.18f else 1f
+  val maxInset = (8f + 31f * intensity) * collapseBoost
+  val waveringInset = 3.5f + 10f * intensity
+
+  fun edgeInset(index: Int, salt: Int): Float {
+    val tear = glitchHash(seed, frame + phaseShift + index, salt) % 5 == 0
+    val pulse = kotlin.math.abs(glitchSignedUnit(seed, frame, salt + 41 + index)) * waveringInset
+    val bite = if (tear) maxInset * (0.32f + glitchUnit(seed, frame, salt + 83 + index) * 0.82f) else 0f
+    return (pulse + bite).coerceIn(0f, maxInset)
+  }
+
+  return Path().apply {
+    moveTo(0f, edgeInset(0, 1601))
+    for (i in 1..segments) {
+      val x = width * i / segments
+      lineTo(x, edgeInset(i, 1601))
+    }
+    for (i in 1..segments) {
+      val y = height * i / segments
+      lineTo(width - edgeInset(i, 1703), y)
+    }
+    for (i in 1..segments) {
+      val x = width - width * i / segments
+      lineTo(x, height - edgeInset(i, 1801))
+    }
+    for (i in 1..segments) {
+      val y = height - height * i / segments
+      lineTo(edgeInset(i, 1907), y)
+    }
+    close()
+  }
+}
+
+private fun DrawScope.drawInterruptedPanelContour(frame: Int, mode: String, seed: Int, intensity: Float) {
+  val edge = 10f + 7f * intensity
+  val segmentCount = 30
+  val topSegmentWidth = size.width / segmentCount
+  val sideSegmentHeight = size.height / 18f
+  val phaseShift = if (mode == "outro") 11 else 0
+
+  for (i in 0 until segmentCount) {
+    val dropped = glitchHash(seed, frame + phaseShift, 941 + i) % 6 == 0
+    val x = i * topSegmentWidth + glitchSignedUnit(seed, frame, 967 + i) * 5f * intensity
+    val segmentLength = topSegmentWidth * (0.46f + glitchUnit(seed, frame, 991 + i) * 0.78f)
+    val topY = 2f + glitchSignedUnit(seed, frame, 1013 + i) * 5f * intensity
+    val bottomY = size.height - edge + glitchSignedUnit(seed, frame, 1031 + i) * 7f * intensity
+    val contourColor =
+        when ((i + frame) % 5) {
+          0 -> Color.White.copy(alpha = 0.48f * intensity)
+          1 -> Color(0xFF00F0FF).copy(alpha = 0.58f * intensity)
+          2 -> Color(0xFF001046).copy(alpha = 0.46f * intensity)
+          3 -> Color(0xFFFF2D7F).copy(alpha = 0.20f * intensity)
+          else -> Color(0xFF7FD4FF).copy(alpha = 0.42f * intensity)
+        }
+    if (dropped) {
+      drawRect(
+          color = Color(0xFF001046).copy(alpha = 0.52f * intensity),
+          topLeft = Offset(x, 0f),
+          size = Size(segmentLength * 1.2f, edge * 1.35f),
+      )
+      drawRect(
+          color = Color(0xFF001046).copy(alpha = 0.46f * intensity),
+          topLeft = Offset(x - topSegmentWidth * 0.2f, size.height - edge * 1.25f),
+          size = Size(segmentLength, edge * 1.35f),
+      )
+    } else {
+      drawRect(color = contourColor, topLeft = Offset(x, topY), size = Size(segmentLength, 4.0f + 4.0f * intensity))
+      drawRect(
+          color = contourColor.copy(alpha = contourColor.alpha * 0.80f),
+          topLeft = Offset(x + glitchSignedUnit(seed, frame, 1049 + i) * 8f * intensity, bottomY),
+          size = Size(segmentLength * 0.92f, 4.0f + 5.0f * intensity),
+      )
+    }
+  }
+
+  for (i in 0 until 18) {
+    val dropped = glitchHash(seed, frame + phaseShift, 1063 + i) % 5 == 0
+    val y = i * sideSegmentHeight + glitchSignedUnit(seed, frame, 1087 + i) * 5f * intensity
+    val segmentLength = sideSegmentHeight * (0.42f + glitchUnit(seed, frame, 1109 + i) * 0.74f)
+    val leftX = 1.5f + glitchSignedUnit(seed, frame, 1123 + i) * 4f * intensity
+    val rightX = size.width - edge + glitchSignedUnit(seed, frame, 1151 + i) * 5f * intensity
+    val color =
+        when ((i + frame) % 4) {
+          0 -> Color(0xFFBFEAFF).copy(alpha = 0.42f * intensity)
+          1 -> Color(0xFF00F0FF).copy(alpha = 0.52f * intensity)
+          2 -> Color(0xFF001046).copy(alpha = 0.42f * intensity)
+          else -> Color(0xFFFF2D7F).copy(alpha = 0.16f * intensity)
+        }
+    if (dropped) {
+      drawRect(color = Color(0xFF001046).copy(alpha = 0.44f * intensity), topLeft = Offset(0f, y), size = Size(edge * 1.2f, segmentLength))
+      drawRect(color = Color(0xFF001046).copy(alpha = 0.44f * intensity), topLeft = Offset(size.width - edge * 1.1f, y), size = Size(edge * 1.2f, segmentLength))
+    } else {
+      drawRect(color = color, topLeft = Offset(leftX, y), size = Size(4f + intensity * 4f, segmentLength))
+      drawRect(color = color, topLeft = Offset(rightX, y + glitchSignedUnit(seed, frame, 1171 + i) * 6f * intensity), size = Size(4f + intensity * 4f, segmentLength * 0.92f))
+    }
+  }
+
+  for (i in 0 until 14) {
+    val biteWidth = 18f + glitchUnit(seed, frame, 1193 + i) * 74f
+    val biteDepth = 6f + glitchUnit(seed, frame, 1217 + i) * 26f * intensity
+    val side = glitchHash(seed, frame, 1231 + i) % 4
+    val color =
+        if ((i + frame) % 3 == 0) {
+          Color(0xFF00F0FF).copy(alpha = 0.18f * intensity)
+        } else {
+          Color(0xFF001046).copy(alpha = 0.58f * intensity)
+        }
+    when (side) {
+      0 ->
+          drawRect(
+              color = color,
+              topLeft = Offset(glitchUnit(seed, frame, 1249 + i) * size.width, 0f),
+              size = Size(biteWidth, biteDepth),
+          )
+      1 ->
+          drawRect(
+              color = color,
+              topLeft = Offset(glitchUnit(seed, frame, 1277 + i) * size.width, size.height - biteDepth),
+              size = Size(biteWidth, biteDepth),
+          )
+      2 ->
+          drawRect(
+              color = color,
+              topLeft = Offset(0f, glitchUnit(seed, frame, 1301 + i) * size.height),
+              size = Size(biteDepth, biteWidth),
+          )
+      else ->
+          drawRect(
+              color = color,
+              topLeft = Offset(size.width - biteDepth, glitchUnit(seed, frame, 1327 + i) * size.height),
+              size = Size(biteDepth, biteWidth),
+          )
+    }
+  }
+
+  for (i in 0 until 9) {
+    val horizontal = glitchHash(seed, frame, 1373 + i) % 2 == 0
+    val fromFarEdge = glitchHash(seed, frame, 1399 + i) % 3 == 0
+    val tearThickness = 5f + glitchUnit(seed, frame, 1423 + i) * 18f * intensity
+    val tearLength =
+        if (mode == "outro") {
+          size.width * (0.18f + glitchUnit(seed, frame, 1447 + i) * 0.42f)
+        } else {
+          size.width * (0.10f + glitchUnit(seed, frame, 1447 + i) * 0.26f)
+        }
+    val tearAlpha = (0.52f + glitchUnit(seed, frame, 1471 + i) * 0.28f) * intensity
+    val seamColor =
+        if ((i + frame) % 3 == 0) {
+          Color(0xFFFF2D7F).copy(alpha = 0.24f * intensity)
+        } else {
+          Color(0xFF00F0FF).copy(alpha = 0.34f * intensity)
+        }
+    if (horizontal) {
+      val y = glitchUnit(seed, frame, 1493 + i) * size.height
+      val x = if (fromFarEdge) size.width - tearLength else 0f
+      drawRect(
+          color = Color.Transparent,
+          topLeft = Offset(x, y),
+          size = Size(tearLength, tearThickness),
+          blendMode = BlendMode.Clear,
+      )
+      drawRect(
+          color = Color(0xFF001046).copy(alpha = tearAlpha),
+          topLeft = Offset(x, y),
+          size = Size(tearLength, tearThickness),
+      )
+      drawRect(
+          color = seamColor,
+          topLeft = Offset(x + glitchSignedUnit(seed, frame, 1511 + i) * 8f, y + tearThickness),
+          size = Size(tearLength * 0.72f, 2.5f + 2f * intensity),
+      )
+    } else {
+      val x = glitchUnit(seed, frame, 1531 + i) * size.width
+      val y = if (fromFarEdge) size.height - tearLength else 0f
+      drawRect(
+          color = Color.Transparent,
+          topLeft = Offset(x, y),
+          size = Size(tearThickness, tearLength),
+          blendMode = BlendMode.Clear,
+      )
+      drawRect(
+          color = Color(0xFF001046).copy(alpha = tearAlpha),
+          topLeft = Offset(x, y),
+          size = Size(tearThickness, tearLength),
+      )
+      drawRect(
+          color = seamColor,
+          topLeft = Offset(x + tearThickness, y + glitchSignedUnit(seed, frame, 1553 + i) * 8f),
+          size = Size(2.5f + 2f * intensity, tearLength * 0.72f),
+      )
+    }
+  }
+
+  drawPath(
+      path = interruptedPanelClipPath(panelSize = size, frame = frame + 2, mode = mode, seed = seed + 1351, intensity = intensity),
+      color = Color(0xFF00F0FF).copy(alpha = 0.28f * intensity),
+      style = Stroke(width = 2.5f + intensity * 2f),
+  )
+  drawPath(
+      path = interruptedPanelClipPath(panelSize = size, frame = frame + 5, mode = mode, seed = seed + 1601, intensity = intensity),
+      color = Color(0xFFFF2D7F).copy(alpha = 0.14f * intensity),
+      style = Stroke(width = 2f),
+  )
 }
 
 private fun DrawScope.drawPhasedFailureWash(frame: Int, mode: String, phase: String, progress: Float, intensity: Float) {
@@ -4575,60 +4854,139 @@ private fun DrawScope.drawGlitchedBufferSpinner(
     intensity: Float,
 ) {
   val shortSide = if (size.width < size.height) size.width else size.height
-  val radius = shortSide * if (phase == "collapse" || phase == "dropout") 0.132f else 0.108f
+  val wheelIntensity = intensity.coerceAtLeast(0.82f)
+  val radius = shortSide * if (phase == "collapse" || phase == "dropout") 0.166f else 0.142f
+  val centerY = size.height * (if (mode == "outro") 0.55f else 0.50f)
   val center =
       Offset(
-          size.width * 0.50f + glitchSignedUnit(seed, frame, 641) * 10f * intensity,
-          size.height * if (mode == "outro") 0.55f else 0.50f + glitchSignedUnit(seed, frame, 659) * 7f * intensity,
+          size.width * 0.50f + glitchSignedUnit(seed, frame, 641) * 12f * wheelIntensity,
+          centerY + glitchSignedUnit(seed, frame, 659) * 9f * wheelIntensity,
       )
   val rotation = (frame * if (mode == "outro") -21f else 17f) + progress * 290f + seed % 360
   val ringBounds = Size(radius * 2f, radius * 2f)
   val topLeft = Offset(center.x - radius, center.y - radius)
-  for (i in 0 until 12) {
-    val dropped = glitchHash(seed, frame + i, 677) % 7 == 0
+
+  drawCircle(
+      color = Color(0xFF000516).copy(alpha = 0.58f),
+      radius = radius * 1.36f,
+      center = center,
+  )
+  drawCircle(
+      color = Color(0xFF00F0FF).copy(alpha = 0.28f * wheelIntensity),
+      radius = radius * 1.12f,
+      center = Offset(center.x + glitchSignedUnit(seed, frame, 666) * 5f, center.y),
+      style = Stroke(width = 6f + wheelIntensity * 6f),
+  )
+  drawCircle(
+      color = Color.White.copy(alpha = 0.18f * wheelIntensity),
+      radius = radius * 0.86f,
+      center = center,
+      style = Stroke(width = 3.5f + wheelIntensity * 3f),
+  )
+
+  for (i in 0 until 18) {
+    val dropped = glitchHash(seed, frame + i, 677) % 6 == 0
     if (!dropped) {
-      val age = ((i + frame) % 12) / 12f
-      val alpha = (0.15f + age * 0.50f) * intensity
+      val age = ((i + frame) % 18) / 18f
+      val alpha = (0.34f + age * 0.62f) * wheelIntensity
       val color =
-          when (i % 4) {
+          when (i % 5) {
             0 -> Color.White.copy(alpha = alpha)
             1 -> Color(0xFF00F0FF).copy(alpha = alpha)
             2 -> Color(0xFF7FD4FF).copy(alpha = alpha * 0.84f)
-            else -> Color(0xFFFF2D7F).copy(alpha = alpha * 0.42f)
+            3 -> Color(0xFF001046).copy(alpha = alpha * 1.10f)
+            else -> Color(0xFFFF2D7F).copy(alpha = alpha * 0.46f)
           }
       drawArc(
           color = color,
-          startAngle = rotation + i * 30f + glitchSignedUnit(seed, frame, 701 + i) * 7f,
-          sweepAngle = 13f + glitchUnit(seed, frame, 719 + i) * 21f,
+          startAngle = rotation + i * 20f + glitchSignedUnit(seed, frame, 701 + i) * 10f,
+          sweepAngle = 10f + glitchUnit(seed, frame, 719 + i) * 25f,
           useCenter = false,
           topLeft = topLeft,
           size = ringBounds,
-          style = Stroke(width = 7f + intensity * 3f, cap = StrokeCap.Round),
+          style = Stroke(width = 11f + wheelIntensity * 6f, cap = StrokeCap.Round),
       )
     }
   }
 
   drawArc(
-      color = Color(0xFF001046).copy(alpha = 0.46f * intensity),
+      color = Color(0xFF001046).copy(alpha = 0.78f * wheelIntensity),
       startAngle = rotation * -0.65f,
-      sweepAngle = 86f + 44f * intensity,
+      sweepAngle = 86f + 44f * wheelIntensity,
       useCenter = false,
       topLeft = Offset(center.x - radius * 1.18f, center.y - radius * 1.18f),
       size = Size(radius * 2.36f, radius * 2.36f),
-      style = Stroke(width = 3f + intensity * 2f, cap = StrokeCap.Square),
+      style = Stroke(width = 5f + wheelIntensity * 3f, cap = StrokeCap.Square),
   )
 
-  for (i in 0 until 22) {
-    val angle = (rotation + i * 16.36f + glitchSignedUnit(seed, frame, 743 + i) * 10f) * PI.toFloat() / 180f
-    val distance = radius * (1.36f + glitchUnit(seed, frame, 761 + i) * 0.22f)
+  drawArc(
+      color = Color.White.copy(alpha = 0.74f * wheelIntensity),
+      startAngle = rotation + 190f,
+      sweepAngle = 42f + 22f * wheelIntensity,
+      useCenter = false,
+      topLeft = Offset(center.x - radius * 0.54f, center.y - radius * 0.54f),
+      size = Size(radius * 1.08f, radius * 1.08f),
+      style = Stroke(width = 7f + wheelIntensity * 5f, cap = StrokeCap.Round),
+  )
+  drawCircle(
+      color = Color(0xFFBFEAFF).copy(alpha = 0.46f * wheelIntensity),
+      radius = radius * 0.19f,
+      center =
+          Offset(
+              center.x + glitchSignedUnit(seed, frame, 733) * 8f * wheelIntensity,
+              center.y + glitchSignedUnit(seed, frame, 739) * 5f * wheelIntensity,
+          ),
+  )
+
+  for (i in 0 until 28) {
+    val angle = (rotation + i * 12.86f + glitchSignedUnit(seed, frame, 743 + i) * 12f) * PI.toFloat() / 180f
+    val distance = radius * (1.34f + glitchUnit(seed, frame, 761 + i) * 0.30f)
     val tickCenter = Offset(center.x + cos(angle) * distance, center.y + sin(angle) * distance)
-    val tickAlpha = if (glitchHash(seed, frame + i, 787) % 6 == 0) 0.08f else 0.34f * intensity
+    val tickAlpha = if (glitchHash(seed, frame + i, 787) % 6 == 0) 0.10f else 0.62f * wheelIntensity
     drawRect(
-        color = Color(0xFFBFEAFF).copy(alpha = tickAlpha),
-        topLeft = Offset(tickCenter.x - 5f, tickCenter.y - 2f),
-        size = Size(10f + glitchUnit(seed, frame, 809 + i) * 18f, 4f + intensity * 3f),
+        color = if ((i + frame) % 7 == 0) Color(0xFFFF2D7F).copy(alpha = tickAlpha * 0.58f) else Color(0xFFBFEAFF).copy(alpha = tickAlpha),
+        topLeft = Offset(tickCenter.x - 6f, tickCenter.y - 3f),
+        size = Size(12f + glitchUnit(seed, frame, 809 + i) * 24f, 5f + wheelIntensity * 4f),
     )
   }
+
+  val finalRadius = radius * 1.08f
+  val finalBounds = Size(finalRadius * 2f, finalRadius * 2f)
+  val finalTopLeft = Offset(center.x - finalRadius, center.y - finalRadius)
+  drawCircle(
+      color = Color(0xFF000516).copy(alpha = 0.64f),
+      radius = radius * 0.64f,
+      center = center,
+  )
+  drawCircle(
+      color = Color.White.copy(alpha = 0.34f),
+      radius = finalRadius,
+      center = center,
+      style = Stroke(width = 4.5f + 4f * wheelIntensity),
+  )
+  drawArc(
+      color = Color(0xFF00F0FF).copy(alpha = 0.96f),
+      startAngle = rotation + 26f,
+      sweepAngle = 78f + 24f * wheelIntensity,
+      useCenter = false,
+      topLeft = finalTopLeft,
+      size = finalBounds,
+      style = Stroke(width = 9f + wheelIntensity * 6f, cap = StrokeCap.Round),
+  )
+  drawArc(
+      color = Color.White.copy(alpha = 0.86f),
+      startAngle = rotation + 184f,
+      sweepAngle = 44f + 16f * wheelIntensity,
+      useCenter = false,
+      topLeft = Offset(center.x - radius * 0.67f, center.y - radius * 0.67f),
+      size = Size(radius * 1.34f, radius * 1.34f),
+      style = Stroke(width = 7f + wheelIntensity * 5f, cap = StrokeCap.Round),
+  )
+  drawCircle(
+      color = Color(0xFFBFEAFF).copy(alpha = 0.82f),
+      radius = radius * 0.12f,
+      center = center,
+  )
 }
 
 private fun DrawScope.drawNoiseBursts(frame: Int, phase: String, seed: Int, intensity: Float) {

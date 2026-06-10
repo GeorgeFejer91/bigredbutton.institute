@@ -1,21 +1,22 @@
 # Visual Validation Notes
 
-Latest visual inspection: 2026-06-10 13:27.
+Latest visual inspection: 2026-06-10 15:49.
 
-## Pending Glitch Recheck
+## Fresh Glitch Recheck
 
-- Local implementation update: 2026-06-10 14:49.
-- Current APK after the glitch update: `app/build/outputs/apk/debug/app-debug.apk`, SHA-256 `7A9A7123CEBE067F9A0A6C4CC1DAA1F0BB00D13EC3ADA0E8F6BB99492E764925`.
-- The questionnaire intro/outro overlay has been intensified into a comfort-safe phased blue system-failure effect with panel jitter, macroblocks, denser scanline tears, color breakup, border desynchronization, noise bursts, non-textual online/offline cues, and a corrupted buffer/loading spinner.
-- The existing headset screenshots below predate this update and show the earlier blue scanline treatment. Refresh `tools/run-quest-panel-smoke.ps1` before using headset screenshots as evidence for the new spinner/collapse renderer.
+- Current APK after the whole-panel glitch update: `app/build/outputs/apk/debug/app-debug.apk`, SHA-256 `65C68761344C1B1D81BBDA192C24D9AA4DE6CD7232693D04C2ABF3F6E3CC9D6A`.
+- Quest panel smoke: `artifacts/quest-panel-smoke/20260610-154919/quest-panel-smoke-summary.json`.
+- Fresh screenshots: `artifacts/quest-panel-smoke/20260610-154919/demographics-panel.png` and `artifacts/quest-panel-smoke/20260610-154919/pictographic-panel.png`.
+- The captures show the comfort-safe phased blue system-failure effect with panel-shell wobble, a jagged generated panel silhouette, interrupted contours, edge-originating tear masks, macroblocks, denser scanline tears, color breakup, border desynchronization, noise bursts, non-textual online/offline cues, and a clearly visible corrupted buffer/loading wheel centered on the panel.
+- The actual Meta Spatial panel quad remains a rectangular render surface, but the participant-facing visible silhouette is now intentionally disrupted during the transition.
 
-## Fresh Headset Evidence
+## Earlier Headset Layout Evidence
 
 - Quest smoke suite: `artifacts/quest-smoke-suite/20260610-132347/quest-smoke-suite-summary.json`
 - In-condition button screenshot: `artifacts/quest-visual-layout-smoke/20260610-132347/button-condition-screenshot.png`
 - Demographics panel screenshot: `artifacts/quest-panel-smoke/20260610-132413/demographics-panel.png`
 - Button Experience panel screenshot: `artifacts/quest-panel-smoke/20260610-132413/pictographic-panel.png`
-- Current APK SHA-256 for this evidence: `55E3B082077BD55D939D1610E5FEC7AC56641B8FA62C201804AEE322CC951C2A`
+- APK SHA-256 for this earlier full-layout evidence: `55E3B082077BD55D939D1610E5FEC7AC56641B8FA62C201804AEE322CC951C2A`
 
 Observed state:
 
@@ -25,7 +26,7 @@ Observed state:
 - The old digital red press counter is visible above the 3D button and uses a transparent passthrough background.
 - The demographics panel spawns in the headset view with the Big Red Button Institute-style paper/red/serif aesthetic. Participant ID is not shown; gender is four-choice, handedness is three-choice, and the signature pad is a large pointer drawing field.
 - The Button Experience panel spawns in the headset view with the same-button pictographic task; local preview evidence confirms the button thumbnail is centered in the presence circle, circle boundaries are thick, and closeness/presence/redness controls are visible.
-- Current panel screenshots were captured during the blue glitch transition, so the aggressive blue stripe/tear overlay is visible and partly obscures text. Treat them as headset placement/glitch evidence, with local previews as the clearer layout evidence.
+- The older panel screenshots were captured during the earlier blue glitch transition. Use the `20260610-154919` panel-smoke screenshots above for the current whole-panel contour disruption and buffer-wheel treatment.
 - The native Quest/system keyboard is an OS-managed surface, not a custom Compose panel. It is validated by qkv log evidence and the local native-keyboard preview rather than by a detached in-app keyboard screenshot.
 
 ## Fresh Local Preview Evidence
@@ -48,4 +49,4 @@ Observed state:
 
 ## Remaining Visual Caveat
 
-These screenshots validate visibility, layout, passthrough composition, panel placement, glitch transitions, and in-condition button placement for the current APK. They do not prove human physical controller-contact pressing or live Polar H10 streaming; those remain the final hardware gates.
+The current `20260610-154919` screenshots validate the new panel-glitch transition treatment only. The older full smoke evidence still documents in-condition button placement/layout, but it predates the current APK. None of these screenshots prove human physical controller-contact pressing or live Polar H10 streaming; those remain the final hardware gates.

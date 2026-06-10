@@ -1,5 +1,14 @@
 # Active Status
 
+## Current Snapshot - 2026-06-10 15:49
+
+- Latest debug APK after adding whole-panel contour disruption and a stronger central corrupted buffer wheel to questionnaire intro/outro glitches: `app/build/outputs/apk/debug/app-debug.apk`, SHA-256 `65C68761344C1B1D81BBDA192C24D9AA4DE6CD7232693D04C2ABF3F6E3CC9D6A`, size `100808601` bytes.
+- The questionnaire panel shell now wobbles during glitch transitions, with a jagged generated silhouette, interrupted/dropped contour segments, dynamic edge-originating tear masks, duplicated cyan/magenta path outlines, reduced paper opacity during failure phases, and apparent surface slices so the panel no longer reads as a perfectly stable rectangle during the cue.
+- The corrupted loading/buffer wheel now draws as the final overlay layer with a high-contrast dark backing disk, broken cyan/white/magenta arcs, dropped spokes, buffer ticks, and a jittered hub. The spinner Y-coordinate is explicitly centered for intro/outro modes so it remains visible in still headset captures.
+- Latest static validation passed: `artifacts/local-validation/validation-20260610-155139.json`; latest build passed with the APK hash above.
+- Latest Quest panel/glitch smoke passed on Quest 3S `3487C10J0P01ZY`: `artifacts/quest-panel-smoke/20260610-154919/quest-panel-smoke-summary.json`. Fresh screenshots: `demographics-panel.png` and `pictographic-panel.png` in that folder show the interrupted panel silhouette and central buffer wheel during the intro transition, then a clean resolved questionnaire panel. This smoke mode did not start condition audio or create exports.
+- Existing supplied transition MP3s remain unchanged and hash-locked. No instruction MP3, export schema, native keyboard behavior, panel placement contract, or button interaction contract changed for this update.
+
 ## Current Snapshot - 2026-06-10 14:49
 
 - Latest debug APK after intensifying questionnaire intro/outro glitch aesthetics: `app/build/outputs/apk/debug/app-debug.apk`, SHA-256 `7A9A7123CEBE067F9A0A6C4CC1DAA1F0BB00D13EC3ADA0E8F6BB99492E764925`, size `107315659` bytes.

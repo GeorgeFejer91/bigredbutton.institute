@@ -409,9 +409,15 @@ if (Test-Path $activity) {
         $activityText.Contains('drawMacroblockCorruption') -and
         $activityText.Contains('drawColorBreakupTears') -and
         $activityText.Contains('drawPanelBorderDesync') -and
+        $activityText.Contains('GlitchPanelFrameOverlay') -and
+        $activityText.Contains('interruptedPanelClipPath') -and
+        $activityText.Contains('drawInterruptedPanelContour') -and
+        $activityText.Contains('panelGlitchShellJitter') -and
+        $activityText.Contains('panelGlitchShellRotation') -and
+        $activityText.Contains('BlendMode.Clear') -and
         $activityText.Contains('graphicsLayer') -and
         $activityText.Contains('PANEL_GLITCH_FRAME_MS = 70L')
-    ) 'intro/outro overlay uses phased acquisition/dropout/collapse, jitter, macroblocks, color breakup, stripes, and border desynchronization'
+    ) 'intro/outro overlay uses phased acquisition/dropout/collapse, jagged panel silhouette, whole-panel wobble, interrupted contours, dynamic edge tears, macroblocks, color breakup, stripes, and border desynchronization'
     Add-Check 'glitched buffer loading cues' (
         $activityText.Contains('drawGlitchedBufferSpinner') -and
         $activityText.Contains('bufferSpinner=true') -and
