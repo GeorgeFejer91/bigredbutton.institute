@@ -15,6 +15,10 @@ Meta Spatial SDK is the pragmatic no-Unity path here:
 
 Raw OpenXR with `XR_FB_passthrough` is possible, but it would require more rendering and input plumbing for the same study UI. Use raw OpenXR only if Meta Spatial SDK blocks a core requirement.
 
+## Meta Spatial Visual/Input Porting Lessons
+
+When translating Unity interaction assets, do not assume Unity collider/material primitives map one-to-one into Meta Spatial SDK. For the Big Red Button, a cap-shaped press target was practical as one centered `IsdkBoxCollider` plus six ring boxes, with a source-level latch to reproduce Unity's active-interactor debounce. For glow, MesmerPrism's Unity reference drives the button material itself: runtime tint interpolates from `0.82,0.22,0.22` to `1.0,0.72,0.72`, emission interpolates from black to `7.0,1.10,0.85`, and optional point lights sit close to the cap surface. Meta Spatial SDK 0.13 `Mesh` exposes the model URI and shader override, but not a Unity-like per-material handle for a loaded GLB renderer. The native participant-facing approximation is therefore GLB material variant swapping: keep the original model for idle and swap to `models/glow/BigRedButtonGlowLevel01.glb` through `32.glb` for progressively brighter/emissive cap materials, assisted only by small native point lights. The native pulse envelope now mirrors Unity's blink timing more closely: 320 ms, ease-in/out from peak to idle, and a 250 ms refractory. In headset screenshots, Unity's raw emission peak washes out in Meta Spatial, so keep the native variants tonemapped to a hot red/orange peak instead of white. Subtle metal-bezel warmth can help sell surface emission, but keep the dark base preserved; changing the base material reads like a different object rather than reflected light. Do not use transparent cap-shell, dome, halo, or canopy geometry for the participant-facing heartbeat glow. Retain flat Compose glow only as an explicitly disabled fallback.
+
 ## Validation Pattern
 
 Use a runged validation ladder:
@@ -93,7 +97,7 @@ For pictographic closeness/presence tasks, separate visible geometry from export
 
 When a task deliberately converts between response formats, store both final answers and the order instead of overwriting one with the other. The redness task uses `rednessVas0To100`, `rednessLikert1To7`, `rednessLikertDescriptor`, and `rednessScaleOrder`, and qkv validation compares both conversion directions. A missing conversion audio asset should be represented by a dedicated placeholder cue/log marker so the behavior remains testable until the real clip is supplied.
 
-For heartbeat-driven button visuals, prefer model-shaped warm emission over a flat overlay. If the engine lacks a robust dynamic emissive material API in the current render path, a transparent Compose overlay can still suggest the right behavior by drawing amber/red/core radial glow layers aligned to the button cap/rim/base. Keep `BRB_HEARTBEAT_FLASH` as the timing evidence and inspect a visual preview/headset screenshot for gross framing.
+For heartbeat-driven button visuals, prefer model-shaped warm emission over a flat overlay. In this project, the current accepted workaround for the lack of loaded-GLB material mutation is 32 opaque GLB material variants plus small native surface lights, not transparent Compose or mesh halo overlays. Keep `BRB_HEARTBEAT_FLASH` as timing evidence and inspect a real headset screenshot for gross framing.
 
 For hand tracking, add it as provenance-separated supplemental input, not as an undocumented replacement for the controller path. `IsdkSystem.getHandForPointerEvent(event)` can distinguish hand-tracked selects; log/export those as `hand_contact`, keep `controller_contact` separate, and preserve the final hardware gate unless the protocol explicitly changes.
 

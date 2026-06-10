@@ -130,6 +130,10 @@ function Pull-DeviceFolder {
                     'brb_first_study_keyevent_ecg_blink_events.csv'
                 } elseif ($file -like '*_ecg_timeseries.csv') {
                     'brb_first_study_keyevent_ecg_timeseries.csv'
+                } elseif ($file -like '*_ecg_detector_events.csv') {
+                    'brb_first_study_keyevent_ecg_detector_events.csv'
+                } elseif ($file -like '*_external_signal_samples.csv') {
+                    'brb_first_study_keyevent_external_signal_samples.csv'
                 } elseif ($file -like '*_summary.csv') {
                     'brb_first_study_keyevent_summary.csv'
                 } elseif ($file -like 'brb_first_study_*.json') {

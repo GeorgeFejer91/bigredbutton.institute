@@ -66,6 +66,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Shadow
@@ -116,6 +117,8 @@ import com.meta.spatial.runtime.InputListener
 import com.meta.spatial.runtime.PointerEvent
 import com.meta.spatial.runtime.PointerEventType
 import com.meta.spatial.runtime.ReferenceSpace
+import com.meta.spatial.runtime.SceneLight
+import com.meta.spatial.runtime.SceneLightType
 import com.meta.spatial.runtime.SceneMaterial
 import com.meta.spatial.runtime.SceneMesh
 import com.meta.spatial.runtime.SceneObject
@@ -161,6 +164,7 @@ private const val SIMULATED_ECG_FRAME_SAMPLES = 16
 private const val PRIOR_BUTTON_EXPERIENCE_QUESTION =
     "Oh wait, we have just one more question: Do you have any experience with pressing big red buttons?"
 private const val PRE_BUTTON_EXPERIENCE_VALIDATION_DELAY_MS = 350L
+private const val MODEL_GLOW_PANEL_FALLBACK_ENABLED = false
 
 enum class StudyStage {
   ConsentDemographics,
@@ -243,6 +247,9 @@ data class EcgBlinkEvent(
     val isoTimestamp: String,
     val rrMs: Double,
     val heartRateBpm: Int,
+    val pulseIntensity01: Float = 1.0f,
+    val pulseSourceTimestampUnixNs: Long = 0L,
+    val detector: String = "rr_interval",
 )
 
 data class EcgTimeSeriesSample(
@@ -263,6 +270,169 @@ data class EcgTimeSeriesSample(
     val negotiatedMtu: Int,
 )
 
+data class EcgDetectorEvent(
+    val conditionNumber: Int,
+    val detectorIndex: Int,
+    val detector: String,
+    val source: String,
+    val elapsedMs: Double,
+    val elapsedNs: Long,
+    val unixTimeMs: Long,
+    val isoTimestamp: String,
+    val sensorTimestampNs: Long,
+    val microVolts: Int,
+    val thresholdMicroVolts: Int,
+    val sampleIndex: Int,
+)
+
+data class ExternalSignalSample(
+    val conditionNumber: Int,
+    val sampleIndex: Int,
+    val source: String,
+    val streamName: String,
+    val streamType: String,
+    val channelIndex: Int,
+    val value01: Float,
+    val elapsedMs: Long,
+    val unixTimeMs: Long,
+    val isoTimestamp: String,
+)
+
+private data class ButtonContactTargetSpec(
+    val name: String,
+    val offsetX: Float,
+    val offsetZ: Float,
+    val width: Float,
+    val height: Float,
+    val depth: Float,
+)
+
+private data class ButtonContactTarget(
+    val entity: Entity,
+    val spec: ButtonContactTargetSpec,
+)
+
+private data class HeartbeatPulseResult(
+    val source: String,
+    val acceptedElapsedMs: Long,
+    val pulseIntensity01: Float,
+    val pulseSourceTimestampUnixNs: Long,
+    val detector: String,
+)
+
+private class ButtonContactLatch(private val forceRearmAfterMs: Long) {
+  private val activeKeys = mutableMapOf<String, Long>()
+
+  fun tryAccept(key: String, nowMs: Long): Boolean {
+    val acceptedAt = activeKeys[key]
+    if (acceptedAt != null && nowMs - acceptedAt < forceRearmAfterMs) {
+      return false
+    }
+    activeKeys[key] = nowMs
+    return true
+  }
+
+  fun release(key: String): Boolean = activeKeys.remove(key) != null
+
+  fun clear() {
+    activeKeys.clear()
+  }
+}
+
+private class HeartbeatPulseDriver(
+    private val baseline01: Float,
+    private val peak01: Float,
+    private val pulseDurationMs: Long,
+    private val refractoryMs: Long,
+) {
+  private var lastPulseElapsedMs = Long.MIN_VALUE
+  private var lastPulsePeak01 = baseline01
+
+  fun tryAcceptPulse(
+      source: String,
+      nowElapsedMs: Long,
+      pulseSourceTimestampUnixNs: Long,
+      detector: String,
+  ): HeartbeatPulseResult? {
+    if (lastPulseElapsedMs != Long.MIN_VALUE && nowElapsedMs - lastPulseElapsedMs < refractoryMs) {
+      return null
+    }
+    lastPulseElapsedMs = nowElapsedMs
+    lastPulsePeak01 = peak01
+    return HeartbeatPulseResult(
+        source = source,
+        acceptedElapsedMs = nowElapsedMs,
+        pulseIntensity01 = peak01,
+        pulseSourceTimestampUnixNs = pulseSourceTimestampUnixNs,
+        detector = detector,
+    )
+  }
+
+  fun intensityAt(nowElapsedMs: Long): Float {
+    if (lastPulseElapsedMs == Long.MIN_VALUE) {
+      return 0f
+    }
+    val elapsed = (nowElapsedMs - lastPulseElapsedMs).coerceAtLeast(0L)
+    val duration = pulseDurationMs.coerceAtLeast(1L)
+    if (elapsed >= duration) {
+      return 0f
+    }
+    val normalizedTime = (elapsed.toDouble() / duration.toDouble()).coerceIn(0.0, 1.0).toFloat()
+    val smoothStep = normalizedTime * normalizedTime * (3f - (2f * normalizedTime))
+    val intensity = baseline01 + (lastPulsePeak01 - baseline01) * (1f - smoothStep)
+    return intensity.coerceIn(0f, 1f)
+  }
+
+  fun reset() {
+    lastPulseElapsedMs = Long.MIN_VALUE
+    lastPulsePeak01 = baseline01
+  }
+}
+
+private class EcgRPeakDetector(
+    private val thresholdMicroVolts: Int,
+    private val refractoryNs: Long,
+    private val detectorName: String,
+) {
+  private var wasAboveThreshold = false
+  private var lastPeakElapsedNs = Long.MIN_VALUE
+  private var detectorIndex = 0
+
+  fun reset() {
+    wasAboveThreshold = false
+    lastPeakElapsedNs = Long.MIN_VALUE
+    detectorIndex = 0
+  }
+
+  fun update(sample: EcgTimeSeriesSample): EcgDetectorEvent? {
+    val above = sample.microVolts >= thresholdMicroVolts
+    val rising = above && !wasAboveThreshold
+    wasAboveThreshold = above
+    if (!rising) {
+      return null
+    }
+    if (lastPeakElapsedNs != Long.MIN_VALUE && sample.elapsedNs - lastPeakElapsedNs < refractoryNs) {
+      return null
+    }
+    lastPeakElapsedNs = sample.elapsedNs
+    detectorIndex += 1
+    return EcgDetectorEvent(
+        conditionNumber = sample.conditionNumber,
+        detectorIndex = detectorIndex,
+        detector = detectorName,
+        source = sample.source,
+        elapsedMs = sample.elapsedMs,
+        elapsedNs = sample.elapsedNs,
+        unixTimeMs = sample.unixTimeMs,
+        isoTimestamp = sample.isoTimestamp,
+        sensorTimestampNs = sample.sensorTimestampNs,
+        microVolts = sample.microVolts,
+        thresholdMicroVolts = thresholdMicroVolts,
+        sampleIndex = sample.sampleIndex,
+    )
+  }
+}
+
 class ConditionRun(
     val conditionNumber: Int,
     val label: String,
@@ -282,6 +452,8 @@ class ConditionRun(
   var ecgSource: String = ""
   val ecgBlinkEvents: MutableList<EcgBlinkEvent> = mutableListOf()
   val ecgTimeSeriesSamples: MutableList<EcgTimeSeriesSample> = mutableListOf()
+  val ecgDetectorEvents: MutableList<EcgDetectorEvent> = mutableListOf()
+  val externalSignalSamples: MutableList<ExternalSignalSample> = mutableListOf()
   var ecgCaptureStartedElapsedMs: Long = 0L
   var ecgCaptureEndedElapsedMs: Long = 0L
   var ecgCaptureStartedElapsedNs: Long = 0L
@@ -395,6 +567,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   val polarStatusState: MutableState<PolarStatusSnapshot> = mutableStateOf(PolarStatusSnapshot())
   val buttonHeartbeatFlashState = mutableStateOf(false)
   val buttonHeartbeatFlashFrameState = mutableIntStateOf(0)
+  val buttonHeartbeatPulseIntensityState = mutableFloatStateOf(0f)
 
   private val sessionId = "brb-" + UUID.randomUUID().toString()
   private val mainHandler = Handler(Looper.getMainLooper())
@@ -413,6 +586,10 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   private var buttonEntity: Entity? = null
   private var buttonModelEntity: Entity? = null
   private var buttonContactEntity: Entity? = null
+  private var buttonStimulusVisible = false
+  private val buttonContactTargets = mutableListOf<ButtonContactTarget>()
+  private val buttonGlowModelEntities = mutableListOf<Entity>()
+  private val buttonGlowLights = mutableListOf<SceneLight>()
   private val buttonVisualEntities = mutableListOf<Entity>()
   private val buttonSceneObjects = mutableListOf<SceneObject>()
   private var questionnaireEntity: Entity? = null
@@ -425,6 +602,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   private var panelSmokeEnabled = false
   private var fastControllerFlowEnabled = false
   private var keyeventValidationEnabled = false
+  private var visualGlowValidationMode = ""
   private var autoValidationStarted = false
   private var fastControllerFlowStarted = false
   private var panelGlitchToken = 0
@@ -432,6 +610,20 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   private var activeSoftKeyboardReason: String? = null
   private var activeSoftKeyboardMode: String? = null
   private var keyboardFieldContractLogged = false
+  private val buttonContactLatch = ButtonContactLatch(BUTTON_CONTACT_LATCH_FORCE_REARM_MS)
+  private val heartbeatPulseDriver =
+      HeartbeatPulseDriver(
+          baseline01 = HEARTBEAT_PULSE_BASELINE_01,
+          peak01 = HEARTBEAT_PULSE_PEAK_01,
+          pulseDurationMs = HEARTBEAT_PULSE_DURATION_MS,
+          refractoryMs = HEARTBEAT_PULSE_REFRACTORY_MS,
+      )
+  private val ecgRPeakDetector =
+      EcgRPeakDetector(
+          thresholdMicroVolts = ECG_R_PEAK_THRESHOLD_MICROVOLTS,
+          refractoryNs = ECG_R_PEAK_REFRACTORY_NS,
+          detectorName = ECG_R_PEAK_DETECTOR_NAME,
+      )
   private lateinit var locomotionSystem: LocomotionSystem
   private val buttonContactPointerObserver: (PointerEvent) -> Unit = { event ->
     handleButtonContactPointerEvent(event)
@@ -464,13 +656,16 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     panelSmokeEnabled = intent?.getBooleanExtra(PANEL_SMOKE_EXTRA, false) == true
     fastControllerFlowEnabled = intent?.getBooleanExtra(FAST_CONTROLLER_FLOW_EXTRA, false) == true
     keyeventValidationEnabled = intent?.getBooleanExtra(KEYEVENT_VALIDATION_EXTRA, false) == true
+    visualGlowValidationMode =
+        intent?.getStringExtra(VISUAL_GLOW_VALIDATION_EXTRA)?.lowercase(Locale.US)?.trim().orEmpty()
     requestScenePermissionIfNeeded()
     initializeEcgProtocol()
+    logOptionalLslContract()
     requestBlePermissionsIfNeeded()
     startPolarScanIfPermitted()
     Log.i(
         TAG,
-        "BRB_STUDY_CREATED sessionId=$sessionId autoValidation=$autoValidationEnabled physicalPressValidation=$physicalPressValidationEnabled panelSmoke=$panelSmokeEnabled fastControllerFlow=$fastControllerFlowEnabled keyeventValidation=$keyeventValidationEnabled",
+        "BRB_STUDY_CREATED sessionId=$sessionId autoValidation=$autoValidationEnabled physicalPressValidation=$physicalPressValidationEnabled panelSmoke=$panelSmokeEnabled fastControllerFlow=$fastControllerFlowEnabled keyeventValidation=$keyeventValidationEnabled visualGlowValidationMode=${visualGlowValidationMode.ifBlank { "none" }}",
     )
   }
 
@@ -493,6 +688,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             Visible(false),
     )
     createButtonModelEntity()
+    createButtonGlowModelEntities()
     createButtonContactColliderEntity()
     createProceduralButtonFallbackObjects()
     questionnaireEntity =
@@ -818,6 +1014,13 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     conditionElapsedTextState.value = "00:00"
     stageState.value = StudyStage.ConditionRunning
     scene.setViewOrigin(0f, 0f, 0f, 0f)
+    buttonContactLatch.clear()
+    heartbeatPulseDriver.reset()
+    ecgRPeakDetector.reset()
+    heartbeatFlashToken += 1
+    buttonHeartbeatFlashState.value = false
+    buttonHeartbeatFlashFrameState.intValue = 0
+    setButtonGlowPulse(0f)
     setButtonVisible(true)
     setQuestionnaireVisible(false)
     logButtonSpatialLayout()
@@ -844,6 +1047,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     asset.close()
 
     beginEcgConditionCapture(run)
+    scheduleVisualGlowValidationFrame(run)
     scheduleAutoValidationPresses(run)
     mainHandler.removeCallbacks(ticker)
     mainHandler.post(ticker)
@@ -967,6 +1171,29 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
           offsetMs,
       )
     }
+  }
+
+  private fun scheduleVisualGlowValidationFrame(run: ConditionRun) {
+    if (visualGlowValidationMode !in setOf(VISUAL_GLOW_VALIDATION_ON, VISUAL_GLOW_VALIDATION_OFF)) {
+      return
+    }
+    mainHandler.postDelayed(
+        {
+          if (activeRun !== run || stageState.value != StudyStage.ConditionRunning) {
+            return@postDelayed
+          }
+          heartbeatFlashToken += 1
+          val intensity = if (visualGlowValidationMode == VISUAL_GLOW_VALIDATION_ON) 1f else 0f
+          buttonHeartbeatFlashState.value = intensity > 0f
+          buttonHeartbeatFlashFrameState.intValue = if (intensity > 0f) 1 else 0
+          setButtonGlowPulse(intensity)
+          Log.i(
+              TAG,
+              "BRB_VISUAL_GLOW_VALIDATION mode=$visualGlowValidationMode intensity=$intensity actualGlowPath=glb_material_variant_swap screenshotHold=true",
+          )
+        },
+        VISUAL_GLOW_VALIDATION_DELAY_MS,
+    )
   }
 
   private fun continueAutoValidationAfterCondition(conditionNumber: Int) {
@@ -1103,9 +1330,15 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     if (!fastControllerFlowEnabled && !keyeventValidationEnabled) {
       return
     }
+    val shortcutMs =
+        if (visualGlowValidationMode in setOf(VISUAL_GLOW_VALIDATION_ON, VISUAL_GLOW_VALIDATION_OFF)) {
+          VISUAL_GLOW_VALIDATION_FAST_CONDITION_HOLD_MS
+        } else {
+          FAST_CONDITION_AUDIO_SHORTCUT_MS
+        }
     Log.i(
         TAG,
-        "BRB_FAST_CONDITION_AUDIO_SHORTCUT condition=${run.conditionNumber} realDurationMs=${run.audioDurationMs} shortcutMs=$FAST_CONDITION_AUDIO_SHORTCUT_MS",
+        "BRB_FAST_CONDITION_AUDIO_SHORTCUT condition=${run.conditionNumber} realDurationMs=${run.audioDurationMs} shortcutMs=$shortcutMs visualGlowValidationMode=${visualGlowValidationMode.ifBlank { "none" }}",
     )
     listOf(650L, 1050L).forEachIndexed { index, offsetMs ->
       mainHandler.postDelayed(
@@ -1131,7 +1364,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             endConditionFromAudio()
           }
         },
-        FAST_CONDITION_AUDIO_SHORTCUT_MS,
+        shortcutMs,
     )
   }
 
@@ -1412,6 +1645,13 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     polarClient?.start()
   }
 
+  private fun logOptionalLslContract() {
+    Log.i(
+        TAG,
+        "BRB_LSL status=disabled featureFlag=$LSL_INPUT_ENABLED streamName=$LSL_DEFAULT_STREAM_NAME streamType=$LSL_DEFAULT_STREAM_TYPE channelIndex=$LSL_DEFAULT_CHANNEL_INDEX route=external_signal_samples contaminatesPressCounts=false",
+    )
+  }
+
   override fun onPolarStatus(status: PolarStatusSnapshot) {
     polarStatusState.value = status
   }
@@ -1468,10 +1708,20 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
               negotiatedMtu = sample.negotiatedMtu,
           )
       run.ecgTimeSeriesSamples.add(event)
+      detectEcgPeak(run, event)
       run.ecgSampleRateHz = sample.sampleRateHz
       run.ecgRequestedMtu = sample.requestedMtu
       run.ecgNegotiatedMtu = sample.negotiatedMtu
     }
+  }
+
+  private fun detectEcgPeak(run: ConditionRun, sample: EcgTimeSeriesSample) {
+    val detectorEvent = ecgRPeakDetector.update(sample) ?: return
+    run.ecgDetectorEvents.add(detectorEvent)
+    Log.i(
+        TAG,
+        "BRB_ECG_RPEAK_DETECTED condition=${detectorEvent.conditionNumber} index=${detectorEvent.detectorIndex} source=${detectorEvent.source} detector=${detectorEvent.detector} elapsedNs=${detectorEvent.elapsedNs} sampleIndex=${detectorEvent.sampleIndex} microVolts=${detectorEvent.microVolts} thresholdMicroVolts=${detectorEvent.thresholdMicroVolts}",
+    )
   }
 
   private fun beginEcgConditionCapture(run: ConditionRun) {
@@ -1511,11 +1761,12 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     val peakTimes = simulatedPeakTimesMs(durationMs)
     run.ecgSampleRateHz = sampleRateHz
     run.ecgExpectedSampleCount = expectedSamples
+    ecgRPeakDetector.reset()
     for (index in 0 until expectedSamples) {
       val elapsedNs = ((index.toDouble() * 1_000_000_000.0) / sampleRateHz.toDouble()).roundToLong()
       val elapsedMs = elapsedNs.toDouble() / 1_000_000.0
       val unixTimeMs = run.startedElapsedMsToUnix(elapsedMs)
-      run.ecgTimeSeriesSamples.add(
+      val event =
           EcgTimeSeriesSample(
               conditionNumber = run.conditionNumber,
               sampleIndex = run.ecgTimeSeriesSamples.size + 1,
@@ -1533,7 +1784,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
               requestedMtu = 0,
               negotiatedMtu = 0,
           )
-      )
+      run.ecgTimeSeriesSamples.add(event)
+      detectEcgPeak(run, event)
     }
   }
 
@@ -1600,6 +1852,13 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
       ecgLastSampleElapsedMs()?.let { audioDurationMs.toDouble() - it }
 
   private fun startEcgBlinkDriver(run: ConditionRun) {
+    if (visualGlowValidationMode in setOf(VISUAL_GLOW_VALIDATION_ON, VISUAL_GLOW_VALIDATION_OFF)) {
+      Log.i(
+          TAG,
+          "BRB_VISUAL_GLOW_VALIDATION_ECG_DRIVER_SUPPRESSED condition=${run.conditionNumber} mode=$visualGlowValidationMode",
+      )
+      return
+    }
     if (run.ecgSource == ECG_SOURCE_SIMULATED) {
       val token = ++simulatedEcgToken
       scheduleNextSimulatedRPeak(run, token)
@@ -1638,6 +1897,21 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
       return
     }
     val nowElapsed = SystemClock.elapsedRealtime()
+    val detector = if (source == ECG_SOURCE_REAL_POLAR) ECG_BLINK_DETECTOR_POLAR_RR else ECG_BLINK_DETECTOR_SIMULATED_RR
+    val pulse =
+        heartbeatPulseDriver.tryAcceptPulse(
+            source = source,
+            nowElapsedMs = nowElapsed,
+            pulseSourceTimestampUnixNs = System.currentTimeMillis() * 1_000_000L,
+            detector = detector,
+        )
+    if (pulse == null) {
+      Log.i(
+          TAG,
+          "BRB_HEARTBEAT_PULSE accepted=false reason=refractory condition=${run.conditionNumber} source=$source detector=$detector rrMs=${"%.1f".format(Locale.US, rrMs)}",
+      )
+      return
+    }
     val event =
         EcgBlinkEvent(
             conditionNumber = run.conditionNumber,
@@ -1648,12 +1922,15 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             isoTimestamp = nowIso(),
             rrMs = rrMs,
             heartRateBpm = heartRateBpm,
+            pulseIntensity01 = pulse.pulseIntensity01,
+            pulseSourceTimestampUnixNs = pulse.pulseSourceTimestampUnixNs,
+            detector = pulse.detector,
         )
     run.ecgBlinkEvents.add(event)
     startHeartbeatFlash(event)
     Log.i(
         TAG,
-        "BRB_ECG_BLINK condition=${event.conditionNumber} index=${event.blinkIndex} source=${event.source} rrMs=${"%.1f".format(Locale.US, event.rrMs)} bpm=${event.heartRateBpm} elapsedMs=${event.elapsedMs}",
+        "BRB_ECG_BLINK condition=${event.conditionNumber} index=${event.blinkIndex} source=${event.source} detector=${event.detector} rrMs=${"%.1f".format(Locale.US, event.rrMs)} bpm=${event.heartRateBpm} elapsedMs=${event.elapsedMs} pulseIntensity01=${"%.3f".format(Locale.US, event.pulseIntensity01)}",
     )
   }
 
@@ -1661,6 +1938,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     val token = ++heartbeatFlashToken
     buttonHeartbeatFlashState.value = true
     buttonHeartbeatFlashFrameState.intValue = 0
+    setButtonGlowPulse(event.pulseIntensity01)
     fun advance(frame: Int) {
       if (token != heartbeatFlashToken) {
         return
@@ -1668,13 +1946,18 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
       if (frame >= HEARTBEAT_FLASH_FRAMES) {
         buttonHeartbeatFlashState.value = false
         buttonHeartbeatFlashFrameState.intValue = 0
+        setButtonGlowPulse(0f)
         return
       }
       buttonHeartbeatFlashFrameState.intValue = frame
+      setButtonGlowPulse(heartbeatPulseDriver.intensityAt(SystemClock.elapsedRealtime()))
       mainHandler.postDelayed({ advance(frame + 1) }, HEARTBEAT_FLASH_FRAME_MS)
     }
     advance(0)
-    Log.i(TAG, "BRB_HEARTBEAT_FLASH condition=${event.conditionNumber} source=${event.source} frameCount=$HEARTBEAT_FLASH_FRAMES")
+    Log.i(
+        TAG,
+        "BRB_HEARTBEAT_FLASH condition=${event.conditionNumber} source=${event.source} detector=${event.detector} frameCount=$HEARTBEAT_FLASH_FRAMES pulseDurationMs=$HEARTBEAT_PULSE_DURATION_MS pulseCurve=unity_ease_in_out_1_to_0 pulseIntensity01=${"%.3f".format(Locale.US, event.pulseIntensity01)} modelGlow=glb_material_variant_swap panelFallback=$MODEL_GLOW_PANEL_FALLBACK_ENABLED",
+    )
   }
 
   fun logDemographicsTextFieldContract() {
@@ -1785,6 +2068,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     val pressText = pressEventsCsvText()
     val ecgBlinkText = ecgBlinkEventsCsvText()
     val ecgTimeSeriesText = ecgTimeSeriesCsvText()
+    val ecgDetectorText = ecgDetectorEventsCsvText()
+    val externalSignalText = externalSignalSamplesCsvText()
     val indexLine =
         JSONObject()
             .put("sessionId", sessionId)
@@ -1795,6 +2080,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             .put("pressEventsCsv", "${baseName}_press_events.csv")
             .put("ecgBlinkEventsCsv", "${baseName}_ecg_blink_events.csv")
             .put("ecgTimeSeriesCsv", "${baseName}_ecg_timeseries.csv")
+            .put("ecgDetectorEventsCsv", "${baseName}_ecg_detector_events.csv")
+            .put("externalSignalSamplesCsv", "${baseName}_external_signal_samples.csv")
             .toString() + "\n"
     val primaryFiles =
         writeExportBundle(
@@ -1805,6 +2092,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             pressText,
             ecgBlinkText,
             ecgTimeSeriesText,
+            ecgDetectorText,
+            externalSignalText,
             indexLine,
         )
     val sidequestFiles =
@@ -1816,6 +2105,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             pressText,
             ecgBlinkText,
             ecgTimeSeriesText,
+            ecgDetectorText,
+            externalSignalText,
             indexLine,
         )
     Log.i(TAG, "BRB_EXPERIMENT_RESULTS_FOLDER path=${experimentResultsDir.absolutePath}")
@@ -1830,6 +2121,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
       pressText: String,
       ecgBlinkText: String,
       ecgTimeSeriesText: String,
+      ecgDetectorText: String,
+      externalSignalText: String,
       indexLine: String,
   ): List<File> {
     val jsonFile = File(exportDir, "$baseName.json")
@@ -1837,14 +2130,27 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     val pressCsv = File(exportDir, "${baseName}_press_events.csv")
     val ecgBlinkCsv = File(exportDir, "${baseName}_ecg_blink_events.csv")
     val ecgTimeSeriesCsv = File(exportDir, "${baseName}_ecg_timeseries.csv")
+    val ecgDetectorCsv = File(exportDir, "${baseName}_ecg_detector_events.csv")
+    val externalSignalCsv = File(exportDir, "${baseName}_external_signal_samples.csv")
     val indexFile = File(exportDir, "session-index.jsonl")
     jsonFile.writeText(jsonText)
     summaryCsv.writeText(summaryText)
     pressCsv.writeText(pressText)
     ecgBlinkCsv.writeText(ecgBlinkText)
     ecgTimeSeriesCsv.writeText(ecgTimeSeriesText)
+    ecgDetectorCsv.writeText(ecgDetectorText)
+    externalSignalCsv.writeText(externalSignalText)
     indexFile.appendText(indexLine)
-    return listOf(jsonFile, summaryCsv, pressCsv, ecgBlinkCsv, ecgTimeSeriesCsv, indexFile)
+    return listOf(
+        jsonFile,
+        summaryCsv,
+        pressCsv,
+        ecgBlinkCsv,
+        ecgTimeSeriesCsv,
+        ecgDetectorCsv,
+        externalSignalCsv,
+        indexFile,
+    )
   }
 
   private fun sessionJson(): JSONObject {
@@ -1960,6 +2266,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         .put("ecgRequestedMtu", run.ecgRequestedMtu)
         .put("ecgNegotiatedMtu", run.ecgNegotiatedMtu)
         .put("ecgBlinkEvents", JSONArray(run.ecgBlinkEvents.map { ecgBlinkEventJson(it) }))
+        .put("ecgDetectorEvents", JSONArray(run.ecgDetectorEvents.map { ecgDetectorEventJson(it) }))
+        .put("externalSignalSamples", JSONArray(run.externalSignalSamples.map { externalSignalSampleJson(it) }))
         .put("ecgTimeSeries", JSONArray(run.ecgTimeSeriesSamples.map { ecgTimeSeriesSampleJson(it, run) }))
         .put("pressEvents", JSONArray(run.pressEvents.map { pressEventJson(it) }))
         .put("pictographic", run.pictographic?.let { pictographicJson(it) } ?: JSONObject.NULL)
@@ -1991,6 +2299,39 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         .put("isoTimestamp", event.isoTimestamp)
         .put("rrMs", event.rrMs)
         .put("heartRateBpm", event.heartRateBpm)
+        .put("pulseIntensity01", event.pulseIntensity01.toDouble())
+        .put("pulseSourceTimestampUnixNs", event.pulseSourceTimestampUnixNs)
+        .put("detector", event.detector)
+  }
+
+  private fun ecgDetectorEventJson(event: EcgDetectorEvent): JSONObject {
+    return JSONObject()
+        .put("conditionNumber", event.conditionNumber)
+        .put("detectorIndex", event.detectorIndex)
+        .put("detector", event.detector)
+        .put("source", event.source)
+        .put("elapsedMs", event.elapsedMs)
+        .put("elapsedNs", event.elapsedNs)
+        .put("unixTimeMs", event.unixTimeMs)
+        .put("isoTimestamp", event.isoTimestamp)
+        .put("sensorTimestampNs", event.sensorTimestampNs)
+        .put("microVolts", event.microVolts)
+        .put("thresholdMicroVolts", event.thresholdMicroVolts)
+        .put("sampleIndex", event.sampleIndex)
+  }
+
+  private fun externalSignalSampleJson(sample: ExternalSignalSample): JSONObject {
+    return JSONObject()
+        .put("conditionNumber", sample.conditionNumber)
+        .put("sampleIndex", sample.sampleIndex)
+        .put("source", sample.source)
+        .put("streamName", sample.streamName)
+        .put("streamType", sample.streamType)
+        .put("channelIndex", sample.channelIndex)
+        .put("value01", sample.value01.toDouble())
+        .put("elapsedMs", sample.elapsedMs)
+        .put("unixTimeMs", sample.unixTimeMs)
+        .put("isoTimestamp", sample.isoTimestamp)
   }
 
   private fun ecgTimeSeriesSampleJson(sample: EcgTimeSeriesSample, run: ConditionRun): JSONObject {
@@ -2116,6 +2457,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
               "condition_${condition}_ecg_source",
               "condition_${condition}_ecg_blink_count",
               "condition_${condition}_ecg_timeseries_sample_count",
+              "condition_${condition}_ecg_detector_event_count",
+              "condition_${condition}_external_signal_sample_count",
               "condition_${condition}_ecg_expected_sample_count",
               "condition_${condition}_ecg_capture_start_elapsed_ms",
               "condition_${condition}_ecg_capture_end_elapsed_ms",
@@ -2211,6 +2554,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
       values["condition_${condition}_ecg_source"] = run.ecgSource
       values["condition_${condition}_ecg_blink_count"] = run.ecgBlinkEvents.size.toString()
       values["condition_${condition}_ecg_timeseries_sample_count"] = run.ecgTimeSeriesSamples.size.toString()
+      values["condition_${condition}_ecg_detector_event_count"] = run.ecgDetectorEvents.size.toString()
+      values["condition_${condition}_external_signal_sample_count"] = run.externalSignalSamples.size.toString()
       values["condition_${condition}_ecg_expected_sample_count"] = run.ecgExpectedSampleCount.toString()
       values["condition_${condition}_ecg_capture_start_elapsed_ms"] = run.ecgCaptureStartedElapsedMs.toString()
       values["condition_${condition}_ecg_capture_end_elapsed_ms"] = run.ecgCaptureEndedElapsedMs.toString()
@@ -2320,6 +2665,9 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             "iso_timestamp",
             "rr_ms",
             "heart_rate_bpm",
+            "pulse_intensity_0_1",
+            "pulse_source_timestamp_unix_ns",
+            "detector",
         )
     val participantId = demographicsState.value.participantId
     val rows =
@@ -2336,6 +2684,105 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
                 event.isoTimestamp,
                 formatDouble(event.rrMs),
                 event.heartRateBpm.toString(),
+                formatFloat(event.pulseIntensity01),
+                event.pulseSourceTimestampUnixNs.toString(),
+                event.detector,
+            )
+          }
+        }
+    return buildString {
+      append(header.joinToString(","))
+      append("\n")
+      rows.forEach { row ->
+        append(row.joinToString(",") { csv(it) })
+        append("\n")
+      }
+    }
+  }
+
+  private fun ecgDetectorEventsCsvText(): String {
+    val header =
+        listOf(
+            "session_id",
+            "participant_id",
+            "condition_number",
+            "detector_index",
+            "detector",
+            "source",
+            "elapsed_ms",
+            "elapsed_ns",
+            "unix_time_ms",
+            "iso_timestamp",
+            "sensor_timestamp_ns",
+            "microvolts",
+            "threshold_microvolts",
+            "sample_index",
+        )
+    val participantId = demographicsState.value.participantId
+    val rows =
+        conditionRuns.flatMap { run ->
+          run.ecgDetectorEvents.map { event ->
+            listOf(
+                sessionId,
+                participantId,
+                event.conditionNumber.toString(),
+                event.detectorIndex.toString(),
+                event.detector,
+                event.source,
+                formatDouble(event.elapsedMs),
+                event.elapsedNs.toString(),
+                event.unixTimeMs.toString(),
+                event.isoTimestamp,
+                event.sensorTimestampNs.toString(),
+                event.microVolts.toString(),
+                event.thresholdMicroVolts.toString(),
+                event.sampleIndex.toString(),
+            )
+          }
+        }
+    return buildString {
+      append(header.joinToString(","))
+      append("\n")
+      rows.forEach { row ->
+        append(row.joinToString(",") { csv(it) })
+        append("\n")
+      }
+    }
+  }
+
+  private fun externalSignalSamplesCsvText(): String {
+    val header =
+        listOf(
+            "session_id",
+            "participant_id",
+            "condition_number",
+            "sample_index",
+            "source",
+            "stream_name",
+            "stream_type",
+            "channel_index",
+            "value_0_1",
+            "elapsed_ms",
+            "unix_time_ms",
+            "iso_timestamp",
+        )
+    val participantId = demographicsState.value.participantId
+    val rows =
+        conditionRuns.flatMap { run ->
+          run.externalSignalSamples.map { sample ->
+            listOf(
+                sessionId,
+                participantId,
+                sample.conditionNumber.toString(),
+                sample.sampleIndex.toString(),
+                sample.source,
+                sample.streamName,
+                sample.streamType,
+                sample.channelIndex.toString(),
+                formatFloat(sample.value01),
+                sample.elapsedMs.toString(),
+                sample.unixTimeMs.toString(),
+                sample.isoTimestamp,
             )
           }
         }
@@ -2412,9 +2859,15 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   }
 
   private fun setButtonVisible(visible: Boolean) {
+    buttonStimulusVisible = visible
     buttonEntity?.setComponent(Visible(visible))
-    buttonModelEntity?.setComponent(Visible(visible))
-    buttonContactEntity?.setComponent(InteractivityInput(visible))
+    buttonContactTargets.forEach { target -> target.entity.setComponent(InteractivityInput(visible)) }
+    if (!visible) {
+      buttonContactLatch.clear()
+      setButtonGlowPulse(0f)
+    } else {
+      applyButtonGlowModelVisibility(buttonHeartbeatPulseIntensityState.floatValue)
+    }
     val fallbackVisible = visible && USE_PROCEDURAL_BUTTON_FALLBACK
     buttonVisualEntities.forEach { it.setComponent(Visible(fallbackVisible)) }
     buttonSceneObjects.forEach { it.setIsVisible(fallbackVisible) }
@@ -2466,9 +2919,13 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   }
 
   private fun setPreButtonExperienceQuestionVisible(visible: Boolean) {
+    buttonStimulusVisible = false
     buttonEntity?.setComponent(Visible(visible))
     buttonModelEntity?.setComponent(Visible(false))
-    buttonContactEntity?.setComponent(InteractivityInput(false))
+    buttonGlowModelEntities.forEach { it.setComponent(Visible(false)) }
+    buttonContactTargets.forEach { target -> target.entity.setComponent(InteractivityInput(false)) }
+    buttonContactLatch.clear()
+    setButtonGlowPulse(0f)
     buttonVisualEntities.forEach { it.setComponent(Visible(false)) }
     buttonSceneObjects.forEach { it.setIsVisible(false) }
   }
@@ -2742,33 +3199,105 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     )
   }
 
-  private fun createButtonContactColliderEntity() {
-    buttonContactEntity =
-        Entity.create(
-            Transform(
-                Pose(
-                    Vector3(
-                        0f,
-                        BUTTON_CONTACT_COLLIDER_Y_METERS,
-                        BUTTON_DISTANCE_FROM_HEAD_METERS,
-                    )
-                )
-            ),
-            IsdkBoxCollider(
-                Vector3(
-                    BUTTON_CONTACT_COLLIDER_WIDTH_METERS,
-                    BUTTON_CONTACT_COLLIDER_HEIGHT_METERS,
-                    BUTTON_CONTACT_COLLIDER_DEPTH_METERS,
-                ),
-                Vector3(0f, 0f, 0f),
-            ),
-            Hittable(MeshCollision.LineTest_IgnoreVisible),
-            InteractivityInput(false),
-        )
+  private fun createButtonGlowModelEntities() {
+    buttonGlowModelEntities.clear()
+    destroyButtonGlowLights()
+    repeat(BUTTON_GLOW_MODEL_LEVEL_COUNT) { index ->
+      val level = index + 1
+      val assetUri = buttonGlowModelAssetUri(level)
+      val entity =
+          Entity.create(
+              Mesh(
+                  mesh = Uri.parse(assetUri),
+                  hittable = MeshCollision.NoCollision,
+              ),
+              Transform(
+                  Pose(
+                      Vector3(
+                          0f,
+                          BUTTON_MODEL_ORIGIN_Y_METERS,
+                          BUTTON_DISTANCE_FROM_HEAD_METERS,
+                      )
+                  )
+              ),
+              Scale(Vector3(BUTTON_MODEL_SCALE)),
+              Visible(false),
+          )
+      buttonGlowModelEntities.add(entity)
+    }
+    createButtonGlowMaterialLights()
     Log.i(
         TAG,
-        "BRB_BUTTON_CONTACT_COLLIDER_READY source=dual_controller_hand_contact shape=box x=0 y=$BUTTON_CONTACT_COLLIDER_Y_METERS z=$BUTTON_DISTANCE_FROM_HEAD_METERS size=${BUTTON_CONTACT_COLLIDER_WIDTH_METERS}x${BUTTON_CONTACT_COLLIDER_HEIGHT_METERS}x$BUTTON_CONTACT_COLLIDER_DEPTH_METERS",
+        "BRB_BUTTON_GLOW_MODEL_VARIANTS_READY modelGlow=glb_material_variant_swap variants=${buttonGlowModelEntities.size} assetPattern=$BUTTON_GLOW_MODEL_ASSET_PATTERN surfaceGeometry=false transparentHalo=false unityReferenceIdleTint=${UNITY_BUTTON_IDLE_RED},${UNITY_BUTTON_IDLE_GREEN},${UNITY_BUTTON_IDLE_BLUE} unityReferenceBlinkTint=${UNITY_BUTTON_BLINK_RED},${UNITY_BUTTON_BLINK_GREEN},${UNITY_BUTTON_BLINK_BLUE} unityReferenceBlinkEmission=${UNITY_BUTTON_BLINK_EMISSION_RED},${UNITY_BUTTON_BLINK_EMISSION_GREEN},${UNITY_BUTTON_BLINK_EMISSION_BLUE} nativePeakTint=${NATIVE_BUTTON_GLOW_PEAK_RED},${NATIVE_BUTTON_GLOW_PEAK_GREEN},${NATIVE_BUTTON_GLOW_PEAK_BLUE} nativePeakEmission=${NATIVE_BUTTON_GLOW_PEAK_EMISSION_RED},${NATIVE_BUTTON_GLOW_PEAK_EMISSION_GREEN},${NATIVE_BUTTON_GLOW_PEAK_EMISSION_BLUE} surfaceLights=${buttonGlowLights.size}",
     )
+  }
+
+  private fun buttonGlowModelAssetUri(level: Int): String {
+    return BUTTON_GLOW_MODEL_ASSET_PATTERN.format(Locale.US, level.coerceIn(1, BUTTON_GLOW_MODEL_LEVEL_COUNT))
+  }
+
+  private fun createButtonContactColliderEntity() {
+    buttonContactTargets.clear()
+    buttonContactEntity = null
+    capContactTargetSpecs().forEachIndexed { index, spec ->
+      val entity =
+          Entity.create(
+              Transform(
+                  Pose(
+                      Vector3(
+                          spec.offsetX,
+                          BUTTON_CONTACT_COLLIDER_Y_METERS,
+                          BUTTON_DISTANCE_FROM_HEAD_METERS + spec.offsetZ,
+                      )
+                  )
+              ),
+              IsdkBoxCollider(
+                  Vector3(
+                      spec.width,
+                      spec.height,
+                      spec.depth,
+                  ),
+                  Vector3(0f, 0f, 0f),
+              ),
+              Hittable(MeshCollision.LineTest_IgnoreVisible),
+              InteractivityInput(false),
+          )
+      if (index == 0) {
+        buttonContactEntity = entity
+      }
+      buttonContactTargets.add(ButtonContactTarget(entity, spec))
+    }
+    Log.i(
+        TAG,
+        "BRB_BUTTON_CONTACT_COLLIDER_READY source=dual_controller_hand_contact shape=multi_box_cap boxes=${buttonContactTargets.size} centerX=0 centerY=$BUTTON_CONTACT_COLLIDER_Y_METERS centerZ=$BUTTON_DISTANCE_FROM_HEAD_METERS capDiameterM=$BUTTON_VISUAL_DIAMETER_METERS centerSize=${BUTTON_CONTACT_CENTER_WIDTH_METERS}x${BUTTON_CONTACT_COLLIDER_HEIGHT_METERS}x$BUTTON_CONTACT_CENTER_DEPTH_METERS ringRadiusM=$BUTTON_CONTACT_RING_RADIUS_METERS ringBoxSize=${BUTTON_CONTACT_RING_BOX_WIDTH_METERS}x${BUTTON_CONTACT_RING_BOX_DEPTH_METERS}",
+    )
+  }
+
+  private fun capContactTargetSpecs(): List<ButtonContactTargetSpec> {
+    val specs = mutableListOf(
+        ButtonContactTargetSpec(
+            name = "cap-center",
+            offsetX = 0f,
+            offsetZ = 0f,
+            width = BUTTON_CONTACT_CENTER_WIDTH_METERS,
+            height = BUTTON_CONTACT_COLLIDER_HEIGHT_METERS,
+            depth = BUTTON_CONTACT_CENTER_DEPTH_METERS,
+        )
+    )
+    for (index in 0 until BUTTON_CONTACT_RING_BOX_COUNT) {
+      val angle = 2.0 * PI * index.toDouble() / BUTTON_CONTACT_RING_BOX_COUNT.toDouble()
+      specs.add(
+          ButtonContactTargetSpec(
+              name = "cap-ring-$index",
+              offsetX = (cos(angle) * BUTTON_CONTACT_RING_RADIUS_METERS).toFloat(),
+              offsetZ = (sin(angle) * BUTTON_CONTACT_RING_RADIUS_METERS).toFloat(),
+              width = BUTTON_CONTACT_RING_BOX_WIDTH_METERS,
+              height = BUTTON_CONTACT_COLLIDER_HEIGHT_METERS,
+              depth = BUTTON_CONTACT_RING_BOX_DEPTH_METERS,
+          )
+      )
+    }
+    return specs
   }
 
   private fun logButtonSpatialLayout() {
@@ -2805,45 +3334,79 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   }
 
   private fun handleButtonContactPointerEvent(event: PointerEvent) {
-    val contactEntity = buttonContactEntity ?: return
     val hitEntity = event.hitInfo.entity ?: return
-    if (hitEntity.id != contactEntity.id) {
-      return
-    }
+    val contactTarget = buttonContactTargets.firstOrNull { target -> target.entity.id == hitEntity.id } ?: return
 
     val eventType =
         PointerEventType.entries.firstOrNull { it.id == event.type }?.name ?: event.type.toString()
     val behavior = isdkSystem?.getInteractionEventSourceBehavior(event)
     val hand = isdkSystem?.getHandForPointerEvent(event)
     val handTracked = hand != null
+    val contactKey = event.source.id.toString()
     Log.i(
         TAG,
-        "BRB_BUTTON_CONTACT_EVENT type=$eventType behavior=$behavior pointer=${event.pointerType} semantic=${event.semanticType} sourceEntity=${event.source.id} handTracked=$handTracked hand=$hand",
+        "BRB_BUTTON_CONTACT_EVENT type=$eventType target=${contactTarget.spec.name} behavior=$behavior pointer=${event.pointerType} semantic=${event.semanticType} sourceEntity=${event.source.id} handTracked=$handTracked hand=$hand",
     )
 
     if (event.type != PointerEventType.Select.id) {
+      if (buttonContactLatch.release(contactKey)) {
+        Log.i(TAG, "BRB_BUTTON_CONTACT_LATCH state=rearmed key=$contactKey eventType=$eventType")
+      }
       return
     }
     val handSignalOnCollider =
         handTracked && behavior == InteractionEventSourceBehavior.COLLIDER_HOVER_SIGNAL_ACTUATE
     val physicalContact = behavior == InteractionEventSourceBehavior.COLLIDER_HOVER_CONTACT_ACTUATE
+    val acceptedKind =
+        when {
+          handTracked && (physicalContact || handSignalOnCollider) -> PRESS_SOURCE_HAND_CONTACT
+          physicalContact -> PRESS_SOURCE_CONTROLLER_CONTACT
+          else -> ""
+        }
+    if (acceptedKind.isEmpty()) {
+      Log.i(
+          TAG,
+          "BRB_BUTTON_CONTACT_SELECT accepted=false reason=not_contact target=${contactTarget.spec.name} behavior=$behavior handTracked=$handTracked",
+      )
+      return
+    }
+    val nowMs = SystemClock.elapsedRealtime()
+    if (!buttonContactLatch.tryAccept(contactKey, nowMs)) {
+      Log.i(
+          TAG,
+          "BRB_BUTTON_CONTACT_SELECT accepted=false reason=latched target=${contactTarget.spec.name} key=$contactKey behavior=$behavior handTracked=$handTracked",
+      )
+      return
+    }
     when {
-      handTracked && (physicalContact || handSignalOnCollider) -> {
-        Log.i(TAG, "BRB_BUTTON_HAND_CONTACT_SELECT accepted=true behavior=$behavior")
+      acceptedKind == PRESS_SOURCE_HAND_CONTACT -> {
+        Log.i(
+            TAG,
+            "BRB_BUTTON_HAND_CONTACT_SELECT accepted=true target=${contactTarget.spec.name} key=$contactKey behavior=$behavior",
+        )
         recordButtonPress(PRESS_SOURCE_HAND_CONTACT)
       }
-      physicalContact -> {
-        Log.i(TAG, "BRB_BUTTON_CONTROLLER_CONTACT_SELECT accepted=true")
+      acceptedKind == PRESS_SOURCE_CONTROLLER_CONTACT -> {
+        Log.i(
+            TAG,
+            "BRB_BUTTON_CONTROLLER_CONTACT_SELECT accepted=true target=${contactTarget.spec.name} key=$contactKey behavior=$behavior",
+        )
         recordButtonPress(PRESS_SOURCE_CONTROLLER_CONTACT)
-      }
-      else -> {
-        Log.i(TAG, "BRB_BUTTON_CONTACT_SELECT accepted=false reason=not_contact behavior=$behavior handTracked=$handTracked")
       }
     }
   }
 
   private fun playButtonPressedAnimation() {
-    buttonModelEntity?.setComponent(
+    playButtonPressedAnimation(buttonModelEntity)
+    buttonGlowModelEntities.forEach { entity -> playButtonPressedAnimation(entity) }
+    Log.i(
+        TAG,
+        "BRB_BUTTON_MODEL_ANIMATION name=$BUTTON_MODEL_PRESS_ANIMATION playback=clamp motionProfile=native_pressed_clip futureSfxAlignment=button_press_noise_profile",
+    )
+  }
+
+  private fun playButtonPressedAnimation(entity: Entity?) {
+    entity?.setComponent(
         Animated(
             startTime = System.currentTimeMillis(),
             pausedTime = 0f,
@@ -2853,7 +3416,99 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             animationName = BUTTON_MODEL_PRESS_ANIMATION,
         )
     )
-    Log.i(TAG, "BRB_BUTTON_MODEL_ANIMATION name=$BUTTON_MODEL_PRESS_ANIMATION playback=clamp")
+  }
+
+  private fun setButtonGlowPulse(intensity01: Float) {
+    val intensity = intensity01.coerceIn(0f, 1f)
+    buttonHeartbeatPulseIntensityState.floatValue = intensity
+    applyButtonGlowModelVisibility(intensity)
+    updateButtonGlowMaterialLights(if (buttonStimulusVisible && stageState.value == StudyStage.ConditionRunning) intensity else 0f)
+  }
+
+  private fun applyButtonGlowModelVisibility(intensity01: Float) {
+    val intensity = intensity01.coerceIn(0f, 1f)
+    val visible =
+        buttonStimulusVisible &&
+            stageState.value == StudyStage.ConditionRunning &&
+            intensity >= BUTTON_GLOW_MIN_VISIBLE_INTENSITY &&
+            buttonGlowModelEntities.isNotEmpty()
+    val activeIndex =
+        if (visible) {
+          (intensity * (buttonGlowModelEntities.size - 1)).roundToInt().coerceIn(0, buttonGlowModelEntities.lastIndex)
+        } else {
+          -1
+        }
+    buttonModelEntity?.setComponent(Visible(buttonStimulusVisible && activeIndex == -1))
+    buttonGlowModelEntities.forEachIndexed { index, entity ->
+      entity.setComponent(Visible(index == activeIndex))
+    }
+  }
+
+  private fun createButtonGlowMaterialLights() {
+    val positions = buttonGlowLightPositions()
+    positions.forEachIndexed { index, position ->
+      try {
+        val light =
+            SceneLight.createPointLight(
+                position,
+                0f,
+                Vector3(BUTTON_GLOW_LIGHT_RED, BUTTON_GLOW_LIGHT_GREEN, BUTTON_GLOW_LIGHT_BLUE),
+                BUTTON_GLOW_LIGHT_RANGE_METERS,
+                false,
+            )
+        if (light?.isValid() == true) {
+          buttonGlowLights.add(light)
+        }
+      } catch (exception: Exception) {
+        Log.w(TAG, "BRB_BUTTON_GLOW_MATERIAL_LIGHT_FAILED index=$index error=${exception.message}")
+      }
+    }
+  }
+
+  private fun updateButtonGlowMaterialLights(intensity01: Float) {
+    if (buttonGlowLights.isEmpty()) {
+      return
+    }
+    val lightIntensity = BUTTON_GLOW_LIGHT_PEAK_INTENSITY * intensity01.coerceIn(0f, 1f)
+    val color = Vector3(BUTTON_GLOW_LIGHT_RED, BUTTON_GLOW_LIGHT_GREEN, BUTTON_GLOW_LIGHT_BLUE)
+    val positions = buttonGlowLightPositions()
+    buttonGlowLights.forEachIndexed { index, light ->
+      val position = positions.getOrElse(index) { positions.first() }
+      light.update(
+          position,
+          lightIntensity,
+          color,
+          BUTTON_GLOW_LIGHT_RANGE_METERS,
+          Vector3(0f, -1f, 0f),
+          0f,
+          0f,
+          SceneLightType.Point,
+          false,
+      )
+    }
+  }
+
+  private fun buttonGlowLightPositions(): List<Vector3> {
+    val y = BUTTON_CONTACT_COLLIDER_Y_METERS + BUTTON_GLOW_LIGHT_Y_OFFSET_METERS
+    val z = BUTTON_DISTANCE_FROM_HEAD_METERS
+    val radius = BUTTON_GLOW_LIGHT_SURFACE_RADIUS_METERS
+    return listOf(
+        Vector3(-radius, y, z),
+        Vector3(radius, y, z),
+        Vector3(0f, y, z - radius),
+        Vector3(0f, y, z + radius),
+    )
+  }
+
+  private fun destroyButtonGlowLights() {
+    buttonGlowLights.forEach { light ->
+      try {
+        light.destroy()
+      } catch (exception: Exception) {
+        Log.w(TAG, "BRB_BUTTON_GLOW_MATERIAL_LIGHT_DESTROY_FAILED error=${exception.message}")
+      }
+    }
+    buttonGlowLights.clear()
   }
 
   private fun createProceduralButtonFallbackObjects() {
@@ -2989,6 +3644,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     releasePlayer()
     releasePanelChimePlayer()
     releaseCuePlayers()
+    destroyButtonGlowLights()
     polarClient?.stop()
     polarClient = null
     super.onDestroy()
@@ -3003,6 +3659,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     releasePlayer()
     releasePanelChimePlayer()
     releaseCuePlayers()
+    destroyButtonGlowLights()
     polarClient?.stop()
     polarClient = null
     super.onSpatialShutdown()
@@ -3021,11 +3678,16 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     private const val PANEL_SMOKE_EXTRA = "brb.panelSmoke"
     private const val FAST_CONTROLLER_FLOW_EXTRA = "brb.fastControllerFlow"
     private const val KEYEVENT_VALIDATION_EXTRA = "brb.keyeventValidation"
+    private const val VISUAL_GLOW_VALIDATION_EXTRA = "brb.visualGlowValidation"
+    private const val VISUAL_GLOW_VALIDATION_ON = "on"
+    private const val VISUAL_GLOW_VALIDATION_OFF = "off"
+    private const val VISUAL_GLOW_VALIDATION_DELAY_MS = 1800L
     private const val AUTO_VALIDATION_START_DELAY_MS = 1200L
     private const val AUTO_VALIDATION_POST_CONDITION_DELAY_MS = 1200L
     private const val FAST_CONTROLLER_FLOW_START_DELAY_MS = 700L
     private const val FAST_CONTROLLER_POST_CONDITION_DELAY_MS = 450L
     private const val FAST_CONDITION_AUDIO_SHORTCUT_MS = 2200L
+    private const val VISUAL_GLOW_VALIDATION_FAST_CONDITION_HOLD_MS = 12000L
     private const val PANEL_TRANSITION_DEMOGRAPHICS = "demographics"
     private const val PANEL_TRANSITION_BEFORE_CONDITION_1 = "before_condition_1"
     private const val PANEL_TRANSITION_BEFORE_CONDITION_2 = "before_condition_2"
@@ -3057,10 +3719,42 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     private const val BUTTON_CONTACT_COLLIDER_WIDTH_METERS = 0.40f
     private const val BUTTON_CONTACT_COLLIDER_HEIGHT_METERS = 0.18f
     private const val BUTTON_CONTACT_COLLIDER_DEPTH_METERS = 0.40f
+    private const val BUTTON_CONTACT_CENTER_WIDTH_METERS = 0.18f
+    private const val BUTTON_CONTACT_CENTER_DEPTH_METERS = 0.18f
+    private const val BUTTON_CONTACT_RING_BOX_COUNT = 6
+    private const val BUTTON_CONTACT_RING_RADIUS_METERS = 0.10f
+    private const val BUTTON_CONTACT_RING_BOX_WIDTH_METERS = 0.13f
+    private const val BUTTON_CONTACT_RING_BOX_DEPTH_METERS = 0.10f
+    private const val BUTTON_CONTACT_LATCH_FORCE_REARM_MS = 1200L
     private const val BUTTON_PANEL_Y_METERS = 1.05f
     private const val BUTTON_BASE_Y_METERS = 0.95f
     private const val BUTTON_BEVEL_Y_METERS = 0.995f
     private const val BUTTON_DOME_Y_METERS = 1.04f
+    private const val BUTTON_GLOW_MODEL_LEVEL_COUNT = 32
+    private const val BUTTON_GLOW_MODEL_ASSET_PATTERN = "apk:///models/glow/BigRedButtonGlowLevel%02d.glb"
+    private const val BUTTON_GLOW_MIN_VISIBLE_INTENSITY = 0.03f
+    private const val BUTTON_GLOW_LIGHT_SURFACE_RADIUS_METERS = 0.062f
+    private const val BUTTON_GLOW_LIGHT_Y_OFFSET_METERS = 0.010f
+    private const val BUTTON_GLOW_LIGHT_RANGE_METERS = 0.60f
+    private const val BUTTON_GLOW_LIGHT_PEAK_INTENSITY = 3.20f
+    private const val BUTTON_GLOW_LIGHT_RED = 1.0f
+    private const val BUTTON_GLOW_LIGHT_GREEN = 0.05f
+    private const val BUTTON_GLOW_LIGHT_BLUE = 0.02f
+    private const val UNITY_BUTTON_IDLE_RED = 0.82f
+    private const val UNITY_BUTTON_IDLE_GREEN = 0.22f
+    private const val UNITY_BUTTON_IDLE_BLUE = 0.22f
+    private const val UNITY_BUTTON_BLINK_RED = 1.0f
+    private const val UNITY_BUTTON_BLINK_GREEN = 0.72f
+    private const val UNITY_BUTTON_BLINK_BLUE = 0.72f
+    private const val UNITY_BUTTON_BLINK_EMISSION_RED = 7.0f
+    private const val UNITY_BUTTON_BLINK_EMISSION_GREEN = 1.10f
+    private const val UNITY_BUTTON_BLINK_EMISSION_BLUE = 0.85f
+    private const val NATIVE_BUTTON_GLOW_PEAK_RED = 1.0f
+    private const val NATIVE_BUTTON_GLOW_PEAK_GREEN = 0.085f
+    private const val NATIVE_BUTTON_GLOW_PEAK_BLUE = 0.025f
+    private const val NATIVE_BUTTON_GLOW_PEAK_EMISSION_RED = 3.35f
+    private const val NATIVE_BUTTON_GLOW_PEAK_EMISSION_GREEN = 0.095f
+    private const val NATIVE_BUTTON_GLOW_PEAK_EMISSION_BLUE = 0.026f
     private const val STARTUP_CONTACT_SUPPRESSION_MS = 350L
     private const val BUTTON_PRESS_COOLDOWN_MS = 180L
     private const val PRESS_SOURCE_CONTROLLER_CONTACT = "controller_contact"
@@ -3078,8 +3772,21 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     private const val ECG_ORDER_REAL_THEN_SIMULATED = "real_then_simulated"
     private const val ECG_ORDER_SIMULATED_THEN_REAL = "simulated_then_real"
     private const val SIMULATED_RR_ASSET = "ecg/neurokit2_simulated_rr_intervals_ms.csv"
-    private const val HEARTBEAT_FLASH_FRAMES = 10
-    private const val HEARTBEAT_FLASH_FRAME_MS = 28L
+    private const val ECG_BLINK_DETECTOR_POLAR_RR = "polar_h10_rr_interval"
+    private const val ECG_BLINK_DETECTOR_SIMULATED_RR = "simulated_rr_interval"
+    private const val ECG_R_PEAK_THRESHOLD_MICROVOLTS = 800
+    private const val ECG_R_PEAK_REFRACTORY_NS = 250_000_000L
+    private const val ECG_R_PEAK_DETECTOR_NAME = "native_threshold_uv800"
+    private const val HEARTBEAT_PULSE_BASELINE_01 = 0.0f
+    private const val HEARTBEAT_PULSE_PEAK_01 = 1.0f
+    private const val HEARTBEAT_PULSE_DURATION_MS = 320L
+    private const val HEARTBEAT_PULSE_REFRACTORY_MS = 250L
+    private const val LSL_INPUT_ENABLED = false
+    private const val LSL_DEFAULT_STREAM_NAME = "BigRedButtonExternalSignal"
+    private const val LSL_DEFAULT_STREAM_TYPE = "Markers"
+    private const val LSL_DEFAULT_CHANNEL_INDEX = 0
+    private const val HEARTBEAT_FLASH_FRAMES = 16
+    private const val HEARTBEAT_FLASH_FRAME_MS = 20L
     private val AUTO_VALIDATION_PRESS_OFFSETS_MS =
         mapOf(
             1 to listOf(1000L, 4000L, 7000L),
@@ -3129,7 +3836,9 @@ fun ButtonStimulusPanel(activity: BigRedButtonStudyActivity) {
           modifier = Modifier.align(Alignment.TopCenter).padding(top = 6.dp, start = 12.dp, end = 12.dp),
       )
     } else {
-      WarmButtonEmissionOverlay(active = heartbeatFlash, frame = heartbeatFlashFrame)
+      if (MODEL_GLOW_PANEL_FALLBACK_ENABLED) {
+        WarmButtonEmissionOverlay(active = heartbeatFlash, frame = heartbeatFlashFrame)
+      }
       DigitalPressCounter(pressCount, modifier = Modifier.align(Alignment.TopCenter).padding(top = 10.dp))
     }
   }
@@ -3457,14 +4166,23 @@ fun StudyPanel(activity: BigRedButtonStudyActivity) {
                     else -> false
                   }
                 }
+                .graphicsLayer {
+                  if (glitchActive) {
+                    translationX = panelGlitchShellJitter(frame = glitchFrame, mode = glitchMode, progress = glitchProgress, seed = glitchSeed, axisSalt = 101)
+                    translationY = panelGlitchShellJitter(frame = glitchFrame, mode = glitchMode, progress = glitchProgress, seed = glitchSeed, axisSalt = 137) * 0.42f
+                    rotationZ = panelGlitchShellRotation(frame = glitchFrame, mode = glitchMode, progress = glitchProgress, seed = glitchSeed)
+                    scaleX = 1f + panelGlitchEnvelope(glitchProgress, glitchMode) * 0.006f
+                    scaleY = 1f - panelGlitchEnvelope(glitchProgress, glitchMode) * 0.004f
+                  }
+                }
                 .clip(RoundedCornerShape(18.dp))
-                .background(BrbPaper.copy(alpha = 0.94f))
-                .border(1.dp, BrbLine, RoundedCornerShape(18.dp))
-                .padding(18.dp),
+                .background(BrbPaper.copy(alpha = if (glitchActive) 0.88f else 0.94f))
+                .border(1.dp, if (glitchActive) BrbLine.copy(alpha = 0.26f) else BrbLine, RoundedCornerShape(18.dp)),
     ) {
       Box(
           modifier =
               Modifier.fillMaxSize()
+                  .padding(18.dp)
                   .graphicsLayer {
                     if (glitchActive) {
                       translationX = panelGlitchContentJitter(frame = glitchFrame, mode = glitchMode, progress = glitchProgress, seed = glitchSeed, axisSalt = 17)
@@ -3484,6 +4202,7 @@ fun StudyPanel(activity: BigRedButtonStudyActivity) {
           StudyStage.Complete -> CompleteScreen(activity)
         }
       }
+      GlitchPanelFrameOverlay(active = glitchActive, frame = glitchFrame, mode = glitchMode, progress = glitchProgress, seed = glitchSeed)
       BlueFailureGlitchOverlay(
           active = glitchActive,
           frame = glitchFrame,
@@ -4310,6 +5029,17 @@ private fun ChoiceButtonGroup(
 }
 
 @Composable
+private fun GlitchPanelFrameOverlay(active: Boolean, frame: Int, mode: String, progress: Float, seed: Int) {
+  if (!active) {
+    return
+  }
+  Canvas(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(18.dp))) {
+    val intensity = panelGlitchEnvelope(progress, mode)
+    drawInterruptedPanelContour(frame = frame, mode = mode, seed = seed, intensity = intensity)
+  }
+}
+
+@Composable
 private fun BlueFailureGlitchOverlay(active: Boolean, frame: Int, mode: String, progress: Float, seed: Int) {
   if (!active) {
     return
@@ -4330,9 +5060,9 @@ private fun BlueFailureGlitchOverlay(active: Boolean, frame: Int, mode: String, 
     drawScanlineTears(frame = frame, mode = mode, phase = phase, seed = seed, intensity = intensity)
     drawMacroblockCorruption(frame = frame, mode = mode, phase = phase, seed = seed, intensity = intensity)
     drawColorBreakupTears(frame = frame, seed = seed, intensity = intensity)
-    drawGlitchedBufferSpinner(frame = frame, mode = mode, phase = phase, progress = progress, seed = seed, intensity = intensity)
     drawNoiseBursts(frame = frame, phase = phase, seed = seed, intensity = intensity)
     drawPanelBorderDesync(frame = frame, mode = mode, seed = seed, intensity = intensity)
+    drawGlitchedBufferSpinner(frame = frame, mode = mode, phase = phase, progress = progress, seed = seed, intensity = intensity)
   }
 }
 
@@ -4390,6 +5120,203 @@ private fun panelGlitchContentJitter(frame: Int, mode: String, progress: Float, 
         else -> 0.78f
       }
   return glitchSignedUnit(seed, frame, axisSalt) * 6.0f * panelGlitchEnvelope(progress, mode) * phaseMultiplier
+}
+
+private fun panelGlitchShellJitter(frame: Int, mode: String, progress: Float, seed: Int, axisSalt: Int): Float {
+  val phase = panelGlitchPhase(progress, mode)
+  val phaseMultiplier =
+      when (phase) {
+        "rupture", "dropout", "collapse" -> 1.0f
+        "dead_screen" -> 0.34f
+        else -> 0.62f
+      }
+  return glitchSignedUnit(seed, frame, axisSalt) * 9.0f * panelGlitchEnvelope(progress, mode) * phaseMultiplier
+}
+
+private fun panelGlitchShellRotation(frame: Int, mode: String, progress: Float, seed: Int): Float {
+  val phase = panelGlitchPhase(progress, mode)
+  val phaseMultiplier =
+      when (phase) {
+        "rupture", "dropout", "collapse" -> 1.0f
+        "dead_screen" -> 0.25f
+        else -> 0.55f
+      }
+  return glitchSignedUnit(seed, frame, 173) * 0.42f * panelGlitchEnvelope(progress, mode) * phaseMultiplier
+}
+
+private fun DrawScope.drawInterruptedPanelContour(frame: Int, mode: String, seed: Int, intensity: Float) {
+  val edge = 10f + 7f * intensity
+  val segmentCount = 30
+  val topSegmentWidth = size.width / segmentCount
+  val sideSegmentHeight = size.height / 18f
+  val phaseShift = if (mode == "outro") 11 else 0
+
+  for (i in 0 until segmentCount) {
+    val dropped = glitchHash(seed, frame + phaseShift, 941 + i) % 6 == 0
+    val x = i * topSegmentWidth + glitchSignedUnit(seed, frame, 967 + i) * 5f * intensity
+    val segmentLength = topSegmentWidth * (0.46f + glitchUnit(seed, frame, 991 + i) * 0.78f)
+    val topY = 2f + glitchSignedUnit(seed, frame, 1013 + i) * 5f * intensity
+    val bottomY = size.height - edge + glitchSignedUnit(seed, frame, 1031 + i) * 7f * intensity
+    val contourColor =
+        when ((i + frame) % 5) {
+          0 -> Color.White.copy(alpha = 0.48f * intensity)
+          1 -> Color(0xFF00F0FF).copy(alpha = 0.58f * intensity)
+          2 -> Color(0xFF001046).copy(alpha = 0.46f * intensity)
+          3 -> Color(0xFFFF2D7F).copy(alpha = 0.20f * intensity)
+          else -> Color(0xFF7FD4FF).copy(alpha = 0.42f * intensity)
+        }
+    if (dropped) {
+      drawRect(
+          color = Color(0xFF001046).copy(alpha = 0.52f * intensity),
+          topLeft = Offset(x, 0f),
+          size = Size(segmentLength * 1.2f, edge * 1.35f),
+      )
+      drawRect(
+          color = Color(0xFF001046).copy(alpha = 0.46f * intensity),
+          topLeft = Offset(x - topSegmentWidth * 0.2f, size.height - edge * 1.25f),
+          size = Size(segmentLength, edge * 1.35f),
+      )
+    } else {
+      drawRect(color = contourColor, topLeft = Offset(x, topY), size = Size(segmentLength, 4.0f + 4.0f * intensity))
+      drawRect(
+          color = contourColor.copy(alpha = contourColor.alpha * 0.80f),
+          topLeft = Offset(x + glitchSignedUnit(seed, frame, 1049 + i) * 8f * intensity, bottomY),
+          size = Size(segmentLength * 0.92f, 4.0f + 5.0f * intensity),
+      )
+    }
+  }
+
+  for (i in 0 until 18) {
+    val dropped = glitchHash(seed, frame + phaseShift, 1063 + i) % 5 == 0
+    val y = i * sideSegmentHeight + glitchSignedUnit(seed, frame, 1087 + i) * 5f * intensity
+    val segmentLength = sideSegmentHeight * (0.42f + glitchUnit(seed, frame, 1109 + i) * 0.74f)
+    val leftX = 1.5f + glitchSignedUnit(seed, frame, 1123 + i) * 4f * intensity
+    val rightX = size.width - edge + glitchSignedUnit(seed, frame, 1151 + i) * 5f * intensity
+    val color =
+        when ((i + frame) % 4) {
+          0 -> Color(0xFFBFEAFF).copy(alpha = 0.42f * intensity)
+          1 -> Color(0xFF00F0FF).copy(alpha = 0.52f * intensity)
+          2 -> Color(0xFF001046).copy(alpha = 0.42f * intensity)
+          else -> Color(0xFFFF2D7F).copy(alpha = 0.16f * intensity)
+        }
+    if (dropped) {
+      drawRect(color = Color(0xFF001046).copy(alpha = 0.44f * intensity), topLeft = Offset(0f, y), size = Size(edge * 1.2f, segmentLength))
+      drawRect(color = Color(0xFF001046).copy(alpha = 0.44f * intensity), topLeft = Offset(size.width - edge * 1.1f, y), size = Size(edge * 1.2f, segmentLength))
+    } else {
+      drawRect(color = color, topLeft = Offset(leftX, y), size = Size(4f + intensity * 4f, segmentLength))
+      drawRect(color = color, topLeft = Offset(rightX, y + glitchSignedUnit(seed, frame, 1171 + i) * 6f * intensity), size = Size(4f + intensity * 4f, segmentLength * 0.92f))
+    }
+  }
+
+  for (i in 0 until 14) {
+    val biteWidth = 18f + glitchUnit(seed, frame, 1193 + i) * 74f
+    val biteDepth = 6f + glitchUnit(seed, frame, 1217 + i) * 26f * intensity
+    val side = glitchHash(seed, frame, 1231 + i) % 4
+    val color =
+        if ((i + frame) % 3 == 0) {
+          Color(0xFF00F0FF).copy(alpha = 0.18f * intensity)
+        } else {
+          Color(0xFF001046).copy(alpha = 0.58f * intensity)
+        }
+    when (side) {
+      0 ->
+          drawRect(
+              color = color,
+              topLeft = Offset(glitchUnit(seed, frame, 1249 + i) * size.width, 0f),
+              size = Size(biteWidth, biteDepth),
+          )
+      1 ->
+          drawRect(
+              color = color,
+              topLeft = Offset(glitchUnit(seed, frame, 1277 + i) * size.width, size.height - biteDepth),
+              size = Size(biteWidth, biteDepth),
+          )
+      2 ->
+          drawRect(
+              color = color,
+              topLeft = Offset(0f, glitchUnit(seed, frame, 1301 + i) * size.height),
+              size = Size(biteDepth, biteWidth),
+          )
+      else ->
+          drawRect(
+              color = color,
+              topLeft = Offset(size.width - biteDepth, glitchUnit(seed, frame, 1327 + i) * size.height),
+              size = Size(biteDepth, biteWidth),
+          )
+    }
+  }
+
+  for (i in 0 until 9) {
+    val horizontal = glitchHash(seed, frame, 1373 + i) % 2 == 0
+    val fromFarEdge = glitchHash(seed, frame, 1399 + i) % 3 == 0
+    val tearThickness = 5f + glitchUnit(seed, frame, 1423 + i) * 18f * intensity
+    val tearLength =
+        if (mode == "outro") {
+          size.width * (0.18f + glitchUnit(seed, frame, 1447 + i) * 0.42f)
+        } else {
+          size.width * (0.10f + glitchUnit(seed, frame, 1447 + i) * 0.26f)
+        }
+    val tearAlpha = (0.52f + glitchUnit(seed, frame, 1471 + i) * 0.28f) * intensity
+    val seamColor =
+        if ((i + frame) % 3 == 0) {
+          Color(0xFFFF2D7F).copy(alpha = 0.24f * intensity)
+        } else {
+          Color(0xFF00F0FF).copy(alpha = 0.34f * intensity)
+        }
+    if (horizontal) {
+      val y = glitchUnit(seed, frame, 1493 + i) * size.height
+      val x = if (fromFarEdge) size.width - tearLength else 0f
+      drawRect(
+          color = Color.Transparent,
+          topLeft = Offset(x, y),
+          size = Size(tearLength, tearThickness),
+          blendMode = BlendMode.Clear,
+      )
+      drawRect(
+          color = Color(0xFF001046).copy(alpha = tearAlpha),
+          topLeft = Offset(x, y),
+          size = Size(tearLength, tearThickness),
+      )
+      drawRect(
+          color = seamColor,
+          topLeft = Offset(x + glitchSignedUnit(seed, frame, 1511 + i) * 8f, y + tearThickness),
+          size = Size(tearLength * 0.72f, 2.5f + 2f * intensity),
+      )
+    } else {
+      val x = glitchUnit(seed, frame, 1531 + i) * size.width
+      val y = if (fromFarEdge) size.height - tearLength else 0f
+      drawRect(
+          color = Color.Transparent,
+          topLeft = Offset(x, y),
+          size = Size(tearThickness, tearLength),
+          blendMode = BlendMode.Clear,
+      )
+      drawRect(
+          color = Color(0xFF001046).copy(alpha = tearAlpha),
+          topLeft = Offset(x, y),
+          size = Size(tearThickness, tearLength),
+      )
+      drawRect(
+          color = seamColor,
+          topLeft = Offset(x + tearThickness, y + glitchSignedUnit(seed, frame, 1553 + i) * 8f),
+          size = Size(2.5f + 2f * intensity, tearLength * 0.72f),
+      )
+    }
+  }
+
+  val duplicateOffset = glitchSignedUnit(seed, frame, 1351) * 12f * intensity
+  drawRect(
+      color = Color(0xFF00F0FF).copy(alpha = 0.22f * intensity),
+      topLeft = Offset(4f + duplicateOffset, 4f),
+      size = Size(size.width - 8f, size.height - 8f),
+      style = Stroke(width = 2.5f + intensity * 2f),
+  )
+  drawRect(
+      color = Color(0xFFFF2D7F).copy(alpha = 0.10f * intensity),
+      topLeft = Offset(4f - duplicateOffset * 0.7f, 4f + duplicateOffset * 0.35f),
+      size = Size(size.width - 8f, size.height - 8f),
+      style = Stroke(width = 2f),
+  )
 }
 
 private fun DrawScope.drawPhasedFailureWash(frame: Int, mode: String, phase: String, progress: Float, intensity: Float) {
@@ -4575,58 +5502,98 @@ private fun DrawScope.drawGlitchedBufferSpinner(
     intensity: Float,
 ) {
   val shortSide = if (size.width < size.height) size.width else size.height
-  val radius = shortSide * if (phase == "collapse" || phase == "dropout") 0.132f else 0.108f
+  val wheelIntensity = intensity.coerceAtLeast(0.82f)
+  val radius = shortSide * if (phase == "collapse" || phase == "dropout") 0.166f else 0.142f
   val center =
       Offset(
-          size.width * 0.50f + glitchSignedUnit(seed, frame, 641) * 10f * intensity,
-          size.height * if (mode == "outro") 0.55f else 0.50f + glitchSignedUnit(seed, frame, 659) * 7f * intensity,
+          size.width * 0.50f + glitchSignedUnit(seed, frame, 641) * 12f * wheelIntensity,
+          size.height * if (mode == "outro") 0.55f else 0.50f + glitchSignedUnit(seed, frame, 659) * 9f * wheelIntensity,
       )
   val rotation = (frame * if (mode == "outro") -21f else 17f) + progress * 290f + seed % 360
   val ringBounds = Size(radius * 2f, radius * 2f)
   val topLeft = Offset(center.x - radius, center.y - radius)
-  for (i in 0 until 12) {
-    val dropped = glitchHash(seed, frame + i, 677) % 7 == 0
+
+  drawCircle(
+      color = Color(0xFF000516).copy(alpha = 0.58f),
+      radius = radius * 1.36f,
+      center = center,
+  )
+  drawCircle(
+      color = Color(0xFF00F0FF).copy(alpha = 0.28f * wheelIntensity),
+      radius = radius * 1.12f,
+      center = Offset(center.x + glitchSignedUnit(seed, frame, 666) * 5f, center.y),
+      style = Stroke(width = 6f + wheelIntensity * 6f),
+  )
+  drawCircle(
+      color = Color.White.copy(alpha = 0.18f * wheelIntensity),
+      radius = radius * 0.86f,
+      center = center,
+      style = Stroke(width = 3.5f + wheelIntensity * 3f),
+  )
+
+  for (i in 0 until 18) {
+    val dropped = glitchHash(seed, frame + i, 677) % 6 == 0
     if (!dropped) {
-      val age = ((i + frame) % 12) / 12f
-      val alpha = (0.15f + age * 0.50f) * intensity
+      val age = ((i + frame) % 18) / 18f
+      val alpha = (0.34f + age * 0.62f) * wheelIntensity
       val color =
-          when (i % 4) {
+          when (i % 5) {
             0 -> Color.White.copy(alpha = alpha)
             1 -> Color(0xFF00F0FF).copy(alpha = alpha)
             2 -> Color(0xFF7FD4FF).copy(alpha = alpha * 0.84f)
-            else -> Color(0xFFFF2D7F).copy(alpha = alpha * 0.42f)
+            3 -> Color(0xFF001046).copy(alpha = alpha * 1.10f)
+            else -> Color(0xFFFF2D7F).copy(alpha = alpha * 0.46f)
           }
       drawArc(
           color = color,
-          startAngle = rotation + i * 30f + glitchSignedUnit(seed, frame, 701 + i) * 7f,
-          sweepAngle = 13f + glitchUnit(seed, frame, 719 + i) * 21f,
+          startAngle = rotation + i * 20f + glitchSignedUnit(seed, frame, 701 + i) * 10f,
+          sweepAngle = 10f + glitchUnit(seed, frame, 719 + i) * 25f,
           useCenter = false,
           topLeft = topLeft,
           size = ringBounds,
-          style = Stroke(width = 7f + intensity * 3f, cap = StrokeCap.Round),
+          style = Stroke(width = 11f + wheelIntensity * 6f, cap = StrokeCap.Round),
       )
     }
   }
 
   drawArc(
-      color = Color(0xFF001046).copy(alpha = 0.46f * intensity),
+      color = Color(0xFF001046).copy(alpha = 0.78f * wheelIntensity),
       startAngle = rotation * -0.65f,
-      sweepAngle = 86f + 44f * intensity,
+      sweepAngle = 86f + 44f * wheelIntensity,
       useCenter = false,
       topLeft = Offset(center.x - radius * 1.18f, center.y - radius * 1.18f),
       size = Size(radius * 2.36f, radius * 2.36f),
-      style = Stroke(width = 3f + intensity * 2f, cap = StrokeCap.Square),
+      style = Stroke(width = 5f + wheelIntensity * 3f, cap = StrokeCap.Square),
   )
 
-  for (i in 0 until 22) {
-    val angle = (rotation + i * 16.36f + glitchSignedUnit(seed, frame, 743 + i) * 10f) * PI.toFloat() / 180f
-    val distance = radius * (1.36f + glitchUnit(seed, frame, 761 + i) * 0.22f)
+  drawArc(
+      color = Color.White.copy(alpha = 0.74f * wheelIntensity),
+      startAngle = rotation + 190f,
+      sweepAngle = 42f + 22f * wheelIntensity,
+      useCenter = false,
+      topLeft = Offset(center.x - radius * 0.54f, center.y - radius * 0.54f),
+      size = Size(radius * 1.08f, radius * 1.08f),
+      style = Stroke(width = 7f + wheelIntensity * 5f, cap = StrokeCap.Round),
+  )
+  drawCircle(
+      color = Color(0xFFBFEAFF).copy(alpha = 0.46f * wheelIntensity),
+      radius = radius * 0.19f,
+      center =
+          Offset(
+              center.x + glitchSignedUnit(seed, frame, 733) * 8f * wheelIntensity,
+              center.y + glitchSignedUnit(seed, frame, 739) * 5f * wheelIntensity,
+          ),
+  )
+
+  for (i in 0 until 28) {
+    val angle = (rotation + i * 12.86f + glitchSignedUnit(seed, frame, 743 + i) * 12f) * PI.toFloat() / 180f
+    val distance = radius * (1.34f + glitchUnit(seed, frame, 761 + i) * 0.30f)
     val tickCenter = Offset(center.x + cos(angle) * distance, center.y + sin(angle) * distance)
-    val tickAlpha = if (glitchHash(seed, frame + i, 787) % 6 == 0) 0.08f else 0.34f * intensity
+    val tickAlpha = if (glitchHash(seed, frame + i, 787) % 6 == 0) 0.10f else 0.62f * wheelIntensity
     drawRect(
-        color = Color(0xFFBFEAFF).copy(alpha = tickAlpha),
-        topLeft = Offset(tickCenter.x - 5f, tickCenter.y - 2f),
-        size = Size(10f + glitchUnit(seed, frame, 809 + i) * 18f, 4f + intensity * 3f),
+        color = if ((i + frame) % 7 == 0) Color(0xFFFF2D7F).copy(alpha = tickAlpha * 0.58f) else Color(0xFFBFEAFF).copy(alpha = tickAlpha),
+        topLeft = Offset(tickCenter.x - 6f, tickCenter.y - 3f),
+        size = Size(12f + glitchUnit(seed, frame, 809 + i) * 24f, 5f + wheelIntensity * 4f),
     )
   }
 }

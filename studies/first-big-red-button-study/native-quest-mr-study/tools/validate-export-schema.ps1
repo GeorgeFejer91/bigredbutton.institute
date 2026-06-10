@@ -48,6 +48,8 @@ $conditionColumns = @(
     'ecg_source',
     'ecg_blink_count',
     'ecg_timeseries_sample_count',
+    'ecg_detector_event_count',
+    'external_signal_sample_count',
     'ecg_expected_sample_count',
     'ecg_capture_start_elapsed_ms',
     'ecg_capture_end_elapsed_ms',
@@ -119,7 +121,40 @@ $requiredEcgBlinkColumns = @(
     'unix_time_ms',
     'iso_timestamp',
     'rr_ms',
-    'heart_rate_bpm'
+    'heart_rate_bpm',
+    'pulse_intensity_0_1',
+    'pulse_source_timestamp_unix_ns',
+    'detector'
+)
+$requiredEcgDetectorColumns = @(
+    'session_id',
+    'participant_id',
+    'condition_number',
+    'detector_index',
+    'detector',
+    'source',
+    'elapsed_ms',
+    'elapsed_ns',
+    'unix_time_ms',
+    'iso_timestamp',
+    'sensor_timestamp_ns',
+    'microvolts',
+    'threshold_microvolts',
+    'sample_index'
+)
+$requiredExternalSignalColumns = @(
+    'session_id',
+    'participant_id',
+    'condition_number',
+    'sample_index',
+    'source',
+    'stream_name',
+    'stream_type',
+    'channel_index',
+    'value_0_1',
+    'elapsed_ms',
+    'unix_time_ms',
+    'iso_timestamp'
 )
 $requiredEcgTimeSeriesColumns = @(
     'session_id',
@@ -169,6 +204,8 @@ function New-SyntheticExport {
     $pressPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_press_events.csv'
     $ecgBlinkPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_ecg_blink_events.csv'
     $ecgTimeSeriesPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_ecg_timeseries.csv'
+    $ecgDetectorPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_ecg_detector_events.csv'
+    $externalSignalPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_external_signal_samples.csv'
     $indexPath = Join-Path $outDir 'session-index.jsonl'
 
     $conditions = @()
@@ -206,6 +243,8 @@ function New-SyntheticExport {
             ecgSampleRateHz = 130
             ecgExpectedSampleCount = 3
             ecgTimeSeriesSampleCount = 3
+            ecgDetectorEventCount = 1
+            externalSignalSampleCount = 0
             ecgRequestedMtu = 70
             ecgNegotiatedMtu = 70
             ecgBlinkEvents = @(
@@ -218,8 +257,28 @@ function New-SyntheticExport {
                     isoTimestamp = '2026-06-09T12:00:00.830Z'
                     rrMs = 830.1
                     heartRateBpm = 72
+                    pulseIntensity01 = 1.0
+                    pulseSourceTimestampUnixNs = 1781006400830000000
+                    detector = if ($condition -eq 1) { 'simulated_rr_interval' } else { 'polar_h10_rr_interval' }
                 }
             )
+            ecgDetectorEvents = @(
+                [ordered]@{
+                    conditionNumber = $condition
+                    detectorIndex = 1
+                    detector = 'native_threshold_uv800'
+                    source = if ($condition -eq 1) { 'simulated_neurokit2' } else { 'real_polar_h10' }
+                    elapsedMs = 15.385
+                    elapsedNs = 15384615
+                    unixTimeMs = 1781006400015
+                    isoTimestamp = '2026-06-09T12:00:00.015Z'
+                    sensorTimestampNs = 15384615
+                    microVolts = 1200
+                    thresholdMicroVolts = 800
+                    sampleIndex = 3
+                }
+            )
+            externalSignalSamples = @()
             ecgTimeSeries = @(
                 [ordered]@{
                     conditionNumber = $condition
@@ -413,8 +472,8 @@ function New-SyntheticExport {
     )
     Set-Content -LiteralPath $ecgBlinkPath -Encoding UTF8 -Value @(
         ($requiredEcgBlinkColumns -join ','),
-        "$sessionId,$participantId,1,1,simulated_neurokit2,830,1781006400830,2026-06-09T12:00:00.830Z,830.1,72",
-        "$sessionId,$participantId,2,1,real_polar_h10,830,1781006700830,2026-06-09T12:05:00.830Z,830.1,72"
+        "$sessionId,$participantId,1,1,simulated_neurokit2,830,1781006400830,2026-06-09T12:00:00.830Z,830.1,72,1.000,1781006400830000000,simulated_rr_interval",
+        "$sessionId,$participantId,2,1,real_polar_h10,830,1781006700830,2026-06-09T12:05:00.830Z,830.1,72,1.000,1781006700830000000,polar_h10_rr_interval"
     )
     Set-Content -LiteralPath $ecgTimeSeriesPath -Encoding UTF8 -Value @(
         ($requiredEcgTimeSeriesColumns -join ','),
@@ -422,6 +481,14 @@ function New-SyntheticExport {
         "$sessionId,$participantId,1,2,simulated_neurokit2,7.692,7692308,0,300774,300774,1781006400008,2026-06-09T12:00:00.008Z,7692308,512,130,1,0,16,70,70",
         "$sessionId,$participantId,2,1,real_polar_h10,0,0,0,325590,325590,1781006700000,2026-06-09T12:05:00Z,0,0,130,1,0,16,70,70",
         "$sessionId,$participantId,2,2,real_polar_h10,7.692,7692308,0,325590,325590,1781006700008,2026-06-09T12:05:00.008Z,7692308,512,130,1,0,16,70,70"
+    )
+    Set-Content -LiteralPath $ecgDetectorPath -Encoding UTF8 -Value @(
+        ($requiredEcgDetectorColumns -join ','),
+        "$sessionId,$participantId,1,1,native_threshold_uv800,simulated_neurokit2,15.385,15384615,1781006400015,2026-06-09T12:00:00.015Z,15384615,1200,800,3",
+        "$sessionId,$participantId,2,1,native_threshold_uv800,real_polar_h10,15.385,15384615,1781006700015,2026-06-09T12:05:00.015Z,15384615,1200,800,3"
+    )
+    Set-Content -LiteralPath $externalSignalPath -Encoding UTF8 -Value @(
+        ($requiredExternalSignalColumns -join ',')
     )
     Add-Content -LiteralPath $indexPath -Encoding UTF8 -Value (@{
         sessionId = $sessionId
@@ -432,6 +499,8 @@ function New-SyntheticExport {
         pressEventsCsv = [IO.Path]::GetFileName($pressPath)
         ecgBlinkEventsCsv = [IO.Path]::GetFileName($ecgBlinkPath)
         ecgTimeSeriesCsv = [IO.Path]::GetFileName($ecgTimeSeriesPath)
+        ecgDetectorEventsCsv = [IO.Path]::GetFileName($ecgDetectorPath)
+        externalSignalSamplesCsv = [IO.Path]::GetFileName($externalSignalPath)
     } | ConvertTo-Json -Compress)
     return $outDir
 }
@@ -446,6 +515,8 @@ $summaryFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_summary.csv' | S
 $pressFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_press_events.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $ecgBlinkFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_ecg_blink_events.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $ecgTimeSeriesFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_ecg_timeseries.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$ecgDetectorFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_ecg_detector_events.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$externalSignalFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_external_signal_samples.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $indexFile = Join-Path $ExportDir 'session-index.jsonl'
 
 Assert-Condition ($null -ne $jsonFile) "Missing JSON export in $ExportDir"
@@ -453,6 +524,8 @@ Assert-Condition ($null -ne $summaryFile) "Missing summary CSV export in $Export
 Assert-Condition ($null -ne $pressFile) "Missing press-events CSV export in $ExportDir"
 Assert-Condition ($null -ne $ecgBlinkFile) "Missing ECG blink-events CSV export in $ExportDir"
 Assert-Condition ($null -ne $ecgTimeSeriesFile) "Missing ECG time-series CSV export in $ExportDir"
+Assert-Condition ($null -ne $ecgDetectorFile) "Missing ECG detector-events CSV export in $ExportDir"
+Assert-Condition ($null -ne $externalSignalFile) "Missing external signal samples CSV export in $ExportDir"
 Assert-Condition (Test-Path $indexFile) "Missing session-index.jsonl in $ExportDir"
 
 $exportJson = Get-Content -Raw -LiteralPath $jsonFile.FullName | ConvertFrom-Json
@@ -482,6 +555,8 @@ foreach ($condition in @($exportJson.conditions)) {
     Assert-Condition ($condition.ecgSource -in @('real_polar_h10', 'simulated_neurokit2')) "Condition $($condition.conditionNumber) invalid ecgSource"
     Assert-Condition ($condition.ecgBlinkCount -ge 0) "Condition $($condition.conditionNumber) invalid ecgBlinkCount"
     Assert-Condition ($null -ne $condition.ecgBlinkEvents) "Condition $($condition.conditionNumber) missing ecgBlinkEvents"
+    Assert-Condition ($null -ne $condition.ecgDetectorEvents) "Condition $($condition.conditionNumber) missing ecgDetectorEvents"
+    Assert-Condition ($null -ne $condition.externalSignalSamples) "Condition $($condition.conditionNumber) missing externalSignalSamples"
     Assert-Condition ($condition.ecgCaptureDurationMs -eq $condition.audioDurationMs) "Condition $($condition.conditionNumber) ECG capture duration must match audio duration"
     Assert-Condition ($condition.ecgCaptureDurationNs -eq ($condition.audioDurationMs * 1000000)) "Condition $($condition.conditionNumber) ECG capture duration ns must match audio duration"
     Assert-Condition (($condition.ecgCaptureEndedElapsedNs - $condition.ecgCaptureStartedElapsedNs) -eq ($condition.audioDurationMs * 1000000)) "Condition $($condition.conditionNumber) ECG capture ns window must match audio duration"
@@ -499,6 +574,13 @@ foreach ($condition in @($exportJson.conditions)) {
         Assert-Condition ($event.source -in @('real_polar_h10', 'simulated_neurokit2')) "Condition $($condition.conditionNumber) ECG blink event has invalid source"
         Assert-Condition ($event.blinkIndex -gt 0) "Condition $($condition.conditionNumber) ECG blink event missing blinkIndex"
         Assert-Condition ($event.rrMs -gt 0) "Condition $($condition.conditionNumber) ECG blink event missing rrMs"
+        Assert-Condition ($event.pulseIntensity01 -ge 0 -and $event.pulseIntensity01 -le 1) "Condition $($condition.conditionNumber) ECG blink event pulseIntensity01 out of range"
+        Assert-Condition (-not [string]::IsNullOrWhiteSpace($event.detector)) "Condition $($condition.conditionNumber) ECG blink event missing detector"
+    }
+    foreach ($event in @($condition.ecgDetectorEvents)) {
+        Assert-Condition ($event.detectorIndex -gt 0) "Condition $($condition.conditionNumber) ECG detector event missing detectorIndex"
+        Assert-Condition ($event.detector -eq 'native_threshold_uv800') "Condition $($condition.conditionNumber) ECG detector name mismatch"
+        Assert-Condition ($event.thresholdMicroVolts -eq 800) "Condition $($condition.conditionNumber) ECG detector threshold mismatch"
     }
     foreach ($sample in @($condition.ecgTimeSeries)) {
         Assert-Condition ($sample.source -in @('real_polar_h10', 'simulated_neurokit2')) "Condition $($condition.conditionNumber) ECG time-series sample has invalid source"
@@ -556,6 +638,16 @@ foreach ($column in $requiredEcgTimeSeriesColumns) {
     Assert-Condition ($ecgTimeSeriesHeader -contains $column) "Missing ECG time-series column $column"
 }
 
+$ecgDetectorHeader = Get-CsvHeader -Path $ecgDetectorFile.FullName
+foreach ($column in $requiredEcgDetectorColumns) {
+    Assert-Condition ($ecgDetectorHeader -contains $column) "Missing ECG detector-events column $column"
+}
+
+$externalSignalHeader = Get-CsvHeader -Path $externalSignalFile.FullName
+foreach ($column in $requiredExternalSignalColumns) {
+    Assert-Condition ($externalSignalHeader -contains $column) "Missing external-signal column $column"
+}
+
 $outRoot = Join-Path $projectRoot 'artifacts\export-schema-validation'
 New-Item -ItemType Directory -Force -Path $outRoot | Out-Null
 $summaryPath = Join-Path $outRoot ("export-schema-validation-" + (Get-Date -Format 'yyyyMMdd-HHmmss') + ".json")
@@ -568,6 +660,8 @@ $summaryPath = Join-Path $outRoot ("export-schema-validation-" + (Get-Date -Form
     pressEventsCsv = $pressFile.FullName
     ecgBlinkEventsCsv = $ecgBlinkFile.FullName
     ecgTimeSeriesCsv = $ecgTimeSeriesFile.FullName
+    ecgDetectorEventsCsv = $ecgDetectorFile.FullName
+    externalSignalSamplesCsv = $externalSignalFile.FullName
 } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $summaryPath -Encoding UTF8
 
 Write-Host "PASS export schema validation"

@@ -103,6 +103,7 @@ $questionnaireNavigationSound = Join-Path $projectRoot 'app\src\main\res\raw\ui_
 $buttonPressSound = Join-Path $projectRoot 'app\src\main\assets\sfx\button-press-placeholder-kenney-bong.ogg'
 $simulatedRrAsset = Join-Path $projectRoot 'app\src\main\assets\ecg\neurokit2_simulated_rr_intervals_ms.csv'
 $polarClient = Join-Path $projectRoot 'app\src\main\java\org\bigredbutton\firststudy\PolarH10HeartRateClient.kt'
+$glowVariantGenerator = Join-Path $projectRoot 'tools\create-button-glow-variants.py'
 
 Add-Check 'manifest exists' (Test-Path $manifest) $manifest
 Add-Check 'activity exists' (Test-Path $activity) $activity
@@ -117,6 +118,7 @@ Add-Check 'questionnaire navigation sound exists' (Test-Path $questionnaireNavig
 Add-Check 'button press sound placeholder exists' (Test-Path $buttonPressSound) $buttonPressSound
 Add-Check 'simulated NeuroKit2 RR asset exists' (Test-Path $simulatedRrAsset) $simulatedRrAsset
 Add-Check 'Polar H10 BLE client exists' (Test-Path $polarClient) $polarClient
+Add-Check 'button glow variant generator exists' (Test-Path $glowVariantGenerator) $glowVariantGenerator
 
 if (Test-Path $audio1) {
     Add-Check 'condition 1 audio nonempty' ((Get-Item $audio1).Length -gt 100000) ((Get-Item $audio1).Length.ToString())
@@ -182,6 +184,20 @@ if (Test-Path $simulatedRrAsset) {
     Add-Check 'simulated NeuroKit2 RR asset hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $simulatedRrAsset).Hash -eq '80D612CEC91C511471F19347C0B76A997FAF0E4AB785E2003B10179C819801C1') 'NeuroKit2-generated RR interval CSV SHA256'
     Add-Check 'simulated NeuroKit2 RR asset has intervals' ($rrLines.Count -gt 800 -and $rrLines[0].Contains('index') -and $rrLines[0].Contains('rr_interval_ms')) "lines=$($rrLines.Count)"
 }
+if (Test-Path $glowVariantGenerator) {
+    $glowVariantGeneratorText = Get-Content -Raw -LiteralPath $glowVariantGenerator
+    Add-Check 'button glow variant generator uses opaque material emission' (
+        $glowVariantGeneratorText.Contains('CAP_PEAK_EMISSION') -and
+        $glowVariantGeneratorText.Contains('BEZEL_PEAK_EMISSION') -and
+        $glowVariantGeneratorText.Contains('BASE_PEAK_EMISSION') -and
+        $glowVariantGeneratorText.Contains('emissiveFactor') -and
+        $glowVariantGeneratorText.Contains('baseColorFactor') -and
+        $glowVariantGeneratorText.Contains('BigRedButtonGlowLevel') -and
+        $glowVariantGeneratorText.Contains('default=32') -and
+        -not $glowVariantGeneratorText.Contains('AlphaMode.TRANSLUCENT') -and
+        -not $glowVariantGeneratorText.Contains('SpatialBlendMode.ADDITIVE')
+    ) 'generator writes 32 GLB material variants with cap emission plus subtle bezel warmth while preserving the dark base, rather than transparent overlay geometry'
+}
 if (Test-Path $polarClient) {
     $polarClientText = Get-Content -Raw -LiteralPath $polarClient
     Add-Check 'Polar H10 client uses standard Heart Rate Service' (
@@ -233,7 +249,19 @@ if (Test-Path $activity) {
     Add-Check 'model material not flattened' (-not $activityText.Contains('defaultShaderOverride = SceneMaterial.UNLIT_SHADER')) 'model uses embedded/material PBR path instead of forced unlit shader'
     Add-Check 'model press animation named' ($activityText.Contains('BUTTON_MODEL_PRESS_ANIMATION = "pressed"') -and $activityText.Contains('animationName = BUTTON_MODEL_PRESS_ANIMATION')) 'GLB pressed animation track'
     Add-Check 'model press animation clamps' ($activityText.Contains('PlaybackType.CLAMP')) 'Meta Spatial SDK clamp playback for one-shot press'
-    Add-Check 'controller contact collider' ($activityText.Contains('IsdkBoxCollider') -and $activityText.Contains('COLLIDER_HOVER_CONTACT_ACTUATE')) 'ISDK contact collider accepts controller contact'
+    Add-Check 'controller contact collider' (
+        $activityText.Contains('IsdkBoxCollider') -and
+        $activityText.Contains('shape=multi_box_cap') -and
+        $activityText.Contains('buttonContactTargets') -and
+        $activityText.Contains('BUTTON_CONTACT_RING_BOX_COUNT = 6') -and
+        $activityText.Contains('COLLIDER_HOVER_CONTACT_ACTUATE')
+    ) 'seven-box ISDK cap contact target accepts controller contact'
+    Add-Check 'controller contact latch' (
+        $activityText.Contains('ButtonContactLatch') -and
+        $activityText.Contains('BUTTON_CONTACT_LATCH_FORCE_REARM_MS') -and
+        $activityText.Contains('BRB_BUTTON_CONTACT_LATCH') -and
+        $activityText.Contains('reason=latched')
+    ) 'source-level latch prevents held or sliding controller contact from over-counting'
     Add-Check 'controller contact input source' ($activityText.Contains('PRESS_SOURCE_CONTROLLER_CONTACT = "controller_contact"') -and $activityText.Contains('inputSource = inputSource')) 'press event provenance'
     Add-Check 'transparent hit target over model' ($activityText.Contains('buttonPanel=transparent-hit-target') -and $activityText.Contains('MutableInteractionSource')) '2D panel is input surface, not visible button'
     Add-Check 'procedural fallback disabled' ($activityText.Contains('USE_PROCEDURAL_BUTTON_FALLBACK = false')) 'fallback is not participant-facing'
@@ -292,7 +320,7 @@ if (Test-Path $activity) {
         $activityText.Contains('buttonModelVisible=false condition=1 onlyOnce=true') -and
         $activityText.Contains('setPreButtonExperienceQuestionVisible(true)') -and
         $activityText.Contains('buttonModelEntity?.setComponent(Visible(false))') -and
-        $activityText.Contains('buttonContactEntity?.setComponent(InteractivityInput(false))') -and
+        $activityText.Contains('buttonContactTargets.forEach { target -> target.entity.setComponent(InteractivityInput(false)) }') -and
         $activityText.Contains('startExperimentFromPriorButtonExperienceQuestion') -and
         $activityText.Contains('beginCondition(1)')
     ) 'after demographics, the transparent counter panel asks the one-time yes/no prior button-press experience question while the 3D model/collider remain hidden'
@@ -310,9 +338,11 @@ if (Test-Path $activity) {
         $activityText.Contains('prior_big_red_button_experience_timestamp_iso') -and
         $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_SAVED')
     ) 'prior yes/no big-red-button experience response is written to JSON and summary CSV with timestamp'
-    Add-Check 'summary CSV ECG variables' ($activityText.Contains('ecg_assignment_order') -and $activityText.Contains('condition_${condition}_ecg_source') -and $activityText.Contains('condition_${condition}_ecg_blink_count') -and $activityText.Contains('condition_${condition}_ecg_timeseries_sample_count') -and $activityText.Contains('condition_${condition}_ecg_capture_duration_ns') -and $activityText.Contains('condition_${condition}_ecg_audio_window_end_ms')) 'counterbalanced ECG source, blink count, raw time-series count, and exact audio-window columns'
-    Add-Check 'ECG blink events CSV export' ($activityText.Contains('_ecg_blink_events.csv') -and $activityText.Contains('ecgBlinkEventsCsvText') -and $activityText.Contains('ecgBlinkEventsCsv')) 'SideQuest-readable ECG blink event CSV'
+    Add-Check 'summary CSV ECG variables' ($activityText.Contains('ecg_assignment_order') -and $activityText.Contains('condition_${condition}_ecg_source') -and $activityText.Contains('condition_${condition}_ecg_blink_count') -and $activityText.Contains('condition_${condition}_ecg_timeseries_sample_count') -and $activityText.Contains('condition_${condition}_ecg_detector_event_count') -and $activityText.Contains('condition_${condition}_external_signal_sample_count') -and $activityText.Contains('condition_${condition}_ecg_capture_duration_ns') -and $activityText.Contains('condition_${condition}_ecg_audio_window_end_ms')) 'counterbalanced ECG source, blink count, raw time-series count, detector count, optional external signal count, and exact audio-window columns'
+    Add-Check 'ECG blink events CSV export' ($activityText.Contains('_ecg_blink_events.csv') -and $activityText.Contains('ecgBlinkEventsCsvText') -and $activityText.Contains('ecgBlinkEventsCsv') -and $activityText.Contains('"pulse_intensity_0_1"') -and $activityText.Contains('"detector"')) 'SideQuest-readable ECG blink event CSV with pulse metadata'
     Add-Check 'ECG raw time-series CSV export' ($activityText.Contains('_ecg_timeseries.csv') -and $activityText.Contains('ecgTimeSeriesCsvText') -and $activityText.Contains('ecgTimeSeriesCsv') -and $activityText.Contains('"elapsed_ns"') -and $activityText.Contains('"audio_window_duration_ms"')) 'SideQuest-readable raw 130 Hz ECG time-series CSV with nanosecond elapsed and audio-window fields'
+    Add-Check 'ECG detector events CSV export' ($activityText.Contains('_ecg_detector_events.csv') -and $activityText.Contains('ecgDetectorEventsCsvText') -and $activityText.Contains('BRB_ECG_RPEAK_DETECTED') -and $activityText.Contains('native_threshold_uv800')) 'native threshold R-peak detector diagnostics are exported separately from the raw ECG stream'
+    Add-Check 'optional LSL external signal scaffold' ($activityText.Contains('LSL_INPUT_ENABLED = false') -and $activityText.Contains('BRB_LSL status=disabled') -and $activityText.Contains('_external_signal_samples.csv') -and $activityText.Contains('externalSignalSamplesCsvText')) 'disabled-by-default LSL/external signal schema is present without adding an untested JNI dependency'
     Add-Check 'pictographic distance variable' ($activityText.Contains('self_button_distance_units')) 'self_button_distance_units'
     Add-Check 'pictographic radius variable' ($activityText.Contains('button_presence_radius_units')) 'button_presence_radius_units'
     Add-Check 'lost opportunity variable' ($activityText.Contains('lost_opportunity_for_better_results_quotient')) 'lost_opportunity_for_better_results_quotient'
@@ -409,9 +439,14 @@ if (Test-Path $activity) {
         $activityText.Contains('drawMacroblockCorruption') -and
         $activityText.Contains('drawColorBreakupTears') -and
         $activityText.Contains('drawPanelBorderDesync') -and
+        $activityText.Contains('GlitchPanelFrameOverlay') -and
+        $activityText.Contains('drawInterruptedPanelContour') -and
+        $activityText.Contains('panelGlitchShellJitter') -and
+        $activityText.Contains('panelGlitchShellRotation') -and
+        $activityText.Contains('BlendMode.Clear') -and
         $activityText.Contains('graphicsLayer') -and
         $activityText.Contains('PANEL_GLITCH_FRAME_MS = 70L')
-    ) 'intro/outro overlay uses phased acquisition/dropout/collapse, jitter, macroblocks, color breakup, stripes, and border desynchronization'
+    ) 'intro/outro overlay uses phased acquisition/dropout/collapse, whole-panel wobble, interrupted contours, dynamic edge tears, macroblocks, color breakup, stripes, and border desynchronization'
     Add-Check 'glitched buffer loading cues' (
         $activityText.Contains('drawGlitchedBufferSpinner') -and
         $activityText.Contains('bufferSpinner=true') -and
@@ -461,20 +496,51 @@ if (Test-Path $activity) {
     Add-Check 'Polar PMD ECG uses highest available settings' ($polarClientText.Contains('settings.sampleRates.maxOrNull()') -and $polarClientText.Contains('settings.resolutions.maxOrNull()') -and $polarClientText.Contains('strategy=highest_available_pmd_ecg_settings')) 'PMD ECG start command selects the highest advertised sample rate and resolution before falling back to H10 defaults'
     Add-Check 'condition ECG capture window markers' ($activityText.Contains('BRB_ECG_CAPTURE_START') -and $activityText.Contains('BRB_ECG_CAPTURE_END') -and $activityText.Contains('ecgCaptureDurationMs') -and $activityText.Contains('ecgCaptureDurationNs') -and $activityText.Contains('ecgCaptureStartedElapsedNs') -and $activityText.Contains('audioWindowStartMs=0') -and $activityText.Contains('audioWindowEndMs=${run.audioDurationMs}') -and $activityText.Contains('audioDurationMs')) 'raw ECG capture window is tied to each instruction-audio duration with exact nanosecond window metadata'
     Add-Check 'condition ECG anchor precedes MediaPlayer start' ([regex]::IsMatch($activityText, 'val conditionStartNs = SystemClock\.elapsedRealtimeNanos\(\)(?s:.*?)BRB_CONDITION_AUDIO_START_ANCHOR(?s:.*?)^\s*start\(\)', [System.Text.RegularExpressions.RegexOptions]::Multiline) -and $activityText.Contains('anchor=pre_media_player_start')) 'condition clock is anchored before MediaPlayer.start so no early audio samples are missed'
-    Add-Check 'warm heartbeat emission overlay' (
-        $activityText.Contains('WarmButtonEmissionOverlay') -and
-        $activityText.Contains('Brush.radialGradient') -and
-        $activityText.Contains('heatCore') -and
-        $activityText.Contains('heatAmber') -and
-        $activityText.Contains('heatRed') -and
+    $glowVariantAssetsPresent = $true
+    foreach ($level in 1..32) {
+        $variantPath = Join-Path $projectRoot ('app\src\main\assets\models\glow\BigRedButtonGlowLevel{0:D2}.glb' -f $level)
+        if (-not (Test-Path -LiteralPath $variantPath)) {
+            $glowVariantAssetsPresent = $false
+        }
+    }
+    Add-Check 'warm heartbeat GLB material variant swap' (
+        $glowVariantAssetsPresent -and
+        $activityText.Contains('createButtonGlowModelEntities') -and
+        $activityText.Contains('BUTTON_GLOW_MODEL_LEVEL_COUNT = 32') -and
+        $activityText.Contains('buttonGlowModelAssetUri') -and
+        $activityText.Contains('BUTTON_GLOW_MODEL_ASSET_PATTERN') -and
+        $activityText.Contains('surfaceGeometry=false') -and
+        $activityText.Contains('transparentHalo=false') -and
+        $activityText.Contains('pulseDurationMs=$HEARTBEAT_PULSE_DURATION_MS') -and
+        $activityText.Contains('pulseCurve=unity_ease_in_out_1_to_0') -and
+        $activityText.Contains('HEARTBEAT_PULSE_DURATION_MS = 320L') -and
+        $activityText.Contains('HEARTBEAT_PULSE_REFRACTORY_MS = 250L') -and
+        $activityText.Contains('SceneLight.createPointLight') -and
+        $activityText.Contains('UNITY_BUTTON_IDLE_RED') -and
+        $activityText.Contains('UNITY_BUTTON_BLINK_RED') -and
+        $activityText.Contains('UNITY_BUTTON_BLINK_EMISSION_RED') -and
+        $activityText.Contains('NATIVE_BUTTON_GLOW_PEAK_RED') -and
+        $activityText.Contains('NATIVE_BUTTON_GLOW_PEAK_EMISSION_RED') -and
+        $activityText.Contains('nativePeakTint=') -and
+        $activityText.Contains('nativePeakEmission=') -and
+        $activityText.Contains('BRB_BUTTON_GLOW_MODEL_VARIANTS_READY') -and
+        $activityText.Contains('HeartbeatPulseDriver') -and
+        $activityText.Contains('modelGlow=glb_material_variant_swap') -and
+        $activityText.Contains('actualGlowPath=glb_material_variant_swap') -and
+        $activityText.Contains('MODEL_GLOW_PANEL_FALLBACK_ENABLED = false') -and
         $activityText.Contains('buttonHeartbeatFlashState') -and
-        $activityText.Contains('BRB_HEARTBEAT_FLASH')
-    ) 'heartbeat flash renders as warm surface emission around the modeled button instead of a flat 2D halo'
+        $activityText.Contains('BRB_HEARTBEAT_FLASH') -and
+        -not $activityText.Contains('BRB_BUTTON_GLOW_SHELL_READY') -and
+        -not $activityText.Contains('modelGlow=cap_shell') -and
+        -not $activityText.Contains('AlphaMode.TRANSLUCENT') -and
+        -not $activityText.Contains('SpatialBlendMode.ADDITIVE')
+    ) 'heartbeat flash follows the MesmerPrism Unity material-tint/emission approach by swapping GLB material variants with brighter/emissive cap materials plus small native lights, with no transparent halo/canopy geometry'
     Add-Check 'dual hand and controller contact route' (
         $activityText.Contains('PRESS_SOURCE_HAND_CONTACT = "hand_contact"') -and
         $activityText.Contains('getHandForPointerEvent') -and
         $activityText.Contains('BRB_BUTTON_HAND_CONTACT_SELECT') -and
         $activityText.Contains('COLLIDER_HOVER_SIGNAL_ACTUATE') -and
+        $activityText.Contains('target=${contactTarget.spec.name}') -and
         $activityText.Contains('source=dual_controller_hand_contact') -and
         $activityText.Contains('condition_${condition}_hand_contact_press_count')
     ) 'button contact path accepts controller contact and records hand-tracked collider selects as a separate provenance source'
@@ -594,6 +660,14 @@ Add-Check 'physical evidence validator tests cover real Polar failures' (
     $physicalEvidenceValidatorTests.Contains('missing-low-latency-config')
 ) 'synthetic pass/fail tests reject missing, coarse, non-monotonic, or otherwise low-quality real Polar ECG evidence'
 Add-Check 'local preflight script' (Test-Path (Join-Path $projectRoot 'tools\run-local-preflight.ps1')) 'tools\run-local-preflight.ps1'
+$exportSchemaScript = Join-Path $projectRoot 'tools\validate-export-schema.ps1'
+Add-Check 'export schema validator covers ECG detector and external signal exports' (
+    (Test-Path $exportSchemaScript) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('requiredEcgDetectorColumns')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('requiredExternalSignalColumns')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('*_ecg_detector_events.csv')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('*_external_signal_samples.csv'))
+) 'synthetic and pulled export schema validation includes the new detector and optional external signal CSVs'
 $readinessReportScript = Join-Path $projectRoot 'tools\write-readiness-report.ps1'
 Add-Check 'readiness report script' (Test-Path $readinessReportScript) 'tools\write-readiness-report.ps1'
 if (Test-Path $readinessReportScript) {
@@ -772,7 +846,9 @@ if (Test-Path $keyeventValidationScript) {
         $keyeventValidationText.Contains('brb.keyeventValidation') -and
         $keyeventValidationText.Contains('ExperimentResults') -and
         $keyeventValidationText.Contains('expected-vs-observed.csv') -and
-        $keyeventValidationText.Contains('ecgTimeSeriesCsv')
+        $keyeventValidationText.Contains('ecgTimeSeriesCsv') -and
+        $keyeventValidationText.Contains('brb_first_study_keyevent_ecg_detector_events.csv') -and
+        $keyeventValidationText.Contains('brb_first_study_keyevent_external_signal_samples.csv')
     ) 'fast replay validates SideQuest-readable JSON/CSV data outputs'
     Add-Check 'Quest keyevent validation proves export mirror equality' (
         $keyeventValidationText.Contains('Compare-ExportMirror') -and
