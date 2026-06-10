@@ -1,6 +1,6 @@
 # Completion Audit
 
-Generated for the current native Quest MR app state on 2026-06-10 13:27.
+Generated for the current native Quest MR app state on 2026-06-10 13:37.
 
 This audit tracks the requested final state: a standalone no-Unity Meta Quest 3 mixed-reality Big Red Button experiment with passthrough, a reachable 3D button, real audio-timed conditions, questionnaire panels, local JSON/CSV exports, native Quest keyboard text entry, and validation evidence.
 
@@ -21,12 +21,12 @@ This audit tracks the requested final state: a standalone no-Unity Meta Quest 3 
 - Fast Quest directional/data validation: `artifacts/qkv/20260610-132449/quest-keyevent-questionnaire-validation-summary.json`.
 - Final hardware wrapper dry run: `artifacts/final-hardware-gates/20260610-130944/final-hardware-gates-summary.json`, with `preRunHandoff.status=pass` and `postRunAudit.status=pass`.
 - Final hardware post-run audit binding verifier: `artifacts/final-hardware-postrun-audit-validation/validation-20260610-132626/final-hardware-postrun-audit-validation.json`, status `pass`.
-- Fresh live Polar H10 PMD ECG smoke attempt: `artifacts/qpolar/20260610-115826/quest-polar-h10-live-smoke-summary.json`, status `fail`, current APK hash, no H10 detected.
+- Fresh live Polar H10 PMD ECG smoke attempt: `artifacts/qpolar/20260610-133603/quest-polar-h10-live-smoke-summary.json`, status `fail`, current APK hash, no H10 detected within 45 seconds.
 - Fresh controller-contact smoke attempt: `artifacts/qcs/20260610-114301/quest-controller-contact-smoke-summary.json`, status `fail`, current APK hash, no controller-contact press detected.
 - Full physical/live-H10 export attempt: `artifacts/qpv/20260610-115825/quest-physical-press-validation-summary.json`, status `fail`, current APK hash, with `polarPrecheckSummary` linked to `artifacts/qpolar/20260610-115826/quest-polar-h10-live-smoke-summary.json`.
-- Readiness report: `artifacts/readiness-report/report-20260610-132642/readiness-report.md`, status `ready_except_physical_and_live_polar_gates`.
-- Machine-readable goal audit: `artifacts/goal-completion-audit/20260610-132650/goal-completion-audit.json`, status `ready_except_physical_and_live_polar_gates`, `completionAllowed=false`, `readinessJson=artifacts/readiness-report/report-20260610-132642/readiness-report.json`, with proven software row `final_hardware_postrun_audit_chain`.
-- Final operator handoff: `artifacts/final-operator-handoff/handoff-20260610-132701/final-operator-handoff.json`, status `ready_for_operator_external_gates`, `readyForOperatorExternalGates=true`, `completionAllowed=false`, `adbDeviceReadyWhenRequested=true` for Quest 3S serial `3487C10J0P01ZY`.
+- Readiness report: `artifacts/readiness-report/report-20260610-133712/readiness-report.md`, status `ready_except_physical_and_live_polar_gates`.
+- Machine-readable goal audit: `artifacts/goal-completion-audit/20260610-133721/goal-completion-audit.json`, status `ready_except_physical_and_live_polar_gates`, `completionAllowed=false`, `readinessJson=artifacts/readiness-report/report-20260610-133712/readiness-report.json`, with proven software row `final_hardware_postrun_audit_chain`.
+- Final operator handoff: `artifacts/final-operator-handoff/handoff-20260610-133732/final-operator-handoff.json`, status `ready_for_operator_external_gates`, `readyForOperatorExternalGates=true`, `completionAllowed=false`, `adbDeviceReadyWhenRequested=true` for Quest 3S serial `3487C10J0P01ZY`.
 
 ## Proven By Current Evidence
 
@@ -56,16 +56,16 @@ This audit tracks the requested final state: a standalone no-Unity Meta Quest 3 
 | Simulated ECG blink/runtime flash path works | qkv reports simulated blink rows, runtime `BRB_ECG_BLINK`, runtime `BRB_HEARTBEAT_FLASH`, and expected simulated time-series row counts |
 | Final physical-gate tooling rejects automation and low-quality Polar evidence | `artifacts/ppe-tests/t-20260610-132618/physical-evidence-validator-test-summary.json` and static validation of `tools/validate-physical-press-evidence.ps1` |
 | Quest smoke script resists stale foreground OpenXR apps | `tools/run-quest-visual-layout-smoke.ps1` checks focused/resumed activities and relaunches once after force-stopping a non-Oculus foreground package |
-| Fresh H10/current-contact attempts are tied to the current APK | `artifacts/qpolar/20260610-115826/quest-polar-h10-live-smoke-summary.json` and `artifacts/qcs/20260610-114301/quest-controller-contact-smoke-summary.json` both record APK SHA-256 `55E3B082077BD55D939D1610E5FEC7AC56641B8FA62C201804AEE322CC951C2A` and expected failure without H10/operator |
+| Fresh H10/current-contact attempts are tied to the current APK | `artifacts/qpolar/20260610-133603/quest-polar-h10-live-smoke-summary.json` and `artifacts/qcs/20260610-114301/quest-controller-contact-smoke-summary.json` both record APK SHA-256 `55E3B082077BD55D939D1610E5FEC7AC56641B8FA62C201804AEE322CC951C2A` and expected failure without H10/operator |
 | Fresh full-physical attempt is tied to the current APK and preserves the failed precheck link | `artifacts/qpv/20260610-115825/quest-physical-press-validation-summary.json` records APK SHA-256 `55E3B082077BD55D939D1610E5FEC7AC56641B8FA62C201804AEE322CC951C2A`, `polarPrecheckSkipped=false`, and `polarPrecheckSummary=artifacts/qpolar/20260610-115826/quest-polar-h10-live-smoke-summary.json` |
 | Final hardware wrapper refreshes pre-run handoff and post-run readiness/audit | `artifacts/final-hardware-gates/20260610-130944/final-hardware-gates-summary.json` records `preRunHandoff.status=pass`, `postRunAudit.status=pass`, wrapper-generated readiness `report-20260610-130948`, and wrapper-generated goal audit `20260610-130949` |
 | Goal audit is bound to the wrapper-generated readiness report | `artifacts/goal-completion-audit/20260610-130949/goal-completion-audit.json` records `readinessJson=artifacts/readiness-report/report-20260610-130948/readiness-report.json` |
 | Post-run audit binding behavior is covered by synthetic tests | `artifacts/final-hardware-postrun-audit-tests/t-20260610-132625/final-hardware-postrun-audit-validator-test-summary.json` reports status `pass` |
 | Post-run audit binding is independently verified | `artifacts/final-hardware-postrun-audit-validation/validation-20260610-132626/final-hardware-postrun-audit-validation.json` reports status `pass` |
-| Goal audit contains the final hardware post-run audit chain as a software requirement | `artifacts/goal-completion-audit/20260610-132650/goal-completion-audit.json` includes proven row `final_hardware_postrun_audit_chain` backed by the validator behavioral test and binding verifier |
-| Final operator handoff confirms the current audit chain before hardware run | `artifacts/final-operator-handoff/handoff-20260610-132701/final-operator-handoff.json` reports `ready_for_operator_external_gates`, with APK hash/readiness/goal-audit binding true, ADB readiness true for Quest 3S serial `3487C10J0P01ZY`, and completion still false |
-| Current readiness report is honest about remaining gates | `artifacts/readiness-report/report-20260610-132642/readiness-report.md` reports `ready_except_physical_and_live_polar_gates` |
-| Machine-readable goal audit blocks premature completion | `artifacts/goal-completion-audit/20260610-132650/goal-completion-audit.json` reports `softwareRequirementsProven=true`, `externalHardwareRequirementsProven=false`, and `completionAllowed=false` |
+| Goal audit contains the final hardware post-run audit chain as a software requirement | `artifacts/goal-completion-audit/20260610-133721/goal-completion-audit.json` includes proven row `final_hardware_postrun_audit_chain` backed by the validator behavioral test and binding verifier |
+| Final operator handoff confirms the current audit chain before hardware run | `artifacts/final-operator-handoff/handoff-20260610-133732/final-operator-handoff.json` reports `ready_for_operator_external_gates`, with APK hash/readiness/goal-audit binding true, ADB readiness true for Quest 3S serial `3487C10J0P01ZY`, and completion still false |
+| Current readiness report is honest about remaining gates | `artifacts/readiness-report/report-20260610-133712/readiness-report.md` reports `ready_except_physical_and_live_polar_gates` |
+| Machine-readable goal audit blocks premature completion | `artifacts/goal-completion-audit/20260610-133721/goal-completion-audit.json` reports `softwareRequirementsProven=true`, `externalHardwareRequirementsProven=false`, and `completionAllowed=false` |
 
 ## Not Yet Proven
 
