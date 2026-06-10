@@ -39,6 +39,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Checkbox
+import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
@@ -69,7 +70,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
@@ -145,6 +148,7 @@ import java.util.Locale
 import java.util.UUID
 import kotlin.math.PI
 import kotlin.math.atan
+import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
@@ -154,9 +158,13 @@ import org.json.JSONObject
 
 private const val ECG_SAMPLE_RATE_HZ = 130
 private const val SIMULATED_ECG_FRAME_SAMPLES = 16
+private const val PRIOR_BUTTON_EXPERIENCE_QUESTION =
+    "Oh wait, we have just one more question: Do you have any experience with pressing big red buttons?"
+private const val PRE_BUTTON_EXPERIENCE_VALIDATION_DELAY_MS = 350L
 
 enum class StudyStage {
   ConsentDemographics,
+  PreButtonExperienceQuestion,
   ConditionRunning,
   Pictographic,
   PresenceQuestionnaire,
@@ -373,12 +381,17 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   val panelGlitchActiveState = mutableStateOf(false)
   val panelGlitchFrameState = mutableIntStateOf(0)
   val panelGlitchModeState = mutableStateOf("intro")
+  val panelGlitchStartElapsedMsState = mutableStateOf(0L)
+  val panelGlitchDurationMsState = mutableStateOf(0L)
+  val panelGlitchSeedState = mutableIntStateOf(0)
   val demographicsDraftNameState = mutableStateOf("")
   val demographicsDraftAgeState = mutableStateOf("")
   val demographicsDraftGenderState = mutableStateOf("")
   val demographicsDraftHandednessState = mutableStateOf("")
   val demographicsDraftSignatureState = mutableStateOf("")
   val demographicsDraftConsentState = mutableStateOf(false)
+  val priorBigRedButtonExperienceAnswerState = mutableStateOf("")
+  val priorBigRedButtonExperienceTimestampState = mutableStateOf("")
   val polarStatusState: MutableState<PolarStatusSnapshot> = mutableStateOf(PolarStatusSnapshot())
   val buttonHeartbeatFlashState = mutableStateOf(false)
   val buttonHeartbeatFlashFrameState = mutableIntStateOf(0)
@@ -566,7 +579,34 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         TAG,
         "BRB_STUDY_DEMOGRAPHICS_SAVED participantId=${demographicsState.value.participantId} participantIdSource=${if (participantIdOverride.isNullOrBlank()) "generated" else "validation_override"} consent=$consent",
     )
-    transitionQuestionnaireOutThenBeginCondition(1, PANEL_TRANSITION_BEFORE_CONDITION_1)
+    transitionQuestionnaireOutThenShowPreButtonExperienceQuestion()
+  }
+
+  fun setPriorBigRedButtonExperienceAnswer(answer: String, source: String = "participant") {
+    val normalized = answer.lowercase(Locale.US).trim()
+    if (normalized !in setOf("yes", "no")) {
+      return
+    }
+    priorBigRedButtonExperienceAnswerState.value = normalized
+    priorBigRedButtonExperienceTimestampState.value = nowIso()
+    Log.i(
+        TAG,
+        "BRB_PRIOR_BUTTON_EXPERIENCE_ANSWER answer=$normalized source=$source displayLocation=button_counter_panel",
+    )
+    playQuestionnaireChoiceCue()
+  }
+
+  fun startExperimentFromPriorButtonExperienceQuestion(): Boolean {
+    val answer = priorBigRedButtonExperienceAnswerState.value
+    if (answer !in setOf("yes", "no")) {
+      return false
+    }
+    Log.i(
+        TAG,
+        "BRB_PRIOR_BUTTON_EXPERIENCE_SAVED answer=$answer timestamp=${priorBigRedButtonExperienceTimestampState.value} shownBeforeCondition=1",
+    )
+    beginCondition(1)
+    return true
   }
 
   fun recordButtonPress(inputSource: String = PRESS_SOURCE_UNSPECIFIED) {
@@ -1038,6 +1078,27 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     )
   }
 
+  private fun maybeContinueValidationFromPreButtonExperienceQuestion() {
+    if (!hiddenValidationModeEnabled() && !fastControllerFlowEnabled && !keyeventValidationEnabled) {
+      return
+    }
+    mainHandler.postDelayed(
+        {
+          if (stageState.value != StudyStage.PreButtonExperienceQuestion) {
+            return@postDelayed
+          }
+          if (fastControllerFlowEnabled || keyeventValidationEnabled) {
+            replayControllerDirection("pre_button_experience", 1, "right")
+            replayControllerSubmit("pre_button_experience", 1)
+          } else {
+            setPriorBigRedButtonExperienceAnswer("yes", "validation_auto")
+            startExperimentFromPriorButtonExperienceQuestion()
+          }
+        },
+        PRE_BUTTON_EXPERIENCE_VALIDATION_DELAY_MS,
+    )
+  }
+
   private fun scheduleFastControllerConditionShortcut(run: ConditionRun) {
     if (!fastControllerFlowEnabled && !keyeventValidationEnabled) {
       return
@@ -1152,6 +1213,22 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   fun handleControllerDirection(direction: String): Boolean {
     val normalized = direction.lowercase(Locale.US)
     return when (stageState.value) {
+      StudyStage.PreButtonExperienceQuestion -> {
+        when (normalized) {
+          "left" -> setPriorBigRedButtonExperienceAnswer("no", "controller_direction_left")
+          "right" -> setPriorBigRedButtonExperienceAnswer("yes", "controller_direction_right")
+          "up", "down" -> {
+            val nextAnswer = if (priorBigRedButtonExperienceAnswerState.value == "yes") "no" else "yes"
+            setPriorBigRedButtonExperienceAnswer(nextAnswer, "controller_direction_$normalized")
+          }
+          else -> return false
+        }
+        Log.i(
+            TAG,
+            "BRB_CONTROLLER_DIRECTION stage=pre_button_experience direction=$normalized answer=${priorBigRedButtonExperienceAnswerState.value}",
+        )
+        true
+      }
       StudyStage.Pictographic -> {
         when (normalized) {
           "left" -> pictographicClosenessState.floatValue = (pictographicClosenessState.floatValue + 5f).coerceIn(0f, 100f)
@@ -1211,6 +1288,10 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
 
   fun submitCurrentControllerStage(): Boolean {
     return when (stageState.value) {
+      StudyStage.PreButtonExperienceQuestion -> {
+        playQuestionnaireNavigationCue()
+        startExperimentFromPriorButtonExperienceQuestion()
+      }
       StudyStage.Pictographic -> {
         playQuestionnaireNavigationCue()
         submitPictographic()
@@ -1774,6 +1855,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     root.put("sessionId", sessionId)
     root.put("exportedAtIso", nowIso())
     root.put("demographics", demographicsJson())
+    root.put("priorBigRedButtonExperience", priorBigRedButtonExperienceJson())
     root.put("ecgProtocol", ecgProtocolJson())
     root.put("conditionOrder", JSONArray(conditionRuns.map { it.conditionNumber }))
     root.put("conditions", JSONArray(conditionRuns.map { conditionJson(it) }))
@@ -1792,6 +1874,23 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         .put("signature", d.signature)
         .put("consent", d.consent)
         .put("consentTimestampIso", d.consentTimestampIso)
+  }
+
+  private fun priorBigRedButtonExperienceJson(): JSONObject {
+    val answer = priorBigRedButtonExperienceAnswerState.value
+    val hasExperience =
+        when (answer) {
+          "yes" -> true
+          "no" -> false
+          else -> JSONObject.NULL
+        }
+    return JSONObject()
+        .put("question", PRIOR_BUTTON_EXPERIENCE_QUESTION)
+        .put("answer", answer)
+        .put("hasExperience", hasExperience)
+        .put("timestampIso", priorBigRedButtonExperienceTimestampState.value)
+        .put("shownBeforeCondition", 1)
+        .put("displayLocation", "button_counter_panel")
   }
 
   private fun ecgProtocolJson(): JSONObject {
@@ -1985,6 +2084,9 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             "signature",
             "consent",
             "consent_timestamp_iso",
+            "prior_big_red_button_experience",
+            "prior_big_red_button_experience_bool",
+            "prior_big_red_button_experience_timestamp_iso",
             "ecg_assignment_order",
             "polar_h10_state",
             "polar_h10_detected",
@@ -2067,6 +2169,15 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     values["signature"] = d.signature
     values["consent"] = d.consent.toString()
     values["consent_timestamp_iso"] = d.consentTimestampIso
+    values["prior_big_red_button_experience"] = priorBigRedButtonExperienceAnswerState.value
+    values["prior_big_red_button_experience_bool"] =
+        when (priorBigRedButtonExperienceAnswerState.value) {
+          "yes" -> "true"
+          "no" -> "false"
+          else -> ""
+        }
+    values["prior_big_red_button_experience_timestamp_iso"] =
+        priorBigRedButtonExperienceTimestampState.value
     val polarStatus = polarStatusState.value
     values["ecg_assignment_order"] = ecgAssignmentOrder
     values["polar_h10_state"] = polarStatus.state
@@ -2330,6 +2441,38 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     }
   }
 
+  private fun transitionQuestionnaireOutThenShowPreButtonExperienceQuestion() {
+    hideSoftKeyboardForCurrentWindow(PANEL_TRANSITION_BEFORE_CONDITION_1)
+    scene.setViewOrigin(0f, 0f, 0f, 0f)
+    setQuestionnaireVisible(true)
+    playQuestionnaireOutroCue(PANEL_TRANSITION_BEFORE_CONDITION_1) {
+      setQuestionnaireVisible(false)
+      showPreButtonExperienceQuestion()
+    }
+  }
+
+  private fun showPreButtonExperienceQuestion() {
+    activeConditionState.intValue = 1
+    buttonPressCountState.intValue = 0
+    conditionElapsedTextState.value = "00:00"
+    stageState.value = StudyStage.PreButtonExperienceQuestion
+    scene.setViewOrigin(0f, 0f, 0f, 0f)
+    setPreButtonExperienceQuestionVisible(true)
+    Log.i(
+        TAG,
+        "BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN question=\"${PRIOR_BUTTON_EXPERIENCE_QUESTION}\" displayLocation=button_counter_panel buttonModelVisible=false condition=1 onlyOnce=true",
+    )
+    maybeContinueValidationFromPreButtonExperienceQuestion()
+  }
+
+  private fun setPreButtonExperienceQuestionVisible(visible: Boolean) {
+    buttonEntity?.setComponent(Visible(visible))
+    buttonModelEntity?.setComponent(Visible(false))
+    buttonContactEntity?.setComponent(InteractivityInput(false))
+    buttonVisualEntities.forEach { it.setComponent(Visible(false)) }
+    buttonSceneObjects.forEach { it.setIsVisible(false) }
+  }
+
   private fun logQuestionnairePanelLayout(trigger: String) {
     Log.i(
         TAG,
@@ -2507,11 +2650,26 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   }
 
   private fun startPanelGlitch(mode: String, trigger: String, token: Int, durationMs: Long) {
+    val seed = deterministicPanelGlitchSeed(mode, trigger, token)
     panelGlitchModeState.value = mode
+    panelGlitchStartElapsedMsState.value = SystemClock.elapsedRealtime()
+    panelGlitchDurationMsState.value = durationMs
+    panelGlitchSeedState.intValue = seed
     panelGlitchActiveState.value = true
     panelGlitchFrameState.intValue = 0
-    Log.i(TAG, "BRB_PANEL_GLITCH state=start mode=$mode trigger=$trigger durationMs=$durationMs")
+    Log.i(
+        TAG,
+        "BRB_PANEL_GLITCH state=start mode=$mode trigger=$trigger durationMs=$durationMs seed=$seed style=phased_system_failure comfortSafe=true bufferSpinner=true onlineOfflineCues=true",
+    )
     schedulePanelGlitchFrame(mode, trigger, token, SystemClock.elapsedRealtime() + durationMs)
+  }
+
+  private fun deterministicPanelGlitchSeed(mode: String, trigger: String, token: Int): Int {
+    var hash = 17
+    hash = 31 * hash + mode.hashCode()
+    hash = 31 * hash + trigger.hashCode()
+    hash = 31 * hash + token
+    return hash and Int.MAX_VALUE
   }
 
   private fun schedulePanelGlitchFrame(mode: String, trigger: String, token: Int, endRealtimeMs: Long) {
@@ -2873,7 +3031,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     private const val PANEL_TRANSITION_BEFORE_CONDITION_2 = "before_condition_2"
     private const val PANEL_TRANSITION_COMPLETE = "complete"
     private const val PANEL_TRANSITION_START_DELAY_MS = 350L
-    private const val PANEL_GLITCH_FRAME_MS = 85L
+    private const val PANEL_GLITCH_FRAME_MS = 70L
     private const val QUESTIONNAIRE_INTRO_FALLBACK_MS = 2400L
     private const val QUESTIONNAIRE_OUTRO_FALLBACK_MS = 1800L
     private const val PANEL_SMOKE_PICTOGRAPHIC_DELAY_MS = 8000L
@@ -2943,23 +3101,180 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
 @Composable
 fun ButtonStimulusPanel(activity: BigRedButtonStudyActivity) {
   val pressCount by activity.buttonPressCountState
+  val stage by activity.stageState
   val heartbeatFlash by activity.buttonHeartbeatFlashState
   val heartbeatFlashFrame by activity.buttonHeartbeatFlashFrameState
-  Box(
-      modifier =
-          Modifier.fillMaxSize()
-              .background(Color.Transparent)
-              .clickable(
-                  interactionSource = remember { MutableInteractionSource() },
-                  indication = null,
-              ) {
-                SpatialActivityManager.executeOnVrActivity<BigRedButtonStudyActivity> {
-                  it.recordInterimPanelPress()
-                }
+  val interimPressInteractionSource = remember { MutableInteractionSource() }
+  val panelModifier =
+      if (stage == StudyStage.ConditionRunning) {
+        Modifier.fillMaxSize()
+            .background(Color.Transparent)
+            .clickable(
+                interactionSource = interimPressInteractionSource,
+                indication = null,
+            ) {
+              SpatialActivityManager.executeOnVrActivity<BigRedButtonStudyActivity> {
+                it.recordInterimPanelPress()
               }
+            }
+      } else {
+        Modifier.fillMaxSize().background(Color.Transparent)
+      }
+  Box(
+      modifier = panelModifier
   ) {
-    WarmButtonEmissionOverlay(active = heartbeatFlash, frame = heartbeatFlashFrame)
-    DigitalPressCounter(pressCount, modifier = Modifier.align(Alignment.TopCenter).padding(top = 10.dp))
+    if (stage == StudyStage.PreButtonExperienceQuestion) {
+      PriorBigRedButtonExperiencePrompt(
+          activity = activity,
+          modifier = Modifier.align(Alignment.TopCenter).padding(top = 6.dp, start = 12.dp, end = 12.dp),
+      )
+    } else {
+      WarmButtonEmissionOverlay(active = heartbeatFlash, frame = heartbeatFlashFrame)
+      DigitalPressCounter(pressCount, modifier = Modifier.align(Alignment.TopCenter).padding(top = 10.dp))
+    }
+  }
+}
+
+@Composable
+private fun PriorBigRedButtonExperiencePrompt(
+    activity: BigRedButtonStudyActivity,
+    modifier: Modifier = Modifier,
+) {
+  val answer by activity.priorBigRedButtonExperienceAnswerState
+  val feedback =
+      when (answer) {
+        "no" -> "No? Well than you are in for a treat!"
+        "yes" -> "An experienced user, just the type of participant we need."
+        else -> ""
+      }
+  Column(
+      modifier =
+          modifier
+              .width(480.dp)
+              .background(Color.Transparent)
+              .padding(horizontal = 8.dp, vertical = 4.dp),
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.spacedBy(10.dp),
+  ) {
+    Text(
+        PRIOR_BUTTON_EXPERIENCE_QUESTION,
+        color = Color.White,
+        fontSize = 20.sp,
+        lineHeight = 24.sp,
+        fontWeight = FontWeight.Black,
+        fontFamily = BrbSerif,
+        textAlign = TextAlign.Center,
+        style =
+            TextStyle(
+                shadow =
+                    Shadow(
+                        color = Color.Black.copy(alpha = 0.95f),
+                        offset = Offset(0f, 2f),
+                        blurRadius = 10f,
+                    ),
+            ),
+    )
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+      PriorExperienceCheckbox(
+          label = "Yes",
+          checked = answer == "yes",
+          modifier = Modifier.weight(1f),
+      ) {
+        SpatialActivityManager.executeOnVrActivity<BigRedButtonStudyActivity> {
+          it.setPriorBigRedButtonExperienceAnswer("yes", "xr_checkbox")
+        }
+      }
+      PriorExperienceCheckbox(
+          label = "No",
+          checked = answer == "no",
+          modifier = Modifier.weight(1f),
+      ) {
+        SpatialActivityManager.executeOnVrActivity<BigRedButtonStudyActivity> {
+          it.setPriorBigRedButtonExperienceAnswer("no", "xr_checkbox")
+        }
+      }
+    }
+    Text(
+        text = feedback.ifBlank { " " },
+        color = if (feedback.isBlank()) Color.Transparent else CounterDigitRed,
+        fontSize = 16.sp,
+        lineHeight = 20.sp,
+        fontWeight = FontWeight.Bold,
+        fontFamily = BrbSans,
+        textAlign = TextAlign.Center,
+        minLines = 2,
+        style =
+            TextStyle(
+                shadow =
+                    Shadow(
+                        color = CounterDigitRed.copy(alpha = if (feedback.isBlank()) 0f else 0.86f),
+                        offset = Offset.Zero,
+                        blurRadius = 12f,
+                    ),
+            ),
+    )
+    PrimaryActionButton(
+        text = "Start experiment",
+        enabled = answer in setOf("yes", "no"),
+        height = 46.dp,
+    ) {
+      SpatialActivityManager.executeOnVrActivity<BigRedButtonStudyActivity> {
+        it.startExperimentFromPriorButtonExperienceQuestion()
+      }
+    }
+  }
+}
+
+@Composable
+private fun PriorExperienceCheckbox(
+    label: String,
+    checked: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+  Row(
+      modifier =
+          modifier
+              .clip(RoundedCornerShape(7.dp))
+              .background(Color.Transparent)
+              .border(1.dp, if (checked) CounterDigitRed else Color.White.copy(alpha = 0.72f), RoundedCornerShape(7.dp))
+              .clickable { onClick() }
+              .padding(horizontal = 9.dp, vertical = 5.dp),
+      horizontalArrangement = Arrangement.Center,
+      verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Checkbox(
+        checked = checked,
+        onCheckedChange = { onClick() },
+        colors =
+            CheckboxDefaults.colors(
+                checkedColor = CounterDigitRed,
+                uncheckedColor = Color.White,
+                checkmarkColor = Color.White,
+            ),
+        modifier = Modifier.size(34.dp),
+    )
+    Spacer(modifier = Modifier.width(6.dp))
+    Text(
+        label,
+        color = Color.White,
+        fontSize = 17.sp,
+        fontWeight = FontWeight.Black,
+        fontFamily = BrbMono,
+        style =
+            TextStyle(
+                shadow =
+                    Shadow(
+                        color = Color.Black.copy(alpha = 0.92f),
+                        offset = Offset(0f, 2f),
+                        blurRadius = 8f,
+                    ),
+            ),
+    )
   }
 }
 
@@ -3107,6 +3422,10 @@ fun StudyPanel(activity: BigRedButtonStudyActivity) {
   val glitchActive by activity.panelGlitchActiveState
   val glitchFrame by activity.panelGlitchFrameState
   val glitchMode by activity.panelGlitchModeState
+  val glitchStartElapsedMs by activity.panelGlitchStartElapsedMsState
+  val glitchDurationMs by activity.panelGlitchDurationMsState
+  val glitchSeed by activity.panelGlitchSeedState
+  val glitchProgress = panelGlitchProgress(glitchActive, glitchStartElapsedMs, glitchDurationMs)
   MaterialTheme(
       colors =
           lightColors(
@@ -3143,15 +3462,35 @@ fun StudyPanel(activity: BigRedButtonStudyActivity) {
                 .border(1.dp, BrbLine, RoundedCornerShape(18.dp))
                 .padding(18.dp),
     ) {
-      when (stage) {
-        StudyStage.ConsentDemographics -> ConsentDemographicsScreen(activity)
-        StudyStage.ConditionRunning -> WaitingScreen()
-        StudyStage.Pictographic -> PictographicScreen(activity)
-        StudyStage.PresenceQuestionnaire -> PresenceQuestionnaireScreen(activity)
-        StudyStage.LostOpportunity -> LostOpportunityScreen(activity)
-        StudyStage.Complete -> CompleteScreen(activity)
+      Box(
+          modifier =
+              Modifier.fillMaxSize()
+                  .graphicsLayer {
+                    if (glitchActive) {
+                      translationX = panelGlitchContentJitter(frame = glitchFrame, mode = glitchMode, progress = glitchProgress, seed = glitchSeed, axisSalt = 17)
+                      translationY = panelGlitchContentJitter(frame = glitchFrame, mode = glitchMode, progress = glitchProgress, seed = glitchSeed, axisSalt = 43) * 0.45f
+                      scaleX = 1f + panelGlitchEnvelope(glitchProgress, glitchMode) * 0.004f
+                      scaleY = 1f - panelGlitchEnvelope(glitchProgress, glitchMode) * 0.003f
+                    }
+                  },
+      ) {
+        when (stage) {
+          StudyStage.ConsentDemographics -> ConsentDemographicsScreen(activity)
+          StudyStage.PreButtonExperienceQuestion -> WaitingScreen()
+          StudyStage.ConditionRunning -> WaitingScreen()
+          StudyStage.Pictographic -> PictographicScreen(activity)
+          StudyStage.PresenceQuestionnaire -> PresenceQuestionnaireScreen(activity)
+          StudyStage.LostOpportunity -> LostOpportunityScreen(activity)
+          StudyStage.Complete -> CompleteScreen(activity)
+        }
       }
-      BlueFailureGlitchOverlay(active = glitchActive, frame = glitchFrame, mode = glitchMode)
+      BlueFailureGlitchOverlay(
+          active = glitchActive,
+          frame = glitchFrame,
+          mode = glitchMode,
+          progress = glitchProgress,
+          seed = glitchSeed,
+      )
     }
   }
 }

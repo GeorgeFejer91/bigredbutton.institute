@@ -282,12 +282,34 @@ if (Test-Path $activity) {
     Add-Check 'Quest panel smoke validation extra' ($activityText.Contains('PANEL_SMOKE_EXTRA = "brb.panelSmoke"') -and $activityText.Contains('BRB_PANEL_SMOKE_PICTOGRAPHIC_READY')) 'brb.panelSmoke launch extra'
     Add-Check 'fast controller flow validation extra' ($activityText.Contains('FAST_CONTROLLER_FLOW_EXTRA = "brb.fastControllerFlow"') -and $activityText.Contains('BRB_FAST_CONTROLLER_FLOW_COMPLETE')) 'brb.fastControllerFlow launch extra'
     Add-Check 'keyevent questionnaire validation extra' ($activityText.Contains('KEYEVENT_VALIDATION_EXTRA = "brb.keyeventValidation"') -and $activityText.Contains('keyeventValidationEnabled')) 'brb.keyeventValidation launch extra'
+    Add-Check 'prior button experience XR prompt before block 1' (
+        $activityText.Contains('PreButtonExperienceQuestion') -and
+        $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_QUESTION') -and
+        $activityText.Contains('Do you have any experience with pressing big red buttons?') -and
+        $activityText.Contains('PriorBigRedButtonExperiencePrompt') -and
+        $activityText.Contains('PriorExperienceCheckbox') -and
+        $activityText.Contains('displayLocation=button_counter_panel') -and
+        $activityText.Contains('buttonModelVisible=false condition=1 onlyOnce=true') -and
+        $activityText.Contains('setPreButtonExperienceQuestionVisible(true)') -and
+        $activityText.Contains('buttonModelEntity?.setComponent(Visible(false))') -and
+        $activityText.Contains('buttonContactEntity?.setComponent(InteractivityInput(false))') -and
+        $activityText.Contains('startExperimentFromPriorButtonExperienceQuestion') -and
+        $activityText.Contains('beginCondition(1)')
+    ) 'after demographics, the transparent counter panel asks the one-time yes/no prior button-press experience question while the 3D model/collider remain hidden'
     Add-Check 'Quest panel smoke does not start audio' ($activityText.Contains('noAudio=true noExport=true') -and -not $activityText.Contains('beginCondition(1, panelSmoke')) 'panel smoke only shows panels/glitch transitions'
     Add-Check 'Quest autorun completion marker' ($activityText.Contains('BRB_VALIDATION_AUTORUN_COMPLETE')) 'BRB_VALIDATION_AUTORUN_COMPLETE'
     Add-Check 'Quest physical press completion marker' ($activityText.Contains('BRB_PHYSICAL_VALIDATION_COMPLETE')) 'BRB_PHYSICAL_VALIDATION_COMPLETE'
     Add-Check 'JSON export directory' ($activityText.Contains('BigRedButtonFirstStudyExports')) 'BigRedButtonFirstStudyExports'
     Add-Check 'SideQuest experiment results directory' ($activityText.Contains('EXPERIMENT_RESULTS_DIR_NAME = "ExperimentResults"') -and $activityText.Contains('BRB_EXPERIMENT_RESULTS_FOLDER')) 'app external files/ExperimentResults mirror export'
     Add-Check 'summary CSV button variable' ($activityText.Contains('button_press_count') -and $activityText.Contains('condition_${condition}_hand_contact_press_count')) 'condition_N_button_press_count plus source-specific hand_contact count'
+    Add-Check 'prior button experience logged variable' (
+        $activityText.Contains('priorBigRedButtonExperienceJson') -and
+        $activityText.Contains('priorBigRedButtonExperience') -and
+        $activityText.Contains('prior_big_red_button_experience') -and
+        $activityText.Contains('prior_big_red_button_experience_bool') -and
+        $activityText.Contains('prior_big_red_button_experience_timestamp_iso') -and
+        $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_SAVED')
+    ) 'prior yes/no big-red-button experience response is written to JSON and summary CSV with timestamp'
     Add-Check 'summary CSV ECG variables' ($activityText.Contains('ecg_assignment_order') -and $activityText.Contains('condition_${condition}_ecg_source') -and $activityText.Contains('condition_${condition}_ecg_blink_count') -and $activityText.Contains('condition_${condition}_ecg_timeseries_sample_count') -and $activityText.Contains('condition_${condition}_ecg_capture_duration_ns') -and $activityText.Contains('condition_${condition}_ecg_audio_window_end_ms')) 'counterbalanced ECG source, blink count, raw time-series count, and exact audio-window columns'
     Add-Check 'ECG blink events CSV export' ($activityText.Contains('_ecg_blink_events.csv') -and $activityText.Contains('ecgBlinkEventsCsvText') -and $activityText.Contains('ecgBlinkEventsCsv')) 'SideQuest-readable ECG blink event CSV'
     Add-Check 'ECG raw time-series CSV export' ($activityText.Contains('_ecg_timeseries.csv') -and $activityText.Contains('ecgTimeSeriesCsvText') -and $activityText.Contains('ecgTimeSeriesCsv') -and $activityText.Contains('"elapsed_ns"') -and $activityText.Contains('"audio_window_duration_ms"')) 'SideQuest-readable raw 130 Hz ECG time-series CSV with nanosecond elapsed and audio-window fields'
@@ -375,6 +397,16 @@ if (Test-Path $activity) {
     Add-Check 'blue failure glitch overlay' ($activityText.Contains('BlueFailureGlitchOverlay') -and $activityText.Contains('BRB_PANEL_GLITCH') -and $activityText.Contains('Color(0xFF012B7F)')) 'blue software-failure style flicker overlay'
     Add-Check 'seizing BSOD glitch treatment' ($activityText.Contains('seizurePulse') -and $activityText.Contains('Color(0xFF00F0FF)') -and $activityText.Contains('tearHeight') -and $activityText.Contains('for (i in 0 until 34)')) 'intro/outro overlay uses aggressive flicker, blocks, stripes, and tears'
     Add-Check 'digital press counter above button' ($activityText.Contains('DigitalPressCounter') -and $activityText.Contains('displayValue') -and $activityText.Contains('PRESSES') -and $activityText.Contains('buttonPressCountState')) 'old digital display counter increments from accepted presses'
+    Add-Check 'prior button experience prompt uses transparent counter panel' (
+        $activityText.Contains('ButtonStimulusPanel') -and
+        $activityText.Contains('stage == StudyStage.PreButtonExperienceQuestion') -and
+        $activityText.Contains('PriorBigRedButtonExperiencePrompt') -and
+        $activityText.Contains('background(Color.Transparent)') -and
+        $activityText.Contains('No? Well than you are in for a treat!') -and
+        $activityText.Contains('An experienced user, just the type of participant we need.') -and
+        $activityText.Contains('PrimaryActionButton(') -and
+        $activityText.Contains('Start experiment')
+    ) 'counter location can temporarily show the clear-background XR prompt before returning to the red press counter'
     Add-Check 'digital press counter red transparent passthrough styling' (
         $activityText.Contains('CounterDigitRed') -and
         $activityText.Contains('Color(0xFFFF2424)') -and
@@ -734,6 +766,14 @@ if (Test-Path $keyeventValidationScript) {
         $keyeventValidationText.Contains('enter submit replay observed') -and
         $keyeventValidationText.Contains('controller submit replay observed')
     ) 'fast replay now fails without field-specific native keyboard mode, retarget, panel-exit hide, and enter-submit markers'
+    Add-Check 'Quest keyevent validation proves prior button experience prompt' (
+        $keyeventValidationText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN') -and
+        $keyeventValidationText.Contains('prior big-red-button experience JSON answer') -and
+        $keyeventValidationText.Contains('prior big-red-button experience summary answer') -and
+        $keyeventValidationText.Contains('prior big-red-button experience prompt shown once') -and
+        $keyeventValidationText.Contains('prior big-red-button experience not repeated in condition 2') -and
+        $keyeventValidationText.Contains('BRB_CONTROLLER_SUBMIT_REPLAY condition=1 stage=pre_button_experience submitted=true')
+    ) 'fast replay now selects the new one-time XR prior-experience question, starts condition 1, and checks JSON/CSV/log evidence'
     Add-Check 'Quest keyevent validation proves redness conversion export' (
         $keyeventValidationText.Contains('condition 1 redness VAS') -and
         $keyeventValidationText.Contains('condition 1 redness Likert') -and
@@ -931,6 +971,15 @@ if (Test-Path $layoutPreviewScript) {
     Add-Check 'layout preview shows website intake aesthetic' ($layoutPreviewText.Contains('BIG RED BUTTON INSTITUTE | INTAKE') -and $layoutPreviewText.Contains('Participant details')) 'preview mirrors intake page styling'
     Add-Check 'layout preview shows Polar validity panel' ($layoutPreviewText.Contains('Polar H10 ECG ready') -and $layoutPreviewText.Contains('ECG 520 samples @ 130 Hz')) 'preview includes first-menu PMD ECG-ready status strip'
     Add-Check 'layout preview shows digital press counter' ($layoutPreviewText.Contains("'012'") -and $layoutPreviewText.Contains("'PRESSES'")) 'button preview includes old digital counter above model'
+    Add-Check 'layout preview shows prior button experience prompt' (
+        $layoutPreviewText.Contains('Draw-PreButtonExperiencePromptPreview') -and
+        $layoutPreviewText.Contains('pre-button-experience-prompt-preview.png') -and
+        $layoutPreviewText.Contains('Do you have any experience with') -and
+        $layoutPreviewText.Contains('pressing big red buttons?') -and
+        $layoutPreviewText.Contains('clear passthrough counter panel; 3D button hidden until Start experiment') -and
+        $layoutPreviewText.Contains('An experienced user, just the type') -and
+        $layoutPreviewText.Contains('of participant we need.')
+    ) 'preview documents the one-time transparent XR prompt displayed where the counter will be'
     Add-Check 'layout preview shows transparent red counter' (
         $layoutPreviewText.Contains('transparent counter overlay; no filled backing panel') -and
         $layoutPreviewText.Contains('Brush 255 43 43') -and

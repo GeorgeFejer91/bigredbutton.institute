@@ -18,6 +18,9 @@ $requiredSummaryColumns = @(
     'signature',
     'consent',
     'consent_timestamp_iso',
+    'prior_big_red_button_experience',
+    'prior_big_red_button_experience_bool',
+    'prior_big_red_button_experience_timestamp_iso',
     'ecg_assignment_order',
     'polar_h10_state',
     'polar_h10_detected',
@@ -340,6 +343,14 @@ function New-SyntheticExport {
             consent = $true
             consentTimestampIso = '2026-06-09T11:59:00Z'
         }
+        priorBigRedButtonExperience = [ordered]@{
+            question = 'Oh wait, we have just one more question: Do you have any experience with pressing big red buttons?'
+            answer = 'yes'
+            hasExperience = $true
+            timestampIso = '2026-06-09T11:59:30Z'
+            shownBeforeCondition = 1
+            displayLocation = 'button_counter_panel'
+        }
         ecgProtocol = [ordered]@{
             schema = 'bigredbutton.ecg_counterbalanced.v1'
             assignmentOrder = 'simulated_then_real'
@@ -449,6 +460,12 @@ Assert-Condition ($exportJson.schema -eq 'bigredbutton.first_study.v1') 'JSON sc
 Assert-Condition ($exportJson.appPackage -eq 'org.bigredbutton.firststudy') 'JSON package mismatch'
 Assert-Condition ($exportJson.demographics.participantId.Length -gt 0) 'Missing demographics.participantId'
 Assert-Condition ($exportJson.demographics.signature -match 'brb_signature_strokes_v1') 'Signature must use stroke JSON format'
+Assert-Condition ($null -ne $exportJson.priorBigRedButtonExperience) 'Missing priorBigRedButtonExperience'
+Assert-Condition ($exportJson.priorBigRedButtonExperience.answer -in @('yes', 'no')) 'Invalid priorBigRedButtonExperience.answer'
+Assert-Condition ($null -ne $exportJson.priorBigRedButtonExperience.hasExperience) 'Missing priorBigRedButtonExperience.hasExperience'
+Assert-Condition ($exportJson.priorBigRedButtonExperience.shownBeforeCondition -eq 1) 'priorBigRedButtonExperience must be shown before condition 1'
+Assert-Condition ($exportJson.priorBigRedButtonExperience.displayLocation -eq 'button_counter_panel') 'priorBigRedButtonExperience display location mismatch'
+Assert-Condition ($exportJson.priorBigRedButtonExperience.question -match 'experience with pressing big red buttons') 'priorBigRedButtonExperience question text mismatch'
 Assert-Condition ($null -ne $exportJson.ecgProtocol) 'Missing ecgProtocol'
 Assert-Condition ($exportJson.ecgProtocol.schema -eq 'bigredbutton.ecg_counterbalanced.v1') 'ECG protocol schema mismatch'
 Assert-Condition ($exportJson.ecgProtocol.assignmentOrder -in @('real_then_simulated', 'simulated_then_real')) 'Invalid ECG assignment order'

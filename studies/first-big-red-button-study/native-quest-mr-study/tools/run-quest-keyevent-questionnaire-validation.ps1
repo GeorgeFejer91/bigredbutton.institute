@@ -260,6 +260,11 @@ try {
     }
 
     Wait-LogPattern 'BRB_SOFT_KEYBOARD_REQUEST reason=field_name keyboardMode=text' 'startup native text keyboard request'
+    Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN' 'prior big-red-button experience prompt'
+    Wait-LogPattern 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pre_button_experience direction=right' 'prior big-red-button experience right-select replay'
+    Wait-LogPattern 'BRB_CONTROLLER_SUBMIT_REPLAY condition=1 stage=pre_button_experience submitted=true' 'prior big-red-button experience enter-submit replay'
+    Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_SAVED answer=yes' 'prior big-red-button experience save'
+    Wait-LogPattern 'BRB_CONDITION_START condition=1' 'condition 1 start after prior-experience prompt'
     Wait-LogPattern 'BRB_CONDITION_END condition=1' 'condition 1 shortcut end'
     Wait-LogPattern 'BRB_QUESTIONNAIRE_INTRO_CUE trigger=post_condition_1' 'condition 1 questionnaire intro'
 
@@ -334,6 +339,11 @@ try {
         ($exportJson.ecgProtocol.assignmentOrder -eq 'real_then_simulated' -and $c1.ecgSource -eq 'real_polar_h10' -and $c2.ecgSource -eq 'simulated_neurokit2') -or
         ($exportJson.ecgProtocol.assignmentOrder -eq 'simulated_then_real' -and $c1.ecgSource -eq 'simulated_neurokit2' -and $c2.ecgSource -eq 'real_polar_h10')
     $row = @($summaryCsv)[0]
+    $uniquePriorExperiencePromptLines = @(
+        $logText -split "`r?`n" |
+            Where-Object { $_ -match 'BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN' } |
+            Sort-Object -Unique
+    )
     $comparisons = New-Object System.Collections.Generic.List[object]
 
     Add-Comparison $comparisons 'participant id generated under hood' 'KEYEVENT_VALIDATION_' ($exportJson.demographics.participantId.Substring(0, [Math]::Min(20, $exportJson.demographics.participantId.Length))) 'JSON demographics.participantId'
@@ -342,6 +352,16 @@ try {
     Add-Comparison $comparisons 'gender four-choice exported' 'prefer_not_to_say' $exportJson.demographics.gender 'JSON demographics.gender'
     Add-Comparison $comparisons 'handedness tri-choice exported' 'right' $exportJson.demographics.handedness 'JSON demographics.handedness'
     Add-Comparison $comparisons 'signature stroke format exported' $true ($exportJson.demographics.signature -match 'brb_signature_strokes_v1') 'JSON demographics.signature'
+    Add-Comparison $comparisons 'prior big-red-button experience JSON answer' 'yes' $exportJson.priorBigRedButtonExperience.answer 'JSON priorBigRedButtonExperience.answer'
+    Add-Comparison $comparisons 'prior big-red-button experience JSON boolean' $true $exportJson.priorBigRedButtonExperience.hasExperience 'JSON priorBigRedButtonExperience.hasExperience'
+    Add-Comparison $comparisons 'prior big-red-button experience JSON location' 'button_counter_panel' $exportJson.priorBigRedButtonExperience.displayLocation 'JSON priorBigRedButtonExperience.displayLocation'
+    Add-Comparison $comparisons 'prior big-red-button experience shown before condition' 1 $exportJson.priorBigRedButtonExperience.shownBeforeCondition 'JSON priorBigRedButtonExperience.shownBeforeCondition'
+    Add-Comparison $comparisons 'prior big-red-button experience summary answer' 'yes' $row.prior_big_red_button_experience 'summary CSV'
+    Add-Comparison $comparisons 'prior big-red-button experience summary boolean' 'true' $row.prior_big_red_button_experience_bool 'summary CSV'
+    Add-Comparison $comparisons 'prior big-red-button experience summary timestamp present' $true (-not [string]::IsNullOrWhiteSpace($row.prior_big_red_button_experience_timestamp_iso)) 'summary CSV'
+    Add-Comparison $comparisons 'prior big-red-button experience prompt shown once' 1 $uniquePriorExperiencePromptLines.Count 'unique logcat lines'
+    Add-Comparison $comparisons 'prior big-red-button experience not repeated in condition 2' $false ($logText -match 'BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN .*condition=2') 'logcat'
+    Add-Comparison $comparisons 'prior big-red-button experience controller replay observed' $true ($logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pre_button_experience direction=right' -and $logText -match 'BRB_CONTROLLER_DIRECTION stage=pre_button_experience direction=right answer=yes' -and $logText -match 'BRB_CONTROLLER_SUBMIT_REPLAY condition=1 stage=pre_button_experience submitted=true') 'logcat'
 
     Add-Comparison $comparisons 'condition 1 emulated button count' 2 $c1.buttonPressCount 'JSON condition 1 buttonPressCount'
     Add-Comparison $comparisons 'condition 2 emulated button count' 2 $c2.buttonPressCount 'JSON condition 2 buttonPressCount'
@@ -406,7 +426,7 @@ try {
     Add-Comparison $comparisons 'panel-exit keyboard hide before condition 1 observed' $true ($logText -match 'BRB_SOFT_KEYBOARD_HIDE reason=before_condition_1') 'logcat'
     Add-Comparison $comparisons 'panel-exit keyboard hide before condition 2 observed' $true ($logText -match 'BRB_SOFT_KEYBOARD_HIDE reason=before_condition_2') 'logcat'
     Add-Comparison $comparisons 'directional replay observed' $true ($logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pictographic direction=left') 'logcat'
-    Add-Comparison $comparisons 'enter submit replay observed' $true ($logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pictographic direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=presence_questionnaire direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=lost_opportunity direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=2 stage=pictographic direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=2 stage=presence_questionnaire direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=2 stage=lost_opportunity direction=enter') 'logcat'
+    Add-Comparison $comparisons 'enter submit replay observed' $true ($logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pre_button_experience direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pictographic direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=presence_questionnaire direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=lost_opportunity direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=2 stage=pictographic direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=2 stage=presence_questionnaire direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=2 stage=lost_opportunity direction=enter') 'logcat'
     Add-Comparison $comparisons 'controller submit replay observed' $true ($logText -match 'BRB_CONTROLLER_SUBMIT_REPLAY condition=1 stage=pictographic submitted=true' -and $logText -match 'BRB_CONTROLLER_SUBMIT_REPLAY condition=2 stage=lost_opportunity submitted=true') 'logcat'
     Add-Comparison $comparisons 'intro glitch observed' $true ($logText -match 'BRB_PANEL_GLITCH state=start mode=intro') 'logcat'
     Add-Comparison $comparisons 'outro glitch observed' $true ($logText -match 'BRB_PANEL_GLITCH state=start mode=outro') 'logcat'

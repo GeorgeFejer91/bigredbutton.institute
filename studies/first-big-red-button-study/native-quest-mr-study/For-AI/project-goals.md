@@ -19,15 +19,16 @@ One button/audio condition should be driven by actual Polar H10 RR events plus r
 ## Participant Flow
 
 1. Consent and demographics.
-2. Condition 1: Big Red Button shown in front of the participant in passthrough/MR while `first-big-red-button-vr-study-instructions-final.mp3` plays; controller-based physical pressing is active for the full track.
-3. Post-condition 1 button experience task, stored as the pictographic closeness/presence/redness measure. Redness starts as VAS, then converts to seven Likert boxes after the first VAS selection.
-4. Post-condition 1 neutral session experience ratings, stored as adapted presence questionnaire responses.
-5. Post-condition 1 neutral additional time rating, stored as the Lost Opportunity visual analog scale.
-6. Condition 2: Big Red Button shown in front of the participant in passthrough/MR while `first-big-red-button-vr-study-instructions-second-instructions-5-final.mp3` plays; controller-based physical pressing is active for the full track.
-7. Post-condition 2 button experience task. Redness starts as seven Likert boxes, then converts to VAS after the first Likert selection.
-8. Post-condition 2 neutral session experience ratings.
-9. Post-condition 2 neutral additional time rating.
-10. Local JSON, summary CSV, press-event CSV, ECG blink-event CSV, raw ECG time-series CSV, and session index export.
+2. One-time transparent XR prior-experience prompt in the button/counter location: keep the 3D Big Red Button model and contact collider hidden, ask whether the participant has experience pressing big red buttons, store Yes/No plus timestamp, show humorous feedback, then allow `Start experiment`. This prompt occurs only before condition 1 and never before condition 2.
+3. Condition 1: Big Red Button shown in front of the participant in passthrough/MR while `first-big-red-button-vr-study-instructions-final.mp3` plays; controller-based physical pressing is active for the full track.
+4. Post-condition 1 button experience task, stored as the pictographic closeness/presence/redness measure. Redness starts as VAS, then converts to seven Likert boxes after the first VAS selection.
+5. Post-condition 1 neutral session experience ratings, stored as adapted presence questionnaire responses.
+6. Post-condition 1 neutral additional time rating, stored as the Lost Opportunity visual analog scale.
+7. Condition 2: Big Red Button shown in front of the participant in passthrough/MR while `first-big-red-button-vr-study-instructions-second-instructions-5-final.mp3` plays; controller-based physical pressing is active for the full track.
+8. Post-condition 2 button experience task. Redness starts as seven Likert boxes, then converts to VAS after the first Likert selection.
+9. Post-condition 2 neutral session experience ratings.
+10. Post-condition 2 neutral additional time rating.
+11. Local JSON, summary CSV, press-event CSV, ECG blink-event CSV, raw ECG time-series CSV, and session index export.
 
 ## Required Variables
 
@@ -38,6 +39,7 @@ One button/audio condition should be driven by actual Polar H10 RR events plus r
 - handedness
 - consent flag
 - consent signature field
+- prior Big Red Button pressing experience answer (`yes`/`no`), boolean, timestamp, and display location metadata
 - condition 1 and 2 button press counts
 - condition 1 and 2 ECG source assignment and blink counts
 - condition 1 and 2 ECG blink-event timing, source, RR interval, and heart-rate estimate

@@ -126,6 +126,48 @@ function Draw-ButtonPreview {
     return Save-Canvas $c 'button-layout-preview.png'
 }
 
+function Draw-PreButtonExperiencePromptPreview {
+    $c = New-Canvas 520 520
+    $g = $c.Graphics
+    $g.Clear([Drawing.Color]::FromArgb(26, 28, 34))
+    Draw-Text $g 'clear passthrough counter panel; 3D button hidden until Start experiment' 26 18 10 468 34 $false (Brush 220 226 238)
+    foreach ($glow in @(
+        @{ X = 18; Y = 42; W = 484; H = 430; A = 18 },
+        @{ X = 74; Y = 96; W = 372; H = 300; A = 25 },
+        @{ X = 122; Y = 144; W = 276; H = 206; A = 32 }
+    )) {
+        $glowBrush = Brush 255 36 36 $glow.A
+        $g.FillEllipse($glowBrush, $glow.X, $glow.Y, $glow.W, $glow.H)
+        $glowBrush.Dispose()
+    }
+    Draw-Text $g 'Oh wait, we have just one more question:' 38 72 16 448 30 $true (Brush 255 255 255)
+    Draw-Text $g 'Do you have any experience with' 38 112 20 448 34 $true (Brush 255 255 255)
+    Draw-Text $g 'pressing big red buttons?' 38 148 20 448 34 $true (Brush 255 255 255)
+
+    $yesRect = [Drawing.Rectangle]::new(54, 218, 178, 58)
+    $noRect = [Drawing.Rectangle]::new(288, 218, 178, 58)
+    foreach ($rect in @($yesRect, $noRect)) {
+        $g.FillRectangle((Brush 0 0 0 0), $rect)
+        $g.DrawRectangle((Pen 255 255 255 2 190), $rect)
+    }
+    $g.DrawRectangle((Pen 255 36 36 3), $yesRect)
+    $g.FillRectangle((Brush 255 36 36), 76, 233, 28, 28)
+    $checkPen = Pen 255 255 255 4
+    $g.DrawLine($checkPen, 82, 248, 92, 258)
+    $g.DrawLine($checkPen, 92, 258, 110, 236)
+    $checkPen.Dispose()
+    $g.DrawRectangle((Pen 255 255 255 2), 310, 233, 28, 28)
+    Draw-Text $g 'YES' 122 235 16 80 26 $true (Brush 255 255 255)
+    Draw-Text $g 'NO' 356 235 16 80 26 $true (Brush 255 255 255)
+
+    Draw-Text $g 'An experienced user, just the type' 54 308 16 420 28 $true (Brush 255 36 36)
+    Draw-Text $g 'of participant we need.' 54 336 16 420 28 $true (Brush 255 36 36)
+    $g.FillRectangle((Brush 223 44 44), 54, 402, 412, 54)
+    $g.DrawRectangle((Pen 143 23 23 2), 54, 402, 412, 54)
+    Draw-Text $g 'Start experiment' 168 418 16 220 28 $true (Brush 255 255 255)
+    return Save-Canvas $c 'pre-button-experience-prompt-preview.png'
+}
+
 function Draw-DemographicsPreview {
     $c = New-Canvas
     $g = $c.Graphics
@@ -406,6 +448,7 @@ function Draw-LostOpportunityPreview {
 
 $paths = @(
     Draw-ButtonPreview
+    Draw-PreButtonExperiencePromptPreview
     Draw-DemographicsPreview
     Draw-DemographicsNativeKeyboardPreview
     Draw-PictographicPreview
