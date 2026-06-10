@@ -396,6 +396,92 @@ function Draw-PictographicPreview {
     return Save-Canvas $c 'pictographic-panel-preview.png'
 }
 
+function Draw-RednessChangeoverFrame {
+    param(
+        [string]$Name,
+        [string]$Title,
+        [string]$AudioAsset,
+        [string]$SourceScale,
+        [string]$TargetScale,
+        [string]$SwapTiming,
+        [string]$SaveState
+    )
+
+    $c = New-Canvas
+    $g = $c.Graphics
+    Draw-Text $g $Title 40 34 30 980 46 $true
+    Draw-Text $g "$AudioAsset | $SwapTiming | $SaveState" 42 82 14 1000 30 $false (Brush 95 103 117)
+    Draw-Text $g 'Button Experience' 88 142 30 520 46 $true
+    Draw-Text $g 'How red did the button feel?' 160 228 19 430 32 $true
+
+    $panelBrush = Brush 255 251 244
+    $g.FillRectangle($panelBrush, 92, 190, 996, 430)
+    $panelBrush.Dispose()
+    $g.DrawRectangle((Pen 201 193 176 2), 92, 190, 996, 430)
+
+    $sliderX = 220
+    $sliderW = 740
+    $redLabels = @('slightly red', 'somewhat red', 'moderately red', 'quite red', 'very red', 'intensely red', 'extremely red')
+    if ($SourceScale -eq 'vas') {
+        $g.DrawLine((Pen 150 150 150 8 130), $sliderX + 22, 332, ($sliderX + $sliderW - 22), 332)
+        $g.FillEllipse((Brush 223 44 44 130), $sliderX + 430, 311, 42, 42)
+        Draw-Text $g 'slightly red' ($sliderX + 4) 364 12 160 24 $false (Brush 95 103 117)
+        Draw-Text $g 'very red' ($sliderX + $sliderW - 116) 364 12 140 24 $false (Brush 95 103 117)
+    } else {
+        $boxW = [int](($sliderW - 36) / 7)
+        for ($i = 0; $i -lt 7; $i++) {
+            $x = $sliderX + ($i * ($boxW + 6))
+            $g.FillRectangle((Brush 255 226 226 130), $x, 300, $boxW, 54)
+            $g.DrawRectangle((Pen 143 23 23 2 130), $x, 300, $boxW, 54)
+            Draw-Text $g "$($i + 1)" ($x + 5) 304 10 22 18 $true (Brush 143 23 23 160)
+            Draw-Text $g $redLabels[$i] ($x + 5) 320 8 ($boxW - 8) 28 $true (Brush 26 30 40 160)
+        }
+    }
+
+    $overlay = Brush 0 27 109 110
+    $g.FillRectangle($overlay, 92, 190, 996, 430)
+    $overlay.Dispose()
+    for ($i = 0; $i -lt 14; $i++) {
+        $stripeBrush = if ($i % 3 -eq 0) { Brush 255 255 255 62 } else { Brush 0 232 255 58 }
+        $y = 220 + (($i * 31) % 350)
+        $x = 100 + (($i * 67) % 120)
+        $g.FillRectangle($stripeBrush, $x, $y, 740 + (($i * 43) % 180), 5 + (($i * 7) % 18))
+        $stripeBrush.Dispose()
+    }
+    $pinkPen = Pen 255 45 127 4 58
+    $g.DrawLine($pinkPen, 92, 286, 1088, 300)
+    $pinkPen.Dispose()
+
+    Draw-Text $g 'VISIBLE AFTER SWAP' 150 442 13 220 24 $true (Brush 255 255 255)
+    if ($TargetScale -eq 'vas') {
+        $g.DrawLine((Pen 255 247 247 12 165), $sliderX + 22, 500, ($sliderX + $sliderW - 22), 500)
+        $g.FillEllipse((Brush 255 75 75 210), $sliderX + 430, 477, 46, 46)
+        Draw-Text $g 'visual analog track returns' 400 534 16 420 28 $true (Brush 255 255 255)
+    } else {
+        $boxW = [int](($sliderW - 36) / 7)
+        for ($i = 0; $i -lt 7; $i++) {
+            $x = $sliderX + ($i * ($boxW + 6))
+            $g.FillRectangle((Brush 255 247 247 165), $x, 472, $boxW, 56)
+            $g.DrawRectangle((Pen 255 255 255 2 190), $x, 472, $boxW, 56)
+            Draw-Text $g "$($i + 1)" ($x + 6) 478 10 22 18 $true (Brush 255 75 75 235)
+            Draw-Text $g $redLabels[$i] ($x + 5) 494 8 ($boxW - 8) 26 $true (Brush 26 30 40 210)
+        }
+    }
+
+    $buttonBrush = Brush 92 18 18 105
+    $g.FillRectangle($buttonBrush, 380, 690, 420, 54)
+    $buttonBrush.Dispose()
+    Draw-Text $g 'Save disabled until clip settles' 425 704 15 330 26 $true (Brush 255 255 255)
+    return Save-Canvas $c $Name
+}
+
+function Draw-RednessChangeoverPreviews {
+    return @(
+        Draw-RednessChangeoverFrame 'redness-changeover-vas-to-likert-preview.png' 'Redness Changeover Preview | Condition 1' 'first_questionnaire_change.mp3' 'vas' 'likert' 'swap at 7.2 s; settle at 19.3 s' 'save blocked during changeover'
+        Draw-RednessChangeoverFrame 'redness-changeover-likert-to-vas-preview.png' 'Redness Changeover Preview | Condition 2' 'second_questionnaire_change_excuse.mp3' 'likert' 'vas' 'swap at 7.3 s; settle at 14.64 s' 'save blocked during changeover'
+    )
+}
+
 function Draw-IpqPreviewPage {
     param($Items, [int]$PageNumber, [int]$StartIndex, [int]$Count)
 
@@ -452,6 +538,7 @@ $paths = @(
     Draw-DemographicsPreview
     Draw-DemographicsNativeKeyboardPreview
     Draw-PictographicPreview
+    Draw-RednessChangeoverPreviews
     Draw-IpqPreview
     Draw-LostOpportunityPreview
 )

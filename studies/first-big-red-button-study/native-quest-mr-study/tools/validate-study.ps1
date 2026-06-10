@@ -98,6 +98,10 @@ $buttonModel = Join-Path $projectRoot 'app\src\main\assets\models\BigRedButton.g
 $buttonThumbnail = Join-Path $projectRoot 'app\src\main\res\drawable-nodpi\big_red_button_model_thumbnail.png'
 $questionnaireIntroGlitch = Join-Path $projectRoot 'app\src\main\res\raw\questionnaire_intro_glitch.mp3'
 $questionnaireOutroGlitch = Join-Path $projectRoot 'app\src\main\res\raw\questionnaire_outro_glitch.mp3'
+$firstQuestionnaireChange = Join-Path $projectRoot 'app\src\main\res\raw\first_questionnaire_change.mp3'
+$secondQuestionnaireChange = Join-Path $projectRoot 'app\src\main\res\raw\second_questionnaire_change_excuse.mp3'
+$firstQuestionnaireChangeSource = Join-Path $projectRoot '..\audio-assets\questionnaire\first-questionnaire-change.mp3'
+$secondQuestionnaireChangeSource = Join-Path $projectRoot '..\audio-assets\questionnaire\second-questionnaire-change-excuse.mp3'
 $questionnaireChoiceSound = Join-Path $projectRoot 'app\src\main\res\raw\ui_choice_blip.wav'
 $questionnaireNavigationSound = Join-Path $projectRoot 'app\src\main\res\raw\ui_navigation_blip.wav'
 $buttonPressSound = Join-Path $projectRoot 'app\src\main\assets\sfx\button-press-placeholder-kenney-bong.ogg'
@@ -169,6 +173,24 @@ if (Test-Path $questionnaireIntroGlitch) {
 if (Test-Path $questionnaireOutroGlitch) {
     Add-Check 'questionnaire outro glitch sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $questionnaireOutroGlitch).Hash -eq 'B57A15DA2E1CC9D93A8D915696663E8BABE293FD53A0E8FDD8604D51A931292F') 'outro.mp3 supplied from AssistantVideos'
     Add-Check 'questionnaire outro glitch sound nonempty' ((Get-Item $questionnaireOutroGlitch).Length -gt 10000) ((Get-Item $questionnaireOutroGlitch).Length.ToString())
+}
+if ((Test-Path $firstQuestionnaireChange) -and (Test-Path $firstQuestionnaireChangeSource)) {
+    Add-Check 'first redness questionnaire-change sound hash preserved' (
+        (Get-FileHash -Algorithm SHA256 -LiteralPath $firstQuestionnaireChange).Hash -eq 'F49538CB8B41959C95B760F6A7CF5B63D2BDC9D979C40739A10DA2AAED50570D' -and
+        (Get-FileHash -Algorithm SHA256 -LiteralPath $firstQuestionnaireChangeSource).Hash -eq 'F49538CB8B41959C95B760F6A7CF5B63D2BDC9D979C40739A10DA2AAED50570D'
+    ) 'first-questionnaire-change.mp3 recovered from Gmail raw MIME and packaged byte-identically'
+    Add-Check 'first redness questionnaire-change sound nonempty' ((Get-Item $firstQuestionnaireChange).Length -gt 300000) ((Get-Item $firstQuestionnaireChange).Length.ToString())
+} else {
+    Add-Check 'first redness questionnaire-change sound exists' $false 'source audio-assets/questionnaire and app raw resource must both exist'
+}
+if ((Test-Path $secondQuestionnaireChange) -and (Test-Path $secondQuestionnaireChangeSource)) {
+    Add-Check 'second redness questionnaire-change sound hash preserved' (
+        (Get-FileHash -Algorithm SHA256 -LiteralPath $secondQuestionnaireChange).Hash -eq 'E008B68E8C158A4CD86D89E695A38AB8FC71573F1507051EEBDCFB1C7C796CDC' -and
+        (Get-FileHash -Algorithm SHA256 -LiteralPath $secondQuestionnaireChangeSource).Hash -eq 'E008B68E8C158A4CD86D89E695A38AB8FC71573F1507051EEBDCFB1C7C796CDC'
+    ) 'second-questionnaire-change-excuse.mp3 recovered from Gmail raw MIME and packaged byte-identically'
+    Add-Check 'second redness questionnaire-change sound nonempty' ((Get-Item $secondQuestionnaireChange).Length -gt 250000) ((Get-Item $secondQuestionnaireChange).Length.ToString())
+} else {
+    Add-Check 'second redness questionnaire-change sound exists' $false 'source audio-assets/questionnaire and app raw resource must both exist'
 }
 if (Test-Path $questionnaireChoiceSound) {
     Add-Check 'questionnaire choice sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $questionnaireChoiceSound).Hash -eq '5005D0A634AAC456D3D495824C057ED14CF58D21EFC16C06772B48520436F8A4') 'short UI choice cue SHA256'
@@ -370,8 +392,13 @@ if (Test-Path $activity) {
         $activityText.Contains('convertRednessVasToLikert') -and
         $activityText.Contains('convertRednessLikertToVas') -and
         $activityText.Contains('BRB_REDNESS_SCALE_CONVERSION') -and
-        $activityText.Contains('redness_scale_conversion_pending_apology')
-    ) 'third redness control flips VAS to Likert in block 1 and Likert to VAS in block 2, with a pending-apology cue marker'
+        $activityText.Contains('BRB_REDNESS_SCALE_CONVERSION_CHOREOGRAPHY') -and
+        $activityText.Contains('RednessConversionChoreographyOverlay') -and
+        $activityText.Contains('R.raw.first_questionnaire_change') -and
+        $activityText.Contains('R.raw.second_questionnaire_change_excuse') -and
+        $activityText.Contains('placeholder=false') -and
+        -not $activityText.Contains('redness_scale_conversion_pending_apology')
+    ) 'third redness control flips VAS to Likert in block 1 and Likert to VAS in block 2, with real questionnaire-change audio and timed visual choreography'
     Add-Check 'redness export fields' (
         $activityText.Contains('rednessVas0To100') -and
         $activityText.Contains('rednessLikert1To7') -and
@@ -896,6 +923,12 @@ if (Test-Path $keyeventValidationScript) {
         $keyeventValidationText.Contains('simulated ECG time-series CSV rows match JSON count') -and
         $keyeventValidationText.Contains('BRB_HEARTBEAT_FLASH condition=$simulatedConditionNumber source=simulated_neurokit2')
     ) 'fast replay now fails unless the simulated RR driver produces runtime blink/flash markers and matching JSON/CSV rows'
+    Add-Check 'Quest keyevent validation recovers foreground focus' (
+        $keyeventValidationText.Contains('Ensure-TargetForeground') -and
+        $keyeventValidationText.Contains('foreground-after-launch.txt') -and
+        $keyeventValidationText.Contains('foreground-after-relaunch.txt') -and
+        $keyeventValidationText.Contains('force-stopping it once before relaunching')
+    ) 'fast qkv validation force-stops a stale non-Oculus foreground OpenXR app and relaunches the study once before waiting for markers'
 }
 $controllerContactSmokeScript = Join-Path $projectRoot 'tools\run-quest-controller-contact-smoke.ps1'
 Add-Check 'Quest controller contact smoke script' (Test-Path $controllerContactSmokeScript) 'tools\run-quest-controller-contact-smoke.ps1'
@@ -1116,6 +1149,15 @@ if (Test-Path $layoutPreviewScript) {
         $layoutPreviewText.Contains('slightly red') -and
         $layoutPreviewText.Contains('extremely red')
     ) 'preview includes the third redness response scale'
+    Add-Check 'layout preview shows redness changeover choreography' (
+        $layoutPreviewText.Contains('Draw-RednessChangeoverPreviews') -and
+        $layoutPreviewText.Contains('redness-changeover-vas-to-likert-preview.png') -and
+        $layoutPreviewText.Contains('redness-changeover-likert-to-vas-preview.png') -and
+        $layoutPreviewText.Contains('first_questionnaire_change.mp3') -and
+        $layoutPreviewText.Contains('second_questionnaire_change_excuse.mp3') -and
+        $layoutPreviewText.Contains('swap at 7.2 s') -and
+        $layoutPreviewText.Contains('swap at 7.3 s')
+    ) 'previews document the two timed redness-format changeover states'
 }
 
 if (-not $SkipBuild) {

@@ -41,6 +41,76 @@ function Get-LogText {
     return (Invoke-Adb logcat -d -v time | Out-String)
 }
 
+function Get-ForegroundDump {
+    return (Invoke-Adb shell dumpsys activity activities) -join "`n"
+}
+
+function Get-ForegroundPackage {
+    param([string]$Dump)
+    $foregroundLines =
+        ($Dump -split "`n") |
+        Where-Object { $_ -match 'mCurrentFocus|mFocusedApp|ResumedActivity|topResumedActivity' }
+    $foregroundText = $foregroundLines -join "`n"
+    $matches = [regex]::Matches($foregroundText, '([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)+)/')
+    foreach ($match in $matches) {
+        $candidate = $match.Groups[1].Value
+        if ($candidate -notlike 'com.oculus.*' -and $candidate -notlike 'android.*') {
+            return $candidate
+        }
+    }
+    if ($matches.Count -gt 0) {
+        return $matches[0].Groups[1].Value
+    }
+    return ''
+}
+
+function Test-TargetForeground {
+    param([string]$Dump)
+    $foregroundLines =
+        ($Dump -split "`n") |
+        Where-Object { $_ -match 'mCurrentFocus|mFocusedApp|ResumedActivity|topResumedActivity' }
+    return (($foregroundLines -join "`n") -match [regex]::Escape($package))
+}
+
+function Start-KeyeventValidationActivity {
+    Invoke-Adb shell am start -n $activity --ez brb.keyeventValidation true |
+        Tee-Object -FilePath (Join-Path $outDir 'launch.txt') |
+        Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        throw "adb launch failed with exit code $LASTEXITCODE"
+    }
+}
+
+function Ensure-TargetForeground {
+    Start-Sleep -Seconds 3
+    $foregroundDump = Get-ForegroundDump
+    $foregroundDump | Set-Content -LiteralPath (Join-Path $outDir 'foreground-after-launch.txt') -Encoding UTF8
+    if (Test-TargetForeground $foregroundDump) {
+        return
+    }
+
+    $foregroundPackage = Get-ForegroundPackage $foregroundDump
+    if (-not [string]::IsNullOrWhiteSpace($foregroundPackage) -and
+        $foregroundPackage -ne $package -and
+        $foregroundPackage -notlike 'com.oculus.*' -and
+        $foregroundPackage -notlike 'android.*') {
+        Write-Host "Foreground is $foregroundPackage, force-stopping it once before relaunching $package."
+        Invoke-Adb shell am force-stop $foregroundPackage | Out-Null
+        Start-Sleep -Seconds 1
+    } else {
+        Write-Host "Target package not foreground after launch; retrying $package once."
+    }
+
+    Start-KeyeventValidationActivity
+    Start-Sleep -Seconds 3
+    $retryDump = Get-ForegroundDump
+    $retryDump | Set-Content -LiteralPath (Join-Path $outDir 'foreground-after-relaunch.txt') -Encoding UTF8
+    if (-not (Test-TargetForeground $retryDump)) {
+        $retryPackage = Get-ForegroundPackage $retryDump
+        throw "Target package $package was not foreground after relaunch. Current foreground package: $retryPackage"
+    }
+}
+
 function Wait-LogPattern {
     param(
         [string]$Pattern,
@@ -256,12 +326,8 @@ try {
     Invoke-Adb logcat -c
 
     Write-Host "Launching keyevent validation mode"
-    Invoke-Adb shell am start -n $activity --ez brb.keyeventValidation true |
-        Tee-Object -FilePath (Join-Path $outDir 'launch.txt') |
-        Out-Host
-    if ($LASTEXITCODE -ne 0) {
-        throw "adb launch failed with exit code $LASTEXITCODE"
-    }
+    Start-KeyeventValidationActivity
+    Ensure-TargetForeground
 
     Wait-LogPattern 'BRB_SOFT_KEYBOARD_REQUEST reason=field_name keyboardMode=text' 'startup native text keyboard request'
     Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN' 'prior big-red-button experience prompt'
@@ -426,7 +492,12 @@ try {
     Add-Comparison $comparisons 'native keyboard movable panel contract observed' $true ($logText -match 'BRB_SYSTEM_KEYBOARD_FIELD_CONTRACT field=name .*movablePanel=true .*closeToParticipant=system_managed' -and $logText -match 'BRB_SOFT_KEYBOARD_REQUEST reason=field_name .*movablePanel=true .*closeToParticipant=system_managed') 'logcat'
     Add-Comparison $comparisons 'native keyboard text-to-number retarget observed' $true ($logText -match 'BRB_SOFT_KEYBOARD_SWITCH from=field_name to=field_age .*fromMode=text .*toMode=number .*failSafeRetarget=true') 'logcat'
     Add-Comparison $comparisons 'startup native keyboard request uses text mode' $true ($logText -match 'BRB_SOFT_KEYBOARD_REQUEST reason=field_name .*keyboardMode=text') 'logcat'
-    Add-Comparison $comparisons 'redness conversion cue observed' $true ($logText -match 'BRB_REDNESS_SCALE_CONVERSION condition=1 .*from=vas to=likert' -and $logText -match 'BRB_REDNESS_SCALE_CONVERSION condition=2 .*from=likert to=vas' -and $logText -match 'BRB_REDNESS_SCALE_CONVERSION_CUE .*placeholder=true') 'logcat'
+    Add-Comparison $comparisons 'redness conversion cue observed' $true (
+        $logText -match 'BRB_REDNESS_SCALE_CONVERSION condition=1 .*from=vas to=likert' -and
+        $logText -match 'BRB_REDNESS_SCALE_CONVERSION condition=2 .*from=likert to=vas' -and
+        $logText -match 'BRB_REDNESS_SCALE_CONVERSION_CUE order=vas_then_likert .*cue=first_questionnaire_change .*placeholder=false .*validationShortcut=true' -and
+        $logText -match 'BRB_REDNESS_SCALE_CONVERSION_CUE order=likert_then_vas .*cue=second_questionnaire_change_excuse .*placeholder=false .*validationShortcut=true'
+    ) 'logcat'
     Add-Comparison $comparisons 'panel-exit keyboard hide before condition 1 observed' $true ($logText -match 'BRB_SOFT_KEYBOARD_HIDE reason=before_condition_1') 'logcat'
     Add-Comparison $comparisons 'panel-exit keyboard hide before condition 2 observed' $true ($logText -match 'BRB_SOFT_KEYBOARD_HIDE reason=before_condition_2') 'logcat'
     Add-Comparison $comparisons 'directional replay observed' $true ($logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pictographic direction=left') 'logcat'

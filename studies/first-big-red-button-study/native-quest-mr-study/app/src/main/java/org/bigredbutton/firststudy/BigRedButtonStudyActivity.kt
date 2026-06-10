@@ -156,6 +156,7 @@ import kotlin.math.exp
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.math.sin
+import kotlinx.coroutines.delay
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -214,6 +215,31 @@ data class PictographicResponse(
     val rednessLikertDescriptor: String,
     val rednessScaleOrder: String,
     val timestampIso: String,
+)
+
+data class RednessConversionChoreography(
+    val order: String,
+    val startedElapsedMs: Long,
+    val durationMs: Long,
+    val swapAtMs: Long,
+    val settleAtMs: Long,
+    val sourceScale: String,
+    val targetScale: String,
+    val finalVas0To100: Int,
+    val finalLikert1To7: Int,
+    val finalDescriptor: String,
+    val cueName: String,
+    val audioAsset: String,
+)
+
+private data class RednessConversionCue(
+    val resourceId: Int,
+    val cueName: String,
+    val audioAsset: String,
+    val durationMs: Long,
+    val swapAtMs: Long,
+    val settleAtMs: Long,
+    val transcriptPlan: String,
 )
 
 data class PresenceItem(
@@ -546,6 +572,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   val pictographicRednessVasState = mutableFloatStateOf(50f)
   val pictographicRednessLikertState = mutableIntStateOf(4)
   val pictographicRednessConvertedState = mutableStateOf(false)
+  val rednessConversionChoreographyState: MutableState<RednessConversionChoreography?> = mutableStateOf(null)
   val pictographicFocusIndexState = mutableIntStateOf(0)
   val ipqAnswersState = mutableStateMapOf<String, Int>()
   val ipqCursorIndexState = mutableIntStateOf(0)
@@ -606,6 +633,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   private var autoValidationStarted = false
   private var fastControllerFlowStarted = false
   private var panelGlitchToken = 0
+  private var rednessConversionChoreographyToken = 0
   private var softKeyboardRequestGeneration = 0
   private var activeSoftKeyboardReason: String? = null
   private var activeSoftKeyboardMode: String? = null
@@ -873,38 +901,47 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   }
 
   fun convertRednessVasToLikert(reason: String) {
-    if (pictographicRednessConvertedState.value) {
+    if (pictographicRednessConvertedState.value || rednessConversionChoreographyState.value != null) {
       return
     }
     val vas = pictographicRednessVasState.floatValue.coerceIn(0f, 100f)
     val likert = rednessLikertFromVas(vas)
-    pictographicRednessVasState.floatValue = vas
-    pictographicRednessLikertState.intValue = likert
-    pictographicRednessConvertedState.value = true
-    Log.i(
-        TAG,
-        "BRB_REDNESS_SCALE_CONVERSION condition=${activeConditionState.intValue} order=$REDNESS_ORDER_VAS_THEN_LIKERT from=vas to=likert reason=$reason vas=${vas.toInt()} likert=$likert descriptor=${rednessDescriptor(likert)}",
+    if (reason == REDNESS_FAST_REPLAY_REASON) {
+      applyRednessVasToLikert(vas, likert, reason, choreographed = false)
+      playRednessScaleConversionCue(REDNESS_ORDER_VAS_THEN_LIKERT, validationShortcut = true)
+      return
+    }
+    beginRednessConversionChoreography(
+        order = REDNESS_ORDER_VAS_THEN_LIKERT,
+        reason = reason,
+        finalVas = vas,
+        finalLikert = likert,
     )
-    playRednessScaleConversionCue(REDNESS_ORDER_VAS_THEN_LIKERT)
   }
 
   fun convertRednessLikertToVas(reason: String) {
-    if (pictographicRednessConvertedState.value) {
+    if (pictographicRednessConvertedState.value || rednessConversionChoreographyState.value != null) {
       return
     }
     val likert = pictographicRednessLikertState.intValue.coerceIn(1, 7)
     val vas = rednessVasCenterFromLikert(likert)
-    pictographicRednessLikertState.intValue = likert
-    pictographicRednessVasState.floatValue = vas
-    pictographicRednessConvertedState.value = true
-    Log.i(
-        TAG,
-        "BRB_REDNESS_SCALE_CONVERSION condition=${activeConditionState.intValue} order=$REDNESS_ORDER_LIKERT_THEN_VAS from=likert to=vas reason=$reason likert=$likert descriptor=${rednessDescriptor(likert)} vas=${vas.toInt()}",
+    if (reason == REDNESS_FAST_REPLAY_REASON) {
+      applyRednessLikertToVas(likert, vas, reason, choreographed = false)
+      playRednessScaleConversionCue(REDNESS_ORDER_LIKERT_THEN_VAS, validationShortcut = true)
+      return
+    }
+    beginRednessConversionChoreography(
+        order = REDNESS_ORDER_LIKERT_THEN_VAS,
+        reason = reason,
+        finalVas = vas,
+        finalLikert = likert,
     )
-    playRednessScaleConversionCue(REDNESS_ORDER_LIKERT_THEN_VAS)
   }
 
   fun setRednessLikert(value1To7: Int, convertIfNeeded: Boolean) {
+    if (rednessConversionChoreographyState.value != null) {
+      return
+    }
     val value = value1To7.coerceIn(1, 7)
     pictographicRednessLikertState.intValue = value
     if (convertIfNeeded && !pictographicRednessConvertedState.value && activeConditionState.intValue == 2) {
@@ -914,8 +951,120 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     }
   }
 
-  fun submitPictographic() {
-    val run = activeRun ?: return
+  private fun beginRednessConversionChoreography(
+      order: String,
+      reason: String,
+      finalVas: Float,
+      finalLikert: Int,
+  ) {
+    val cue = rednessConversionCue(order)
+    val token = ++rednessConversionChoreographyToken
+    val sourceScale = if (order == REDNESS_ORDER_VAS_THEN_LIKERT) "vas" else "likert"
+    val targetScale = if (order == REDNESS_ORDER_VAS_THEN_LIKERT) "likert" else "vas"
+    val descriptor = rednessDescriptor(finalLikert)
+    rednessConversionChoreographyState.value =
+        RednessConversionChoreography(
+            order = order,
+            startedElapsedMs = SystemClock.elapsedRealtime(),
+            durationMs = cue.durationMs,
+            swapAtMs = cue.swapAtMs,
+            settleAtMs = cue.settleAtMs,
+            sourceScale = sourceScale,
+            targetScale = targetScale,
+            finalVas0To100 = finalVas.toInt(),
+            finalLikert1To7 = finalLikert,
+            finalDescriptor = descriptor,
+            cueName = cue.cueName,
+            audioAsset = cue.audioAsset,
+        )
+    Log.i(
+        TAG,
+        "BRB_REDNESS_SCALE_CONVERSION_CHOREOGRAPHY state=start condition=${activeConditionState.intValue} order=$order from=$sourceScale to=$targetScale reason=$reason audio=${cue.audioAsset} durationMs=${cue.durationMs} swapAtMs=${cue.swapAtMs} settleAtMs=${cue.settleAtMs} transcript=${cue.transcriptPlan}",
+    )
+    playRednessScaleConversionCue(order, validationShortcut = false)
+    mainHandler.postDelayed(
+        {
+          if (rednessConversionChoreographyToken != token || rednessConversionChoreographyState.value?.order != order) {
+            return@postDelayed
+          }
+          if (order == REDNESS_ORDER_VAS_THEN_LIKERT) {
+            applyRednessVasToLikert(finalVas, finalLikert, reason, choreographed = true)
+          } else {
+            applyRednessLikertToVas(finalLikert, finalVas, reason, choreographed = true)
+          }
+          Log.i(
+              TAG,
+              "BRB_REDNESS_SCALE_CONVERSION_CHOREOGRAPHY state=swap condition=${activeConditionState.intValue} order=$order elapsedMs=${cue.swapAtMs} visibleFrom=$sourceScale visibleTo=$targetScale vas=${finalVas.toInt()} likert=$finalLikert descriptor=$descriptor",
+          )
+        },
+        cue.swapAtMs,
+    )
+    mainHandler.postDelayed(
+        {
+          if (rednessConversionChoreographyToken != token || rednessConversionChoreographyState.value?.order != order) {
+            return@postDelayed
+          }
+          Log.i(
+              TAG,
+              "BRB_REDNESS_SCALE_CONVERSION_CHOREOGRAPHY state=settle condition=${activeConditionState.intValue} order=$order elapsedMs=${cue.settleAtMs} answerCarriedForward=true",
+          )
+        },
+        cue.settleAtMs,
+    )
+    mainHandler.postDelayed(
+        {
+          if (rednessConversionChoreographyToken != token || rednessConversionChoreographyState.value?.order != order) {
+            return@postDelayed
+          }
+          rednessConversionChoreographyState.value = null
+          Log.i(
+              TAG,
+              "BRB_REDNESS_SCALE_CONVERSION_CHOREOGRAPHY state=end condition=${activeConditionState.intValue} order=$order elapsedMs=${cue.durationMs} editable=true",
+          )
+        },
+        cue.durationMs,
+    )
+  }
+
+  private fun applyRednessVasToLikert(
+      vas: Float,
+      likert: Int,
+      reason: String,
+      choreographed: Boolean,
+  ) {
+    pictographicRednessVasState.floatValue = vas.coerceIn(0f, 100f)
+    pictographicRednessLikertState.intValue = likert.coerceIn(1, 7)
+    pictographicRednessConvertedState.value = true
+    Log.i(
+        TAG,
+        "BRB_REDNESS_SCALE_CONVERSION condition=${activeConditionState.intValue} order=$REDNESS_ORDER_VAS_THEN_LIKERT from=vas to=likert reason=$reason choreographed=$choreographed vas=${pictographicRednessVasState.floatValue.toInt()} likert=${pictographicRednessLikertState.intValue} descriptor=${rednessDescriptor(pictographicRednessLikertState.intValue)}",
+    )
+  }
+
+  private fun applyRednessLikertToVas(
+      likert: Int,
+      vas: Float,
+      reason: String,
+      choreographed: Boolean,
+  ) {
+    pictographicRednessLikertState.intValue = likert.coerceIn(1, 7)
+    pictographicRednessVasState.floatValue = vas.coerceIn(0f, 100f)
+    pictographicRednessConvertedState.value = true
+    Log.i(
+        TAG,
+        "BRB_REDNESS_SCALE_CONVERSION condition=${activeConditionState.intValue} order=$REDNESS_ORDER_LIKERT_THEN_VAS from=likert to=vas reason=$reason choreographed=$choreographed likert=${pictographicRednessLikertState.intValue} descriptor=${rednessDescriptor(pictographicRednessLikertState.intValue)} vas=${pictographicRednessVasState.floatValue.toInt()}",
+    )
+  }
+
+  fun submitPictographic(): Boolean {
+    if (rednessConversionChoreographyState.value != null) {
+      Log.i(
+          TAG,
+          "BRB_PICTOGRAPHIC_SAVE_BLOCKED condition=${activeConditionState.intValue} reason=redness_conversion_choreography order=${rednessConversionChoreographyState.value?.order}",
+      )
+      return false
+    }
+    val run = activeRun ?: return false
     val closeness = pictographicClosenessState.floatValue.coerceIn(0f, 100f)
     val presence = pictographicPresenceState.floatValue.coerceIn(0f, 100f)
     val rednessVas = pictographicRednessVasState.floatValue.coerceIn(0f, 100f)
@@ -939,6 +1088,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         TAG,
         "BRB_PICTOGRAPHIC_SAVED condition=${run.conditionNumber} closeness=${closeness.toInt()} presence=${presence.toInt()} rednessVas=${rednessVas.toInt()} rednessLikert=$rednessLikert rednessOrder=${rednessScaleOrderForCondition(run.conditionNumber)}",
     )
+    return true
   }
 
   fun setIpqAnswer(itemId: String, value: Int) {
@@ -1528,7 +1678,6 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
       StudyStage.Pictographic -> {
         playQuestionnaireNavigationCue()
         submitPictographic()
-        true
       }
       StudyStage.PresenceQuestionnaire -> {
         playQuestionnaireNavigationCue()
@@ -2943,6 +3092,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     pictographicRednessVasState.floatValue = 50f
     pictographicRednessLikertState.intValue = 4
     pictographicRednessConvertedState.value = false
+    rednessConversionChoreographyToken += 1
+    rednessConversionChoreographyState.value = null
     pictographicFocusIndexState.intValue = 0
   }
 
@@ -2981,12 +3132,41 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     playRawOneShotCue(R.raw.ui_navigation_blip, "questionnaire_navigation")
   }
 
-  fun playRednessScaleConversionCue(order: String) {
+  fun playRednessScaleConversionCue(order: String, validationShortcut: Boolean = false) {
+    val cue = rednessConversionCue(order)
     Log.i(
         TAG,
-        "BRB_REDNESS_SCALE_CONVERSION_CUE order=$order cue=redness_scale_conversion_pending_apology placeholder=true pendingAudioAsset=redness-scale-conversion-apology",
+        "BRB_REDNESS_SCALE_CONVERSION_CUE order=$order cue=${cue.cueName} placeholder=false audioAsset=${cue.audioAsset} durationMs=${cue.durationMs} swapAtMs=${cue.swapAtMs} validationShortcut=$validationShortcut",
     )
-    playRawOneShotCue(R.raw.ui_navigation_blip, "redness_scale_conversion_pending_apology")
+    if (validationShortcut) {
+      playRawOneShotCue(R.raw.ui_navigation_blip, "${cue.cueName}_validation_shortcut")
+    } else {
+      playRawOneShotCue(cue.resourceId, cue.cueName)
+    }
+  }
+
+  private fun rednessConversionCue(order: String): RednessConversionCue {
+    return if (order == REDNESS_ORDER_VAS_THEN_LIKERT) {
+      RednessConversionCue(
+          resourceId = R.raw.first_questionnaire_change,
+          cueName = "first_questionnaire_change",
+          audioAsset = "first-questionnaire-change.mp3",
+          durationMs = FIRST_REDNESS_CHANGE_AUDIO_DURATION_MS,
+          swapAtMs = FIRST_REDNESS_CHANGE_SWAP_MS,
+          settleAtMs = FIRST_REDNESS_CHANGE_SETTLE_MS,
+          transcriptPlan = "supervisor_request_0_6800ms|likert_request_6800_11760ms|answer_already_given_14000_19280ms|result_settle_19280_22988ms",
+      )
+    } else {
+      RednessConversionCue(
+          resourceId = R.raw.second_questionnaire_change_excuse,
+          cueName = "second_questionnaire_change_excuse",
+          audioAsset = "second-questionnaire-change-excuse.mp3",
+          durationMs = SECOND_REDNESS_CHANGE_AUDIO_DURATION_MS,
+          swapAtMs = SECOND_REDNESS_CHANGE_SWAP_MS,
+          settleAtMs = SECOND_REDNESS_CHANGE_SETTLE_MS,
+          transcriptPlan = "unprofessional_swap_0_6560ms|restore_vas_6560_12120ms|data_important_12120_14640ms|settle_14640_16771ms",
+      )
+    }
   }
 
   private fun playButtonPressCue() {
@@ -3641,6 +3821,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
 
   override fun onDestroy() {
     mainHandler.removeCallbacks(ticker)
+    rednessConversionChoreographyToken += 1
+    rednessConversionChoreographyState.value = null
     releasePlayer()
     releasePanelChimePlayer()
     releaseCuePlayers()
@@ -3652,6 +3834,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
 
   override fun onSpatialShutdown() {
     mainHandler.removeCallbacks(ticker)
+    rednessConversionChoreographyToken += 1
+    rednessConversionChoreographyState.value = null
     if (isdkPointerObserverRegistered) {
       isdkSystem?.unregisterObserver(buttonContactPointerObserver)
       isdkPointerObserverRegistered = false
@@ -3767,6 +3951,13 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     private const val BUTTON_PRESS_SFX_ASSET = "sfx/button-press-placeholder-kenney-bong.ogg"
     private const val REDNESS_ORDER_VAS_THEN_LIKERT = "vas_then_likert"
     private const val REDNESS_ORDER_LIKERT_THEN_VAS = "likert_then_vas"
+    private const val REDNESS_FAST_REPLAY_REASON = "fast_controller_replay"
+    private const val FIRST_REDNESS_CHANGE_AUDIO_DURATION_MS = 22_988L
+    private const val FIRST_REDNESS_CHANGE_SWAP_MS = 7_200L
+    private const val FIRST_REDNESS_CHANGE_SETTLE_MS = 19_300L
+    private const val SECOND_REDNESS_CHANGE_AUDIO_DURATION_MS = 16_771L
+    private const val SECOND_REDNESS_CHANGE_SWAP_MS = 7_300L
+    private const val SECOND_REDNESS_CHANGE_SETTLE_MS = 14_640L
     private const val ECG_SOURCE_REAL_POLAR = "real_polar_h10"
     private const val ECG_SOURCE_SIMULATED = "simulated_neurokit2"
     private const val ECG_ORDER_REAL_THEN_SIMULATED = "real_then_simulated"
@@ -4608,6 +4799,7 @@ private fun PictographicScreen(activity: BigRedButtonStudyActivity) {
   val rednessVas by activity.pictographicRednessVasState
   val rednessLikert by activity.pictographicRednessLikertState
   val rednessConverted by activity.pictographicRednessConvertedState
+  val rednessChoreography by activity.rednessConversionChoreographyState
 
   Column(
       modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
@@ -4644,6 +4836,7 @@ private fun PictographicScreen(activity: BigRedButtonStudyActivity) {
         vasValue = rednessVas,
         likertValue = rednessLikert,
         converted = rednessConverted,
+        choreography = rednessChoreography,
         modifier = pictographicScaleModifier,
         onVasChange = { activity.pictographicRednessVasState.floatValue = it },
         onVasFinished = {
@@ -4661,7 +4854,7 @@ private fun PictographicScreen(activity: BigRedButtonStudyActivity) {
           }
         },
     )
-    PrimaryActionButton("Save response", true) {
+    PrimaryActionButton("Save response", rednessChoreography == null) {
       SpatialActivityManager.executeOnVrActivity<BigRedButtonStudyActivity> { it.submitPictographic() }
     }
   }
@@ -4673,24 +4866,154 @@ private fun RednessResponseControl(
     vasValue: Float,
     likertValue: Int,
     converted: Boolean,
+    choreography: RednessConversionChoreography?,
     modifier: Modifier,
     onVasChange: (Float) -> Unit,
     onVasFinished: () -> Unit,
     onLikertSelect: (Int) -> Unit,
 ) {
-  val showVas = (condition == 1 && !converted) || (condition == 2 && converted)
-  if (showVas) {
-    ScaleSlider(
-        label = "How red did the button feel?",
-        value = vasValue,
-        left = "slightly red",
-        right = "very red",
-        onChange = onVasChange,
-        onFinished = onVasFinished,
-        modifier = modifier,
+  var elapsedMs by remember(choreography?.startedElapsedMs) { mutableStateOf(0L) }
+  LaunchedEffect(choreography?.startedElapsedMs) {
+    val activeChoreography = choreography
+    if (activeChoreography == null) {
+      elapsedMs = 0L
+      return@LaunchedEffect
+    }
+    while (elapsedMs < activeChoreography.durationMs) {
+      elapsedMs =
+          (SystemClock.elapsedRealtime() - activeChoreography.startedElapsedMs)
+              .coerceIn(0L, activeChoreography.durationMs)
+      delay(70L)
+    }
+  }
+  val showVas =
+      choreography?.let { active ->
+        val afterSwap = elapsedMs >= active.swapAtMs
+        val visibleScale = if (afterSwap) active.targetScale else active.sourceScale
+        visibleScale == "vas"
+      } ?: ((condition == 1 && !converted) || (condition == 2 && converted))
+  val jitterSeed = choreography?.startedElapsedMs?.toInt() ?: 0
+  val jitter =
+      if (choreography == null) {
+        0f
+      } else {
+        glitchSignedUnit(jitterSeed, (elapsedMs / 70L).toInt(), 1201) * 4.5f
+      }
+  val contentAlpha =
+      if (choreography == null) {
+        1f
+      } else if (elapsedMs < choreography.swapAtMs) {
+        0.74f
+      } else {
+        0.90f
+      }
+  Box(modifier = modifier) {
+    Box(
+        modifier =
+            Modifier.fillMaxWidth().graphicsLayer {
+              alpha = contentAlpha
+              translationX = jitter
+              translationY = -jitter * 0.35f
+              scaleX = if (choreography == null) 1f else 1f + glitchSignedUnit(jitterSeed, (elapsedMs / 140L).toInt(), 1217) * 0.008f
+            }
+    ) {
+      if (showVas) {
+        ScaleSlider(
+            label = "How red did the button feel?",
+            value = vasValue,
+            left = "slightly red",
+            right = "very red",
+            onChange = onVasChange,
+            onFinished = onVasFinished,
+            modifier = Modifier.fillMaxWidth(),
+        )
+      } else {
+        RednessLikertScale(value = likertValue, onSelect = onLikertSelect, modifier = Modifier.fillMaxWidth())
+      }
+    }
+    if (choreography != null) {
+      RednessConversionChoreographyOverlay(choreography = choreography, elapsedMs = elapsedMs)
+    }
+  }
+}
+
+@Composable
+private fun RednessConversionChoreographyOverlay(
+    choreography: RednessConversionChoreography,
+    elapsedMs: Long,
+) {
+  val frame = (elapsedMs / 70L).toInt()
+  val progress = (elapsedMs.toFloat() / choreography.durationMs.toFloat()).coerceIn(0f, 1f)
+  val nearSwap = kotlin.math.abs(elapsedMs - choreography.swapAtMs) < 850L
+  val phaseText =
+      when {
+        elapsedMs < choreography.swapAtMs -> "One moment..."
+        elapsedMs < choreography.settleAtMs -> "Updating item..."
+        else -> "You can adjust the new response."
+      }
+  Box(
+      modifier =
+          Modifier.fillMaxSize()
+              .clip(RoundedCornerShape(10.dp))
+              .clickable(
+                  interactionSource = remember { MutableInteractionSource() },
+                  indication = null,
+              ) {}
+  ) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+      val baseAlpha = if (nearSwap) 0.42f else 0.25f
+      drawRect(Color(0xFF001B6D).copy(alpha = baseAlpha + progress * 0.10f))
+      val stripeCount = if (nearSwap) 18 else 11
+      for (index in 0 until stripeCount) {
+        val y = (glitchHash(choreography.startedElapsedMs.toInt(), frame + index, 1231) % size.height.toInt().coerceAtLeast(1)).toFloat()
+        val height = 3f + (glitchHash(choreography.startedElapsedMs.toInt(), frame, 1249 + index) % 18)
+        val xShift = glitchSignedUnit(choreography.startedElapsedMs.toInt(), frame, 1277 + index) * size.width * 0.10f
+        val alpha = if (nearSwap) 0.30f else 0.16f
+        drawRect(
+            color = if (index % 3 == 0) Color.White.copy(alpha = alpha) else Color(0xFF00E8FF).copy(alpha = alpha),
+            topLeft = Offset(xShift, y),
+            size = Size(size.width * (0.64f + glitchUnit(choreography.startedElapsedMs.toInt(), frame, 1291 + index) * 0.45f), height),
+        )
+      }
+      val targetProgress =
+          if (elapsedMs >= choreography.swapAtMs) {
+            ((elapsedMs - choreography.swapAtMs).toFloat() / (choreography.durationMs - choreography.swapAtMs).toFloat()).coerceIn(0f, 1f)
+          } else {
+            0f
+          }
+      val boxCount = if (choreography.targetScale == "likert") 7 else 1
+      if (targetProgress > 0f) {
+        repeat(boxCount) { index ->
+          val width = if (boxCount == 1) size.width * 0.78f else size.width * 0.105f
+          val gap = size.width * 0.013f
+          val x = if (boxCount == 1) size.width * 0.11f else size.width * 0.08f + index * (width + gap)
+          val y = size.height * 0.48f + glitchSignedUnit(choreography.startedElapsedMs.toInt(), frame, 1301 + index) * 3f
+          drawRect(
+              color = Color(0xFFFFF7F7).copy(alpha = 0.18f + targetProgress * 0.34f),
+              topLeft = Offset(x, y),
+              size = Size(width, 8f + targetProgress * 11f),
+          )
+        }
+      }
+      drawRect(
+          color = Color(0xFFFF2D7F).copy(alpha = if (nearSwap) 0.15f else 0.05f),
+          topLeft = Offset(0f, size.height * (0.14f + 0.16f * progress)),
+          size = Size(size.width, 2.5f + 5f * if (nearSwap) 1f else 0.2f),
+      )
+    }
+    Text(
+        phaseText,
+        color = Color.White,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Black,
+        fontFamily = BrbMono,
+        modifier =
+            Modifier.align(Alignment.BottomEnd)
+                .padding(8.dp)
+                .background(Color(0xFF001046).copy(alpha = 0.74f), RoundedCornerShape(6.dp))
+                .border(1.dp, Color(0xFF9EEBFF).copy(alpha = 0.58f), RoundedCornerShape(6.dp))
+                .padding(horizontal = 8.dp, vertical = 4.dp),
     )
-  } else {
-    RednessLikertScale(value = likertValue, onSelect = onLikertSelect, modifier = modifier)
   }
 }
 
