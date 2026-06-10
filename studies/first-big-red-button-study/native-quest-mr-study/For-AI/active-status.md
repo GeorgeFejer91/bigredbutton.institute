@@ -1,5 +1,14 @@
 # Active Status
 
+## Current Snapshot - 2026-06-10 22:25
+
+- Fresh test pass on the current pushed commit `b14ded0` / APK SHA-256 `8EF7C02833AFFDDE200F68086C9A638963B2B02129F4BD5305C14AB95837E9AB`, size `107318779` bytes.
+- Full local preflight passed: `artifacts/local-preflight/20260610-222213/local-preflight-summary.json`. This rebuilt/checked the APK, passed static validation, exact instruction-audio validation, synthetic export schema validation, native keyboard contract, physical-evidence validator tests, final hardware post-run audit tests, final hardware post-run binding validation, and layout preview rendering.
+- Short Quest smoke suite passed on Quest 3S `3487C10J0P01ZY`: `artifacts/quest-smoke-suite/20260610-222240/quest-smoke-suite-summary.json`. It ran visual-layout smoke and panel/glitch smoke, installed/launched the current APK, verified the modeled button layout path, verified questionnaire panel/glitch startup, and pulled fresh screenshots.
+- Fast Quest directional questionnaire/data validation passed on Quest 3S `3487C10J0P01ZY`: `artifacts/qkv/20260610-222348/quest-keyevent-questionnaire-validation-summary.json`. It verified generated demographics, one-time prior button prompt, emulated condition button counts, native keyboard lifecycle, redness VAS/Likert conversion and transcript `microTimeline` cue logs, ECG/audio-window fields, pulled `ExperimentResults`, and byte-matched the export mirror.
+- Current readiness report: `artifacts/readiness-report/report-20260610-222522/readiness-report.md`, status `ready_except_physical_and_live_polar_gates`. Current goal audit: `artifacts/goal-completion-audit/20260610-222531/goal-completion-audit.md`, status `ready_except_physical_and_live_polar_gates`, `completionAllowed=false`.
+- Remaining gates are still external/human: live Polar H10 PMD ECG smoke, fast human controller-contact smoke, and full physical controller-contact/live-H10 export validation.
+
 ## Current Snapshot - 2026-06-10 22:16
 
 - The two questionnaire-change clips now drive transcript-synced micro-event choreography instead of one broad swap animation. `RednessConversionMicroEvent` rows encode phrase windows, spoken cue, participant caption, visual cue, and intensity. Condition 1 includes events such as `supervisor_ping`, `swap_requested`, `seven_boxes_assemble`, `answer_already_given`, and `result_settle`; condition 2 includes `professional_warning`, `mid_experiment_freeze`, `restore_requested`, `boxes_erased`, `data_importance`, and `wrong_way_settle`.
