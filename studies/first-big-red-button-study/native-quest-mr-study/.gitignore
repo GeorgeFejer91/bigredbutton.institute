@@ -1,0 +1,10 @@
+.gradle/
+.kotlin/
+local.properties
+build/
+app/build/
+artifacts/
+captures/
+*.apk
+*.apks
+local-export-pulls/
