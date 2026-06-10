@@ -4310,86 +4310,388 @@ private fun ChoiceButtonGroup(
 }
 
 @Composable
-private fun BlueFailureGlitchOverlay(active: Boolean, frame: Int, mode: String) {
+private fun BlueFailureGlitchOverlay(active: Boolean, frame: Int, mode: String, progress: Float, seed: Int) {
   if (!active) {
     return
   }
-  Canvas(modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(18.dp))) {
-    val widthInt = size.width.toInt().coerceAtLeast(1)
-    val heightInt = size.height.toInt().coerceAtLeast(1)
-    val seizurePulse = frame % 12
-    val baseAlpha =
-        when {
-          mode == "outro" && seizurePulse in 0..2 -> 0.88f
-          seizurePulse == 0 || seizurePulse == 7 -> 0.82f
-          else -> if (mode == "outro") 0.74f else 0.66f
-        }
-    drawRect(Color(0xFF012B7F).copy(alpha = baseAlpha))
-    if (seizurePulse == 0 || seizurePulse == 6) {
-      drawRect(Color(0xFFB7D7FF).copy(alpha = 0.22f))
-    }
-    if (seizurePulse == 3) {
-      drawRect(Color(0xFF0000AA).copy(alpha = 0.48f))
-    }
+  val intensity = panelGlitchEnvelope(progress, mode)
+  Canvas(
+      modifier =
+          Modifier.fillMaxSize()
+              .graphicsLayer {
+                translationX = panelGlitchContentJitter(frame, mode, progress, seed, 71) * 0.55f
+                translationY = panelGlitchContentJitter(frame, mode, progress, seed, 89) * 0.25f
+              }
+              .clip(RoundedCornerShape(18.dp)),
+  ) {
+    val phase = panelGlitchPhase(progress, mode)
+    drawPhasedFailureWash(frame = frame, mode = mode, phase = phase, progress = progress, intensity = intensity)
+    drawOnlineOfflineCues(frame = frame, mode = mode, phase = phase, progress = progress, seed = seed, intensity = intensity)
+    drawScanlineTears(frame = frame, mode = mode, phase = phase, seed = seed, intensity = intensity)
+    drawMacroblockCorruption(frame = frame, mode = mode, phase = phase, seed = seed, intensity = intensity)
+    drawColorBreakupTears(frame = frame, seed = seed, intensity = intensity)
+    drawGlitchedBufferSpinner(frame = frame, mode = mode, phase = phase, progress = progress, seed = seed, intensity = intensity)
+    drawNoiseBursts(frame = frame, phase = phase, seed = seed, intensity = intensity)
+    drawPanelBorderDesync(frame = frame, mode = mode, seed = seed, intensity = intensity)
+  }
+}
 
-    for (i in 0 until 34) {
-      val y = ((i * 29 + frame * (17 + (i % 5))) % heightInt).toFloat()
-      val stripeHeight = 1.5f + ((i * 3 + frame) % 9) * 2.2f
-      val xOffset = if ((i + frame) % 4 == 0) -size.width * 0.18f else 0f
-      val stripeWidth = size.width * (1.05f + ((i + frame) % 3) * 0.10f)
-      val color =
-          when ((i + frame) % 5) {
-            0 -> Color.White.copy(alpha = 0.30f)
-            1 -> Color(0xFF7FD4FF).copy(alpha = 0.38f)
-            2 -> Color(0xFF043BCA).copy(alpha = 0.54f)
-            3 -> Color(0xFF001046).copy(alpha = 0.44f)
-            else -> Color(0xFF00D8FF).copy(alpha = 0.24f)
-          }
-      drawRect(color = color, topLeft = Offset(xOffset, y), size = Size(stripeWidth, stripeHeight))
-    }
+private fun panelGlitchProgress(active: Boolean, startElapsedMs: Long, durationMs: Long): Float {
+  if (!active || durationMs <= 0L) {
+    return 0f
+  }
+  val elapsedMs = (SystemClock.elapsedRealtime() - startElapsedMs).coerceAtLeast(0L)
+  return (elapsedMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+}
 
-    for (i in 0 until 18) {
-      val blockWidth = size.width * (0.12f + ((i * 5 + frame) % 7) * 0.035f)
-      val blockHeight = 10f + ((i * 13 + frame * 3) % 64)
-      val x = ((frame * (41 + i) + i * 97) % widthInt).toFloat() - blockWidth / 2f
-      val y = ((frame * (23 + i) + i * 61) % heightInt).toFloat()
-      val blockColor =
-          when ((frame + i) % 4) {
-            0 -> Color(0xFFE8F6FF).copy(alpha = 0.24f)
-            1 -> Color(0xFF36A7FF).copy(alpha = 0.30f)
-            2 -> Color(0xFF001B66).copy(alpha = 0.54f)
-            else -> Color(0xFF00F0FF).copy(alpha = 0.18f)
-          }
-      drawRect(color = blockColor, topLeft = Offset(x, y), size = Size(blockWidth, blockHeight))
+private fun panelGlitchPhase(progress: Float, mode: String): String {
+  val p = progress.coerceIn(0f, 1f)
+  return if (mode == "outro") {
+    when {
+      p < 0.18f -> "destabilize"
+      p < 0.58f -> "dropout"
+      p < 0.86f -> "collapse"
+      else -> "dead_screen"
     }
-
-    for (i in 0 until 7) {
-      val tearY = ((frame * (37 + i * 3) + i * 89) % heightInt).toFloat()
-      val tearHeight = 5f + ((frame + i) % 6) * 4f
-      val alpha = if ((frame + i) % 3 == 0) 0.42f else 0.18f
-      drawRect(
-          color = Color.White.copy(alpha = alpha),
-          topLeft = Offset(0f, tearY),
-          size = Size(size.width, tearHeight),
-      )
-      drawRect(
-          color = Color(0xFF001046).copy(alpha = 0.38f),
-          topLeft = Offset(((frame * 17 + i * 53) % widthInt).toFloat() - size.width * 0.40f, tearY + tearHeight),
-          size = Size(size.width * 0.74f, tearHeight * 0.70f),
-      )
-    }
-
-    val columnWidth = size.width / 18f
-    for (i in 0 until 18) {
-      if ((frame + i) % 5 == 0) {
-        drawRect(
-            color = Color(0xFF021A5F).copy(alpha = 0.24f),
-            topLeft = Offset(i * columnWidth, 0f),
-            size = Size(columnWidth * 0.52f, size.height),
-        )
-      }
+  } else {
+    when {
+      p < 0.16f -> "acquire"
+      p < 0.48f -> "rupture"
+      p < 0.78f -> "reassemble"
+      else -> "lock"
     }
   }
+}
+
+private fun panelGlitchEnvelope(progress: Float, mode: String): Float {
+  val p = progress.coerceIn(0f, 1f)
+  return if (mode == "outro") {
+    when {
+      p < 0.18f -> 0.38f + p * 3.0f
+      p < 0.72f -> 1.0f
+      else -> (1.0f - (p - 0.72f) * 0.75f).coerceIn(0.48f, 1.0f)
+    }
+  } else {
+    when {
+      p < 0.16f -> 1.0f
+      p < 0.48f -> 0.92f
+      p < 0.78f -> 0.72f
+      else -> (1.0f - (p - 0.78f) * 3.3f).coerceIn(0.18f, 0.72f)
+    }
+  }
+}
+
+private fun panelGlitchContentJitter(frame: Int, mode: String, progress: Float, seed: Int, axisSalt: Int): Float {
+  val phase = panelGlitchPhase(progress, mode)
+  val phaseMultiplier =
+      when (phase) {
+        "rupture", "dropout", "collapse" -> 1.25f
+        "dead_screen" -> 0.45f
+        else -> 0.78f
+      }
+  return glitchSignedUnit(seed, frame, axisSalt) * 6.0f * panelGlitchEnvelope(progress, mode) * phaseMultiplier
+}
+
+private fun DrawScope.drawPhasedFailureWash(frame: Int, mode: String, phase: String, progress: Float, intensity: Float) {
+  val pulse = frame % 10
+  val baseAlpha =
+      when {
+        mode == "outro" && phase == "collapse" -> 0.90f
+        mode == "outro" && phase == "dead_screen" -> 0.82f
+        phase == "acquire" && pulse in 0..1 -> 0.86f
+        phase == "rupture" && pulse == 5 -> 0.80f
+        else -> if (mode == "outro") 0.74f else 0.64f
+      }
+  drawRect(Color(0xFF012B7F).copy(alpha = baseAlpha))
+  drawRect(
+      brush =
+          Brush.verticalGradient(
+              listOf(
+                  Color(0xFFBFEAFF).copy(alpha = 0.16f * intensity),
+                  Color(0xFF002782).copy(alpha = 0.08f),
+                  Color(0xFF000830).copy(alpha = 0.34f * intensity),
+              ),
+          ),
+  )
+  if (pulse == 0 && phase != "lock") {
+    drawRect(Color(0xFFDDF7FF).copy(alpha = 0.18f * intensity))
+  }
+  if (mode == "outro") {
+    val wipeProgress = ((progress - 0.54f) / 0.42f).coerceIn(0f, 1f)
+    if (wipeProgress > 0f) {
+      drawRect(
+          color = Color(0xFF000B3A).copy(alpha = 0.52f * wipeProgress),
+          topLeft = Offset(0f, size.height * (1f - wipeProgress)),
+          size = Size(size.width, size.height * wipeProgress),
+      )
+    }
+  }
+}
+
+private fun DrawScope.drawOnlineOfflineCues(
+    frame: Int,
+    mode: String,
+    phase: String,
+    progress: Float,
+    seed: Int,
+    intensity: Float,
+) {
+  val barAlpha = (0.16f + 0.32f * intensity).coerceAtMost(0.48f)
+  val topY = if (mode == "intro") size.height * (0.08f + progress * 0.08f) else size.height * (0.84f - progress * 0.12f)
+  val blockWidth = size.width / 28f
+  for (i in 0 until 28) {
+    val dropped = glitchHash(seed, frame + i, 211) % 5 == 0
+    val height = 7f + (glitchHash(seed, frame, 251 + i) % 20)
+    val color =
+        when {
+          dropped -> Color(0xFF001244).copy(alpha = barAlpha * 0.70f)
+          (i + frame) % 6 == 0 -> Color(0xFFFF2D7F).copy(alpha = barAlpha * 0.70f)
+          (i + frame) % 3 == 0 -> Color.White.copy(alpha = barAlpha)
+          else -> Color(0xFF00F0FF).copy(alpha = barAlpha)
+        }
+    drawRect(
+        color = color,
+        topLeft = Offset(i * blockWidth + glitchSignedUnit(seed, frame, 277 + i) * 3f, topY),
+        size = Size(blockWidth * if (dropped) 0.38f else 0.76f, height),
+    )
+  }
+
+  val shortSide = if (size.width < size.height) size.width else size.height
+  val bracket = shortSide * 0.078f
+  val inset = 16f + glitchUnit(seed, frame, 293) * 5f
+  val bracketAlpha = if (phase == "lock" || phase == "dead_screen") 0.20f else 0.42f * intensity
+  val color = Color(0xFFBFEAFF).copy(alpha = bracketAlpha)
+  drawLine(color, Offset(inset, inset), Offset(inset + bracket, inset), strokeWidth = 4f)
+  drawLine(color, Offset(inset, inset), Offset(inset, inset + bracket), strokeWidth = 4f)
+  drawLine(color, Offset(size.width - inset, inset), Offset(size.width - inset - bracket, inset), strokeWidth = 4f)
+  drawLine(color, Offset(size.width - inset, inset), Offset(size.width - inset, inset + bracket), strokeWidth = 4f)
+  drawLine(color, Offset(inset, size.height - inset), Offset(inset + bracket, size.height - inset), strokeWidth = 4f)
+  drawLine(color, Offset(inset, size.height - inset), Offset(inset, size.height - inset - bracket), strokeWidth = 4f)
+  drawLine(color, Offset(size.width - inset, size.height - inset), Offset(size.width - inset - bracket, size.height - inset), strokeWidth = 4f)
+  drawLine(color, Offset(size.width - inset, size.height - inset), Offset(size.width - inset, size.height - inset - bracket), strokeWidth = 4f)
+}
+
+private fun DrawScope.drawScanlineTears(frame: Int, mode: String, phase: String, seed: Int, intensity: Float) {
+  val widthInt = size.width.toInt().coerceAtLeast(1)
+  val heightInt = size.height.toInt().coerceAtLeast(1)
+  val stripeCount = if (phase == "lock" || phase == "dead_screen") 42 else 64
+  for (i in 0 until stripeCount) {
+    val y = ((i * 19 + frame * (9 + (i % 7)) + glitchHash(seed, i, 311) % heightInt) % heightInt).toFloat()
+    val stripeHeight = 1.2f + (glitchHash(seed, frame, 337 + i) % 11) * 1.8f
+    val shift = glitchSignedUnit(seed, frame, 353 + i) * size.width * 0.20f * intensity
+    val color =
+        when ((i + frame) % 6) {
+          0 -> Color.White.copy(alpha = 0.24f * intensity)
+          1 -> Color(0xFF7FD4FF).copy(alpha = 0.38f * intensity)
+          2 -> Color(0xFF043BCA).copy(alpha = 0.54f * intensity)
+          3 -> Color(0xFF001046).copy(alpha = 0.46f * intensity)
+          4 -> Color(0xFFFF2D7F).copy(alpha = 0.13f * intensity)
+          else -> Color(0xFF00D8FF).copy(alpha = 0.24f * intensity)
+        }
+    drawRect(color = color, topLeft = Offset(-size.width * 0.22f + shift, y), size = Size(size.width * 1.44f, stripeHeight))
+  }
+
+  val tearCount = if (phase == "collapse") 14 else 10
+  for (i in 0 until tearCount) {
+    val tearY = ((frame * (31 + i * 3) + i * 89 + glitchHash(seed, i, 379)) % heightInt).toFloat()
+    val tearHeight = 4f + (glitchHash(seed, frame, 397 + i) % 7) * 4f
+    val tearOffset = glitchSignedUnit(seed, frame, 419 + i) * size.width * if (mode == "outro") 0.34f else 0.22f
+    drawRect(
+        color = Color.White.copy(alpha = 0.16f + 0.28f * intensity),
+        topLeft = Offset(0f, tearY),
+        size = Size(size.width, tearHeight),
+    )
+    drawRect(
+        color = Color(0xFF001046).copy(alpha = 0.42f * intensity),
+        topLeft = Offset(tearOffset - size.width * 0.35f, tearY + tearHeight),
+        size = Size(size.width * 0.82f, tearHeight * 0.74f),
+    )
+    if ((i + frame) % 4 == 0) {
+      drawRect(
+          color = Color(0xFF00F0FF).copy(alpha = 0.20f * intensity),
+          topLeft = Offset(((frame * 17 + i * 53) % widthInt).toFloat(), tearY - tearHeight * 0.40f),
+          size = Size(size.width * 0.28f, tearHeight * 1.4f),
+      )
+    }
+  }
+}
+
+private fun DrawScope.drawMacroblockCorruption(frame: Int, mode: String, phase: String, seed: Int, intensity: Float) {
+  val columns = 18
+  val rows = 12
+  val cellWidth = size.width / columns
+  val cellHeight = size.height / rows
+  val blockCount =
+      when (phase) {
+        "rupture", "dropout", "collapse" -> 48
+        "lock", "dead_screen" -> 24
+        else -> 34
+      }
+  for (i in 0 until blockCount) {
+    val col = glitchHash(seed, frame / 2 + i, 431) % columns
+    val row = glitchHash(seed, frame + i, 457) % rows
+    val cellsWide = 1 + glitchHash(seed, frame, 479 + i) % 4
+    val cellsHigh = 1 + glitchHash(seed, frame, 503 + i) % 3
+    val x = (col * cellWidth + glitchSignedUnit(seed, frame, 521 + i) * 8f * intensity).coerceIn(-cellWidth, size.width)
+    val y = (row * cellHeight + glitchSignedUnit(seed, frame, 541 + i) * 5f * intensity).coerceIn(-cellHeight, size.height)
+    val alpha = (0.12f + glitchUnit(seed, frame, 563 + i) * 0.34f) * intensity
+    val blockColor =
+        when ((frame + i + if (mode == "outro") 1 else 0) % 5) {
+          0 -> Color(0xFFE8F6FF).copy(alpha = alpha * 0.76f)
+          1 -> Color(0xFF36A7FF).copy(alpha = alpha)
+          2 -> Color(0xFF001B66).copy(alpha = alpha * 1.35f)
+          3 -> Color(0xFF00F0FF).copy(alpha = alpha * 0.70f)
+          else -> Color(0xFFFF2D7F).copy(alpha = alpha * 0.42f)
+        }
+    drawRect(color = blockColor, topLeft = Offset(x, y), size = Size(cellWidth * cellsWide, cellHeight * cellsHigh))
+  }
+}
+
+private fun DrawScope.drawColorBreakupTears(frame: Int, seed: Int, intensity: Float) {
+  val heightInt = size.height.toInt().coerceAtLeast(1)
+  for (i in 0 until 11) {
+    val y = ((frame * (13 + i) + glitchHash(seed, i, 587)) % heightInt).toFloat()
+    val stripHeight = 2f + (glitchHash(seed, frame, 601 + i) % 4)
+    val shift = glitchSignedUnit(seed, frame, 617 + i) * size.width * 0.09f * intensity
+    drawRect(
+        color = Color(0xFF00F0FF).copy(alpha = 0.18f * intensity),
+        topLeft = Offset(shift, y),
+        size = Size(size.width * 0.78f, stripHeight),
+    )
+    drawRect(
+        color = Color(0xFFFF2D7F).copy(alpha = 0.15f * intensity),
+        topLeft = Offset(-shift + size.width * 0.18f, y + stripHeight * 1.8f),
+        size = Size(size.width * 0.58f, stripHeight),
+    )
+  }
+}
+
+private fun DrawScope.drawGlitchedBufferSpinner(
+    frame: Int,
+    mode: String,
+    phase: String,
+    progress: Float,
+    seed: Int,
+    intensity: Float,
+) {
+  val shortSide = if (size.width < size.height) size.width else size.height
+  val radius = shortSide * if (phase == "collapse" || phase == "dropout") 0.132f else 0.108f
+  val center =
+      Offset(
+          size.width * 0.50f + glitchSignedUnit(seed, frame, 641) * 10f * intensity,
+          size.height * if (mode == "outro") 0.55f else 0.50f + glitchSignedUnit(seed, frame, 659) * 7f * intensity,
+      )
+  val rotation = (frame * if (mode == "outro") -21f else 17f) + progress * 290f + seed % 360
+  val ringBounds = Size(radius * 2f, radius * 2f)
+  val topLeft = Offset(center.x - radius, center.y - radius)
+  for (i in 0 until 12) {
+    val dropped = glitchHash(seed, frame + i, 677) % 7 == 0
+    if (!dropped) {
+      val age = ((i + frame) % 12) / 12f
+      val alpha = (0.15f + age * 0.50f) * intensity
+      val color =
+          when (i % 4) {
+            0 -> Color.White.copy(alpha = alpha)
+            1 -> Color(0xFF00F0FF).copy(alpha = alpha)
+            2 -> Color(0xFF7FD4FF).copy(alpha = alpha * 0.84f)
+            else -> Color(0xFFFF2D7F).copy(alpha = alpha * 0.42f)
+          }
+      drawArc(
+          color = color,
+          startAngle = rotation + i * 30f + glitchSignedUnit(seed, frame, 701 + i) * 7f,
+          sweepAngle = 13f + glitchUnit(seed, frame, 719 + i) * 21f,
+          useCenter = false,
+          topLeft = topLeft,
+          size = ringBounds,
+          style = Stroke(width = 7f + intensity * 3f, cap = StrokeCap.Round),
+      )
+    }
+  }
+
+  drawArc(
+      color = Color(0xFF001046).copy(alpha = 0.46f * intensity),
+      startAngle = rotation * -0.65f,
+      sweepAngle = 86f + 44f * intensity,
+      useCenter = false,
+      topLeft = Offset(center.x - radius * 1.18f, center.y - radius * 1.18f),
+      size = Size(radius * 2.36f, radius * 2.36f),
+      style = Stroke(width = 3f + intensity * 2f, cap = StrokeCap.Square),
+  )
+
+  for (i in 0 until 22) {
+    val angle = (rotation + i * 16.36f + glitchSignedUnit(seed, frame, 743 + i) * 10f) * PI.toFloat() / 180f
+    val distance = radius * (1.36f + glitchUnit(seed, frame, 761 + i) * 0.22f)
+    val tickCenter = Offset(center.x + cos(angle) * distance, center.y + sin(angle) * distance)
+    val tickAlpha = if (glitchHash(seed, frame + i, 787) % 6 == 0) 0.08f else 0.34f * intensity
+    drawRect(
+        color = Color(0xFFBFEAFF).copy(alpha = tickAlpha),
+        topLeft = Offset(tickCenter.x - 5f, tickCenter.y - 2f),
+        size = Size(10f + glitchUnit(seed, frame, 809 + i) * 18f, 4f + intensity * 3f),
+    )
+  }
+}
+
+private fun DrawScope.drawNoiseBursts(frame: Int, phase: String, seed: Int, intensity: Float) {
+  val widthInt = size.width.toInt().coerceAtLeast(1)
+  val heightInt = size.height.toInt().coerceAtLeast(1)
+  val count = (34 + 62 * intensity).roundToInt()
+  for (i in 0 until count) {
+    val x = (glitchHash(seed, frame + i, 821) % widthInt).toFloat()
+    val y = (glitchHash(seed, frame * 2 + i, 839) % heightInt).toFloat()
+    val pixelWidth = 2f + (glitchHash(seed, frame, 853 + i) % 15)
+    val pixelHeight = 1.5f + (glitchHash(seed, frame, 877 + i) % 9)
+    val alpha = (0.08f + glitchUnit(seed, frame, 887 + i) * 0.22f) * intensity
+    val color =
+        when ((i + frame) % 5) {
+          0 -> Color.White.copy(alpha = alpha)
+          1 -> Color(0xFF00F0FF).copy(alpha = alpha)
+          2 -> Color(0xFF002782).copy(alpha = alpha * 1.3f)
+          3 -> Color(0xFFFF2D7F).copy(alpha = alpha * if (phase == "collapse") 0.7f else 0.36f)
+          else -> Color(0xFFBFEAFF).copy(alpha = alpha)
+        }
+    drawRect(color = color, topLeft = Offset(x, y), size = Size(pixelWidth, pixelHeight))
+  }
+}
+
+private fun DrawScope.drawPanelBorderDesync(frame: Int, mode: String, seed: Int, intensity: Float) {
+  val offsetX = glitchSignedUnit(seed, frame, 907) * 8f * intensity
+  val offsetY = glitchSignedUnit(seed, frame, 919) * 5f * intensity
+  val borderSize = Size(size.width - 3f, size.height - 3f)
+  drawRect(
+      color = Color(0xFFBFEAFF).copy(alpha = 0.34f * intensity),
+      topLeft = Offset(1.5f + offsetX, 1.5f),
+      size = borderSize,
+      style = Stroke(width = 4.5f),
+  )
+  drawRect(
+      color = Color(0xFFFF2D7F).copy(alpha = 0.13f * intensity),
+      topLeft = Offset(1.5f - offsetX * 0.70f, 1.5f + offsetY),
+      size = borderSize,
+      style = Stroke(width = 3f),
+  )
+  if (mode == "outro") {
+    drawRect(
+        color = Color(0xFF001046).copy(alpha = 0.42f * intensity),
+        topLeft = Offset(size.width * 0.04f, size.height * 0.86f + offsetY),
+        size = Size(size.width * 0.92f, 9f + 18f * intensity),
+    )
+  }
+}
+
+private fun glitchHash(seed: Int, frame: Int, salt: Int): Int {
+  var value = seed xor (frame * 1103515245) xor (salt * 12345)
+  value = value xor (value ushr 16)
+  value *= 73244475
+  value = value xor (value ushr 15)
+  return value and Int.MAX_VALUE
+}
+
+private fun glitchUnit(seed: Int, frame: Int, salt: Int): Float {
+  return (glitchHash(seed, frame, salt) % 10000) / 10000f
+}
+
+private fun glitchSignedUnit(seed: Int, frame: Int, salt: Int): Float {
+  return glitchUnit(seed, frame, salt) * 2f - 1f
 }
 
 @Composable

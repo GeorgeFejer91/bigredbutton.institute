@@ -1,5 +1,15 @@
 # Active Status
 
+## Current Snapshot - 2026-06-10 14:49
+
+- Latest debug APK after intensifying questionnaire intro/outro glitch aesthetics: `app/build/outputs/apk/debug/app-debug.apk`, SHA-256 `7A9A7123CEBE067F9A0A6C4CC1DAA1F0BB00D13EC3ADA0E8F6BB99492E764925`, size `107315659` bytes.
+- Questionnaire transition visuals are now a comfort-safe phased blue system-failure effect. Intro uses acquisition/rupture/reassembly/lock timing; outro uses destabilize/dropout/collapse/dead-screen timing. The renderer adds panel jitter, dense scanline tears, macroblocks, cyan/white/blue color breakup with limited magenta contamination, border desynchronization, noise bursts, non-textual online/offline cues, and a corrupted buffer/loading spinner inspired by a spinning wait cursor.
+- The existing supplied transition MP3s remain unchanged and hash-locked as `questionnaire_intro_glitch.mp3` and `questionnaire_outro_glitch.mp3`; no instruction MP3, export schema, native keyboard behavior, panel placement, or button interaction contract changed for this glitch update.
+- Latest full local preflight passed: `artifacts/local-preflight/20260610-144945/local-preflight-summary.json`. It rebuilt/checked the current APK, passed static validation, exact audio validation, synthetic export schema validation, native keyboard contract, physical-evidence validator tests, final hardware post-run audit validator tests, final hardware post-run audit binding validation, and layout preview rendering.
+- Latest standalone/static validation passed: `artifacts/local-validation/validation-20260610-144947.json`. It includes dedicated checks for the phased comfort-safe failure overlay, corrupted buffer spinner, and non-textual online/offline system-failure cues.
+- Quest headset panel-smoke screenshots have not yet been refreshed for this intensified glitch. The older `20260610-132413` screenshots show the previous blue scanline treatment, not this current renderer.
+- Remaining external gates are unchanged: standalone live Polar H10 PMD ECG streaming, fast human controller-contact smoke, and full physical controller-contact/live-H10 export validation still require a human operator wearing the Quest and Polar H10.
+
 ## Current Snapshot - 2026-06-10 14:35
 
 - Latest debug APK after adding the one-time prior Big Red Button experience prompt: `app/build/outputs/apk/debug/app-debug.apk`, SHA-256 `EA6600EA52D75EB1B4821CE934E87D5C0001CCC46E9E26EE33DB47218D254073`, size `107315659` bytes.

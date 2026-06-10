@@ -2,6 +2,13 @@
 
 Latest visual inspection: 2026-06-10 13:27.
 
+## Pending Glitch Recheck
+
+- Local implementation update: 2026-06-10 14:49.
+- Current APK after the glitch update: `app/build/outputs/apk/debug/app-debug.apk`, SHA-256 `7A9A7123CEBE067F9A0A6C4CC1DAA1F0BB00D13EC3ADA0E8F6BB99492E764925`.
+- The questionnaire intro/outro overlay has been intensified into a comfort-safe phased blue system-failure effect with panel jitter, macroblocks, denser scanline tears, color breakup, border desynchronization, noise bursts, non-textual online/offline cues, and a corrupted buffer/loading spinner.
+- The existing headset screenshots below predate this update and show the earlier blue scanline treatment. Refresh `tools/run-quest-panel-smoke.ps1` before using headset screenshots as evidence for the new spinner/collapse renderer.
+
 ## Fresh Headset Evidence
 
 - Quest smoke suite: `artifacts/quest-smoke-suite/20260610-132347/quest-smoke-suite-summary.json`

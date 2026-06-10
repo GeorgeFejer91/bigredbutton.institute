@@ -394,8 +394,34 @@ if (Test-Path $activity) {
     ) 'intake page fits the 1180x820 Quest panel without requiring scroll'
     Add-Check 'questionnaire panel spawns in gaze line' ($activityText.Contains('BRB_QUESTIONNAIRE_PANEL_LAYOUT') -and $activityText.Contains('placement=current-gaze-line') -and $activityText.Contains('QUESTIONNAIRE_PANEL_Y_METERS = 1.52f') -and $activityText.Contains('QUESTIONNAIRE_PANEL_Z_METERS = 1.55f')) 'view-origin reset and gaze-line panel placement marker'
     Add-Check 'questionnaire intro/outro glitch cues' ($activityText.Contains('R.raw.questionnaire_intro_glitch') -and $activityText.Contains('R.raw.questionnaire_outro_glitch') -and $activityText.Contains('BRB_QUESTIONNAIRE_${mode.uppercase(Locale.US)}_CUE') -and $activityText.Contains('mode = "intro"') -and $activityText.Contains('mode = "outro"')) 'intro/outro MP3s drive panel transitions'
-    Add-Check 'blue failure glitch overlay' ($activityText.Contains('BlueFailureGlitchOverlay') -and $activityText.Contains('BRB_PANEL_GLITCH') -and $activityText.Contains('Color(0xFF012B7F)')) 'blue software-failure style flicker overlay'
-    Add-Check 'seizing BSOD glitch treatment' ($activityText.Contains('seizurePulse') -and $activityText.Contains('Color(0xFF00F0FF)') -and $activityText.Contains('tearHeight') -and $activityText.Contains('for (i in 0 until 34)')) 'intro/outro overlay uses aggressive flicker, blocks, stripes, and tears'
+    Add-Check 'blue failure glitch overlay' (
+        $activityText.Contains('BlueFailureGlitchOverlay') -and
+        $activityText.Contains('BRB_PANEL_GLITCH') -and
+        $activityText.Contains('Color(0xFF012B7F)') -and
+        $activityText.Contains('style=phased_system_failure comfortSafe=true')
+    ) 'blue software-failure style transition overlay with comfort-safe phased timing'
+    Add-Check 'comfort-safe phased glitch treatment' (
+        $activityText.Contains('panelGlitchProgress') -and
+        $activityText.Contains('panelGlitchEnvelope') -and
+        $activityText.Contains('panelGlitchPhase') -and
+        $activityText.Contains('drawPhasedFailureWash') -and
+        $activityText.Contains('drawScanlineTears') -and
+        $activityText.Contains('drawMacroblockCorruption') -and
+        $activityText.Contains('drawColorBreakupTears') -and
+        $activityText.Contains('drawPanelBorderDesync') -and
+        $activityText.Contains('graphicsLayer') -and
+        $activityText.Contains('PANEL_GLITCH_FRAME_MS = 70L')
+    ) 'intro/outro overlay uses phased acquisition/dropout/collapse, jitter, macroblocks, color breakup, stripes, and border desynchronization'
+    Add-Check 'glitched buffer loading cues' (
+        $activityText.Contains('drawGlitchedBufferSpinner') -and
+        $activityText.Contains('bufferSpinner=true') -and
+        $activityText.Contains('drawOnlineOfflineCues') -and
+        $activityText.Contains('onlineOfflineCues=true') -and
+        $activityText.Contains('drawNoiseBursts') -and
+        $activityText.Contains('StrokeCap.Round') -and
+        $activityText.Contains('dead_screen') -and
+        $activityText.Contains('dropout')
+    ) 'panel transitions include a corrupted loading spinner, buffer ticks, and non-textual online/offline system-failure cues'
     Add-Check 'digital press counter above button' ($activityText.Contains('DigitalPressCounter') -and $activityText.Contains('displayValue') -and $activityText.Contains('PRESSES') -and $activityText.Contains('buttonPressCountState')) 'old digital display counter increments from accepted presses'
     Add-Check 'prior button experience prompt uses transparent counter panel' (
         $activityText.Contains('ButtonStimulusPanel') -and
