@@ -606,13 +606,16 @@ if (Test-Path $activity) {
         $activityText.Contains('normalizeAgeInput(raw)') -and
         $activityText.Contains('InputFilter.LengthFilter(maxChars)') -and
         $activityText.Contains('requestDemographicsTextInputFocus("age", "name_submit_next")') -and
-        $activityText.Contains('requestDemographicsTextInputFocus("age", "name_valid_auto_advance")') -and
+        -not $activityText.Contains('name_valid_auto_advance') -and
         $activityText.Contains('hideSoftKeyboardForReason("field_age_done")') -and
         $activityText.Contains('focus_request_retry_') -and
         $activityText.Contains('requiredTextField') -and
         $activityText.Contains('isRequired = requiredTextField == "name"') -and
         $activityText.Contains('isRequired = requiredTextField == "age"') -and
         $activityText.Contains('isGuidedField = isFocused || isRequired') -and
+        $activityText.Contains('handleDemographicsHardwareKeyEvent(event)') -and
+        $activityText.Contains('appendDemographicsNameCharacter') -and
+        $activityText.Contains('activity_key_event') -and
         $activityText.Contains('.height(72.dp)') -and
         $activityText.Contains('demographicsFocusRequestSourceState') -and
         $activityText.Contains('singlePath=true') -and
@@ -1471,6 +1474,23 @@ if (Test-Path $demographicsKeyboardValidationScript) {
         -not $demographicsKeyboardValidationText.Contains('trigger dial') -and
         -not $demographicsKeyboardValidationText.Contains('input text')
     ) 'focused Quest smoke proves visible AndroidView(EditText) Name text/Next and Age number/Done contracts, mixed-input cleanup, then exact George/34 values'
+}
+$demographicsKeypressStressScript = Join-Path $projectRoot 'tools\run-quest-demographics-keypress-stress.ps1'
+Add-Check 'Quest demographics keypress stress script' (Test-Path $demographicsKeypressStressScript) 'tools\run-quest-demographics-keypress-stress.ps1'
+if (Test-Path $demographicsKeypressStressScript) {
+    $demographicsKeypressStressText = Get-Content -Raw -LiteralPath $demographicsKeypressStressScript
+    Add-Check 'Quest demographics keypress stress types full name and age' (
+        $demographicsKeypressStressText.Contains("Send-TextToken 'George'") -and
+        $demographicsKeypressStressText.Contains("Send-KeyCode 62 'SPACE'") -and
+        $demographicsKeypressStressText.Contains("Send-TextToken 'Fejer'") -and
+        $demographicsKeypressStressText.Contains('value=george_fejer') -and
+        $demographicsKeypressStressText.Contains("Send-TextToken '3'") -and
+        $demographicsKeypressStressText.Contains("Send-TextToken '4'") -and
+        $demographicsKeypressStressText.Contains('value=34') -and
+        $demographicsKeypressStressText.Contains('source=activity_key_event') -and
+        $demographicsKeypressStressText.Contains("Send-KeyCode 66 'ENTER_NEXT'") -and
+        $demographicsKeypressStressText.Contains("Send-KeyCode 66 'ENTER_DONE'")
+    ) 'headset stress uses real focused demographics key events for George Fejer, Enter/Next, age 34, and Enter/Done'
 }
 
 $localPreflightScript = Join-Path $projectRoot 'tools\run-local-preflight.ps1'

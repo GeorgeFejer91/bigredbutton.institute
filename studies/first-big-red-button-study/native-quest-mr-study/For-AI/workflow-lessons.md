@@ -107,6 +107,8 @@ For heartbeat-driven button visuals, prefer model-shaped warm emission over a fl
 
 For hand tracking, add it as provenance-separated supplemental input, not as an undocumented replacement for the controller path. `IsdkSystem.getHandForPointerEvent(event)` can distinguish hand-tracked selects; log/export those as `hand_contact`, keep `controller_contact` separate, and preserve the final hardware gate unless the protocol explicitly changes.
 
+For Quest demographics text entry, do not auto-retarget from Name to Age based only on partial typed content. Participants need to enter full names such as `George Fejer`; only explicit Next/Enter or a deliberate controller submit should move focus to Age. Keep an app-side validation route for deterministic state/sanitizer checks, but also run a keypress-level headset stress that sends real input events into the focused visible `EditText`.
+
 Use `tools/run-quest-panel-smoke.ps1` for routine headset evidence of demographics styling, the first Button Experience panel, and questionnaire intro/glitch markers. This hidden mode must not start audio, start a condition, or export data; it exists so panel/glitch regressions can be checked without another full audio wait.
 
 Use `tools/run-quest-visual-layout-smoke.ps1` for routine headset evidence of the in-condition modeled button and the seated visual-angle contract. It launches hidden physical-validation mode, waits only for condition 1 plus `BRB_BUTTON_SPATIAL_LAYOUT`, captures a screenshot/log, and force-stops before full audio completion. It does not replace the human controller-contact smoke or physical export gate.

@@ -853,6 +853,13 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     handleAudioRigStressIntent(intent)
   }
 
+  override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+    if (handleDemographicsHardwareKeyEvent(event)) {
+      return true
+    }
+    return super.dispatchKeyEvent(event)
+  }
+
   fun selectStudyLanguage(language: StudyLanguage, source: String = "participant") {
     selectedLanguageState.value = language
     languageSelectionFocusIndexState.intValue = if (language == StudyLanguage.Japanese) 1 else 0
@@ -3038,6 +3045,43 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     return accepted
   }
 
+  fun appendDemographicsNameCharacter(char: Char, source: String): Boolean {
+    if (char.isISOControl()) {
+      Log.i(
+          TAG,
+          "BRB_DEMOGRAPHICS_NAME_KEY accepted=false reason=control_character source=${sanitizeKeyboardLogToken(source)} length=${demographicsDraftNameState.value.length} maxChars=$DEMOGRAPHICS_NAME_MAX_CHARS platformControl=EditText keyboardTarget=true",
+      )
+      return false
+    }
+    val before = demographicsDraftNameState.value
+    val cleaned = replaceDemographicsTextInput("name", before + char, "text", source)
+    val accepted = cleaned != before
+    val keyKind =
+        when {
+          char == ' ' -> "space"
+          char.isLetter() -> "letter"
+          char.isDigit() -> "digit"
+          else -> "punctuation"
+        }
+    Log.i(
+        TAG,
+        "BRB_DEMOGRAPHICS_NAME_KEY keyKind=$keyKind accepted=$accepted source=${sanitizeKeyboardLogToken(source)} length=${cleaned.length} maxChars=$DEMOGRAPHICS_NAME_MAX_CHARS platformControl=EditText keyboardTarget=true",
+    )
+    return accepted
+  }
+
+  fun backspaceDemographicsName(source: String): Boolean {
+    val before = demographicsDraftNameState.value
+    val after = before.dropLast(1)
+    replaceDemographicsTextInput("name", after, "text", source)
+    val accepted = before != after
+    Log.i(
+        TAG,
+        "BRB_DEMOGRAPHICS_NAME_BACKSPACE accepted=$accepted source=${sanitizeKeyboardLogToken(source)} length=${after.length} platformControl=EditText keyboardTarget=true",
+    )
+    return accepted
+  }
+
   fun backspaceDemographicsAge(source: String): Boolean {
     val before = demographicsDraftAgeState.value
     val after = before.dropLast(1)
@@ -3137,6 +3181,67 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         TAG,
         "BRB_DEMOGRAPHICS_EDITTEXT_FOCUS_REQUEST field=$safeFieldId accepted=true token=${demographicsFocusRequestTokenState.intValue} source=${demographicsFocusRequestSourceState.value} keyboardMode=$keyboardMode singlePath=true fullCellHitbox=true platformControl=EditText inputOwner=androidViewEditText",
     )
+  }
+
+  private fun handleDemographicsHardwareKeyEvent(event: KeyEvent): Boolean {
+    if (stageState.value != StudyStage.ConsentDemographics) {
+      return false
+    }
+    if (event.action != KeyEvent.ACTION_DOWN && event.action != KeyEvent.ACTION_UP) {
+      return false
+    }
+    val focusedField = demographicsFocusedFieldState.value
+    if (focusedField != "name" && focusedField != "age") {
+      return false
+    }
+    val keyCode = event.keyCode
+    val isBackspace = keyCode == KeyEvent.KEYCODE_DEL || keyCode == KeyEvent.KEYCODE_FORWARD_DEL
+    val isSubmit = keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER
+    val char = demographicsHardwareKeyCharacter(event)
+    if (!isBackspace && !isSubmit && char == null) {
+      return false
+    }
+    if (event.action == KeyEvent.ACTION_DOWN) {
+      return true
+    }
+    val source = "activity_key_event"
+    when {
+      isSubmit && focusedField == "name" -> {
+        logDemographicsTextInputEditorAction("name", "next", source)
+        requestDemographicsTextInputFocus("age", "hardware_key_event_name_next")
+      }
+      isSubmit && focusedField == "age" -> {
+        logDemographicsTextInputEditorAction("age", "done", source)
+        hideSoftKeyboardForReason("field_age_done_hardware_key_event")
+      }
+      isBackspace && focusedField == "name" -> backspaceDemographicsName(source)
+      isBackspace && focusedField == "age" -> backspaceDemographicsAge(source)
+      focusedField == "name" && char != null -> appendDemographicsNameCharacter(char, source)
+      focusedField == "age" && char != null -> appendDemographicsAgeDigit(char, source)
+    }
+    return true
+  }
+
+  private fun demographicsHardwareKeyCharacter(event: KeyEvent): Char? {
+    val unicodeChar = event.unicodeChar
+    if (unicodeChar > 0) {
+      val char = unicodeChar.toChar()
+      if (!char.isISOControl()) {
+        return char
+      }
+    }
+    return when (event.keyCode) {
+      KeyEvent.KEYCODE_SPACE -> ' '
+      in KeyEvent.KEYCODE_A..KeyEvent.KEYCODE_Z ->
+          'a' + (event.keyCode - KeyEvent.KEYCODE_A)
+      in KeyEvent.KEYCODE_0..KeyEvent.KEYCODE_9 ->
+          '0' + (event.keyCode - KeyEvent.KEYCODE_0)
+      in KeyEvent.KEYCODE_NUMPAD_0..KeyEvent.KEYCODE_NUMPAD_9 ->
+          '0' + (event.keyCode - KeyEvent.KEYCODE_NUMPAD_0)
+      KeyEvent.KEYCODE_MINUS -> '-'
+      KeyEvent.KEYCODE_APOSTROPHE -> '\''
+      else -> null
+    }
   }
 
   private fun handleDemographicsKeyboardValidationIntent(intent: Intent?) {
@@ -7125,17 +7230,6 @@ private fun ConsentDemographicsScreen(activity: BigRedButtonStudyActivity) {
         age.toIntOrNull() == null -> "age"
         else -> ""
       }
-
-  LaunchedEffect(name, age, requiredTextField) {
-    if (requiredTextField == "age" && age.isBlank() && name.trim().length >= 2) {
-      delay(900)
-      if (activity.stageState.value == StudyStage.ConsentDemographics &&
-          activity.demographicsDraftAgeState.value.isBlank() &&
-          activity.demographicsDraftNameState.value.trim().length >= 2) {
-        activity.requestDemographicsTextInputFocus("age", "name_valid_auto_advance")
-      }
-    }
-  }
 
   Box(modifier = Modifier.fillMaxSize()) {
     Column(
