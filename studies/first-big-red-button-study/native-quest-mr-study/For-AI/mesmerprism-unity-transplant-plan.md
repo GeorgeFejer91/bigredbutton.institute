@@ -183,3 +183,32 @@ Native transplant steps:
   - full physical controller-contact/live-H10 export gate remains the final proof.
 - Optional LSL gate:
   - LSL loopback stream connects and exports timestamped samples without contaminating participant press counts.
+
+## New-Agent Integration Brief Delta - 2026-06-12
+
+Source brief inspected: `https://github.com/MesmerPrism/the-big-red-button-institute/blob/codex/brb-questionnaire-panel-bridge/Documentation/New-Agent-Integration-Brief.md`.
+
+The Unity project is still a parallel implementation, not an engine dependency for this native app. Use it as a behavioral and integration reference only: button feel, signal routing, diagnostic boundaries, and validation habits can transfer, but Unity scene/components and Unity-specific Android bridge code should not be imported into this Meta Spatial SDK/Kotlin app.
+
+Questionnaire-panel bridge lesson:
+
+- The Unity branch now demonstrates a clean Android product boundary for a standalone questionnaire panel: explicit intent, `request_json`, caller-owned `content://` result URI, write-only URI grant, one-shot immutable broadcast `PendingIntent`, and caller-side result validation by `request_id`/`nonce`.
+- The current native app keeps questionnaires in-process, so it does not need this caller/callee IPC path. Still, the same contract shape is useful internally: explicit stage names, versioned request/result schema, validation-only auto-submit flags, durable pending state before panel display, and no answer data in logs, filenames, public shared storage, or callback extras.
+- Do not replace native questionnaire validation with ADB relaunches, public storage exchange, overlays, package killing, `file://`, `QUERY_ALL_PACKAGES`, or `SYSTEM_ALERT_WINDOW`. ADB remains a development/validation launcher only.
+
+Brokerless signal-route lesson:
+
+- Unity now documents direct Polar, direct LSL, and direct OSC-style routing without requiring the Rusty XR broker. This supports the native app's current direction: native Polar PMD ECG/RR remains primary and broker-independent, while any future external signal route should be optional and separately validated.
+- Unity's direct Polar route blinks the button from heartbeat samples through a blink-only runtime entry point. The native app already has the stronger study path: real Polar PMD ECG/RR is recorded in both conditions, feedback source is counterbalanced, and heartbeat flashes go through `HeartbeatPulseDriver` plus GLB material variants.
+- Unity's direct LSL route defaults to `HRV_Biofeedback` / `HRV`, channel `0`, threshold `0.5`, rising-edge pulse, and minimum interval `0.25 s`. The native app currently has only a disabled external/LSL CSV scaffold and logs `BRB_LSL status=disabled`; if LSL is activated later, decide deliberately whether to adopt Unity-compatible stream defaults or document a different native contract.
+- LSL threshold pulses must not satisfy the final participant press requirement unless the study protocol is explicitly changed. In this native study, final proof remains human Quest controller contact with the 3D button plus live Polar H10 PMD ECG coverage.
+
+Validation takeaway:
+
+- Keep validation-only shortcuts obvious and logged. Unity's questionnaire `debugAutoSubmit` maps conceptually to native hidden/qkv validation shortcuts, but participant runs must use real foreground interaction and final controller-contact pressing.
+- If the standalone questionnaire-panel pattern is ever adopted by the native app, add tests for URI grant scope, callback-after-stream-close ordering, duplicate callback idempotency, process-death recovery, package visibility, and privacy leakage, mirroring the `quest-questionnaire-panel` validation matrix.
+
+Implementation note - 2026-06-12:
+
+- The native app adopted the low-risk parts of the brief without splitting questionnaires into a second APK. Session JSON now exports `questionnaireProtocol` with schema `bigredbutton.questionnaire_flow.v1`, `transport=in_process_spatial_panel`, explicit participant stage sequence, known validation shortcut modes, and product-path exclusions for ADB/public-storage/overlay/package-kill communication. Runtime emits answer-free `BRB_QUESTIONNAIRE_CONTRACT`, `BRB_QUESTIONNAIRE_STAGE_OPEN`, and `BRB_QUESTIONNAIRE_STAGE_COMPLETE` markers.
+- External signal routing remains disabled and diagnostic-only. The exported `externalSignalProtocol` uses Unity-compatible defaults (`HRV_Biofeedback` / `HRV`, channel `0`, threshold `0.5`, rising edge, 250 ms interval), keeps `_external_signal_samples.csv` as the only data surface, and explicitly records no JNI/native LSL library, no heartbeat blink drive, and no button press drive.

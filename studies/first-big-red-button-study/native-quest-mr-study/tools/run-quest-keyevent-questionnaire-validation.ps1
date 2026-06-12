@@ -194,6 +194,8 @@ function Pull-DeviceFolder {
             $safeFile =
                 if ($file -eq 'session-index.jsonl') {
                     'session-index.jsonl'
+                } elseif ($file -like '*_final_extra_button_presses.csv') {
+                    'brb_first_study_keyevent_final_extra_button_presses.csv'
                 } elseif ($file -like '*_press_events.csv') {
                     'brb_first_study_keyevent_press_events.csv'
                 } elseif ($file -like '*_ecg_blink_events.csv') {
@@ -202,6 +204,8 @@ function Pull-DeviceFolder {
                     'brb_first_study_keyevent_ecg_timeseries.csv'
                 } elseif ($file -like '*_ecg_detector_events.csv') {
                     'brb_first_study_keyevent_ecg_detector_events.csv'
+                } elseif ($file -like '*_polar_rr_events.csv') {
+                    'brb_first_study_keyevent_polar_rr_events.csv'
                 } elseif ($file -like '*_external_signal_samples.csv') {
                     'brb_first_study_keyevent_external_signal_samples.csv'
                 } elseif ($file -like '*_summary.csv') {
@@ -329,6 +333,8 @@ try {
     Start-KeyeventValidationActivity
     Ensure-TargetForeground
 
+    Wait-LogPattern 'BRB_QUESTIONNAIRE_CONTRACT schema=bigredbutton.questionnaire_flow.v1 .*transport=in_process_spatial_panel .*productCommunication=app_internal' 'questionnaire protocol contract marker'
+    Wait-LogPattern 'BRB_LSL status=disabled .*role=diagnostic_only .*streamName=HRV_Biofeedback .*streamType=HRV .*contaminatesPressCounts=false' 'disabled diagnostic external signal contract marker'
     Wait-LogPattern 'BRB_SOFT_KEYBOARD_REQUEST reason=field_name keyboardMode=text' 'startup native text keyboard request'
     Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN' 'prior big-red-button experience prompt'
     Wait-LogPattern 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pre_button_experience direction=right' 'prior big-red-button experience right-select replay'
@@ -346,6 +352,12 @@ try {
     Wait-LogPattern 'BRB_QUESTIONNAIRE_INTRO_CUE trigger=post_condition_2' 'condition 2 questionnaire intro'
     Wait-LogPattern 'BRB_PICTOGRAPHIC_SAVED condition=2' 'condition 2 pictographic save'
     Wait-LogPattern 'BRB_IPQ_SAVED condition=2' 'condition 2 ratings save'
+    Wait-LogPattern 'BRB_LOST_OPPORTUNITY_SAVED condition=2' 'condition 2 additional-time save'
+    Wait-LogPattern 'BRB_FINAL_END_CONFIRMATION_SHOWN' 'final end-confirmation questionnaire shown'
+    Wait-LogPattern 'BRB_FINAL_END_CONFIRMATION_OPTIONS_READY .*optionsVisible=true' 'final end-confirmation options ready before replay'
+    Wait-LogPattern 'BRB_KEYEVENT_REPLAY_STEP condition=0 stage=final_end_confirmation direction=right' 'final end-confirmation right-select replay'
+    Wait-LogPattern 'BRB_CONTROLLER_SUBMIT_REPLAY condition=0 stage=final_end_confirmation submitted=true' 'final end-confirmation enter-submit replay'
+    Wait-LogPattern 'BRB_FINAL_END_CONFIRMATION_SAVED rating=10 immediateEnd=true' 'final end-confirmation option 10 save'
     Wait-LogPattern 'BRB_EXPORT_COMPLETE' 'export complete'
     Wait-LogPattern 'BRB_EXPERIMENT_RESULTS_FOLDER' 'ExperimentResults folder marker'
 
@@ -384,30 +396,58 @@ try {
     $pressFile = Get-ChildItem -LiteralPath $resultsPullDir -Filter '*_press_events.csv' |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
+    $finalExtraPressFile = Get-ChildItem -LiteralPath $resultsPullDir -Filter '*_final_extra_button_presses.csv' |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1
     $ecgBlinkFile = Get-ChildItem -LiteralPath $resultsPullDir -Filter '*_ecg_blink_events.csv' |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
     $ecgTimeSeriesFile = Get-ChildItem -LiteralPath $resultsPullDir -Filter '*_ecg_timeseries.csv' |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
+    $polarRrFile = Get-ChildItem -LiteralPath $resultsPullDir -Filter '*_polar_rr_events.csv' |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1
 
     $exportJson = Get-Content -Raw -LiteralPath $jsonFile.FullName | ConvertFrom-Json
     $summaryCsv = Import-Csv -LiteralPath $summaryFile.FullName
     $pressCsv = Import-Csv -LiteralPath $pressFile.FullName
+    $finalExtraPressCsv = if ($null -ne $finalExtraPressFile) { Import-Csv -LiteralPath $finalExtraPressFile.FullName } else { @() }
     $ecgBlinkCsv = Import-Csv -LiteralPath $ecgBlinkFile.FullName
-    $ecgTimeSeriesCsv = Import-Csv -LiteralPath $ecgTimeSeriesFile.FullName
+    $ecgTimeSeriesHeader =
+        if ($null -ne $ecgTimeSeriesFile) {
+            Get-Content -LiteralPath $ecgTimeSeriesFile.FullName -TotalCount 1
+        } else {
+            ''
+        }
+    $ecgTimeSeriesCsv =
+        if ($null -ne $ecgTimeSeriesFile) {
+            @(Import-Csv -LiteralPath $ecgTimeSeriesFile.FullName)
+        } else {
+            @()
+        }
+    $polarRrCsv = if ($null -ne $polarRrFile) { Import-Csv -LiteralPath $polarRrFile.FullName } else { @() }
     $c1 = @($exportJson.conditions | Where-Object { $_.conditionNumber -eq 1 })[0]
     $c2 = @($exportJson.conditions | Where-Object { $_.conditionNumber -eq 2 })[0]
     $conditions = @($c1, $c2)
-    $simulatedCondition = @($conditions | Where-Object { $_.ecgSource -eq 'simulated_neurokit2' })[0]
-    $realCondition = @($conditions | Where-Object { $_.ecgSource -eq 'real_polar_h10' })[0]
+    $simulatedCondition = @($conditions | Where-Object { $_.feedbackSource -eq 'simulated_neurokit2' })[0]
+    $realCondition = @($conditions | Where-Object { $_.feedbackSource -eq 'real_polar_h10' })[0]
     $simulatedConditionNumber = if ($null -ne $simulatedCondition) { [int]$simulatedCondition.conditionNumber } else { 0 }
     $realConditionNumber = if ($null -ne $realCondition) { [int]$realCondition.conditionNumber } else { 0 }
     $simulatedBlinkRows = @($ecgBlinkCsv | Where-Object { [int]$_.condition_number -eq $simulatedConditionNumber -and $_.source -eq 'simulated_neurokit2' })
-    $simulatedTimeSeriesRows = @($ecgTimeSeriesCsv | Where-Object { [int]$_.condition_number -eq $simulatedConditionNumber -and $_.source -eq 'simulated_neurokit2' })
+    $simulatedTimeSeriesRows = @($ecgTimeSeriesCsv | Where-Object { $_.source -eq 'simulated_neurokit2' })
+    $pressRowsWithElapsedNs = @($pressCsv | Where-Object { -not [string]::IsNullOrWhiteSpace($_.elapsed_ns) })
+    $pressColumns = if (@($pressCsv).Count -gt 0) { @($pressCsv[0].PSObject.Properties.Name) } else { @() }
+    $pressAlignmentColumnsPresent =
+        $pressColumns -contains 'elapsed_ns' -and
+        $pressColumns -contains 'event_elapsed_realtime_ns' -and
+        $pressColumns -contains 'condition_start_elapsed_realtime_ns' -and
+        $pressColumns -contains 'nearest_ecg_sample_index' -and
+        $pressColumns -contains 'nearest_ecg_elapsed_ns' -and
+        $pressColumns -contains 'nearest_ecg_delta_ns'
     $assignmentMatchesSources =
-        ($exportJson.ecgProtocol.assignmentOrder -eq 'real_then_simulated' -and $c1.ecgSource -eq 'real_polar_h10' -and $c2.ecgSource -eq 'simulated_neurokit2') -or
-        ($exportJson.ecgProtocol.assignmentOrder -eq 'simulated_then_real' -and $c1.ecgSource -eq 'simulated_neurokit2' -and $c2.ecgSource -eq 'real_polar_h10')
+        ($exportJson.ecgProtocol.assignmentOrder -eq 'real_then_simulated' -and $c1.feedbackSource -eq 'real_polar_h10' -and $c2.feedbackSource -eq 'simulated_neurokit2') -or
+        ($exportJson.ecgProtocol.assignmentOrder -eq 'simulated_then_real' -and $c1.feedbackSource -eq 'simulated_neurokit2' -and $c2.feedbackSource -eq 'real_polar_h10')
     $row = @($summaryCsv)[0]
     $uniquePriorExperiencePromptLines = @(
         $logText -split "`r?`n" |
@@ -418,7 +458,7 @@ try {
 
     Add-Comparison $comparisons 'participant id generated under hood' 'KEYEVENT_VALIDATION_' ($exportJson.demographics.participantId.Substring(0, [Math]::Min(20, $exportJson.demographics.participantId.Length))) 'JSON demographics.participantId'
     Add-Comparison $comparisons 'name text exported' 'Keyevent Validation' $exportJson.demographics.name 'JSON demographics.name'
-    Add-Comparison $comparisons 'age numeric text exported' '33' $exportJson.demographics.age 'JSON demographics.age'
+    Add-Comparison $comparisons 'age selector value exported' '33' $exportJson.demographics.age 'JSON demographics.age'
     Add-Comparison $comparisons 'gender four-choice exported' 'prefer_not_to_say' $exportJson.demographics.gender 'JSON demographics.gender'
     Add-Comparison $comparisons 'handedness tri-choice exported' 'right' $exportJson.demographics.handedness 'JSON demographics.handedness'
     Add-Comparison $comparisons 'signature stroke format exported' $true ($exportJson.demographics.signature -match 'brb_signature_strokes_v1') 'JSON demographics.signature'
@@ -432,22 +472,36 @@ try {
     Add-Comparison $comparisons 'prior big-red-button experience prompt shown once' 1 $uniquePriorExperiencePromptLines.Count 'unique logcat lines'
     Add-Comparison $comparisons 'prior big-red-button experience not repeated in condition 2' $false ($logText -match 'BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN .*condition=2') 'logcat'
     Add-Comparison $comparisons 'prior big-red-button experience controller replay observed' $true ($logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pre_button_experience direction=right' -and $logText -match 'BRB_CONTROLLER_DIRECTION stage=pre_button_experience direction=right answer=yes' -and $logText -match 'BRB_CONTROLLER_SUBMIT_REPLAY condition=1 stage=pre_button_experience submitted=true') 'logcat'
+    Add-Comparison $comparisons 'final end confirmation JSON rating' 10 $exportJson.finalEndConfirmation.rating1To10 'JSON finalEndConfirmation.rating1To10'
+    Add-Comparison $comparisons 'final end confirmation JSON immediate end' $true $exportJson.finalEndConfirmation.immediateEnd 'JSON finalEndConfirmation.immediateEnd'
+    Add-Comparison $comparisons 'final end confirmation JSON extra press count' 0 $exportJson.finalEndConfirmation.extraPressCount 'JSON finalEndConfirmation.extraPressCount'
+    Add-Comparison $comparisons 'final end confirmation summary rating' 10 $row.final_end_confirmation_rating_1_10 'summary CSV'
+    Add-Comparison $comparisons 'final end confirmation summary immediate end' 'true' $row.final_end_confirmation_immediate_end 'summary CSV'
+    Add-Comparison $comparisons 'final extra button press summary count' 0 $row.final_extra_button_press_count 'summary CSV'
+    Add-Comparison $comparisons 'final extra button press CSV exists' $true ($null -ne $finalExtraPressFile) 'ExperimentResults final extra button presses CSV'
+    Add-Comparison $comparisons 'final extra button press CSV rows' 0 @($finalExtraPressCsv).Count 'ExperimentResults final extra button presses CSV'
+    Add-Comparison $comparisons 'final end confirmation options ready before replay' $true ($logText -match 'BRB_FINAL_END_CONFIRMATION_OPTIONS_READY .*optionsVisible=true' -and $logText -match 'BRB_FINAL_END_CONFIRMATION_VALIDATION_WAIT .*reason=question_audio_active') 'logcat'
+    Add-Comparison $comparisons 'final end confirmation controller replay observed' $true ($logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=0 stage=final_end_confirmation direction=right' -and $logText -match 'BRB_CONTROLLER_SUBMIT_REPLAY condition=0 stage=final_end_confirmation submitted=true' -and $logText -match 'BRB_FINAL_END_CONFIRMATION_SAVED rating=10 immediateEnd=true') 'logcat'
 
     Add-Comparison $comparisons 'condition 1 emulated button count' 2 $c1.buttonPressCount 'JSON condition 1 buttonPressCount'
     Add-Comparison $comparisons 'condition 2 emulated button count' 2 $c2.buttonPressCount 'JSON condition 2 buttonPressCount'
-    Add-Comparison $comparisons 'ECG assignment exported' $true ($exportJson.ecgProtocol.assignmentOrder -in @('real_then_simulated', 'simulated_then_real')) 'JSON ecgProtocol.assignmentOrder'
-    Add-Comparison $comparisons 'condition 1 ECG source exported' $true ($c1.ecgSource -in @('real_polar_h10', 'simulated_neurokit2')) 'JSON condition 1 ecgSource'
-    Add-Comparison $comparisons 'condition 2 ECG source exported' $true ($c2.ecgSource -in @('real_polar_h10', 'simulated_neurokit2')) 'JSON condition 2 ecgSource'
-    Add-Comparison $comparisons 'ECG sources counterbalanced complement' $true (($null -ne $simulatedCondition) -and ($null -ne $realCondition) -and ($simulatedConditionNumber -ne $realConditionNumber)) 'JSON condition ecgSource values'
-    Add-Comparison $comparisons 'ECG assignment order matches condition sources' $true $assignmentMatchesSources 'JSON ecgProtocol.assignmentOrder and condition ecgSource values'
+    Add-Comparison $comparisons 'feedback assignment exported' $true ($exportJson.ecgProtocol.assignmentOrder -in @('real_then_simulated', 'simulated_then_real')) 'JSON ecgProtocol.assignmentOrder'
+    Add-Comparison $comparisons 'condition 1 feedback source exported' $true ($c1.feedbackSource -in @('real_polar_h10', 'simulated_neurokit2')) 'JSON condition 1 feedbackSource'
+    Add-Comparison $comparisons 'condition 2 feedback source exported' $true ($c2.feedbackSource -in @('real_polar_h10', 'simulated_neurokit2')) 'JSON condition 2 feedbackSource'
+    Add-Comparison $comparisons 'condition 1 physiology source exported' 'real_polar_h10' $c1.physiologySource 'JSON condition 1 physiologySource'
+    Add-Comparison $comparisons 'condition 2 physiology source exported' 'real_polar_h10' $c2.physiologySource 'JSON condition 2 physiologySource'
+    Add-Comparison $comparisons 'feedback sources counterbalanced complement' $true (($null -ne $simulatedCondition) -and ($null -ne $realCondition) -and ($simulatedConditionNumber -ne $realConditionNumber)) 'JSON condition feedbackSource values'
+    Add-Comparison $comparisons 'feedback assignment order matches condition feedback sources' $true $assignmentMatchesSources 'JSON ecgProtocol.assignmentOrder and condition feedbackSource values'
     Add-Comparison $comparisons 'ECG blink event CSV readable' $true ($null -ne $ecgBlinkCsv) 'ExperimentResults ECG blink-events CSV'
-    Add-Comparison $comparisons 'ECG time-series CSV readable' $true ($null -ne $ecgTimeSeriesCsv) 'ExperimentResults ECG time-series CSV'
+    Add-Comparison $comparisons 'ECG time-series CSV readable' $true (($null -ne $ecgTimeSeriesFile) -and $ecgTimeSeriesHeader.Contains('session_id,participant_id,condition_number')) 'ExperimentResults ECG time-series CSV'
+    Add-Comparison $comparisons 'Polar RR event CSV readable' $true ($null -ne $polarRrFile) 'ExperimentResults Polar RR events CSV'
     Add-Comparison $comparisons 'simulated ECG blink count exported' $true (($null -ne $simulatedCondition) -and ([int]$simulatedCondition.ecgBlinkCount -gt 0)) 'JSON simulated condition ecgBlinkCount'
     Add-Comparison $comparisons 'simulated ECG blink rows match JSON count' ([int]$simulatedCondition.ecgBlinkCount) @($simulatedBlinkRows).Count 'ExperimentResults ECG blink-events CSV'
     Add-Comparison $comparisons 'simulated ECG blink runtime marker observed' $true ($logText -match "BRB_ECG_BLINK condition=$simulatedConditionNumber .*source=simulated_neurokit2") 'logcat'
     Add-Comparison $comparisons 'simulated heartbeat visual flash observed' $true ($logText -match "BRB_HEARTBEAT_FLASH condition=$simulatedConditionNumber source=simulated_neurokit2") 'logcat'
-    Add-Comparison $comparisons 'simulated ECG time-series sample count equals expected' ([int]$simulatedCondition.ecgExpectedSampleCount) ([int]$simulatedCondition.ecgTimeSeriesSampleCount) 'JSON simulated condition raw ECG count'
-    Add-Comparison $comparisons 'simulated ECG time-series CSV rows match JSON count' ([int]$simulatedCondition.ecgTimeSeriesSampleCount) @($simulatedTimeSeriesRows).Count 'ExperimentResults ECG time-series CSV'
+    Add-Comparison $comparisons 'simulated feedback excluded from real ECG time-series' 0 @($simulatedTimeSeriesRows).Count 'ExperimentResults ECG time-series CSV'
+    Add-Comparison $comparisons 'press elapsed_ns exported' @($pressCsv).Count $pressRowsWithElapsedNs.Count 'ExperimentResults press-events CSV'
+    Add-Comparison $comparisons 'press alignment columns exported' $true $pressAlignmentColumnsPresent 'ExperimentResults press-events CSV'
     Add-Comparison $comparisons 'condition 1 ECG capture duration equals audio' $c1.audioDurationMs $c1.ecgCaptureDurationMs 'JSON condition 1 ECG capture window'
     Add-Comparison $comparisons 'condition 2 ECG capture duration equals audio' $c2.audioDurationMs $c2.ecgCaptureDurationMs 'JSON condition 2 ECG capture window'
     Add-Comparison $comparisons 'condition 1 ECG sample rate' 130 $c1.ecgSampleRateHz 'JSON condition 1 ECG sample rate'
@@ -467,9 +521,21 @@ try {
     Add-Comparison $comparisons 'condition 1 redness VAS' 60 $c1.pictographic.rednessVas0To100 'fast replay VAS-to-Likert conversion'
     Add-Comparison $comparisons 'condition 1 redness Likert' 5 $c1.pictographic.rednessLikert1To7 'fast replay VAS-to-Likert conversion'
     Add-Comparison $comparisons 'condition 1 redness order' 'vas_then_likert' $c1.pictographic.rednessScaleOrder 'JSON pictographic.rednessScaleOrder'
+    Add-Comparison $comparisons 'condition 1 redness carried VAS' 60 $c1.pictographic.rednessCarriedForwardVas0To100 'closest analogue carried through VAS-to-Likert conversion'
+    Add-Comparison $comparisons 'condition 1 redness carried Likert' 5 $c1.pictographic.rednessCarriedForwardLikert1To7 'closest analogue carried through VAS-to-Likert conversion'
+    Add-Comparison $comparisons 'condition 1 redness post-conversion edited' $false $c1.pictographic.rednessPostConversionEdited 'no post-conversion edit in fast replay'
+    Add-Comparison $comparisons 'condition 1 redness post-conversion edit scale' 'none' $c1.pictographic.rednessPostConversionEditScale 'no post-conversion edit in fast replay'
+    Add-Comparison $comparisons 'condition 1 redness changed after conversion' $false $c1.pictographic.rednessChangedAfterConversion 'final answer stays with closest analogue'
+    Add-Comparison $comparisons 'condition 1 redness final matches carried' $true $c1.pictographic.rednessFinalMatchesCarriedForward 'final answer stays with closest analogue'
     Add-Comparison $comparisons 'condition 2 redness VAS' 66 $c2.pictographic.rednessVas0To100 'fast replay Likert-to-VAS conversion'
     Add-Comparison $comparisons 'condition 2 redness Likert' 5 $c2.pictographic.rednessLikert1To7 'fast replay Likert-to-VAS conversion'
     Add-Comparison $comparisons 'condition 2 redness order' 'likert_then_vas' $c2.pictographic.rednessScaleOrder 'JSON pictographic.rednessScaleOrder'
+    Add-Comparison $comparisons 'condition 2 redness carried VAS' 66 $c2.pictographic.rednessCarriedForwardVas0To100 'closest analogue carried through Likert-to-VAS conversion'
+    Add-Comparison $comparisons 'condition 2 redness carried Likert' 5 $c2.pictographic.rednessCarriedForwardLikert1To7 'closest analogue carried through Likert-to-VAS conversion'
+    Add-Comparison $comparisons 'condition 2 redness post-conversion edited' $false $c2.pictographic.rednessPostConversionEdited 'no post-conversion edit in fast replay'
+    Add-Comparison $comparisons 'condition 2 redness post-conversion edit scale' 'none' $c2.pictographic.rednessPostConversionEditScale 'no post-conversion edit in fast replay'
+    Add-Comparison $comparisons 'condition 2 redness changed after conversion' $false $c2.pictographic.rednessChangedAfterConversion 'final answer stays with closest analogue'
+    Add-Comparison $comparisons 'condition 2 redness final matches carried' $true $c2.pictographic.rednessFinalMatchesCarriedForward 'final answer stays with closest analogue'
     Add-Comparison $comparisons 'condition 1 lost opportunity' 59 $c1.lostOpportunity.score0To100 'D-pad right/right/down'
     Add-Comparison $comparisons 'condition 2 lost opportunity' 51 $c2.lostOpportunity.score0To100 'D-pad left/up/right'
     Add-Comparison $comparisons 'summary condition 1 lost opportunity' 59 $row.condition_1_lost_opportunity_for_better_results_quotient 'summary CSV'
@@ -486,11 +552,59 @@ try {
     $automationFlags = @($pressCsv | Select-Object -ExpandProperty validation_automation -Unique)
     Add-Comparison $comparisons 'press validation automation flag' 'true' ($automationFlags -join '|') 'press-events CSV'
     Add-Comparison $comparisons 'press event rows' 4 @($pressCsv).Count 'press-events CSV'
-    Add-Comparison $comparisons 'native keyboard request observed' $true ($logText -match 'BRB_SOFT_KEYBOARD_REQUEST reason=field_name .*implementation=system') 'logcat'
-    Add-Comparison $comparisons 'native keyboard name text mode observed' $true ($logText -match 'BRB_SYSTEM_KEYBOARD_FIELD_CONTRACT field=name .*keyboardMode=text .*keyboardType=Text .*implementation=system_native') 'logcat'
-    Add-Comparison $comparisons 'native keyboard age numeric mode observed' $true ($logText -match 'BRB_SYSTEM_KEYBOARD_FIELD_CONTRACT field=age .*keyboardMode=number .*keyboardType=Number .*digitsOnly=true .*maxDigits=3') 'logcat'
+    Add-Comparison $comparisons 'questionnaire protocol schema' 'bigredbutton.questionnaire_flow.v1' $exportJson.questionnaireProtocol.schema 'JSON questionnaireProtocol.schema'
+    Add-Comparison $comparisons 'questionnaire protocol transport' 'in_process_spatial_panel' $exportJson.questionnaireProtocol.transport 'JSON questionnaireProtocol.transport'
+    Add-Comparison $comparisons 'questionnaire protocol product communication' 'app_internal' $exportJson.questionnaireProtocol.productCommunication 'JSON questionnaireProtocol.productCommunication'
+    Add-Comparison $comparisons 'questionnaire protocol stage sequence' $true (
+        @($exportJson.questionnaireProtocol.stageSequence) -contains 'consent_demographics' -and
+        @($exportJson.questionnaireProtocol.stageSequence) -contains 'prior_big_red_button_experience' -and
+        @($exportJson.questionnaireProtocol.stageSequence) -contains 'post_condition_1_pictographic' -and
+        @($exportJson.questionnaireProtocol.stageSequence) -contains 'post_condition_2_lost_opportunity' -and
+        @($exportJson.questionnaireProtocol.stageSequence) -contains 'final_end_confirmation' -and
+        @($exportJson.questionnaireProtocol.stageSequence) -contains 'complete_export_summary'
+    ) 'JSON questionnaireProtocol.stageSequence'
+    Add-Comparison $comparisons 'questionnaire protocol shortcut modes' $true (
+        @($exportJson.questionnaireProtocol.validationShortcutModes) -contains 'keyevent_validation' -and
+        @($exportJson.questionnaireProtocol.validationShortcutModes) -contains 'physical_press_validation'
+    ) 'JSON questionnaireProtocol.validationShortcutModes'
+    Add-Comparison $comparisons 'questionnaire product path exclusions' $true (
+        $exportJson.questionnaireProtocol.adbProductCommunication -eq $false -and
+        $exportJson.questionnaireProtocol.publicSharedStorageExchange -eq $false -and
+        $exportJson.questionnaireProtocol.overlayReturnFlow -eq $false -and
+        $exportJson.questionnaireProtocol.packageKillReturnFlow -eq $false
+    ) 'JSON questionnaireProtocol product path exclusions'
+    Add-Comparison $comparisons 'external signal protocol disabled diagnostic' $true (
+        $exportJson.externalSignalProtocol.schema -eq 'bigredbutton.external_signal.v1' -and
+        $exportJson.externalSignalProtocol.enabled -eq $false -and
+        $exportJson.externalSignalProtocol.role -eq 'diagnostic_only' -and
+        $exportJson.externalSignalProtocol.contaminatesPressCounts -eq $false -and
+        $exportJson.externalSignalProtocol.streamName -eq 'HRV_Biofeedback' -and
+        $exportJson.externalSignalProtocol.streamType -eq 'HRV' -and
+        $exportJson.externalSignalProtocol.channelIndex -eq 0 -and
+        [math]::Abs(([double]$exportJson.externalSignalProtocol.triggerThreshold01) - 0.5) -lt 0.0001 -and
+        $exportJson.externalSignalProtocol.triggerOnRisingEdgeOnly -eq $true -and
+        $exportJson.externalSignalProtocol.minimumTriggerIntervalMs -eq 250 -and
+        $exportJson.externalSignalProtocol.nativeLibraryPackaged -eq $false -and
+        $exportJson.externalSignalProtocol.jniEnabled -eq $false -and
+        $exportJson.externalSignalProtocol.drivesHeartbeatBlink -eq $false -and
+        $exportJson.externalSignalProtocol.drivesButtonPresses -eq $false
+    ) 'JSON externalSignalProtocol'
+    Add-Comparison $comparisons 'questionnaire lifecycle markers observed' $true (
+        $logText -match 'BRB_QUESTIONNAIRE_CONTRACT schema=bigredbutton.questionnaire_flow.v1 .*answersLogged=false' -and
+        $logText -match 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=consent_demographics .*answersLogged=false' -and
+        $logText -match 'BRB_QUESTIONNAIRE_STAGE_COMPLETE stageId=consent_demographics .*nextStageId=prior_big_red_button_experience .*answersLogged=false' -and
+        $logText -match 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=post_condition_1_pictographic .*condition=1 .*answersLogged=false' -and
+        $logText -match 'BRB_QUESTIONNAIRE_STAGE_COMPLETE stageId=post_condition_2_lost_opportunity .*nextStageId=final_end_confirmation .*answersLogged=false' -and
+        $logText -match 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=complete_export_summary .*answersLogged=false'
+    ) 'logcat'
+    Add-Comparison $comparisons 'external signal diagnostic marker observed' $true (
+        $logText -match 'BRB_LSL status=disabled .*role=diagnostic_only .*streamName=HRV_Biofeedback .*streamType=HRV .*drivesButtonPresses=false'
+    ) 'logcat'
+    Add-Comparison $comparisons 'native keyboard request observed' $true ($logText -match 'BRB_SOFT_KEYBOARD_REQUEST reason=field_name .*focusedView=EditText .*implementation=system_native') 'logcat'
+    Add-Comparison $comparisons 'native keyboard name text mode observed' $true ($logText -match 'BRB_SYSTEM_KEYBOARD_FIELD_CONTRACT field=name .*keyboardMode=text .*keyboardType=Text .*platformControl=EditText') 'logcat'
+    Add-Comparison $comparisons 'native keyboard age number mode observed' $true ($logText -match 'BRB_SYSTEM_KEYBOARD_FIELD_CONTRACT field=age .*keyboardMode=number .*keyboardType=Number .*platformControl=EditText') 'logcat'
     Add-Comparison $comparisons 'native keyboard movable panel contract observed' $true ($logText -match 'BRB_SYSTEM_KEYBOARD_FIELD_CONTRACT field=name .*movablePanel=true .*closeToParticipant=system_managed' -and $logText -match 'BRB_SOFT_KEYBOARD_REQUEST reason=field_name .*movablePanel=true .*closeToParticipant=system_managed') 'logcat'
-    Add-Comparison $comparisons 'native keyboard text-to-number retarget observed' $true ($logText -match 'BRB_SOFT_KEYBOARD_SWITCH from=field_name to=field_age .*fromMode=text .*toMode=number .*failSafeRetarget=true') 'logcat'
+    Add-Comparison $comparisons 'age is numeric IME target' $true ($logText -match 'BRB_SOFT_KEYBOARD_REQUEST reason=field_age .*keyboardMode=number .*focusedView=EditText .*restartInput=true') 'logcat'
     Add-Comparison $comparisons 'startup native keyboard request uses text mode' $true ($logText -match 'BRB_SOFT_KEYBOARD_REQUEST reason=field_name .*keyboardMode=text') 'logcat'
     Add-Comparison $comparisons 'redness conversion cue observed' $true (
         $logText -match 'BRB_REDNESS_SCALE_CONVERSION condition=1 .*from=vas to=likert' -and
@@ -530,13 +644,14 @@ try {
         json = $jsonFile.FullName
         summaryCsv = $summaryFile.FullName
         pressEventsCsv = $pressFile.FullName
+        finalExtraButtonPressesCsv = if ($null -ne $finalExtraPressFile) { $finalExtraPressFile.FullName } else { $null }
         ecgBlinkEventsCsv = $ecgBlinkFile.FullName
         ecgTimeSeriesCsv = $ecgTimeSeriesFile.FullName
         exportMirrorComparison = $mirrorComparisonPath
         exportMirrorMatched = ($mirrorComparison.status -eq 'pass')
         exportMirrorFileCount = $mirrorComparison.primaryFileCount
         comparisons = $comparisons
-        note = 'Fast directional questionnaire validation. It shortcuts instruction-audio waiting, replays bounded up/down/left/right/enter-equivalent commands through the app controller-direction/submit handlers, validates field-specific native system keyboard request modes and text-to-number retarget markers, redness VAS/Likert conversion markers, panel-exit hide markers and glitch markers, pulls both export folders, and compares exported values against expected outcomes. ADB input keyevent is not treated as the reliable transport for Spatial SDK panels. This is not physical controller-contact evidence.'
+        note = 'Fast directional questionnaire validation. It shortcuts instruction-audio waiting, replays bounded up/down/left/right/enter-equivalent commands through the app controller-direction/submit handlers, validates Name text keyboard evidence, Age numeric keyboard evidence, redness VAS/Likert conversion markers, panel-exit hide markers, glitch markers, questionnaire protocol metadata, and disabled diagnostic-only external signal protocol metadata, pulls both export folders, and compares exported values against expected outcomes. ADB input keyevent is not treated as the reliable transport for Spatial SDK panels. This is not physical controller-contact evidence.'
     }
     $summaryPath = Join-Path $outDir 'quest-keyevent-questionnaire-validation-summary.json'
     $summary | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $summaryPath -Encoding UTF8

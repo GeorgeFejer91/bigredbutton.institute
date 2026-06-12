@@ -44,7 +44,7 @@ Checks:
 - digital press counter is visible above the 3D button and driven by accepted condition press count
 - signature field is a trigger/pointer drawing pad that exports temporal stroke JSON
 - questionnaire UI sounds and button press sound asset exist, are hash-locked, and are hooked to active controls
-- Polar H10 BLE permissions/client, first-menu validity panel, counterbalanced real/simulated ECG assignment, simulated NeuroKit2 RR asset, heartbeat blink driver, Polar PMD raw ECG stream, ECG export fields, and final physical-gate real-Polar evidence checks exist
+- Polar H10 BLE permissions/client, first-menu validity panel, counterbalanced real-vs-sham feedback assignment, simulated NeuroKit2 RR asset, heartbeat blink driver, Polar PMD raw ECG/RR stream, ECG/RR export fields, and final physical-gate real-Polar evidence checks for both conditions exist
 - if the press-sound placeholder is replaced in the future, the final sound asset SHA-256, duration, source, and license must be validated separately from the instruction MP3s
 
 ## 2. APK Build
@@ -137,7 +137,7 @@ To validate questionnaire passability and data logging without waiting through b
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\run-quest-keyevent-questionnaire-validation.ps1 -Serial <quest-serial> -AdbPath <adb.exe>
 ```
 
-This launches `brb.keyeventValidation`, uses the app-side bounded directional replay route, requires native keyboard text/numeric mode markers, text-to-number retarget markers, panel-exit keyboard hide markers, plus explicit `direction=enter` submit replay markers, pulls both `BigRedButtonFirstStudyExports` and `ExperimentResults`, byte-compares the pulled export mirror, verifies that qkv ECG capture windows equal the instruction-audio durations at 130 Hz in both milliseconds and nanoseconds, requires the simulated RR driver to produce exported blink rows plus runtime `BRB_ECG_BLINK` and `BRB_HEARTBEAT_FLASH` markers, and writes expected-vs-observed comparisons under `artifacts\qkv`. It is evidence for questionnaire/data routing and simulated ECG blink routing only, not for physical controller-contact pressing or live H10 streaming.
+This launches `brb.keyeventValidation`, uses the app-side bounded directional replay route, requires native Name text-keyboard markers, Age numeric-keyboard markers, panel-exit keyboard hide markers, plus explicit `direction=enter` submit replay markers, pulls both `BigRedButtonFirstStudyExports` and `ExperimentResults`, byte-compares the pulled export mirror, verifies that qkv ECG capture windows equal the instruction-audio durations at 130 Hz in both milliseconds and nanoseconds, requires the sham feedback RR driver to produce exported blink rows plus runtime `BRB_ECG_BLINK` and `BRB_HEARTBEAT_FLASH` markers, verifies simulated feedback rows are excluded from the real ECG time-series export, and writes expected-vs-observed comparisons under `artifacts\qkv`. It is evidence for questionnaire/data routing and feedback blink routing only, not for physical controller-contact pressing or live H10 streaming.
 
 After local preflight, this short Quest smoke suite, and the fast keyevent questionnaire/data export validation all pass, write a readiness rollup:
 
@@ -145,7 +145,7 @@ After local preflight, this short Quest smoke suite, and the fast keyevent quest
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\write-readiness-report.ps1
 ```
 
-Accept `ready_except_physical_gate` only when the report points at the current APK hash, current passing local/headset/keyevent evidence, pulled `ExperimentResults` files, qkv export-mirror equality, qkv ECG audio-window equality in milliseconds and nanoseconds, qkv simulated blink/runtime flash proof, qkv keyboard lifecycle proof, qkv Enter-submit replay proof, and a current passing live Polar H10 smoke if Polar live evidence is being claimed. If a live H10 has not been validated yet, the report should say `ready_except_physical_and_live_polar_gates`. Accept `complete` only when the standalone live Polar smoke and the full physical controller-contact/live-H10 export validation both pass on the current APK.
+Accept `ready_except_physical_gate` only when the report points at the current APK hash, current passing local/headset/keyevent evidence, pulled `ExperimentResults` files, qkv export-mirror equality, qkv ECG audio-window equality in milliseconds and nanoseconds, qkv simulated blink/runtime flash proof, qkv Name-keyboard/Age-dial lifecycle proof, qkv Enter-submit replay proof, and a current passing live Polar H10 smoke if Polar live evidence is being claimed. If a live H10 has not been validated yet, the report should say `ready_except_physical_and_live_polar_gates`. Accept `complete` only when the standalone live Polar smoke and the full physical controller-contact/live-H10 export validation both pass on the current APK.
 
 Then write the requirement-level goal audit:
 
@@ -193,10 +193,10 @@ Inspect:
 - condition 1 and 2 pictographic distance/radius values are present
 - condition 1 and 2 adapted IPQ raw/scored values are present
 - condition 1 and 2 Lost Opportunity scores are present
-- ECG assignment order, condition source, Polar status, and blink-event timing/source/RR fields are present
-- condition ECG capture durations match instruction-audio durations in milliseconds and nanoseconds; `*_ecg_timeseries.csv` includes `elapsed_ns` plus audio-window columns; simulated ECG sample counts match expected 130 Hz counts; real Polar samples are clipped to the audio window without fabricated padding
+- feedback assignment order, condition feedback/physiology source, Polar status, RR-event fields, and blink-event timing/source/RR fields are present
+- condition ECG capture durations match instruction-audio durations in milliseconds and nanoseconds; `*_ecg_timeseries.csv` includes real Polar `elapsed_ns` plus audio-window columns; `*_polar_rr_events.csv` records real RR events; simulated feedback is excluded from real ECG physiology rows; real Polar samples are clipped to the audio window without fabricated padding
 - condition start/ECG start is anchored before `MediaPlayer.start()` and logged with `BRB_CONDITION_AUDIO_START_ANCHOR ... anchor=pre_media_player_start`
-- final real-Polar evidence has sequential sample indices, strictly increasing `elapsed_ns`, a median sample interval consistent with 130 Hz, and no large sample gaps
+- final real-Polar evidence in both conditions has sequential sample indices, strictly increasing `elapsed_ns`, a median sample interval consistent with 130 Hz, no large sample gaps, and controller presses linked to nearby ECG samples
 
 Then validate the pulled export folders and confirm the SideQuest-readable `ExperimentResults` mirror is byte-identical to the primary export:
 
@@ -234,11 +234,11 @@ For direct physical controller-contact validation or debugging the slow final st
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\run-quest-physical-press-validation.ps1 -Serial <quest-serial> -AdbPath <adb.exe>
 ```
 
-This first runs the live Polar H10 PMD ECG smoke unless `-SkipPolarPrecheck` is supplied. If the precheck fails, the slow two-track run does not start. After that it launches `brb.physicalPressValidation`, auto-starts the study, and auto-submits non-press questionnaire fields after real audio completion, but it does not create button presses. A human wearing the headset must press the modeled button with a Quest controller in both conditions while wearing a live Polar H10. The script accepts the gate only when logcat, JSON, and press-events CSV all show `controller_contact` presses, and when the real-Polar condition exports valid PMD ECG evidence.
+This first runs the live Polar H10 PMD ECG smoke unless `-SkipPolarPrecheck` is supplied. If the precheck fails, the slow two-track run does not start. After that it launches `brb.physicalPressValidation`, auto-starts the study, and auto-submits non-press questionnaire fields after real audio completion, but it does not create button presses. A human wearing the headset must press the modeled button with a Quest controller in both conditions while wearing a live Polar H10. The script accepts the gate only when logcat, JSON, and press-events CSV all show `controller_contact` presses, and when both conditions export valid real Polar PMD ECG/RR evidence.
 
-Before running it, read [physical-validation-operator-guide.md](physical-validation-operator-guide.md). The script writes `operator-checklist.txt` into the run artifact folder and fails if the live Polar precheck fails, button press evidence contains `auto_validation` sources, controller-contact rows marked as validation automation, missing source-summary/contact-select evidence, missing real-Polar blink rows, insufficient 130 Hz PMD ECG coverage, coarse or non-monotonic real-Polar ECG timing, ECG samples outside the audio window, divergent primary-vs-`ExperimentResults` mirror hashes, or a missing `BRB_POLAR_H10_LOW_LATENCY_CONFIG ... requestedMtu=70` marker.
+Before running it, read [physical-validation-operator-guide.md](physical-validation-operator-guide.md). The script writes `operator-checklist.txt` into the run artifact folder and fails if the live Polar precheck fails, button press evidence contains `auto_validation` sources, controller-contact rows marked as validation automation, missing source-summary/contact-select evidence, missing real-Polar RR rows, simulated ECG rows in the real physiology export, insufficient 130 Hz PMD ECG coverage in either condition, coarse or non-monotonic real-Polar ECG timing, missing press-to-ECG linkage, ECG samples outside the audio window, divergent primary-vs-`ExperimentResults` mirror hashes, or a missing `BRB_POLAR_H10_LOW_LATENCY_CONFIG ... requestedMtu=70` marker.
 
-The physical script also calls `tools\validate-physical-press-evidence.ps1` after pulling exports and writes `export-mirror-comparison.json` for the primary-vs-`ExperimentResults` hash comparison. Use the same validator to independently recheck a completed physical run's pulled `BigRedButtonFirstStudyExports` folder and `logcat-filtered.txt`. The validator's local pass/fail behavior is covered by `tools\test-physical-press-evidence-validator.ps1`, including failure cases for missing real ECG rows, missing blink rows, bad sample rate, short ECG coverage, invalid PMD package metadata, non-monotonic `elapsed_ns`, coarse/clumped sample timing, and missing low-latency setup.
+The physical script also calls `tools\validate-physical-press-evidence.ps1` after pulling exports and writes `export-mirror-comparison.json` for the primary-vs-`ExperimentResults` hash comparison. Use the same validator to independently recheck a completed physical run's pulled `BigRedButtonFirstStudyExports` folder and `logcat-filtered.txt`. The validator's local pass/fail behavior is covered by `tools\test-physical-press-evidence-validator.ps1`, including failure cases for only one real-Polar condition, sham feedback filled with simulated ECG rows, missing press `elapsed_ns`, missing nearest ECG linkage, oversized press-to-ECG gaps, missing real ECG/RR rows, non-monotonic `elapsed_ns`, and missing low-latency setup.
 
 ## 5b. Live Polar H10 Gate
 
@@ -252,9 +252,11 @@ This launches the normal intake screen and watches `BRB_POLAR_H10_STATUS`. Accep
 
 This gate proves that real Polar PMD ECG samples reach the native headset app. It does not prove full-condition export timing and does not prove physical controller-contact button pressing. The final physical export gate still needs to be run afterward because it verifies that the real PMD ECG samples cover the actual instruction-audio window in the exported study files.
 
+For ordinary participant/manual starts, a missing Polar H10 is a warning, not a Start-button blocker. The app should display the warning and log `BRB_POLAR_START_WARNING ... continuing=true participantPhysiologyEvidenceRequired=true`, then proceed into condition audio. This does not weaken the live-H10 gate or the final physical export gate: those validation scripts still fail unless real Polar H10 PMD ECG/RR evidence is present and aligned to both condition audio windows.
+
 ## 6. Physical Input Gate
 
-A human operator wearing the headset must press the virtual button with the intended participant input method: a Quest controller physically contacting/pressing the 3D Big Red Button or an aligned invisible helper collider. Accept the gate only when logcat shows `BRB_BUTTON_PRESS` markers, the final export contains the same press count, and the real-Polar condition contains valid 130 Hz PMD ECG evidence for the audio window.
+A human operator wearing the headset must press the virtual button with the intended participant input method: a Quest controller physically contacting/pressing the 3D Big Red Button or an aligned invisible helper collider. Accept the gate only when logcat shows `BRB_BUTTON_PRESS` markers, the final export contains the same press count, and both conditions contain valid 130 Hz real Polar PMD ECG/RR evidence for their audio windows.
 
 Do not use ADB taps, Android keyevents, gaze selection, keyboard input, or visible flat UI buttons as proof that Quest controller input works for the participant-facing button.
 

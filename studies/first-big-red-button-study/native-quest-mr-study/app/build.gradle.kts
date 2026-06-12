@@ -6,6 +6,7 @@ plugins {
 }
 
 val stagedStudyAudioAssets = layout.buildDirectory.dir("generated/study-audio-assets")
+val stagedLocalizedAudioAssets = layout.buildDirectory.dir("generated/localized-audio-assets")
 val stageStudyAudioAssets =
     tasks.register<Copy>("stageStudyAudioAssets") {
       from(layout.projectDirectory.dir("../../audio-assets/final")) {
@@ -13,6 +14,17 @@ val stageStudyAudioAssets =
         include("first-big-red-button-vr-study-instructions-second-instructions-5-final.mp3")
       }
       into(stagedStudyAudioAssets)
+    }
+val stageLocalizedAudioAssets =
+    tasks.register<Copy>("stageLocalizedAudioAssets") {
+      from(layout.projectDirectory.dir("../../audio-assets/localized")) {
+        include("manifest.json")
+        include("en_us/**")
+        include("ja_jp/**")
+        include("shared/**")
+        include("stems/**")
+      }
+      into(stagedLocalizedAudioAssets.map { it.dir("localized") })
     }
 
 android {
@@ -53,6 +65,7 @@ android {
   sourceSets {
     getByName("main") {
       assets.srcDir(stagedStudyAudioAssets)
+      assets.srcDir(stagedLocalizedAudioAssets)
     }
   }
 
@@ -75,6 +88,7 @@ dependencies {
   implementation(libs.meta.spatial.sdk.toolkit)
   implementation(libs.meta.spatial.sdk.isdk)
   implementation(libs.meta.spatial.sdk.vr)
+  implementation(libs.meta.spatial.sdk.uiset)
 
   implementation(platform(libs.androidx.compose.bom))
   implementation(libs.androidx.activity.compose)
@@ -98,4 +112,5 @@ spatial {
 
 tasks.named("preBuild") {
   dependsOn(stageStudyAudioAssets)
+  dependsOn(stageLocalizedAudioAssets)
 }

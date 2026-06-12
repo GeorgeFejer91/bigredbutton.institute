@@ -104,6 +104,13 @@ $firstQuestionnaireChangeSource = Join-Path $projectRoot '..\audio-assets\questi
 $secondQuestionnaireChangeSource = Join-Path $projectRoot '..\audio-assets\questionnaire\second-questionnaire-change-excuse.mp3'
 $questionnaireChoiceSound = Join-Path $projectRoot 'app\src\main\res\raw\ui_choice_blip.wav'
 $questionnaireNavigationSound = Join-Path $projectRoot 'app\src\main\res\raw\ui_navigation_blip.wav'
+$priorButtonExperienceQuestionSound = Join-Path $projectRoot 'app\src\main\res\raw\prior_button_experience_question.mp3'
+$priorButtonExperienceYesSound = Join-Path $projectRoot 'app\src\main\res\raw\prior_button_experience_yes.mp3'
+$priorButtonExperienceNoSound = Join-Path $projectRoot 'app\src\main\res\raw\prior_button_experience_no.mp3'
+$priorButtonExperiencePreStartSound = Join-Path $projectRoot 'app\src\main\res\raw\pre_start_instructions.mp3'
+$finalEndConfirmationQuestionSound = Join-Path $projectRoot 'app\src\main\res\raw\final_end_confirmation_question_prompt.mp3'
+$finalEndConfirmation10FeedbackSound = Join-Path $projectRoot 'app\src\main\res\raw\final_end_confirmation_10_feedback.mp3'
+$finalExtraPressPromptSound = Join-Path $projectRoot 'app\src\main\res\raw\final_extra_presses_prompt.mp3'
 $buttonPressSound = Join-Path $projectRoot 'app\src\main\assets\sfx\button-press-placeholder-kenney-bong.ogg'
 $simulatedRrAsset = Join-Path $projectRoot 'app\src\main\assets\ecg\neurokit2_simulated_rr_intervals_ms.csv'
 $polarClient = Join-Path $projectRoot 'app\src\main\java\org\bigredbutton\firststudy\PolarH10HeartRateClient.kt'
@@ -119,6 +126,13 @@ Add-Check 'questionnaire intro glitch sound exists' (Test-Path $questionnaireInt
 Add-Check 'questionnaire outro glitch sound exists' (Test-Path $questionnaireOutroGlitch) $questionnaireOutroGlitch
 Add-Check 'questionnaire choice sound exists' (Test-Path $questionnaireChoiceSound) $questionnaireChoiceSound
 Add-Check 'questionnaire navigation sound exists' (Test-Path $questionnaireNavigationSound) $questionnaireNavigationSound
+Add-Check 'prior button experience question sound exists' (Test-Path $priorButtonExperienceQuestionSound) $priorButtonExperienceQuestionSound
+Add-Check 'prior button experience yes feedback sound exists' (Test-Path $priorButtonExperienceYesSound) $priorButtonExperienceYesSound
+Add-Check 'prior button experience no feedback sound exists' (Test-Path $priorButtonExperienceNoSound) $priorButtonExperienceNoSound
+Add-Check 'pre-start instructions sound exists' (Test-Path $priorButtonExperiencePreStartSound) $priorButtonExperiencePreStartSound
+Add-Check 'final end confirmation question prompt sound exists' (Test-Path $finalEndConfirmationQuestionSound) $finalEndConfirmationQuestionSound
+Add-Check 'final end confirmation 10 feedback sound exists' (Test-Path $finalEndConfirmation10FeedbackSound) $finalEndConfirmation10FeedbackSound
+Add-Check 'final extra presses prompt sound exists' (Test-Path $finalExtraPressPromptSound) $finalExtraPressPromptSound
 Add-Check 'button press sound placeholder exists' (Test-Path $buttonPressSound) $buttonPressSound
 Add-Check 'simulated NeuroKit2 RR asset exists' (Test-Path $simulatedRrAsset) $simulatedRrAsset
 Add-Check 'Polar H10 BLE client exists' (Test-Path $polarClient) $polarClient
@@ -197,6 +211,34 @@ if (Test-Path $questionnaireChoiceSound) {
 }
 if (Test-Path $questionnaireNavigationSound) {
     Add-Check 'questionnaire navigation sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $questionnaireNavigationSound).Hash -eq 'DEF7603B0786070F01F0EFEACEA74F321F946EF217F0E11EA45B34990BF46F51') 'short UI navigation cue SHA256'
+}
+if (Test-Path $priorButtonExperienceQuestionSound) {
+    Add-Check 'prior button experience question sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $priorButtonExperienceQuestionSound).Hash -eq '735ACE7698E8D085A693B29FB231A21718E364FE61F09B643EA03C37F80FDCFB') 'supplied prior button experience question MP3 SHA256'
+    Add-Check 'prior button experience question sound nonempty' ((Get-Item $priorButtonExperienceQuestionSound).Length -gt 100000) ((Get-Item $priorButtonExperienceQuestionSound).Length.ToString())
+}
+if (Test-Path $priorButtonExperienceYesSound) {
+    Add-Check 'prior button experience yes feedback sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $priorButtonExperienceYesSound).Hash -eq '3867345F273BE83B7AB769961286A90F4E22EAA48730CA0B31C13BEEAA21DFEE') 'supplied prior button experience yes MP3 SHA256'
+    Add-Check 'prior button experience yes feedback sound nonempty' ((Get-Item $priorButtonExperienceYesSound).Length -gt 50000) ((Get-Item $priorButtonExperienceYesSound).Length.ToString())
+}
+if (Test-Path $priorButtonExperienceNoSound) {
+    Add-Check 'prior button experience no feedback sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $priorButtonExperienceNoSound).Hash -eq '30BE2B59158189DF8EFC7F2DFD1B4BD9CABDFC13400EE6F79227CFE0D2F508E9') 'supplied prior button experience no MP3 SHA256'
+    Add-Check 'prior button experience no feedback sound nonempty' ((Get-Item $priorButtonExperienceNoSound).Length -gt 50000) ((Get-Item $priorButtonExperienceNoSound).Length.ToString())
+}
+if (Test-Path $priorButtonExperiencePreStartSound) {
+    Add-Check 'pre-start instructions sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $priorButtonExperiencePreStartSound).Hash -eq '82E4F551785BF893D3686258F8072E3F46B8B4BF675CD21898BD790C70C13C27') 'supplied pre-start instructions MP3 SHA256'
+    Add-Check 'pre-start instructions sound nonempty' ((Get-Item $priorButtonExperiencePreStartSound).Length -gt 500000) ((Get-Item $priorButtonExperiencePreStartSound).Length.ToString())
+}
+if (Test-Path $finalEndConfirmationQuestionSound) {
+    Add-Check 'final end confirmation question prompt sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $finalEndConfirmationQuestionSound).Hash -eq '52CFEF284158C760771C20F8126816C0DFD451EE34639998CEFF4143CDB85F6A') 'supplied final end confirmation question prompt MP3 SHA256'
+    Add-Check 'final end confirmation question prompt sound nonempty' ((Get-Item $finalEndConfirmationQuestionSound).Length -gt 50000) ((Get-Item $finalEndConfirmationQuestionSound).Length.ToString())
+}
+if (Test-Path $finalEndConfirmation10FeedbackSound) {
+    Add-Check 'final end confirmation 10 feedback sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $finalEndConfirmation10FeedbackSound).Hash -eq 'C119CD2DA25693DA58ECDF90B7A50F13597DE979A469D5AD2D154F8911B8A29F') 'supplied final end confirmation feedback MP3 SHA256'
+    Add-Check 'final end confirmation 10 feedback sound nonempty' ((Get-Item $finalEndConfirmation10FeedbackSound).Length -gt 100000) ((Get-Item $finalEndConfirmation10FeedbackSound).Length.ToString())
+}
+if (Test-Path $finalExtraPressPromptSound) {
+    Add-Check 'final extra presses prompt sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $finalExtraPressPromptSound).Hash -eq '2D8BA3229E920770A8C31C946787A1CCA06D5D6063FD7FC7881ACE8D6988DF35') 'supplied final extra presses prompt MP3 SHA256'
+    Add-Check 'final extra presses prompt sound nonempty' ((Get-Item $finalExtraPressPromptSound).Length -gt 500000) ((Get-Item $finalExtraPressPromptSound).Length.ToString())
 }
 if (Test-Path $buttonPressSound) {
     Add-Check 'button press sound placeholder hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $buttonPressSound).Hash -eq 'D21D0F0B782445DB579D11E2506B24CD1AC9D664EE33AEAF807761AA7B6FD710') 'Kenney CC0 bong_001.ogg placeholder SHA256'
@@ -327,7 +369,19 @@ if (Test-Path $activity) {
     Add-Check 'button press logging marker' ($activityText.Contains('BRB_BUTTON_PRESS')) 'BRB_BUTTON_PRESS'
     Add-Check 'button press suppression marker' ($activityText.Contains('BRB_BUTTON_PRESS_SUPPRESSED')) 'BRB_BUTTON_PRESS_SUPPRESSED'
     Add-Check 'condition press source summary marker' ($activityText.Contains('BRB_CONDITION_PRESS_SOURCES') -and $activityText.Contains('controllerContact=') -and $activityText.Contains('handContact=') -and $activityText.Contains('autoValidation=')) 'condition-end log reports source-specific press counts, including hand contact attempts'
+    Add-Check 'missing Polar H10 warns but does not block participant start' (
+        $activityText.Contains('BRB_POLAR_START_WARNING') -and
+        $activityText.Contains('continuing=true participantPhysiologyEvidenceRequired=true') -and
+        $activityText.Contains('missingPolarStartWarningText') -and
+        $activityText.Contains('participantPhysiologyEvidenceExpected()') -and
+        -not $activityText.Contains('BRB_POLAR_START_BLOCKED')
+    ) 'participant/manual start logs a warning and continues when Polar H10 is not ready; final hardware validators still enforce live-H10 evidence'
     Add-Check 'Quest autorun validation extra' ($activityText.Contains('AUTO_VALIDATION_EXTRA = "brb.autoValidation"')) 'brb.autoValidation launch extra'
+    Add-Check 'Quest validation language override extra' (
+        $activityText.Contains('STUDY_LANGUAGE_EXTRA = "brb.studyLanguage"') -and
+        $activityText.Contains('studyLanguageFromIntent') -and
+        $activityText.Contains('launchLanguage ?: StudyLanguage.English')
+    ) 'brb.studyLanguage launch extra lets headset validation exercise English or Japanese without removing the participant-facing selector'
     Add-Check 'Quest physical press validation extra' ($activityText.Contains('PHYSICAL_PRESS_VALIDATION_EXTRA = "brb.physicalPressValidation"')) 'brb.physicalPressValidation launch extra'
     Add-Check 'Quest panel smoke validation extra' ($activityText.Contains('PANEL_SMOKE_EXTRA = "brb.panelSmoke"') -and $activityText.Contains('BRB_PANEL_SMOKE_PICTOGRAPHIC_READY')) 'brb.panelSmoke launch extra'
     Add-Check 'fast controller flow validation extra' ($activityText.Contains('FAST_CONTROLLER_FLOW_EXTRA = "brb.fastControllerFlow"') -and $activityText.Contains('BRB_FAST_CONTROLLER_FLOW_COMPLETE')) 'brb.fastControllerFlow launch extra'
@@ -360,28 +414,121 @@ if (Test-Path $activity) {
         $activityText.Contains('prior_big_red_button_experience_timestamp_iso') -and
         $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_SAVED')
     ) 'prior yes/no big-red-button experience response is written to JSON and summary CSV with timestamp'
-    Add-Check 'summary CSV ECG variables' ($activityText.Contains('ecg_assignment_order') -and $activityText.Contains('condition_${condition}_ecg_source') -and $activityText.Contains('condition_${condition}_ecg_blink_count') -and $activityText.Contains('condition_${condition}_ecg_timeseries_sample_count') -and $activityText.Contains('condition_${condition}_ecg_detector_event_count') -and $activityText.Contains('condition_${condition}_external_signal_sample_count') -and $activityText.Contains('condition_${condition}_ecg_capture_duration_ns') -and $activityText.Contains('condition_${condition}_ecg_audio_window_end_ms')) 'counterbalanced ECG source, blink count, raw time-series count, detector count, optional external signal count, and exact audio-window columns'
+    Add-Check 'final end-confirmation and 1000-press branch' (
+        $activityText.Contains('FinalEndQuestionnaire') -and
+        $activityText.Contains('FinalExtraPresses') -and
+        $activityText.Contains('FINAL_END_CONFIRMATION_QUESTION') -and
+        $activityText.Contains('How sure are you that you want to end the experiment, on a scale of 1 to 10?') -and
+        $activityText.Contains('FINAL_EXTRA_BUTTON_PRESS_REQUIREMENT = 1000') -and
+        $activityText.Contains('FinalEndQuestionnaireScreen') -and
+        $activityText.Contains('setFinalEndLikert') -and
+        $activityText.Contains('submitFinalEndConfirmationSelection') -and
+        $activityText.Contains('finalEndSelectionLockedState') -and
+        $activityText.Contains('finalEndQuestionAudioReadyState') -and
+        $activityText.Contains('BRB_FINAL_END_CONFIRMATION_OPTIONS_READY') -and
+        $activityText.Contains('BRB_FINAL_END_CONFIRMATION_SELECTION_BLOCKED') -and
+        $activityText.Contains('BRB_FINAL_END_CONFIRMATION_SUBMIT_BLOCKED') -and
+        $activityText.Contains('optionsVisible=false questionAudio=final_end_confirmation_question_prompt.mp3') -and
+        $activityText.Contains('optionsVisible=true answerLocked=false') -and
+        $activityText.Contains('FINAL_END_CONFIRMATION_QUESTION_HOLD_MS = 5400L') -and
+        $activityText.Contains('if (optionsReady || selectionLocked)') -and
+        $activityText.Contains('(1..10).filter { value -> !selectionLocked || value == selected }') -and
+        $activityText.Contains('transparentCounterQuestionnaire = stage == StudyStage.FinalEndQuestionnaire') -and
+        $activityText.Contains('FinalEndQuestionnaireScreen') -and
+        $activityText.Contains('color = CounterDigitRed') -and
+        $activityText.Contains('R.raw.final_end_confirmation_question_prompt') -and
+        $activityText.Contains('BRB_FINAL_END_CONFIRMATION_QUESTION_CUE') -and
+        $activityText.Contains('FINAL_END_CONFIRMATION_QUESTION_AUDIO_DURATION_MS = 5146L') -and
+        $activityText.Contains('R.raw.final_end_confirmation_10_feedback') -and
+        $activityText.Contains('BRB_FINAL_END_CONFIRMATION_FEEDBACK_CUE') -and
+        $activityText.Contains('FINAL_END_CONFIRMATION_10_FEEDBACK_AUDIO_DURATION_MS = 16274L') -and
+        $activityText.Contains('FINAL_END_CONFIRMATION_FEEDBACK_HOLD_MS = 16550L') -and
+        $activityText.Contains('BRB_FINAL_END_CONFIRMATION_SHOWN') -and
+        $activityText.Contains('BRB_FINAL_END_CONFIRMATION_SAVED') -and
+        $activityText.Contains('BRB_FINAL_EXTRA_BUTTON_CHALLENGE_START') -and
+        $activityText.Contains('That is fantastic! I will take your non-decimal response as a big red YES!') -and
+        $activityText.Contains('R.raw.final_extra_presses_prompt') -and
+        $activityText.Contains('BRB_FINAL_EXTRA_PROMPT_CUE') -and
+        $activityText.Contains('FINAL_EXTRA_PRESSES_PROMPT_AUDIO_DURATION_MS = 45636L') -and
+        $activityText.Contains('FINAL_EXTRA_PRESSES_PROMPT_HOLD_MS = 46100L') -and
+        $activityText.Contains('finalExtraPromptVisibleState') -and
+        $activityText.Contains('setFinalExtraPromptPanelVisible(true)') -and
+        $activityText.Contains('buttonModelVisible=false') -and
+        $activityText.Contains('BRB_FINAL_EXTRA_PROMPT_HIDDEN') -and
+        $activityText.Contains('counterOnly=true') -and
+        $activityText.Contains('reason=prompt_audio_active') -and
+        $activityText.Contains('BRB_FINAL_EXTRA_BUTTON_PRESS_COMPLETE') -and
+        $activityText.Contains('recordFinalExtraButtonPress') -and
+        $activityText.Contains('FinalExtraPressPrompt') -and
+        $activityText.Contains('PRESSES OUT OF 1,000')
+    ) 'after condition 2, a 10-point final question either ends on rating 10 or returns the button until 1000 extra presses are counted'
+    Add-Check 'final end-confirmation export fields' (
+        $activityText.Contains('finalEndConfirmationJson') -and
+        $activityText.Contains('finalEndConfirmation') -and
+        $activityText.Contains('final_extra_button_press_requirement') -and
+        $activityText.Contains('final_extra_button_press_count') -and
+        $activityText.Contains('final_extra_button_press_completed') -and
+        $activityText.Contains('_final_extra_button_presses.csv') -and
+        $activityText.Contains('finalExtraPressEventsCsvText') -and
+        $activityText.Contains('finalExtraButtonPressesCsv')
+    ) 'final 10-point decision and optional 1000 extra press events are exported to JSON, summary CSV, session index, and a dedicated event CSV'
+    Add-Check 'summary CSV ECG variables' ($activityText.Contains('ecg_assignment_order') -and $activityText.Contains('condition_${condition}_ecg_source') -and $activityText.Contains('condition_${condition}_feedback_source') -and $activityText.Contains('condition_${condition}_physiology_source') -and $activityText.Contains('condition_${condition}_ecg_blink_count') -and $activityText.Contains('condition_${condition}_ecg_timeseries_sample_count') -and $activityText.Contains('condition_${condition}_real_ecg_timeseries_sample_count') -and $activityText.Contains('condition_${condition}_polar_rr_event_count') -and $activityText.Contains('condition_${condition}_ecg_detector_event_count') -and $activityText.Contains('condition_${condition}_external_signal_sample_count') -and $activityText.Contains('condition_${condition}_ecg_capture_duration_ns') -and $activityText.Contains('condition_${condition}_ecg_audio_window_end_ms')) 'counterbalanced feedback source, real physiology source, blink count, raw time-series count, Polar RR count, detector count, optional external signal count, and exact audio-window columns'
     Add-Check 'ECG blink events CSV export' ($activityText.Contains('_ecg_blink_events.csv') -and $activityText.Contains('ecgBlinkEventsCsvText') -and $activityText.Contains('ecgBlinkEventsCsv') -and $activityText.Contains('"pulse_intensity_0_1"') -and $activityText.Contains('"detector"')) 'SideQuest-readable ECG blink event CSV with pulse metadata'
     Add-Check 'ECG raw time-series CSV export' ($activityText.Contains('_ecg_timeseries.csv') -and $activityText.Contains('ecgTimeSeriesCsvText') -and $activityText.Contains('ecgTimeSeriesCsv') -and $activityText.Contains('"elapsed_ns"') -and $activityText.Contains('"audio_window_duration_ms"')) 'SideQuest-readable raw 130 Hz ECG time-series CSV with nanosecond elapsed and audio-window fields'
+    Add-Check 'Polar RR events CSV export' ($activityText.Contains('_polar_rr_events.csv') -and $activityText.Contains('polarRrEventsCsvText') -and $activityText.Contains('polarRrEventsCsv') -and $activityText.Contains('"used_for_feedback"')) 'SideQuest-readable real Polar RR event CSV with feedback-use flag'
     Add-Check 'ECG detector events CSV export' ($activityText.Contains('_ecg_detector_events.csv') -and $activityText.Contains('ecgDetectorEventsCsvText') -and $activityText.Contains('BRB_ECG_RPEAK_DETECTED') -and $activityText.Contains('native_threshold_uv800')) 'native threshold R-peak detector diagnostics are exported separately from the raw ECG stream'
-    Add-Check 'optional LSL external signal scaffold' ($activityText.Contains('LSL_INPUT_ENABLED = false') -and $activityText.Contains('BRB_LSL status=disabled') -and $activityText.Contains('_external_signal_samples.csv') -and $activityText.Contains('externalSignalSamplesCsvText')) 'disabled-by-default LSL/external signal schema is present without adding an untested JNI dependency'
+    Add-Check 'questionnaire protocol metadata and lifecycle markers' (
+        $activityText.Contains('questionnaireProtocolJson') -and
+        $activityText.Contains('bigredbutton.questionnaire_flow.v1') -and
+        $activityText.Contains('transport", "in_process_spatial_panel"') -and
+        $activityText.Contains('productCommunication", "app_internal"') -and
+        $activityText.Contains('QUESTIONNAIRE_STAGE_SEQUENCE') -and
+        $activityText.Contains('BRB_QUESTIONNAIRE_CONTRACT') -and
+        $activityText.Contains('BRB_QUESTIONNAIRE_STAGE_OPEN') -and
+        $activityText.Contains('BRB_QUESTIONNAIRE_STAGE_COMPLETE') -and
+        $activityText.Contains('answersLogged=false')
+    ) 'in-process questionnaire flow exports a versioned contract and answer-free lifecycle markers'
+    Add-Check 'optional LSL external signal scaffold' (
+        $activityText.Contains('LSL_INPUT_ENABLED = false') -and
+        $activityText.Contains('LSL_ROLE_DIAGNOSTIC_ONLY = "diagnostic_only"') -and
+        $activityText.Contains('LSL_DEFAULT_STREAM_NAME = "HRV_Biofeedback"') -and
+        $activityText.Contains('LSL_DEFAULT_STREAM_TYPE = "HRV"') -and
+        $activityText.Contains('LSL_TRIGGER_THRESHOLD_01 = 0.5f') -and
+        $activityText.Contains('LSL_MINIMUM_TRIGGER_INTERVAL_MS = 250L') -and
+        $activityText.Contains('externalSignalProtocolJson') -and
+        $activityText.Contains('BRB_LSL status=disabled') -and
+        $activityText.Contains('contaminatesPressCounts=false') -and
+        $activityText.Contains('nativeLibraryPackaged=false') -and
+        $activityText.Contains('jniEnabled=false') -and
+        $activityText.Contains('drivesHeartbeatBlink=false') -and
+        $activityText.Contains('drivesButtonPresses=false') -and
+        $activityText.Contains('_external_signal_samples.csv') -and
+        $activityText.Contains('externalSignalSamplesCsvText') -and
+        -not (Test-Path (Join-Path $projectRoot 'app\src\main\jniLibs\arm64-v8a\liblsl.so')) -and
+        -not $activityText.Contains('System.loadLibrary("lsl")')
+    ) 'disabled-by-default Unity-compatible LSL/external signal schema is present without adding an untested JNI dependency'
     Add-Check 'pictographic distance variable' ($activityText.Contains('self_button_distance_units')) 'self_button_distance_units'
     Add-Check 'pictographic radius variable' ($activityText.Contains('button_presence_radius_units')) 'button_presence_radius_units'
     Add-Check 'lost opportunity variable' ($activityText.Contains('lost_opportunity_for_better_results_quotient')) 'lost_opportunity_for_better_results_quotient'
     Add-Check 'pictographic uses model thumbnail' ($activityText.Contains('ImageBitmap.imageResource(id = R.drawable.big_red_button_model_thumbnail)') -and $activityText.Contains('drawImage(') -and -not $activityText.Contains('drawCircle(BrbRed, radius = 34f, center = Offset(buttonX')) 'same-button thumbnail replaces generic red oval'
     Add-Check 'pictographic button centered in presence circle' ($activityText.Contains('buttonX - buttonImageSize / 2f') -and $activityText.Contains('y - buttonImageSize / 2f')) 'thumbnail dstOffset centers on circle center'
     Add-Check 'pictographic distance slider calibrated to self axis' (
-        $activityText.Contains('val pictographicScaleModifier = Modifier.width(640.dp).align(Alignment.CenterHorizontally)') -and
+        $activityText.Contains('private const val PICTOGRAPHIC_VAS_AXIS_WIDTH_DP = 640') -and
+        $activityText.Contains('private const val PICTOGRAPHIC_VAS_THUMB_RADIUS_DP = 20') -and
+        $activityText.Contains('Modifier.width(PICTOGRAPHIC_VAS_AXIS_WIDTH_DP.dp).align(Alignment.CenterHorizontally)') -and
+        $activityText.Contains('val selfX = scaleStartX + scaleThumbRadiusPx') -and
+        $activityText.Contains('val buttonX = selfX + buttonDistancePx') -and
+        $activityText.Contains('end = Offset(selfX + maxButtonDistancePx, y)') -and
+        $activityText.Contains('val thumbX = trackStartX + trackTravel * (boundedValue / 100f)') -and
         $activityText.Contains('value = 100f - closeness') -and
         $activityText.Contains('onChange = { activity.pictographicClosenessState.floatValue = 100f - it }') -and
-        $activityText.Contains('left = "very close"') -and
-        $activityText.Contains('right = "very distant"') -and
-        $activityText.Contains('end = Offset(selfX + selfButtonDistanceUnits(0f), y)') -and
-        $activityText.Contains('return (100f - closeness0To100.coerceIn(0f, 100f)) * 4.40f')
-    ) 'visible slider thumb and button marker move together along a distance-from-self axis'
+        $activityText.Contains('left = activity.t("very_close")') -and
+        $activityText.Contains('right = activity.t("very_distant")') -and
+        $activityText.Contains('PICTOGRAPHIC_SELF_BUTTON_TRAVEL_UNITS.toFloat() / 100f')
+    ) 'visible VAS minimum aligns to the self pictogram, and the closeness thumb/button marker share one horizontal coordinate'
     Add-Check 'pictographic presence endpoint labels' (
-        $activityText.Contains('left = "small presence"') -and
-        $activityText.Contains('right = "large presence"')
+        $activityText.Contains('left = activity.t("small_presence")') -and
+        $activityText.Contains('right = activity.t("large_presence")')
     ) 'presence VAS is labelled small presence to large presence'
     Add-Check 'redness VAS/Likert conversion task' (
         $activityText.Contains('RednessResponseControl') -and
@@ -397,6 +544,11 @@ if (Test-Path $activity) {
         $activityText.Contains('BRB_REDNESS_SCALE_CONVERSION_MICRO_EVENT') -and
         $activityText.Contains('RednessConversionChoreographyOverlay') -and
         $activityText.Contains('drawRednessMicroEventVisual') -and
+        $activityText.Contains('recordRednessPostConversionEdit') -and
+        $activityText.Contains('rednessFinalMatchesCarriedForward') -and
+        $activityText.Contains('BRB_REDNESS_POST_CONVERSION_EDIT') -and
+        $activityText.Contains('Modifier.fillMaxWidth().padding(horizontal = 28.dp)') -and
+        $activityText.Contains('Arrangement.spacedBy(10.dp)') -and
         $activityText.Contains('R.raw.first_questionnaire_change') -and
         $activityText.Contains('R.raw.second_questionnaire_change_excuse') -and
         $activityText.Contains('placeholder=false') -and
@@ -418,53 +570,150 @@ if (Test-Path $activity) {
         $activityText.Contains('rednessLikert1To7') -and
         $activityText.Contains('rednessLikertDescriptor') -and
         $activityText.Contains('rednessScaleOrder') -and
+        $activityText.Contains('rednessCarriedForwardVas0To100') -and
+        $activityText.Contains('rednessCarriedForwardLikert1To7') -and
+        $activityText.Contains('rednessPostConversionEdited') -and
+        $activityText.Contains('rednessChangedAfterConversion') -and
+        $activityText.Contains('rednessFinalMatchesCarriedForward') -and
         $activityText.Contains('condition_${condition}_redness_vas_0_100') -and
-        $activityText.Contains('condition_${condition}_redness_likert_1_7')
-    ) 'both final redness VAS and Likert values plus presentation order are written to JSON and summary CSV'
+        $activityText.Contains('condition_${condition}_redness_likert_1_7') -and
+        $activityText.Contains('condition_${condition}_redness_carried_forward_vas_0_100') -and
+        $activityText.Contains('condition_${condition}_redness_changed_after_conversion')
+    ) 'both final redness values, carried-forward closest analogues, and post-conversion change flags are written to JSON, logcat, and summary CSV'
     Add-Check 'pictographic circle boundaries thickened' (
         ([regex]::Matches($activityText, 'style = Stroke\(width = 9f\)')).Count -ge 2
     ) 'self boundary and button-presence boundary use thicker 9 px strokes'
     Add-Check 'website-style intake header' ($activityText.Contains('IntakeWebsiteHeader') -and $activityText.Contains('Brush.linearGradient') -and $activityText.Contains('Big Red Button Institute | Intake')) 'demographics page mirrors BRB website header treatment'
-    Add-Check 'participant-facing start experiment label' ($activityText.Contains('PrimaryActionButton("Start experiment"') -and -not $activityText.Contains('Start condition 1')) 'demographics CTA avoids condition numbering'
+    Add-Check 'participant-facing start experiment label' (
+        ($activityText.Contains('PrimaryActionButton("Start experiment"') -or
+            $activityText.Contains('PrimaryActionButton(activity.t("start_experiment")')) -and
+        -not $activityText.Contains('Start condition 1')
+    ) 'demographics CTA avoids condition numbering'
     Add-Check 'participant ID assigned under hood' ($activityText.Contains('participantIdSource=${if (participantIdOverride.isNullOrBlank()) "generated" else "validation_override"}') -and -not $activityText.Contains('LabeledTextField("Participant ID"')) 'participant ID is generated or validation-overridden, not typed by participant'
-    Add-Check 'gender four-choice' ($activityText.Contains('GenderChoice') -and $activityText.Contains('"male" to "Male"') -and $activityText.Contains('"female" to "Female"') -and $activityText.Contains('"other" to "Other"') -and $activityText.Contains('"prefer_not_to_say" to "Prefer not to say"')) 'Male/Female/Other/Prefer not to say choice buttons'
-    Add-Check 'handedness tri-choice' ($activityText.Contains('HandednessChoice') -and $activityText.Contains('"left" to "Left"') -and $activityText.Contains('"right" to "Right"') -and $activityText.Contains('"ambidextrous" to "Ambidextrous"')) 'Left/Right/Ambidextrous choice buttons'
-    Add-Check 'native system keyboard field focus hooks' (
-        $activityText.Contains('FocusRequester') -and
-        $activityText.Contains('LocalSoftwareKeyboardController') -and
-        $activityText.Contains('KeyboardCapitalization.Words') -and
-        $activityText.Contains('KeyboardType.Text') -and
-        $activityText.Contains('KeyboardType.Number') -and
-        $activityText.Contains('ImeAction.Next') -and
-        $activityText.Contains('ImeAction.Done') -and
-        $activityText.Contains('normalizeAgeInput') -and
+    Add-Check 'gender four-choice' ($activityText.Contains('GenderChoice') -and $activityText.Contains('"male" to activity.t("male")') -and $activityText.Contains('"female" to activity.t("female")') -and $activityText.Contains('"other" to activity.t("other")') -and $activityText.Contains('"prefer_not_to_say" to activity.t("prefer_not_to_say")')) 'Male/Female/Other/Prefer not to say choice buttons'
+    Add-Check 'handedness tri-choice' ($activityText.Contains('HandednessChoice') -and $activityText.Contains('"left" to activity.t("left")') -and $activityText.Contains('"right" to activity.t("right")') -and $activityText.Contains('"ambidextrous" to activity.t("ambidextrous")')) 'Left/Right/Ambidextrous choice buttons'
+    Add-Check 'visible Android EditText demographics keyboard hooks' (
+        $activityText.Contains('AndroidView(') -and
+        $activityText.Contains('EditText(context).apply') -and
+        $activityText.Contains('fieldId = "name"') -and
+        $activityText.Contains('fieldId = "age"') -and
+        $activityText.Contains('InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS') -and
+        $activityText.Contains('InputType.TYPE_CLASS_NUMBER') -and
+        $activityText.Contains('EditorInfo.IME_ACTION_NEXT') -and
+        $activityText.Contains('EditorInfo.IME_ACTION_DONE') -and
+        $activityText.Contains('DEMOGRAPHICS_NAME_MAX_CHARS = 80') -and
+        $activityText.Contains('DEMOGRAPHICS_AGE_MAX_DIGITS = 3') -and
+        $activityText.Contains('normalizeAgeInput(raw)') -and
+        $activityText.Contains('InputFilter.LengthFilter(maxChars)') -and
+        $activityText.Contains('requestDemographicsTextInputFocus("age", "name_submit_next")') -and
+        $activityText.Contains('requestDemographicsTextInputFocus("age", "name_valid_auto_advance")') -and
+        $activityText.Contains('hideSoftKeyboardForReason("field_age_done")') -and
+        $activityText.Contains('focus_request_retry_') -and
+        $activityText.Contains('requiredTextField') -and
+        $activityText.Contains('isRequired = requiredTextField == "name"') -and
+        $activityText.Contains('isRequired = requiredTextField == "age"') -and
+        $activityText.Contains('isGuidedField = isFocused || isRequired') -and
+        $activityText.Contains('.height(72.dp)') -and
+        $activityText.Contains('demographicsFocusRequestSourceState') -and
+        $activityText.Contains('singlePath=true') -and
+        $activityText.Contains('fullCellHitbox=true') -and
+        $activityText.Contains('tap_hitbox') -and
         $activityText.Contains('demographicsDraftNameState') -and
         $activityText.Contains('demographicsDraftAgeState') -and
-        -not $activityText.Contains('useLooseKeyboard') -and
-        -not $activityText.Contains('requestLooseKeyboard') -and
-        -not $activityText.Contains('LooseKeyboard') -and
-        -not $activityText.Contains('BRB_LOOSE_KEYBOARD') -and
-        -not $activityText.Contains('R.id.loose_keyboard_panel') -and
-        $activityText.Contains('requestSoftKeyboard(view, keyboardReason, keyboardMode)') -and
-        $activityText.Contains('inputMethodManager.restartInput(targetView)') -and
-        $activityText.Contains('InputMethodManager.SHOW_FORCED') -and
+        $activityText.Contains('demographicsFocusedFieldState') -and
+        $activityText.Contains('onNewIntent(intent: Intent)') -and
+        $activityText.Contains('handleDemographicsKeyboardValidationIntent') -and
+        $activityText.Contains('DEMOGRAPHICS_KEYBOARD_VALIDATION_COMMAND_EXTRA') -and
+        $activityText.Contains('DEMOGRAPHICS_KEYBOARD_VALIDATION_TEXT_EXTRA') -and
+        $activityText.Contains('DEMOGRAPHICS_KEYBOARD_VALIDATION_SESSION_EXTRA') -and
+        $activityText.Contains('BRB_DEMOGRAPHICS_VALIDATION_SESSION') -and
+        $activityText.Contains('reason=session_mismatch') -and
+        $activityText.Contains('BRB_DEMOGRAPHICS_VALIDATION_COMMAND') -and
+        $activityText.Contains('BRB_DEMOGRAPHICS_VALIDATION_TEXT_APPLIED') -and
+        $activityText.Contains('sameSanitizer=true') -and
+        $activityText.Contains('"focus_age"') -and
+        $activityText.Contains('"set_age"') -and
+        $activityText.Contains('"age_done"') -and
+        $activityText.Contains('platformControl=EditText') -and
+        $activityText.Contains('inputOwner=androidViewEditText') -and
+        $activityText.Contains('visibleControl=androidViewEditText') -and
+        $activityText.Contains('focusedView=EditText') -and
+        $activityText.Contains('restartInput=true') -and
+        $activityText.Contains('inputMethodManager.restartInput(editText)') -and
         $activityText.Contains('BRB_SYSTEM_KEYBOARD_FIELD_CONTRACT') -and
+        $activityText.Contains('BRB_DEMOGRAPHICS_TEXT_VALUE') -and
+        $activityText.Contains('BRB_DEMOGRAPHICS_TEXT_EDITOR_ACTION') -and
+        $activityText.Contains('BRB_DEMOGRAPHICS_EDITTEXT_FOCUS') -and
+        $activityText.Contains('DEMOGRAPHICS_KEYBOARD_VALIDATION_EXTRA = "brb.demographicsKeyboardValidation"') -and
         $activityText.Contains('BRB_SOFT_KEYBOARD_REQUEST') -and
         $activityText.Contains('BRB_SOFT_KEYBOARD_SWITCH') -and
         $activityText.Contains('failSafeRetarget=true') -and
         $activityText.Contains('movablePanel=true') -and
         $activityText.Contains('closeToParticipant=system_managed') -and
+        -not $activityText.Contains('SpatialTextField') -and
+        -not $activityText.Contains('AgeTriggerDial') -and
+        -not $activityText.Contains('AgeDialStepButton') -and
+        -not $activityText.Contains('ComposeTriggerDial') -and
+        -not $activityText.Contains('keyboardTarget=false') -and
+        -not $activityText.Contains('demographicsInputBridge') -and
+        -not $activityText.Contains('demographicsBridgeActiveFieldId') -and
+        -not $activityText.Contains('BRB_DEMOGRAPHICS_WINDOW_EDITTEXT') -and
+        -not $activityText.Contains('BRB_DEMOGRAPHICS_INPUT_BRIDGE_READY') -and
+        -not $activityText.Contains('useLooseKeyboard') -and
+        -not $activityText.Contains('requestLooseKeyboard') -and
+        -not $activityText.Contains('LooseKeyboard') -and
+        -not $activityText.Contains('BRB_LOOSE_KEYBOARD') -and
+        -not $activityText.Contains('R.id.loose_keyboard_panel') -and
         -not ($activityText.Contains('DemographicsInlineKeyboard') -or $activityText.Contains('requestInlineKeyboard'))
-    ) 'name/age use the native Quest system keyboard, with automatic text/numeric mode retargeting and digit-safe age entry'
+    ) 'Name and Age use visible AndroidView(EditText) controls as the single IME owners, with Name text/Next and Age number/Done contracts'
+    Add-Check 'demographics validation can smoke prior audio prompt' (
+        $activityText.Contains('"submit_demographics" ->') -and
+        $activityText.Contains('safeCommand == "prior_answer_yes"') -and
+        $activityText.Contains('safeCommand == "prior_answer_no"') -and
+        $activityText.Contains('BRB_DEMOGRAPHICS_VALIDATION_SUBMIT accepted=true') -and
+        $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_VALIDATION_ANSWER') -and
+        $activityText.Contains('priorAudioSmoke=true') -and
+        $activityText.Contains('route=submitDemographics')
+    ) 'validation-only demographics submit and prior-answer commands smoke the participant prior-experience audio prompt without adding visible UI'
+    Add-Check 'audio rig stress validation commands' (
+        $activityText.Contains('AUDIO_RIG_STRESS_EXTRA = "brb.audioRigStress"') -and
+        $activityText.Contains('AUDIO_RIG_STRESS_COMMAND_EXTRA = "brb.audioRigStressCommand"') -and
+        $activityText.Contains('handleAudioRigStressIntent') -and
+        $activityText.Contains('BRB_AUDIO_RIG_STRESS_COMMAND') -and
+        $activityText.Contains('show_prior_prompt') -and
+        $activityText.Contains('show_final_end') -and
+        $activityText.Contains('final_answer_') -and
+        $activityText.Contains('final_extra_press_attempt') -and
+        $activityText.Contains('play_short_cues') -and
+        $activityText.Contains('redness_vas_then_likert') -and
+        $activityText.Contains('redness_likert_then_vas') -and
+        $activityText.Contains('condition_1_audio_probe') -and
+        $activityText.Contains('condition_2_audio_probe') -and
+        $activityText.Contains('BRB_AUDIO_RIG_STRESS_CONDITION_AUDIO_PROBE') -and
+        $activityText.Contains('BRB_CONDITION_START condition=$conditionNumber audio=${run.audioAssetPath}') -and
+        $activityText.Contains('audioId=${run.audioId}') -and
+        $activityText.Contains('audioLocale=${run.audioLocaleCode}') -and
+        $activityText.Contains('localizedFallback=${run.audioFallbackToEnglish}') -and
+        $activityText.Contains('durationMs=${run.audioDurationMs} isPlaying=${mediaPlayer?.isPlaying == true}')
+    ) 'hidden Quest stress commands can drive real audio-linked prompt gates and cue playback without visible participant shortcuts'
     Add-Check 'demographics panel compact no-scroll layout' (
         $activityText.Contains('BRB_DEMOGRAPHICS_LAYOUT noScroll=true compact=true signaturePadHeightDp=142 startButtonHeightDp=48') -and
         $activityText.Contains('modifier = Modifier.fillMaxSize()') -and
         $activityText.Contains('.height(142.dp)') -and
-        $activityText.Contains('PrimaryActionButton("Start experiment", canSubmit, height = 48.dp)') -and
+        ($activityText.Contains('PrimaryActionButton("Start experiment", canSubmit, height = 48.dp)') -or $activityText.Contains('PrimaryActionButton(activity.t("start_experiment"), canSubmit, height = 48.dp)')) -and
         -not [regex]::IsMatch($activityText, 'private fun ConsentDemographicsScreen(?s:(?!@Composable\s+private fun PolarH10ValidityPanel).)*verticalScroll')
     ) 'intake page fits the 1180x820 Quest panel without requiring scroll'
     Add-Check 'questionnaire panel spawns in gaze line' ($activityText.Contains('BRB_QUESTIONNAIRE_PANEL_LAYOUT') -and $activityText.Contains('placement=current-gaze-line') -and $activityText.Contains('QUESTIONNAIRE_PANEL_Y_METERS = 1.52f') -and $activityText.Contains('QUESTIONNAIRE_PANEL_Z_METERS = 1.55f')) 'view-origin reset and gaze-line panel placement marker'
-    Add-Check 'questionnaire intro/outro glitch cues' ($activityText.Contains('R.raw.questionnaire_intro_glitch') -and $activityText.Contains('R.raw.questionnaire_outro_glitch') -and $activityText.Contains('BRB_QUESTIONNAIRE_${mode.uppercase(Locale.US)}_CUE') -and $activityText.Contains('mode = "intro"') -and $activityText.Contains('mode = "outro"')) 'intro/outro MP3s drive panel transitions'
+    Add-Check 'questionnaire intro/outro glitch cues' (
+        $activityText.Contains('R.raw.questionnaire_intro_glitch') -and
+        $activityText.Contains('R.raw.questionnaire_outro_glitch') -and
+        $activityText.Contains('BRB_QUESTIONNAIRE_${mode.uppercase(Locale.US)}_CUE') -and
+        $activityText.Contains('mode = "intro"') -and
+        $activityText.Contains('mode = "outro"') -and
+        $activityText.Contains('AudioAttributes.CONTENT_TYPE_SONIFICATION') -and
+        $activityText.Contains('durationMs=${player.duration} isPlaying=${player.isPlaying} audioUsage=media contentType=sonification volume=1.0') -and
+        $activityText.Contains('reason=open_raw_resource_fd_returned_null')
+    ) 'intro/outro MP3s drive panel transitions through explicit raw-resource playback with runtime evidence'
     Add-Check 'blue failure glitch overlay' (
         $activityText.Contains('BlueFailureGlitchOverlay') -and
         $activityText.Contains('BRB_PANEL_GLITCH') -and
@@ -504,11 +753,37 @@ if (Test-Path $activity) {
         $activityText.Contains('stage == StudyStage.PreButtonExperienceQuestion') -and
         $activityText.Contains('PriorBigRedButtonExperiencePrompt') -and
         $activityText.Contains('background(Color.Transparent)') -and
+        $activityText.Contains('CounterFloatingAction(') -and
+        $activityText.Contains('color = CounterDigitRed') -and
+        $activityText.Contains('fontFamily = BrbMono') -and
+        $activityText.Contains('.border(2.dp, checkboxBorder, RoundedCornerShape(2.dp))') -and
+        $activityText.Contains('priorBigRedButtonExperienceOptionsReadyState') -and
+        $activityText.Contains('priorBigRedButtonExperienceFeedbackReadyState') -and
+        $activityText.Contains('priorBigRedButtonExperiencePreStartReadyState') -and
+        $activityText.Contains('R.raw.prior_button_experience_question') -and
+        $activityText.Contains('R.raw.prior_button_experience_yes') -and
+        $activityText.Contains('R.raw.prior_button_experience_no') -and
+        $activityText.Contains('R.raw.pre_start_instructions') -and
+        $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_QUESTION_CUE') -and
+        $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_OPTIONS_READY') -and
+        $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_FEEDBACK_CUE') -and
+        $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_CUE') -and
+        $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_READY') -and
+        $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_START_CLICK') -and
+        $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_QUESTION_AUDIO_DURATION_MS = 10527L') -and
+        $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_YES_AUDIO_DURATION_MS = 5251L') -and
+        $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_NO_AUDIO_DURATION_MS = 4284L') -and
+        $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_PRE_START_AUDIO_DURATION_MS = 34273L') -and
+        $activityText.Contains('reason=question_audio_active') -and
+        $activityText.Contains('reason=answer_locked') -and
+        $activityText.Contains('otherOptionsHidden=true') -and
+        $activityText.Contains('reason=feedback_audio_active') -and
+        $activityText.Contains('reason=pre_start_instructions_active') -and
         $activityText.Contains('No? Well than you are in for a treat!') -and
         $activityText.Contains('An experienced user, just the type of participant we need.') -and
-        $activityText.Contains('PrimaryActionButton(') -and
-        $activityText.Contains('Start experiment')
-    ) 'counter location can temporarily show the clear-background XR prompt before returning to the red press counter'
+        $activityText.Contains('Start experiment') -and
+        -not $activityText.Contains('.border(1.dp, if (checked) CounterDigitRed else Color.White.copy(alpha = 0.72f), RoundedCornerShape(7.dp))')
+    ) 'counter location shows a frameless clear-background XR prompt with red counter-style lettering and only answer boxes before the 3D button appears'
     Add-Check 'digital press counter red transparent passthrough styling' (
         $activityText.Contains('CounterDigitRed') -and
         $activityText.Contains('Color(0xFFFF2424)') -and
@@ -518,10 +793,25 @@ if (Test-Path $activity) {
         -not $activityText.Contains('Color(0xFF3D0A0A)')
     ) 'counter digits/label are red and the counter has no filled backing panel, so passthrough remains visible behind it'
     Add-Check 'questionnaire UI sound cues wired' ($activityText.Contains('playQuestionnaireChoiceCue') -and $activityText.Contains('R.raw.ui_choice_blip') -and $activityText.Contains('playQuestionnaireNavigationCue') -and $activityText.Contains('R.raw.ui_navigation_blip')) 'multiple-choice and navigation feedback sounds'
-    Add-Check 'button press sound cue wired' ($activityText.Contains('playButtonPressCue()') -and $activityText.Contains('BUTTON_PRESS_SFX_ASSET') -and $activityText.Contains('BRB_SFX_PLAY cue=$cueName asset=$assetPath')) 'accepted button press plays swappable asset sound'
+    Add-Check 'raw speech cue playback uses explicit audio attributes' (
+        $activityText.Contains('resources.openRawResourceFd(resourceId)') -and
+        $activityText.Contains('AudioAttributes.Builder()') -and
+        $activityText.Contains('AudioAttributes.USAGE_MEDIA') -and
+        $activityText.Contains('AudioAttributes.CONTENT_TYPE_SPEECH') -and
+        $activityText.Contains('setVolume(1.0f, 1.0f)') -and
+        $activityText.Contains('durationMs=${player.duration} isPlaying=${player.isPlaying}') -and
+        $activityText.Contains('what=$what extra=$extra')
+    ) 'raw packaged prompt MP3s are played through an explicit MediaPlayer path with auditable runtime errors'
+    Add-Check 'button press sound cue wired' (
+        $activityText.Contains('playButtonPressCue()') -and
+        $activityText.Contains('BUTTON_PRESS_SFX_ASSET') -and
+        $activityText.Contains('BRB_SFX_PLAY cue=$cueName audioId=$audioId asset=$assetPath')
+    ) 'accepted button press plays swappable asset sound'
     Add-Check 'signature pad stores temporal stroke data' ($activityText.Contains('ConsentSignaturePad') -and $activityText.Contains('detectDragGestures') -and $activityText.Contains('brb_signature_strokes_v1') -and $activityText.Contains('tMs') -and $activityText.Contains('.height(142.dp)')) 'trigger/pointer signature pad replaces text signature field inside the compact no-scroll intake layout'
     Add-Check 'Polar H10 validity panel in first menu' (
         $activityText.Contains('PolarH10ValidityPanel') -and
+        $activityText.Contains('PolarEcgWaveform') -and
+        $activityText.Contains('polarEcgPreviewSamplesState') -and
         $activityText.Contains('Polar H10 ECG ready') -and
         $activityText.Contains('status.streaming') -and
         $activityText.Contains('status.pmdReady') -and
@@ -665,11 +955,18 @@ Add-Check 'physical evidence validator requires source summaries' (
 ) 'final evidence requires condition-end source summary markers matching exports'
 Add-Check 'physical evidence validator requires real Polar ECG export evidence' (
     $physicalEvidenceValidator.Contains('*_ecg_timeseries.csv') -and
+    $physicalEvidenceValidator.Contains('*_polar_rr_events.csv') -and
     $physicalEvidenceValidator.Contains('real_polar_h10') -and
+    $physicalEvidenceValidator.Contains('feedbackSource') -and
+    $physicalEvidenceValidator.Contains('physiologySource') -and
+    $physicalEvidenceValidator.Contains('conditionRealPolarEvidence') -and
     $physicalEvidenceValidator.Contains('MinRealPolarEcgCoverageRatio') -and
     $physicalEvidenceValidator.Contains('csvRealPolarTimeSeriesRows') -and
+    $physicalEvidenceValidator.Contains('csvPolarRrRows') -and
     $physicalEvidenceValidator.Contains('ecgCaptureDurationNs') -and
     $physicalEvidenceValidator.Contains('elapsed_ns') -and
+    $physicalEvidenceValidator.Contains('nearest_ecg_delta_ns') -and
+    $physicalEvidenceValidator.Contains('MaxPressEcgAlignmentDeltaMs') -and
     $physicalEvidenceValidator.Contains('audio_window_end_ms') -and
     $physicalEvidenceValidator.Contains('BRB_ECG_CAPTURE_START') -and
     $physicalEvidenceValidator.Contains('BRB_ECG_CAPTURE_END') -and
@@ -678,7 +975,7 @@ Add-Check 'physical evidence validator requires real Polar ECG export evidence' 
     $physicalEvidenceValidator.Contains('realPolarMedianSampleDeltaNs') -and
     $physicalEvidenceValidator.Contains('MaxRealPolarEcgMedianDeltaErrorRatio') -and
     $physicalEvidenceValidator.Contains('MaxRealPolarEcgSampleGapMs')
-) 'final evidence requires one real Polar H10 condition with raw 130 Hz ECG samples covering the exact audio window and preserving high-resolution monotonic timing'
+) 'final evidence requires both conditions to contain real Polar H10 ECG/RR physiology, feedback counterbalance metadata, and press-to-ECG alignment fields'
 Add-Check 'physical evidence validator requires real Polar blink and low-latency markers' (
     $physicalEvidenceValidator.Contains('*_ecg_blink_events.csv') -and
     $physicalEvidenceValidator.Contains('MinRealPolarBlinkEvents') -and
@@ -691,24 +988,35 @@ Add-Check 'physical evidence validator requires real Polar blink and low-latency
 $physicalEvidenceValidatorTests = Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\test-physical-press-evidence-validator.ps1')
 Add-Check 'physical evidence validator tests cover real Polar failures' (
     $physicalEvidenceValidatorTests.Contains('missing-real-ecg-samples') -and
-    $physicalEvidenceValidatorTests.Contains('missing-real-blink') -and
-    $physicalEvidenceValidatorTests.Contains('wrong-real-ecg-rate') -and
-    $physicalEvidenceValidatorTests.Contains('short-real-ecg-coverage') -and
-    $physicalEvidenceValidatorTests.Contains('invalid-real-ecg-package') -and
-    $physicalEvidenceValidatorTests.Contains('invalid-real-ecg-mtu') -and
-    $physicalEvidenceValidatorTests.Contains('nonmonotonic-real-ecg-timing') -and
-    $physicalEvidenceValidatorTests.Contains('coarse-real-ecg-timing') -and
+    $physicalEvidenceValidatorTests.Contains('only-one-real-polar-condition') -and
+    $physicalEvidenceValidatorTests.Contains('sham-filled-with-simulated-ecg') -and
+    $physicalEvidenceValidatorTests.Contains('missing-press-elapsed-ns') -and
+    $physicalEvidenceValidatorTests.Contains('missing-nearest-ecg-linkage') -and
+    $physicalEvidenceValidatorTests.Contains('nonmonotonic-ecg-timing') -and
+    $physicalEvidenceValidatorTests.Contains('oversized-press-ecg-gap') -and
+    $physicalEvidenceValidatorTests.Contains('missing-polar-rr') -and
     $physicalEvidenceValidatorTests.Contains('missing-low-latency-config')
-) 'synthetic pass/fail tests reject missing, coarse, non-monotonic, or otherwise low-quality real Polar ECG evidence'
+) 'synthetic pass/fail tests reject missing, simulated, non-monotonic, or misaligned real Polar physiology evidence'
 Add-Check 'local preflight script' (Test-Path (Join-Path $projectRoot 'tools\run-local-preflight.ps1')) 'tools\run-local-preflight.ps1'
 $exportSchemaScript = Join-Path $projectRoot 'tools\validate-export-schema.ps1'
 Add-Check 'export schema validator covers ECG detector and external signal exports' (
     (Test-Path $exportSchemaScript) -and
     ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('requiredEcgDetectorColumns')) -and
     ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('requiredExternalSignalColumns')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('questionnaireProtocol')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('externalSignalProtocol')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('HRV_Biofeedback')) -and
     ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('*_ecg_detector_events.csv')) -and
     ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('*_external_signal_samples.csv'))
-) 'synthetic and pulled export schema validation includes the new detector and optional external signal CSVs'
+) 'synthetic and pulled export schema validation includes detector, optional external signal CSVs, and native integration protocol metadata'
+Add-Check 'export schema validator covers final end-confirmation branch' (
+    (Test-Path $exportSchemaScript) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('requiredFinalExtraPressColumns')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('*_final_extra_button_presses.csv')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('finalEndConfirmation')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('Extra press branch must require 1000 presses')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('Immediate end requires rating 10'))
+) 'synthetic and pulled export schema validation includes final 10-point end confirmation plus optional 1000-press branch'
 $readinessReportScript = Join-Path $projectRoot 'tools\write-readiness-report.ps1'
 Add-Check 'readiness report script' (Test-Path $readinessReportScript) 'tools\write-readiness-report.ps1'
 if (Test-Path $readinessReportScript) {
@@ -745,25 +1053,27 @@ if (Test-Path $readinessReportScript) {
         $readinessReportText.Contains('condition 2 ECG sample rate') -and
         $readinessReportText.Contains('Quest ECG audio-window match')
     ) 'current readiness must require qkv ECG capture windows to equal instruction-audio durations at 130 Hz'
-    Add-Check 'readiness report requires Quest simulated ECG blink proof' (
+    Add-Check 'readiness report requires Quest feedback blink proof' (
         $readinessReportText.Contains('questKeyeventEcgBlinkMatched') -and
-        $readinessReportText.Contains('ECG sources counterbalanced complement') -and
+        $readinessReportText.Contains('feedback sources counterbalanced complement') -and
         $readinessReportText.Contains('simulated ECG blink count exported') -and
         $readinessReportText.Contains('simulated ECG blink rows match JSON count') -and
         $readinessReportText.Contains('simulated ECG blink runtime marker observed') -and
         $readinessReportText.Contains('simulated heartbeat visual flash observed') -and
-        $readinessReportText.Contains('simulated ECG time-series sample count equals expected') -and
-        $readinessReportText.Contains('Quest simulated ECG blink/runtime flash match') -and
+        $readinessReportText.Contains('simulated feedback excluded from real ECG time-series') -and
+        $readinessReportText.Contains('press elapsed_ns exported') -and
+        $readinessReportText.Contains('press alignment columns exported') -and
+        $readinessReportText.Contains('Quest feedback counterbalance/sham blink match') -and
         $readinessReportText.Contains('$questKeyeventEcgBlinkMatched -and')
-    ) 'current readiness must require qkv evidence that the simulated RR driver produced exported blink rows and runtime flash markers'
+    ) 'current readiness must require qkv feedback counterbalance, sham blink rows, press timing columns, and runtime flash proof'
     Add-Check 'readiness report requires Quest keyboard and enter replay proof' (
         $readinessReportText.Contains('questKeyeventKeyboardLifecycleMatched') -and
         $readinessReportText.Contains('questKeyeventEnterSubmitMatched') -and
         $readinessReportText.Contains('native keyboard request observed') -and
         $readinessReportText.Contains('native keyboard name text mode observed') -and
-        $readinessReportText.Contains('native keyboard age numeric mode observed') -and
+        $readinessReportText.Contains('native keyboard age number mode observed') -and
         $readinessReportText.Contains('native keyboard movable panel contract observed') -and
-        $readinessReportText.Contains('native keyboard text-to-number retarget observed') -and
+        $readinessReportText.Contains('age is numeric IME target') -and
         $readinessReportText.Contains('startup native keyboard request uses text mode') -and
         $readinessReportText.Contains('panel-exit keyboard hide before condition 1 observed') -and
         $readinessReportText.Contains('panel-exit keyboard hide before condition 2 observed') -and
@@ -771,9 +1081,9 @@ if (Test-Path $readinessReportScript) {
         $readinessReportText.Contains('controller submit replay observed') -and
         $readinessReportText.Contains('$questKeyeventKeyboardLifecycleMatched -and') -and
         $readinessReportText.Contains('$questKeyeventEnterSubmitMatched -and') -and
-        $readinessReportText.Contains('Quest keyboard lifecycle match') -and
+        $readinessReportText.Contains('Quest keyboard EditText lifecycle match') -and
         $readinessReportText.Contains('Quest Enter-submit replay match')
-    ) 'current readiness must require qkv field-specific native keyboard modes, text-to-number retarget evidence, panel-exit keyboard hide, and Enter-submit replay evidence'
+    ) 'current readiness must require qkv Name text keyboard, Age numeric keyboard, panel-exit keyboard hide, and Enter-submit replay evidence'
     Add-Check 'readiness report requires Quest redness conversion proof' (
         $readinessReportText.Contains('questKeyeventRednessMatched') -and
         $readinessReportText.Contains('redness conversion cue observed') -and
@@ -887,6 +1197,7 @@ if (Test-Path $keyeventValidationScript) {
         $keyeventValidationText.Contains('brb.keyeventValidation') -and
         $keyeventValidationText.Contains('ExperimentResults') -and
         $keyeventValidationText.Contains('expected-vs-observed.csv') -and
+        $keyeventValidationText.Contains('brb_first_study_keyevent_final_extra_button_presses.csv') -and
         $keyeventValidationText.Contains('ecgTimeSeriesCsv') -and
         $keyeventValidationText.Contains('brb_first_study_keyevent_ecg_detector_events.csv') -and
         $keyeventValidationText.Contains('brb_first_study_keyevent_external_signal_samples.csv')
@@ -898,17 +1209,26 @@ if (Test-Path $keyeventValidationScript) {
         $keyeventValidationText.Contains('primarySha256') -and
         $keyeventValidationText.Contains('mirrorSha256')
     ) 'fast replay checks BigRedButtonFirstStudyExports and ExperimentResults are byte-identical after pull'
+    Add-Check 'Quest keyevent validation proves native integration protocols' (
+        $keyeventValidationText.Contains('BRB_QUESTIONNAIRE_CONTRACT schema=bigredbutton.questionnaire_flow.v1') -and
+        $keyeventValidationText.Contains('questionnaire protocol schema') -and
+        $keyeventValidationText.Contains('questionnaire lifecycle markers observed') -and
+        $keyeventValidationText.Contains('external signal protocol disabled diagnostic') -and
+        $keyeventValidationText.Contains('external signal diagnostic marker observed') -and
+        $keyeventValidationText.Contains('HRV_Biofeedback') -and
+        $keyeventValidationText.Contains('drivesButtonPresses')
+    ) 'fast replay validates in-process questionnaire contract metadata and disabled diagnostic-only external signal defaults'
     Add-Check 'Quest keyevent validation proves keyboard and enter lifecycle' (
         $keyeventValidationText.Contains('native keyboard name text mode observed') -and
-        $keyeventValidationText.Contains('native keyboard age numeric mode observed') -and
+        $keyeventValidationText.Contains('native keyboard age number mode observed') -and
         $keyeventValidationText.Contains('native keyboard movable panel contract observed') -and
-        $keyeventValidationText.Contains('native keyboard text-to-number retarget observed') -and
+        $keyeventValidationText.Contains('age is numeric IME target') -and
         $keyeventValidationText.Contains('startup native keyboard request uses text mode') -and
         $keyeventValidationText.Contains('panel-exit keyboard hide before condition 1 observed') -and
         $keyeventValidationText.Contains('panel-exit keyboard hide before condition 2 observed') -and
         $keyeventValidationText.Contains('enter submit replay observed') -and
         $keyeventValidationText.Contains('controller submit replay observed')
-    ) 'fast replay now fails without field-specific native keyboard mode, retarget, panel-exit hide, and enter-submit markers'
+    ) 'fast replay now fails without Name text keyboard, Age numeric keyboard, panel-exit hide, and enter-submit markers'
     Add-Check 'Quest keyevent validation proves prior button experience prompt' (
         $keyeventValidationText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN') -and
         $keyeventValidationText.Contains('prior big-red-button experience JSON answer') -and
@@ -917,28 +1237,46 @@ if (Test-Path $keyeventValidationScript) {
         $keyeventValidationText.Contains('prior big-red-button experience not repeated in condition 2') -and
         $keyeventValidationText.Contains('BRB_CONTROLLER_SUBMIT_REPLAY condition=1 stage=pre_button_experience submitted=true')
     ) 'fast replay now selects the new one-time XR prior-experience question, starts condition 1, and checks JSON/CSV/log evidence'
+    Add-Check 'Quest keyevent validation proves final end-confirmation branch' (
+        $keyeventValidationText.Contains('BRB_FINAL_END_CONFIRMATION_SHOWN') -and
+        $keyeventValidationText.Contains('BRB_KEYEVENT_REPLAY_STEP condition=0 stage=final_end_confirmation direction=right') -and
+        $keyeventValidationText.Contains('BRB_CONTROLLER_SUBMIT_REPLAY condition=0 stage=final_end_confirmation submitted=true') -and
+        $keyeventValidationText.Contains('BRB_FINAL_END_CONFIRMATION_SAVED rating=10 immediateEnd=true') -and
+        $keyeventValidationText.Contains('final end confirmation JSON rating') -and
+        $keyeventValidationText.Contains('final end confirmation JSON immediate end') -and
+        $keyeventValidationText.Contains('final extra button press CSV exists') -and
+        $keyeventValidationText.Contains('final extra button press CSV rows') -and
+        $keyeventValidationText.Contains('final end confirmation controller replay observed')
+    ) 'fast replay chooses option 10 on the final 10-point scale and verifies JSON, summary, dedicated CSV, and controller replay evidence'
     Add-Check 'Quest keyevent validation proves redness conversion export' (
         $keyeventValidationText.Contains('condition 1 redness VAS') -and
         $keyeventValidationText.Contains('condition 1 redness Likert') -and
         $keyeventValidationText.Contains('condition 1 redness order') -and
+        $keyeventValidationText.Contains('condition 1 redness carried VAS') -and
+        $keyeventValidationText.Contains('condition 1 redness changed after conversion') -and
+        $keyeventValidationText.Contains('condition 1 redness final matches carried') -and
         $keyeventValidationText.Contains('condition 2 redness VAS') -and
         $keyeventValidationText.Contains('condition 2 redness Likert') -and
         $keyeventValidationText.Contains('condition 2 redness order') -and
+        $keyeventValidationText.Contains('condition 2 redness carried VAS') -and
+        $keyeventValidationText.Contains('condition 2 redness changed after conversion') -and
+        $keyeventValidationText.Contains('condition 2 redness final matches carried') -and
         $keyeventValidationText.Contains('redness conversion cue observed') -and
         $keyeventValidationText.Contains('microTimeline=.*supervisor_ping.*seven_boxes_assemble') -and
         $keyeventValidationText.Contains('microTimeline=.*professional_warning.*boxes_erased')
-    ) 'fast replay now fails unless redness VAS/Likert conversion markers, transcript micro-timelines, and exported values are present'
-    Add-Check 'Quest keyevent validation proves simulated ECG blink and flash path' (
-        $keyeventValidationText.Contains('ECG sources counterbalanced complement') -and
-        $keyeventValidationText.Contains('ECG assignment order matches condition sources') -and
+    ) 'fast replay now fails unless redness conversion markers, transcript micro-timelines, final values, and carried-forward/change audit fields are present'
+    Add-Check 'Quest keyevent validation proves feedback blink and flash path' (
+        $keyeventValidationText.Contains('feedback sources counterbalanced complement') -and
+        $keyeventValidationText.Contains('feedback assignment order matches condition feedback sources') -and
         $keyeventValidationText.Contains('simulated ECG blink count exported') -and
         $keyeventValidationText.Contains('simulated ECG blink rows match JSON count') -and
         $keyeventValidationText.Contains('simulated ECG blink runtime marker observed') -and
         $keyeventValidationText.Contains('simulated heartbeat visual flash observed') -and
-        $keyeventValidationText.Contains('simulated ECG time-series sample count equals expected') -and
-        $keyeventValidationText.Contains('simulated ECG time-series CSV rows match JSON count') -and
+        $keyeventValidationText.Contains('simulated feedback excluded from real ECG time-series') -and
+        $keyeventValidationText.Contains('press elapsed_ns exported') -and
+        $keyeventValidationText.Contains('press alignment columns exported') -and
         $keyeventValidationText.Contains('BRB_HEARTBEAT_FLASH condition=$simulatedConditionNumber source=simulated_neurokit2')
-    ) 'fast replay now fails unless the simulated RR driver produces runtime blink/flash markers and matching JSON/CSV rows'
+    ) 'fast replay now fails unless feedback counterbalance, sham RR blink/flash markers, and press timing columns export correctly'
     Add-Check 'Quest keyevent validation recovers foreground focus' (
         $keyeventValidationText.Contains('Ensure-TargetForeground') -and
         $keyeventValidationText.Contains('foreground-after-launch.txt') -and
@@ -1079,6 +1417,25 @@ if (Test-Path (Join-Path $projectRoot 'tools\run-quest-visual-layout-smoke.ps1')
         $visualLayoutSmokeText.Contains('Set-Content -LiteralPath $filteredLogPath')
     ) 'visual smoke always writes filtered logcat and falls back to full logcat before parsing spatial markers'
 }
+Add-Check 'Quest audio rig stress script' (Test-Path (Join-Path $projectRoot 'tools\run-quest-audio-rig-stress.ps1')) 'tools\run-quest-audio-rig-stress.ps1'
+if (Test-Path (Join-Path $projectRoot 'tools\run-quest-audio-rig-stress.ps1')) {
+    $audioRigStressText = Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-audio-rig-stress.ps1')
+    Add-Check 'Quest audio rig stress covers gated prompt timing' (
+        $audioRigStressText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_ANSWER_BLOCKED answer=yes') -and
+        $audioRigStressText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_OPTIONS_READY') -and
+        $audioRigStressText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_FEEDBACK_READY answer=yes') -and
+        $audioRigStressText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_READY answer=yes') -and
+        $audioRigStressText.Contains('cue=pre_start_instructions') -and
+        $audioRigStressText.Contains('BRB_FINAL_END_CONFIRMATION_SELECTION_BLOCKED rating=10') -and
+        $audioRigStressText.Contains('BRB_FINAL_END_CONFIRMATION_OPTIONS_READY') -and
+        $audioRigStressText.Contains('BRB_FINAL_EXTRA_BUTTON_PRESS_SUPPRESSED reason=prompt_audio_active') -and
+        $audioRigStressText.Contains('BRB_FINAL_EXTRA_PROMPT_HIDDEN reason=audio_complete') -and
+        $audioRigStressText.Contains('"condition_${condition}_audio_probe"') -and
+        $audioRigStressText.Contains('foreach ($condition in 1, 2)') -and
+        $audioRigStressText.Contains('Add-TimeWindowComparison') -and
+        $audioRigStressText.Contains('quest-audio-rig-stress-summary.json')
+    ) 'headset stress script proves audio-linked answer visibility and cue playback timing with logcat deltas'
+}
 Add-Check 'Quest short smoke suite script' (Test-Path (Join-Path $projectRoot 'tools\run-quest-smoke-suite.ps1')) 'tools\run-quest-smoke-suite.ps1'
 Add-Check 'realistic button model generator' (Test-Path (Join-Path $projectRoot 'tools\create-realistic-button-model.ps1')) 'tools\create-realistic-button-model.ps1'
 Add-Check 'pictographic button thumbnail generator' (Test-Path (Join-Path $projectRoot 'tools\create-pictographic-button-thumbnail.ps1')) 'tools\create-pictographic-button-thumbnail.ps1'
@@ -1086,6 +1443,30 @@ Add-Check 'retired panel chime generator retained' (Test-Path (Join-Path $projec
 Add-Check 'press sound plan documentation' (Test-Path (Join-Path $projectRoot 'docs\button-press-sound-and-motion.md')) 'docs\button-press-sound-and-motion.md'
 Add-Check 'physical validation operator guide' (Test-Path (Join-Path $projectRoot 'docs\physical-validation-operator-guide.md')) 'docs\physical-validation-operator-guide.md'
 Add-Check 'native keyboard contract test script' (Test-Path (Join-Path $projectRoot 'tools\test-native-keyboard-contract.ps1')) 'tools\test-native-keyboard-contract.ps1'
+$demographicsKeyboardValidationScript = Join-Path $projectRoot 'tools\run-quest-demographics-keyboard-entry-validation.ps1'
+Add-Check 'Quest demographics keyboard entry validation script' (Test-Path $demographicsKeyboardValidationScript) 'tools\run-quest-demographics-keyboard-entry-validation.ps1'
+if (Test-Path $demographicsKeyboardValidationScript) {
+    $demographicsKeyboardValidationText = Get-Content -Raw -LiteralPath $demographicsKeyboardValidationScript
+    Add-Check 'Quest demographics keyboard validation covers EditText Name/Age route' (
+        $demographicsKeyboardValidationText.Contains('BRB_DEMOGRAPHICS_EDITTEXT_FOCUS_REQUEST') -and
+        $demographicsKeyboardValidationText.Contains('actual name EditText focus marker') -and
+        $demographicsKeyboardValidationText.Contains('age number keyboard request after retarget') -and
+        $demographicsKeyboardValidationText.Contains('BRB_SOFT_KEYBOARD_REQUEST reason=field_age') -and
+        $demographicsKeyboardValidationText.Contains('platformControl=EditText') -and
+        $demographicsKeyboardValidationText.Contains('Invoke-DemographicsValidationCommand') -and
+        $demographicsKeyboardValidationText.Contains('brb.demographicsKeyboardValidationCommand') -and
+        $demographicsKeyboardValidationText.Contains('brb.demographicsKeyboardValidationSession') -and
+        $demographicsKeyboardValidationText.Contains('source=validation_intent') -and
+        $demographicsKeyboardValidationText.Contains("Invoke-DemographicsValidationCommand 'set_age' 'a1234'") -and
+        $demographicsKeyboardValidationText.Contains('BRB_DEMOGRAPHICS_AGE_FILTER source=validation_intent rawLength=5 digitCount=4 cleanedLength=3 stripped=true truncated=true') -and
+        $demographicsKeyboardValidationText.Contains("Invoke-DemographicsValidationCommand 'clear_age'") -and
+        $demographicsKeyboardValidationText.Contains("Invoke-DemographicsValidationCommand 'set_age' '34'") -and
+        $demographicsKeyboardValidationText.Contains("Invoke-DemographicsValidationCommand 'age_done'") -and
+        -not $demographicsKeyboardValidationText.Contains('SpatialTextField') -and
+        -not $demographicsKeyboardValidationText.Contains('trigger dial') -and
+        -not $demographicsKeyboardValidationText.Contains('input text')
+    ) 'focused Quest smoke proves visible AndroidView(EditText) Name text/Next and Age number/Done contracts, mixed-input cleanup, then exact George/34 values'
+}
 
 $localPreflightScript = Join-Path $projectRoot 'tools\run-local-preflight.ps1'
 if (Test-Path $localPreflightScript) {
@@ -1120,17 +1501,24 @@ if (Test-Path $layoutPreviewScript) {
     Add-Check 'layout preview shows handedness choices' ($layoutPreviewText.Contains("'Left'") -and $layoutPreviewText.Contains("'Right'") -and $layoutPreviewText.Contains("'Ambidextrous'")) 'preview reflects handedness tri-choice'
     Add-Check 'layout preview centers model thumbnail' ($layoutPreviewText.Contains('big_red_button_model_thumbnail.png') -and $layoutPreviewText.Contains('$buttonCenterX - 62') -and $layoutPreviewText.Contains('$buttonCenterY - 62')) 'preview thumbnail centered inside circle'
     Add-Check 'layout preview shows website intake aesthetic' ($layoutPreviewText.Contains('BIG RED BUTTON INSTITUTE | INTAKE') -and $layoutPreviewText.Contains('Participant details')) 'preview mirrors intake page styling'
-    Add-Check 'layout preview shows Polar validity panel' ($layoutPreviewText.Contains('Polar H10 ECG ready') -and $layoutPreviewText.Contains('ECG 520 samples @ 130 Hz')) 'preview includes first-menu PMD ECG-ready status strip'
+    Add-Check 'layout preview shows Polar validity panel' (
+        $layoutPreviewText.Contains('Polar H10 ECG ready') -and
+        $layoutPreviewText.Contains('ECG 520 samples @ 130 Hz') -and
+        $layoutPreviewText.Contains('$waveRect')
+    ) 'preview includes first-menu PMD ECG-ready status strip with a live ECG trace area'
     Add-Check 'layout preview shows digital press counter' ($layoutPreviewText.Contains("'012'") -and $layoutPreviewText.Contains("'PRESSES'")) 'button preview includes old digital counter above model'
     Add-Check 'layout preview shows prior button experience prompt' (
         $layoutPreviewText.Contains('Draw-PreButtonExperiencePromptPreview') -and
         $layoutPreviewText.Contains('pre-button-experience-prompt-preview.png') -and
         $layoutPreviewText.Contains('Do you have any experience with') -and
         $layoutPreviewText.Contains('pressing big red buttons?') -and
-        $layoutPreviewText.Contains('clear passthrough counter panel; 3D button hidden until Start experiment') -and
+        $layoutPreviewText.Contains('red floating question; start appears only after all audio') -and
         $layoutPreviewText.Contains('An experienced user, just the type') -and
-        $layoutPreviewText.Contains('of participant we need.')
-    ) 'preview documents the one-time transparent XR prompt displayed where the counter will be'
+        $layoutPreviewText.Contains('of participant we need.') -and
+        $layoutPreviewText.Contains('pre-start instructions clip plays') -and
+        $layoutPreviewText.Contains('START EXPERIMENT') -and
+        -not $layoutPreviewText.Contains('$g.FillRectangle((Brush 223 44 44), 54, 402, 412, 54)')
+    ) 'preview documents the one-time transparent XR prompt as floating red counter-style text with bare answer boxes'
     Add-Check 'layout preview shows transparent red counter' (
         $layoutPreviewText.Contains('transparent counter overlay; no filled backing panel') -and
         $layoutPreviewText.Contains('Brush 255 43 43') -and
@@ -1149,15 +1537,21 @@ if (Test-Path $layoutPreviewScript) {
         $layoutPreviewText.Contains('Draw-DemographicsNativeKeyboardPreview') -and
         $layoutPreviewText.Contains('demographics-native-keyboard-preview.png') -and
         $layoutPreviewText.Contains('native movable Quest keyboard') -and
-        $layoutPreviewText.Contains('text-to-number retarget')
-    ) 'preview documents the native movable Quest keyboard and automatic name/age mode switching'
+        $layoutPreviewText.Contains('Age uses the numeric Quest keyboard')
+    ) 'preview documents the native movable Quest keyboard for Name and Age'
     Add-Check 'layout preview shows calibrated pictographic axis' (
-        $layoutPreviewText.Contains('The distance axis starts at the figure') -and
+        $layoutPreviewText.Contains('How Big and how Red was this button experience?') -and
+        $layoutPreviewText.Contains('Please rate how subjectively close the button felt') -and
         $layoutPreviewText.Contains('$sliderW = 640') -and
+        $layoutPreviewText.Contains('$thumbRadius = 20') -and
+        $layoutPreviewText.Contains('$axisStartX = $sliderX + $thumbRadius') -and
         $layoutPreviewText.Contains('very close') -and
         $layoutPreviewText.Contains('very distant') -and
         $layoutPreviewText.Contains('small presence') -and
         $layoutPreviewText.Contains('large presence') -and
+        $layoutPreviewText.Contains('How large was the felt presence of the button?') -and
+        $layoutPreviewText.Contains('$likertInset = 34') -and
+        $layoutPreviewText.Contains('$likertGap = 12') -and
         $layoutPreviewText.Contains('Pen 223 44 44 9')
     ) 'preview shows equal-width sliders, a self-origin distance axis, and thicker circle boundaries'
     Add-Check 'layout preview shows redness scale' (
@@ -1178,6 +1572,21 @@ if (Test-Path $layoutPreviewScript) {
         $layoutPreviewText.Contains('professional_warning') -and
         $layoutPreviewText.Contains('boxes_erased')
     ) 'previews document the two timed redness-format changeover states with transcript micro-event rails'
+    Add-Check 'layout preview shows final end-confirmation branch' (
+        $layoutPreviewText.Contains('Draw-FinalEndQuestionnairePreview') -and
+        $layoutPreviewText.Contains('final-end-questionnaire-preview.png') -and
+        $layoutPreviewText.Contains('How sure are you that you want to end the experiment,') -and
+        $layoutPreviewText.Contains('on a scale of 1 to 10?') -and
+        $layoutPreviewText.Contains('red floating question; only Likert boxes below') -and
+        $layoutPreviewText.Contains("if you don't feel like doing any more button presses") -and
+        $layoutPreviewText.Contains('Draw-FinalExtraPressChallengePreview') -and
+        $layoutPreviewText.Contains('final-extra-press-challenge-preview.png') -and
+        $layoutPreviewText.Contains('That is fantastic! I will take your non-decimal response as a big red YES!') -and
+        $layoutPreviewText.Contains('text visible, audio plays, 3D button hidden') -and
+        $layoutPreviewText.Contains('after 46.1 s: prompt disappears; only counter remains above the 3D button') -and
+        $layoutPreviewText.Contains('0000 / 1000') -and
+        $layoutPreviewText.Contains('PRESSES OUT OF 1,000')
+    ) 'previews document the final 10-point end question and the transparent 1000 extra-press counter branch'
 }
 
 if (-not $SkipBuild) {

@@ -59,16 +59,17 @@ The script accepts the final gate only when all are true:
 - controller-contact rows are not marked `validationAutomation=true` or `validation_automation=true`
 - no `auto_validation` button press source appears in logcat, JSON, or CSV
 - condition-end logcat includes source-specific `BRB_CONDITION_PRESS_SOURCES` markers whose controller-contact counts match the exports
-- exactly one condition is exported as `real_polar_h10` and exactly one as `simulated_neurokit2`
-- the real-Polar condition's `ecgCaptureDurationMs` equals its instruction `audioDurationMs`
-- the real-Polar condition's `ecgCaptureDurationNs` equals `audioDurationMs * 1,000,000`, with `ecgAudioWindowStartMs=0` and `ecgAudioWindowEndMs=audioDurationMs`
-- the real-Polar condition exports 130 Hz PMD ECG samples in `*_ecg_timeseries.csv` with `elapsed_ns` and audio-window columns
-- the real-Polar time-series rows have sequential `sample_index`, strictly increasing `elapsed_ns`, a median sample interval consistent with 130 Hz, and no large sample gaps
-- the real-Polar condition has at least 95 percent of its expected 130 Hz samples, with first/last samples covering the audio window within the validator boundary gap
-- the real-Polar condition exports RR blink evidence in `*_ecg_blink_events.csv`
+- exactly one condition has `feedbackSource=real_polar_h10` and exactly one has `feedbackSource=simulated_neurokit2`; both conditions have `physiologySource=real_polar_h10`
+- each condition's `ecgCaptureDurationMs` equals its instruction `audioDurationMs`
+- each condition's `ecgCaptureDurationNs` equals `audioDurationMs * 1,000,000`, with `ecgAudioWindowStartMs=0` and `ecgAudioWindowEndMs=audioDurationMs`
+- both conditions export 130 Hz real PMD ECG samples in `*_ecg_timeseries.csv` with `elapsed_ns` and audio-window columns; sham/simulated feedback never appears as real ECG rows
+- each condition's real-Polar time-series rows have sequential `sample_index`, strictly increasing `elapsed_ns`, a median sample interval consistent with 130 Hz, and no large sample gaps
+- both conditions have at least 95 percent of their expected 130 Hz samples, with first/last samples covering the audio window within the validator boundary gap
+- both conditions export real Polar RR evidence in `*_polar_rr_events.csv`, with `used_for_feedback=true` only in the real-feedback condition
+- controller-contact press rows include `elapsed_ns` and nearest real ECG sample linkage within the validator threshold
 - real-Polar ECG rows include positive PMD frame/package metadata and requested MTU 70
 - logcat includes `BRB_POLAR_H10_LOW_LATENCY_CONFIG ... requestedMtu=70 ... minimum_mtu_low_latency_ecg`
-- logcat includes real-Polar `BRB_ECG_CAPTURE_START` and `BRB_ECG_CAPTURE_END` markers for the audio window
+- logcat includes real-Polar `BRB_ECG_CAPTURE_START` and `BRB_ECG_CAPTURE_END` markers for both audio windows
 - the script records a passing `polarPrecheckSummary` unless `-SkipPolarPrecheck` was intentionally supplied
 - export schema validation passes on the pulled headset files from both export folders
 - physical evidence validation passes on both the primary export folder and the SideQuest-readable `ExperimentResults` mirror
@@ -85,4 +86,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\validate-physical-pr
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\validate-physical-press-evidence.ps1 -ExportDir <pulled ExperimentResults folder> -LogcatPath <logcat-filtered.txt>
 ```
 
-The final physical script calls this validator automatically after pulling exports. The local harness `tools\test-physical-press-evidence-validator.ps1` creates synthetic clean and contaminated cases to verify that this validator accepts real-looking controller-contact plus real-Polar ECG evidence and rejects automation-contaminated or physiology-incomplete evidence.
+The final physical script calls this validator automatically after pulling exports. The local harness `tools\test-physical-press-evidence-validator.ps1` creates synthetic clean and contaminated cases to verify that this validator accepts real-looking controller-contact plus real-Polar ECG/RR evidence in both conditions and rejects automation-contaminated, simulated-ECG-contaminated, misaligned, or physiology-incomplete evidence.

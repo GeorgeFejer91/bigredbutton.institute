@@ -100,6 +100,10 @@ try {
         & (Join-Path $PSScriptRoot 'validate-audio-assets.ps1')
     }
 
+    Invoke-PreflightStep 'validate-localized-audio-catalog' {
+        & (Join-Path $PSScriptRoot 'validate-localized-audio.ps1')
+    }
+
     Invoke-PreflightStep 'validate-export-schema-synthetic' {
         & (Join-Path $PSScriptRoot 'validate-export-schema.ps1') -Synthetic
     }
@@ -153,6 +157,7 @@ try {
 
     $latestLocalValidation = Get-LatestFile (Join-Path $projectRoot 'artifacts\local-validation') 'validation-*.json'
     $latestAudioValidation = Get-LatestFile (Join-Path $projectRoot 'artifacts\audio-validation') 'audio-validation-*.json'
+    $latestLocalizedAudioValidation = Get-LatestFile (Join-Path $projectRoot 'artifacts\localized-audio-validation') 'localized-audio-validation-*.json'
     $latestExportSchema = Get-LatestFile (Join-Path $projectRoot 'artifacts\export-schema-validation') 'export-schema-validation-*.json'
     $latestNativeKeyboardValidation = Get-LatestFile (Join-Path $projectRoot 'artifacts\native-keyboard-validation') 'native-keyboard-validation-*.json'
     $latestPhysicalEvidenceTest = Get-LatestDirectory (Join-Path $projectRoot 'artifacts\ppe-tests')
@@ -174,6 +179,7 @@ try {
         latestArtifacts = [pscustomobject]@{
             localValidation = if ($latestLocalValidation) { $latestLocalValidation.FullName } else { $null }
             audioValidation = if ($latestAudioValidation) { $latestAudioValidation.FullName } else { $null }
+            localizedAudioValidation = if ($latestLocalizedAudioValidation) { $latestLocalizedAudioValidation.FullName } else { $null }
             exportSchemaValidation = if ($latestExportSchema) { $latestExportSchema.FullName } else { $null }
             nativeKeyboardValidation = if ($latestNativeKeyboardValidation) { $latestNativeKeyboardValidation.FullName } else { $null }
             physicalEvidenceValidatorTest = if ($latestPhysicalEvidenceTest) { Join-Path $latestPhysicalEvidenceTest.FullName 'physical-evidence-validator-test-summary.json' } else { $null }

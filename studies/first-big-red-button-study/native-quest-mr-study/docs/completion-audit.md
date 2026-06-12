@@ -2,7 +2,7 @@
 
 Generated for the current native Quest MR app state on 2026-06-10 13:48.
 
-This audit tracks the requested final state: a standalone no-Unity Meta Quest 3 mixed-reality Big Red Button experiment with passthrough, a reachable 3D button, real audio-timed conditions, questionnaire panels, local JSON/CSV exports, native Quest keyboard text entry, and validation evidence.
+This audit tracks the requested final state: a standalone no-Unity Meta Quest 3 mixed-reality Big Red Button experiment with passthrough, a reachable 3D button, real audio-timed conditions, questionnaire panels, local JSON/CSV exports, native Quest keyboard text entry for Name, controller-trigger Age selection, and validation evidence.
 
 ## Current Evidence Snapshot
 
@@ -39,7 +39,7 @@ This audit tracks the requested final state: a standalone no-Unity Meta Quest 3 
 | Button remains visible during condition audio and panel is hidden | Static source checks plus Quest visual smoke screenshot `artifacts/quest-visual-layout-smoke/20260610-132347/button-condition-screenshot.png` |
 | Demographics, Button Experience, adapted presence ratings, and additional-time VAS exist | Static validation plus local previews in `artifacts/layout-previews/preview-20260610-132626` |
 | Participant ID hidden, gender four-choice, handedness three-choice, signature drawing pad | Static validation and qkv export validation `artifacts/qkv/20260610-132449/quest-keyevent-questionnaire-validation-summary.json` |
-| Demographics text entry uses only native Quest/system keyboard | Native keyboard contract `artifacts/native-keyboard-validation/native-keyboard-validation-20260610-132618.json`; qkv confirms text keyboard for Name, numeric keyboard for Age, text-to-number retarget, and panel-exit keyboard hide |
+| Demographics intake has single-owner Name/Age keyboard fields | Native EditText keyboard contract validation; qkv should confirm native text keyboard for Name, numeric keyboard for Age, EditText retarget markers, and panel-exit keyboard hide |
 | Retired custom loose keyboard is absent | `tools/test-native-keyboard-contract.ps1` now fails if `useLooseKeyboard`, `requestLooseKeyboard`, `LooseKeyboard`, or `BRB_LOOSE_KEYBOARD` reappears in the activity |
 | Questionnaire panels spawn in gaze line and use BRB website-style aesthetics | Static validation, local previews, and headset panel/glitch screenshots in `artifacts/quest-panel-smoke/20260610-132413` |
 | Glitch intro/outro sound and blue software-failure overlay fire | Quest panel smoke `artifacts/quest-panel-smoke/20260610-132413/quest-panel-smoke-summary.json` and qkv `artifacts/qkv/20260610-132449/quest-keyevent-questionnaire-validation-summary.json` |
@@ -48,12 +48,12 @@ This audit tracks the requested final state: a standalone no-Unity Meta Quest 3 
 | Digital red transparent press counter is above the 3D button | Static validation and Quest visual screenshot `artifacts/quest-visual-layout-smoke/20260610-132347/button-condition-screenshot.png` |
 | Button press sound and questionnaire UI feedback sounds are wired | Static validation hash-locks `button-press-placeholder-kenney-bong.ogg`, `ui_choice_blip.wav`, and `ui_navigation_blip.wav` |
 | Warm heartbeat glow replaces flat halo | Static validation and local button preview in `artifacts/layout-previews/preview-20260610-132626/button-layout-preview.png` |
-| Polar H10 validity panel, real/simulated ECG assignment, simulated RR asset, and raw ECG export schema exist | Static validation, synthetic export schema validation, and qkv source/export checks |
+| Polar H10 validity panel, real-vs-sham feedback assignment, simulated RR asset, and raw ECG/RR export schema exist | Static validation, synthetic export schema validation, and qkv feedback/export checks |
 | JSON, summary CSV, press-event CSV, ECG blink CSV, raw ECG time-series CSV, and `session-index.jsonl` schema exist | `artifacts/export-schema-validation/export-schema-validation-20260610-132618.json` and pulled qkv exports under `artifacts/qkv/20260610-132449/pulled` |
 | SideQuest-readable `ExperimentResults` mirror exists and is byte-comparable | qkv pulled `/sdcard/Android/data/org.bigredbutton.firststudy/files/ExperimentResults` and passed `exportMirrorMatched=true` with `artifacts/qkv/20260610-132449/export-mirror-comparison.json` |
 | Directional questionnaire/data replay works without full audio wait | qkv `artifacts/qkv/20260610-132449/quest-keyevent-questionnaire-validation-summary.json` compares expected vs observed demographics, button counts, pictographic responses, all adapted IPQ raw fields, Lost Opportunity scores, redness values, press provenance, ECG windows, and exports |
 | ECG capture windows equal instruction-audio durations in qkv | qkv reports condition 1 `0..300774 ms` and `300774000000 ns`; condition 2 `0..325590 ms` and `325590000000 ns`; both at `130 Hz` |
-| Simulated ECG blink/runtime flash path works | qkv reports simulated blink rows, runtime `BRB_ECG_BLINK`, runtime `BRB_HEARTBEAT_FLASH`, and expected simulated time-series row counts |
+| Sham feedback blink/runtime flash path works | qkv reports simulated blink rows, runtime `BRB_ECG_BLINK`, runtime `BRB_HEARTBEAT_FLASH`, press timing columns, and zero simulated rows in the real ECG time-series export |
 | Final physical-gate tooling rejects automation and low-quality Polar evidence | `artifacts/ppe-tests/t-20260610-132618/physical-evidence-validator-test-summary.json` and static validation of `tools/validate-physical-press-evidence.ps1` |
 | Quest smoke script resists stale foreground OpenXR apps | `tools/run-quest-visual-layout-smoke.ps1` checks focused/resumed activities and relaunches once after force-stopping a non-Oculus foreground package |
 | Fresh H10/current-contact attempts are tied to the current APK | `artifacts/qpolar/20260610-134648/quest-polar-h10-live-smoke-summary.json` and `artifacts/qcs/20260610-114301/quest-controller-contact-smoke-summary.json` both record APK SHA-256 `55E3B082077BD55D939D1610E5FEC7AC56641B8FA62C201804AEE322CC951C2A` and expected failure without H10/operator |
@@ -77,4 +77,4 @@ This audit tracks the requested final state: a standalone no-Unity Meta Quest 3 
 
 ## Completion Rule
 
-Do not mark the overall goal complete until the final physical controller-contact/live-H10 export gate passes and standalone live Polar H10 PMD ECG streaming has been validated, or the user explicitly changes those requirements. No-human autorun, ADB input, screenshot-only evidence, simulated ECG rows, or transparent-panel fallback presses are insufficient for those final gates.
+Do not mark the overall goal complete until the final physical controller-contact/live-H10 export gate passes and standalone live Polar H10 PMD ECG streaming has been validated, or the user explicitly changes those requirements. No-human autorun, ADB input, screenshot-only evidence, simulated ECG rows, one-condition Polar recordings, or transparent-panel fallback presses are insufficient for those final gates.

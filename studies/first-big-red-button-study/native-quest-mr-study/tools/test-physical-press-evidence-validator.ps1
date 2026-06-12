@@ -16,37 +16,69 @@ function New-PressEvent {
     param(
         [int]$Condition,
         [int]$Index,
-        [string]$Source,
-        [bool]$Automation
+        [string]$InputSource = 'controller_contact',
+        [bool]$Automation = $false,
+        [string]$FeedbackSource
     )
+    $elapsedNs = 46153846L
+    $startNs = [int64]$Condition * 1000000000000L
     return [ordered]@{
         conditionNumber = $Condition
         pressIndex = $Index
-        elapsedMs = 1000 * $Index
-        unixTimeMs = 1781006400000 + (1000 * $Index)
-        isoTimestamp = "2026-06-09T12:00:0${Index}Z"
-        inputSource = $Source
+        elapsedMs = 46
+        elapsedNs = $elapsedNs
+        eventElapsedRealtimeNs = $startNs + $elapsedNs
+        conditionStartElapsedRealtimeNs = $startNs
+        unixTimeMs = 1781006400046 + (($Condition - 1) * 100000)
+        isoTimestamp = if ($Condition -eq 1) { '2026-06-09T12:00:00.046Z' } else { '2026-06-09T12:05:00.046Z' }
+        inputSource = $InputSource
         validationAutomation = $Automation
+        feedbackSource = $FeedbackSource
+        physiologySource = 'real_polar_h10'
+        nearestEcgSampleIndex = 7
+        nearestEcgElapsedNs = 46153846L
+        nearestEcgDeltaNs = 0L
     }
 }
 
 function New-EcgBlinkEvent {
     param(
         [int]$Condition,
-        [int]$Index,
-        [string]$Source,
-        [double]$ElapsedMs
+        [string]$Source
     )
-    $unixTimeMs = 1781006400000 + [int][math]::Round($ElapsedMs)
+    $unixTimeMs = 1781006400080 + (($Condition - 1) * 100000)
     return [ordered]@{
         conditionNumber = $Condition
-        blinkIndex = $Index
+        blinkIndex = 1
         source = $Source
-        elapsedMs = $ElapsedMs
+        elapsedMs = 80
         unixTimeMs = $unixTimeMs
         isoTimestamp = [DateTimeOffset]::FromUnixTimeMilliseconds($unixTimeMs).UtcDateTime.ToString('o')
         rrMs = 830.0
         heartRateBpm = 72
+        pulseIntensity01 = 1.0
+        pulseSourceTimestampUnixNs = [int64]$unixTimeMs * 1000000L
+        detector = if ($Source -eq 'real_polar_h10') { 'polar_h10_rr_interval' } else { 'simulated_rr_interval' }
+    }
+}
+
+function New-PolarRrEvent {
+    param(
+        [int]$Condition,
+        [string]$FeedbackSource
+    )
+    $unixTimeMs = 1781006400080 + (($Condition - 1) * 100000)
+    return [ordered]@{
+        conditionNumber = $Condition
+        rrIndex = 1
+        elapsedMs = 80
+        elapsedNs = 80000000L
+        unixTimeMs = $unixTimeMs
+        isoTimestamp = [DateTimeOffset]::FromUnixTimeMilliseconds($unixTimeMs).UtcDateTime.ToString('o')
+        rrMs = 830.0
+        heartRateBpm = 72
+        feedbackSource = $FeedbackSource
+        usedForFeedback = ($FeedbackSource -eq 'real_polar_h10')
     }
 }
 
@@ -62,7 +94,7 @@ function New-EcgSample {
         [int]$NegotiatedMtu = 70,
         [int]$AudioDurationMs = 100
     )
-    $unixTimeMs = 1781006400000 + [int][math]::Round($ElapsedMs)
+    $unixTimeMs = 1781006400000 + (($Condition - 1) * 100000) + [int][math]::Round($ElapsedMs)
     $elapsedNs = [int64][math]::Round($ElapsedMs * 1000000.0)
     return [ordered]@{
         conditionNumber = $Condition
@@ -87,61 +119,83 @@ function New-EcgSample {
 }
 
 function Set-EcgSampleElapsed {
-    param(
-        $Sample,
-        [double]$ElapsedMs
-    )
-    $unixTimeMs = 1781006400000 + [int][math]::Round($ElapsedMs)
+    param($Sample, [double]$ElapsedMs)
     $elapsedNs = [int64][math]::Round($ElapsedMs * 1000000.0)
     $Sample['elapsedMs'] = $ElapsedMs
     $Sample['elapsedNs'] = $elapsedNs
-    $Sample['unixTimeMs'] = $unixTimeMs
-    $Sample['isoTimestamp'] = [DateTimeOffset]::FromUnixTimeMilliseconds($unixTimeMs).UtcDateTime.ToString('o')
     $Sample['sensorTimestampNs'] = $elapsedNs
 }
 
 function New-EcgSampleSeries {
     param(
         [int]$Condition,
-        [string]$Source,
-        [int]$Count,
-        [int]$SampleRateHz = 130,
-        [int]$PackageSizeBytes = 16,
-        [int]$RequestedMtu = 70,
-        [int]$NegotiatedMtu = 70,
+        [string]$Source = 'real_polar_h10',
+        [int]$Count = 13,
         [int]$AudioDurationMs = 100
     )
     $samples = @()
     for ($index = 1; $index -le $Count; $index += 1) {
         $elapsedMs = (($index - 1) * 1000.0) / 130.0
-        $samples += New-EcgSample `
-            -Condition $Condition `
-            -Index $index `
-            -Source $Source `
-            -ElapsedMs $elapsedMs `
-            -SampleRateHz $SampleRateHz `
-            -PackageSizeBytes $PackageSizeBytes `
-            -RequestedMtu $RequestedMtu `
-            -NegotiatedMtu $NegotiatedMtu `
-            -AudioDurationMs $AudioDurationMs
+        $samples += New-EcgSample -Condition $Condition -Index $index -Source $Source -ElapsedMs $elapsedMs -AudioDurationMs $AudioDurationMs
     }
     return @($samples)
 }
 
 function Get-EcgSeriesMinElapsedMs {
     param($Series)
-    if (@($Series).Count -eq 0) {
-        return $null
-    }
+    if (@($Series).Count -eq 0) { return $null }
     return (@($Series | ForEach-Object { [double]$_['elapsedMs'] } | Measure-Object -Minimum).Minimum)
 }
 
 function Get-EcgSeriesMaxElapsedMs {
     param($Series)
-    if (@($Series).Count -eq 0) {
-        return $null
-    }
+    if (@($Series).Count -eq 0) { return $null }
     return (@($Series | ForEach-Object { [double]$_['elapsedMs'] } | Measure-Object -Maximum).Maximum)
+}
+
+function New-ConditionJson {
+    param(
+        [int]$Condition,
+        [string]$FeedbackSource,
+        [string]$PhysiologySource,
+        [array]$PressEvents,
+        [array]$BlinkEvents,
+        [array]$PolarRrEvents,
+        [array]$Samples,
+        [int]$AudioDurationMs = 100
+    )
+    return [ordered]@{
+        conditionNumber = $Condition
+        audioDurationMs = $AudioDurationMs
+        ecgSource = $PhysiologySource
+        feedbackSource = $FeedbackSource
+        physiologySource = $PhysiologySource
+        ecgBlinkCount = @($BlinkEvents).Count
+        ecgBlinkEvents = @($BlinkEvents)
+        polarRrEventCount = @($PolarRrEvents).Count
+        polarRrEvents = @($PolarRrEvents)
+        ecgCaptureStartedElapsedMs = 0
+        ecgCaptureEndedElapsedMs = $AudioDurationMs
+        ecgCaptureStartedElapsedNs = 0
+        ecgCaptureEndedElapsedNs = [int64]$AudioDurationMs * 1000000L
+        ecgCaptureDurationMs = $AudioDurationMs
+        ecgCaptureDurationNs = [int64]$AudioDurationMs * 1000000L
+        ecgAudioWindowStartMs = 0
+        ecgAudioWindowEndMs = $AudioDurationMs
+        ecgAudioWindowDurationMs = $AudioDurationMs
+        ecgFirstSampleElapsedMs = Get-EcgSeriesMinElapsedMs $Samples
+        ecgLastSampleElapsedMs = Get-EcgSeriesMaxElapsedMs $Samples
+        ecgStartBoundaryGapMs = Get-EcgSeriesMinElapsedMs $Samples
+        ecgEndBoundaryGapMs = if (@($Samples).Count -gt 0) { $AudioDurationMs - (Get-EcgSeriesMaxElapsedMs $Samples) } else { $null }
+        ecgSampleRateHz = 130
+        ecgExpectedSampleCount = 13
+        ecgTimeSeriesSampleCount = @($Samples).Count
+        realEcgTimeSeriesSampleCount = @($Samples | Where-Object { $_.source -eq 'real_polar_h10' }).Count
+        ecgRequestedMtu = 70
+        ecgNegotiatedMtu = 70
+        ecgTimeSeries = @($Samples)
+        pressEvents = @($PressEvents)
+    }
 }
 
 function New-Case {
@@ -154,176 +208,129 @@ function New-Case {
     New-Item -ItemType Directory -Force -Path $exportRoot | Out-Null
     $sessionId = "s-$Name"
     $participantId = 'p'
-    $jsonPath = Join-Path $exportRoot "brb_first_study_p_${Name}.json"
-    $pressPath = Join-Path $exportRoot "brb_first_study_p_${Name}_press_events.csv"
-    $ecgBlinkPath = Join-Path $exportRoot "brb_first_study_p_${Name}_ecg_blink_events.csv"
-    $ecgTimeSeriesPath = Join-Path $exportRoot "brb_first_study_p_${Name}_ecg_timeseries.csv"
+    $jsonPath = Join-Path $exportRoot 'brb_first_study_p_case.json'
+    $pressPath = Join-Path $exportRoot 'brb_first_study_p_case_press_events.csv'
+    $ecgBlinkPath = Join-Path $exportRoot 'brb_first_study_p_case_ecg_blink_events.csv'
+    $ecgTimeSeriesPath = Join-Path $exportRoot 'brb_first_study_p_case_ecg_timeseries.csv'
+    $polarRrPath = Join-Path $exportRoot 'brb_first_study_p_case_polar_rr_events.csv'
     $logPath = Join-Path $caseRoot 'logcat-filtered.txt'
     $summaryPath = Join-Path $caseRoot 'physical-evidence-summary.json'
 
-    $condition1Events = @((New-PressEvent -Condition 1 -Index 1 -Source 'controller_contact' -Automation $false))
-    $condition2Events = @((New-PressEvent -Condition 2 -Index 1 -Source 'controller_contact' -Automation $false))
+    $condition1Feedback = 'real_polar_h10'
+    $condition2Feedback = 'simulated_neurokit2'
+    $condition1Physiology = 'real_polar_h10'
+    $condition2Physiology = if ($Mode -eq 'only-one-real-polar-condition') { 'simulated_neurokit2' } else { 'real_polar_h10' }
+    $condition1PressEvents = @((New-PressEvent -Condition 1 -Index 1 -FeedbackSource $condition1Feedback))
+    $condition2PressEvents = @((New-PressEvent -Condition 2 -Index 1 -FeedbackSource $condition2Feedback))
     if ($Mode -eq 'auto-source') {
-        $condition2Events += New-PressEvent -Condition 2 -Index 2 -Source 'auto_validation' -Automation $true
+        $condition2PressEvents += New-PressEvent -Condition 2 -Index 2 -InputSource 'auto_validation' -Automation $true -FeedbackSource $condition2Feedback
     }
     if ($Mode -eq 'controller-marked-automation') {
-        $condition1Events = @((New-PressEvent -Condition 1 -Index 1 -Source 'controller_contact' -Automation $true))
+        $condition1PressEvents = @((New-PressEvent -Condition 1 -Index 1 -Automation $true -FeedbackSource $condition1Feedback))
+    }
+    if ($Mode -eq 'missing-press-elapsed-ns') {
+        $condition1PressEvents[0]['elapsedNs'] = ''
+    }
+    if ($Mode -eq 'missing-nearest-ecg-linkage') {
+        $condition1PressEvents[0]['nearestEcgSampleIndex'] = ''
+        $condition1PressEvents[0]['nearestEcgElapsedNs'] = ''
+        $condition1PressEvents[0]['nearestEcgDeltaNs'] = ''
+    }
+    if ($Mode -eq 'oversized-press-ecg-gap') {
+        $condition1PressEvents[0]['nearestEcgDeltaNs'] = 30000000L
     }
 
-    $audioDurationMs = 100
-    $expectedSamples = 13
-    $realSampleRateHz = if ($Mode -eq 'wrong-real-ecg-rate') { 129 } else { 130 }
-    $realRequestedMtu = if ($Mode -eq 'invalid-real-ecg-mtu') { 185 } else { 70 }
-    $realBlinkEvents = @((New-EcgBlinkEvent -Condition 1 -Index 1 -Source 'real_polar_h10' -ElapsedMs 80.0))
-    $simBlinkEvents = @((New-EcgBlinkEvent -Condition 2 -Index 1 -Source 'simulated_neurokit2' -ElapsedMs 70.0))
-    $realTimeSeries =
-        New-EcgSampleSeries -Condition 1 -Source 'real_polar_h10' -Count $expectedSamples -SampleRateHz $realSampleRateHz -RequestedMtu $realRequestedMtu -AudioDurationMs $audioDurationMs
-    $simTimeSeries =
-        New-EcgSampleSeries -Condition 2 -Source 'simulated_neurokit2' -Count $expectedSamples -PackageSizeBytes 0 -RequestedMtu 0 -NegotiatedMtu 0 -AudioDurationMs $audioDurationMs
+    $condition1BlinkEvents = @((New-EcgBlinkEvent -Condition 1 -Source $condition1Feedback))
+    $condition2BlinkEvents = @((New-EcgBlinkEvent -Condition 2 -Source $condition2Feedback))
+    $condition1PolarRrEvents = @((New-PolarRrEvent -Condition 1 -FeedbackSource $condition1Feedback))
+    $condition2PolarRrEvents = @((New-PolarRrEvent -Condition 2 -FeedbackSource $condition2Feedback))
+    $condition1Samples = New-EcgSampleSeries -Condition 1
+    $condition2SampleSource = if ($Mode -eq 'sham-filled-with-simulated-ecg') { 'simulated_neurokit2' } else { 'real_polar_h10' }
+    $condition2Samples = New-EcgSampleSeries -Condition 2 -Source $condition2SampleSource
     if ($Mode -eq 'missing-real-ecg-samples') {
-        $realTimeSeries = @()
+        $condition1Samples = @()
     }
-    if ($Mode -eq 'missing-real-blink') {
-        $realBlinkEvents = @()
+    if ($Mode -eq 'nonmonotonic-ecg-timing' -and @($condition2Samples).Count -ge 5) {
+        Set-EcgSampleElapsed -Sample $condition2Samples[4] -ElapsedMs ([double]$condition2Samples[3]['elapsedMs'])
     }
-    if ($Mode -eq 'short-real-ecg-coverage') {
-        $realTimeSeries = @($realTimeSeries | Select-Object -First 2)
-    }
-    if ($Mode -eq 'invalid-real-ecg-package') {
-        $realTimeSeries = @(
-            $realTimeSeries | ForEach-Object {
-                if ($_.sampleIndex -eq 1) {
-                    $_.packageSizeBytes = 0
-                }
-                $_
-            }
-        )
-    }
-    if ($Mode -eq 'nonmonotonic-real-ecg-timing' -and $realTimeSeries.Count -ge 5) {
-        Set-EcgSampleElapsed -Sample $realTimeSeries[4] -ElapsedMs ([double]$realTimeSeries[3]['elapsedMs'])
-    }
-    if ($Mode -eq 'coarse-real-ecg-timing' -and $realTimeSeries.Count -ge 13) {
-        $coarseElapsedMs = @(0.0, 12.5, 13.5, 26.0, 27.0, 39.5, 40.5, 53.0, 54.0, 66.5, 67.5, 80.0, 92.3)
-        for ($i = 0; $i -lt $coarseElapsedMs.Count; $i += 1) {
-            Set-EcgSampleElapsed -Sample $realTimeSeries[$i] -ElapsedMs $coarseElapsedMs[$i]
-        }
+    if ($Mode -eq 'missing-polar-rr') {
+        $condition2PolarRrEvents = @()
     }
 
     $json = [ordered]@{
         schema = 'bigredbutton.first_study.v1'
         sessionId = $sessionId
         demographics = [ordered]@{ participantId = $participantId }
+        ecgProtocol = [ordered]@{
+            schema = 'bigredbutton.ecg_counterbalanced.v1'
+            assignmentOrder = 'real_then_simulated'
+            assignmentBasis = 'feedback_source'
+            condition1Source = $condition1Feedback
+            condition2Source = $condition2Feedback
+            condition1FeedbackSource = $condition1Feedback
+            condition2FeedbackSource = $condition2Feedback
+            condition1PhysiologySource = $condition1Physiology
+            condition2PhysiologySource = $condition2Physiology
+        }
         conditions = @(
-            [ordered]@{
-                conditionNumber = 1
-                audioDurationMs = $audioDurationMs
-                ecgSource = 'real_polar_h10'
-                ecgBlinkCount = $realBlinkEvents.Count
-                ecgBlinkEvents = $realBlinkEvents
-                ecgCaptureStartedElapsedMs = 0
-                ecgCaptureEndedElapsedMs = $audioDurationMs
-                ecgCaptureStartedElapsedNs = 0
-                ecgCaptureEndedElapsedNs = $audioDurationMs * 1000000
-                ecgCaptureDurationMs = $audioDurationMs
-                ecgCaptureDurationNs = $audioDurationMs * 1000000
-                ecgAudioWindowStartMs = 0
-                ecgAudioWindowEndMs = $audioDurationMs
-                ecgAudioWindowDurationMs = $audioDurationMs
-                ecgFirstSampleElapsedMs = Get-EcgSeriesMinElapsedMs $realTimeSeries
-                ecgLastSampleElapsedMs = Get-EcgSeriesMaxElapsedMs $realTimeSeries
-                ecgStartBoundaryGapMs = Get-EcgSeriesMinElapsedMs $realTimeSeries
-                ecgEndBoundaryGapMs = if ($realTimeSeries.Count -gt 0) { $audioDurationMs - (Get-EcgSeriesMaxElapsedMs $realTimeSeries) } else { $null }
-                ecgSampleRateHz = $realSampleRateHz
-                ecgExpectedSampleCount = $expectedSamples
-                ecgTimeSeriesSampleCount = $realTimeSeries.Count
-                ecgRequestedMtu = $realRequestedMtu
-                ecgNegotiatedMtu = 70
-                ecgTimeSeries = $realTimeSeries
-                pressEvents = $condition1Events
-            },
-            [ordered]@{
-                conditionNumber = 2
-                audioDurationMs = $audioDurationMs
-                ecgSource = 'simulated_neurokit2'
-                ecgBlinkCount = $simBlinkEvents.Count
-                ecgBlinkEvents = $simBlinkEvents
-                ecgCaptureStartedElapsedMs = 0
-                ecgCaptureEndedElapsedMs = $audioDurationMs
-                ecgCaptureStartedElapsedNs = 0
-                ecgCaptureEndedElapsedNs = $audioDurationMs * 1000000
-                ecgCaptureDurationMs = $audioDurationMs
-                ecgCaptureDurationNs = $audioDurationMs * 1000000
-                ecgAudioWindowStartMs = 0
-                ecgAudioWindowEndMs = $audioDurationMs
-                ecgAudioWindowDurationMs = $audioDurationMs
-                ecgFirstSampleElapsedMs = Get-EcgSeriesMinElapsedMs $simTimeSeries
-                ecgLastSampleElapsedMs = Get-EcgSeriesMaxElapsedMs $simTimeSeries
-                ecgStartBoundaryGapMs = Get-EcgSeriesMinElapsedMs $simTimeSeries
-                ecgEndBoundaryGapMs = if ($simTimeSeries.Count -gt 0) { $audioDurationMs - (Get-EcgSeriesMaxElapsedMs $simTimeSeries) } else { $null }
-                ecgSampleRateHz = 130
-                ecgExpectedSampleCount = $expectedSamples
-                ecgTimeSeriesSampleCount = $simTimeSeries.Count
-                ecgRequestedMtu = 0
-                ecgNegotiatedMtu = 0
-                ecgTimeSeries = $simTimeSeries
-                pressEvents = $condition2Events
-            }
+            New-ConditionJson -Condition 1 -FeedbackSource $condition1Feedback -PhysiologySource $condition1Physiology -PressEvents $condition1PressEvents -BlinkEvents $condition1BlinkEvents -PolarRrEvents $condition1PolarRrEvents -Samples $condition1Samples
+            New-ConditionJson -Condition 2 -FeedbackSource $condition2Feedback -PhysiologySource $condition2Physiology -PressEvents $condition2PressEvents -BlinkEvents $condition2BlinkEvents -PolarRrEvents $condition2PolarRrEvents -Samples $condition2Samples
         )
     }
-    $json | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $jsonPath -Encoding UTF8
+    $json | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $jsonPath -Encoding UTF8
 
     $pressRows = New-Object System.Collections.Generic.List[string]
-    $pressRows.Add('session_id,participant_id,condition_number,press_index,elapsed_ms,unix_time_ms,iso_timestamp,input_source,validation_automation')
-    foreach ($event in @($condition1Events + $condition2Events)) {
-        $pressRows.Add(
-            "$sessionId,$participantId,$($event.conditionNumber),$($event.pressIndex),$($event.elapsedMs),$($event.unixTimeMs),$($event.isoTimestamp),$($event.inputSource),$($event.validationAutomation.ToString().ToLowerInvariant())"
-        )
+    $pressRows.Add('session_id,participant_id,condition_number,press_index,elapsed_ms,elapsed_ns,event_elapsed_realtime_ns,condition_start_elapsed_realtime_ns,unix_time_ms,iso_timestamp,input_source,validation_automation,feedback_source,physiology_source,nearest_ecg_sample_index,nearest_ecg_elapsed_ns,nearest_ecg_delta_ns')
+    foreach ($event in @($condition1PressEvents + $condition2PressEvents)) {
+        $pressRows.Add("$sessionId,$participantId,$($event.conditionNumber),$($event.pressIndex),$($event.elapsedMs),$($event.elapsedNs),$($event.eventElapsedRealtimeNs),$($event.conditionStartElapsedRealtimeNs),$($event.unixTimeMs),$($event.isoTimestamp),$($event.inputSource),$($event.validationAutomation.ToString().ToLowerInvariant()),$($event.feedbackSource),$($event.physiologySource),$($event.nearestEcgSampleIndex),$($event.nearestEcgElapsedNs),$($event.nearestEcgDeltaNs)")
     }
     $pressRows | Set-Content -LiteralPath $pressPath -Encoding UTF8
 
     $ecgBlinkRows = New-Object System.Collections.Generic.List[string]
-    $ecgBlinkRows.Add('session_id,participant_id,condition_number,blink_index,source,elapsed_ms,unix_time_ms,iso_timestamp,rr_ms,heart_rate_bpm')
-    foreach ($event in @($realBlinkEvents + $simBlinkEvents)) {
-        $ecgBlinkRows.Add(
-            "$sessionId,$participantId,$($event.conditionNumber),$($event.blinkIndex),$($event.source),$($event.elapsedMs),$($event.unixTimeMs),$($event.isoTimestamp),$($event.rrMs),$($event.heartRateBpm)"
-        )
+    $ecgBlinkRows.Add('session_id,participant_id,condition_number,blink_index,source,elapsed_ms,unix_time_ms,iso_timestamp,rr_ms,heart_rate_bpm,pulse_intensity_0_1,pulse_source_timestamp_unix_ns,detector')
+    foreach ($event in @($condition1BlinkEvents + $condition2BlinkEvents)) {
+        $ecgBlinkRows.Add("$sessionId,$participantId,$($event.conditionNumber),$($event.blinkIndex),$($event.source),$($event.elapsedMs),$($event.unixTimeMs),$($event.isoTimestamp),$($event.rrMs),$($event.heartRateBpm),$($event.pulseIntensity01),$($event.pulseSourceTimestampUnixNs),$($event.detector)")
     }
     $ecgBlinkRows | Set-Content -LiteralPath $ecgBlinkPath -Encoding UTF8
 
+    $polarRrRows = New-Object System.Collections.Generic.List[string]
+    $polarRrRows.Add('session_id,participant_id,condition_number,rr_index,elapsed_ms,elapsed_ns,unix_time_ms,iso_timestamp,rr_ms,heart_rate_bpm,feedback_source,used_for_feedback')
+    foreach ($event in @($condition1PolarRrEvents + $condition2PolarRrEvents)) {
+        $polarRrRows.Add("$sessionId,$participantId,$($event.conditionNumber),$($event.rrIndex),$($event.elapsedMs),$($event.elapsedNs),$($event.unixTimeMs),$($event.isoTimestamp),$($event.rrMs),$($event.heartRateBpm),$($event.feedbackSource),$($event.usedForFeedback.ToString().ToLowerInvariant())")
+    }
+    $polarRrRows | Set-Content -LiteralPath $polarRrPath -Encoding UTF8
+
     $ecgTimeSeriesRows = New-Object System.Collections.Generic.List[string]
     $ecgTimeSeriesRows.Add('session_id,participant_id,condition_number,sample_index,source,elapsed_ms,elapsed_ns,audio_window_start_ms,audio_window_end_ms,audio_window_duration_ms,unix_time_ms,iso_timestamp,sensor_timestamp_ns,microvolts,sample_rate_hz,frame_index,frame_type,package_size_bytes,requested_mtu,negotiated_mtu')
-    foreach ($sample in @($realTimeSeries + $simTimeSeries)) {
-        $ecgTimeSeriesRows.Add(
-            "$sessionId,$participantId,$($sample.conditionNumber),$($sample.sampleIndex),$($sample.source),$($sample.elapsedMs),$($sample.elapsedNs),$($sample.audioWindowStartMs),$($sample.audioWindowEndMs),$($sample.audioWindowDurationMs),$($sample.unixTimeMs),$($sample.isoTimestamp),$($sample.sensorTimestampNs),$($sample.microVolts),$($sample.sampleRateHz),$($sample.frameIndex),$($sample.frameType),$($sample.packageSizeBytes),$($sample.requestedMtu),$($sample.negotiatedMtu)"
-        )
+    foreach ($sample in @($condition1Samples + $condition2Samples)) {
+        $ecgTimeSeriesRows.Add("$sessionId,$participantId,$($sample.conditionNumber),$($sample.sampleIndex),$($sample.source),$($sample.elapsedMs),$($sample.elapsedNs),$($sample.audioWindowStartMs),$($sample.audioWindowEndMs),$($sample.audioWindowDurationMs),$($sample.unixTimeMs),$($sample.isoTimestamp),$($sample.sensorTimestampNs),$($sample.microVolts),$($sample.sampleRateHz),$($sample.frameIndex),$($sample.frameType),$($sample.packageSizeBytes),$($sample.requestedMtu),$($sample.negotiatedMtu)")
     }
     $ecgTimeSeriesRows | Set-Content -LiteralPath $ecgTimeSeriesPath -Encoding UTF8
 
     $logLines = New-Object System.Collections.Generic.List[string]
-    foreach ($event in @($condition1Events + $condition2Events)) {
+    foreach ($event in @($condition1PressEvents + $condition2PressEvents)) {
         if ($Mode -ne 'missing-accepted-select') {
-            $logLines.Add(
-                "06-09 12:00:00.000 I/BigRedButtonStudy(123): BRB_BUTTON_CONTROLLER_CONTACT_SELECT accepted=true"
-            )
+            $logLines.Add('06-09 12:00:00.000 I/BigRedButtonStudy(123): BRB_BUTTON_CONTROLLER_CONTACT_SELECT accepted=true')
         }
-        $logLines.Add(
-            "06-09 12:00:00.000 I/BigRedButtonStudy(123): BRB_BUTTON_PRESS condition=$($event.conditionNumber) index=$($event.pressIndex) source=$($event.inputSource) validationAutomation=$($event.validationAutomation.ToString().ToLowerInvariant()) elapsedMs=$($event.elapsedMs)"
-        )
+        $logLines.Add("06-09 12:00:00.000 I/BigRedButtonStudy(123): BRB_BUTTON_PRESS condition=$($event.conditionNumber) index=$($event.pressIndex) source=$($event.inputSource) validationAutomation=$($event.validationAutomation.ToString().ToLowerInvariant()) elapsedMs=$($event.elapsedMs) elapsedNs=$($event.elapsedNs)")
     }
     if ($Mode -ne 'missing-source-summary') {
-        $condition1ControllerCount = @($condition1Events | Where-Object { $_.inputSource -eq 'controller_contact' }).Count
-        $condition2ControllerCount = @($condition2Events | Where-Object { $_.inputSource -eq 'controller_contact' }).Count
+        $condition1ControllerCount = @($condition1PressEvents | Where-Object { $_.inputSource -eq 'controller_contact' }).Count
+        $condition2ControllerCount = @($condition2PressEvents | Where-Object { $_.inputSource -eq 'controller_contact' }).Count
         if ($Mode -eq 'source-summary-mismatch') {
             $condition2ControllerCount += 1
         }
-        $logLines.Add("06-09 12:05:01.000 I/BigRedButtonStudy(123): BRB_CONDITION_PRESS_SOURCES condition=1 total=$($condition1Events.Count) controllerContact=$condition1ControllerCount interimPanel=0 sceneObjectFallback=0 autoValidation=0")
-        $logLines.Add("06-09 12:10:27.000 I/BigRedButtonStudy(123): BRB_CONDITION_PRESS_SOURCES condition=2 total=$($condition2Events.Count) controllerContact=$condition2ControllerCount interimPanel=0 sceneObjectFallback=0 autoValidation=0")
+        $logLines.Add("06-09 12:05:01.000 I/BigRedButtonStudy(123): BRB_CONDITION_PRESS_SOURCES condition=1 total=$($condition1PressEvents.Count) controllerContact=$condition1ControllerCount interimPanel=0 sceneObjectFallback=0 autoValidation=0")
+        $logLines.Add("06-09 12:10:27.000 I/BigRedButtonStudy(123): BRB_CONDITION_PRESS_SOURCES condition=2 total=$($condition2PressEvents.Count) controllerContact=$condition2ControllerCount interimPanel=0 sceneObjectFallback=0 autoValidation=0")
     }
     if ($Mode -ne 'missing-low-latency-config') {
         $logLines.Add('06-09 12:00:00.000 I/BigRedButtonStudy(123): BRB_POLAR_H10_LOW_LATENCY_CONFIG connectionPriorityHighRequested=true requestedMtu=70 mtuIssued=true strategy=minimum_mtu_low_latency_ecg')
     }
-    $logLines.Add("06-09 12:00:00.000 I/BigRedButtonStudy(123): BRB_ECG_CAPTURE_START condition=1 source=real_polar_h10 audioDurationMs=$audioDurationMs sampleRateHz=$realSampleRateHz expectedSamples=$expectedSamples requestedMtu=70 negotiatedMtu=70")
-    $logLines.Add("06-09 12:00:00.100 I/BigRedButtonStudy(123): BRB_ECG_CAPTURE_END condition=1 source=real_polar_h10 audioDurationMs=$audioDurationMs sampleRateHz=$realSampleRateHz expectedSamples=$expectedSamples actualSamples=$($realTimeSeries.Count) captureWindowMs=$audioDurationMs")
+    foreach ($condition in 1..2) {
+        $sampleCount = if ($condition -eq 1) { @($condition1Samples).Count } else { @($condition2Samples).Count }
+        $logLines.Add("06-09 12:00:00.000 I/BigRedButtonStudy(123): BRB_ECG_CAPTURE_START condition=$condition source=real_polar_h10 audioDurationMs=100 sampleRateHz=130 expectedSamples=13 requestedMtu=70 negotiatedMtu=70")
+        $logLines.Add("06-09 12:00:00.100 I/BigRedButtonStudy(123): BRB_ECG_CAPTURE_END condition=$condition source=real_polar_h10 audioDurationMs=100 sampleRateHz=130 expectedSamples=13 actualSamples=$sampleCount captureWindowMs=100")
+    }
     $logLines | Set-Content -LiteralPath $logPath -Encoding UTF8
 
     return [pscustomobject]@{
@@ -380,13 +387,13 @@ $cases = @(
     [pscustomobject]@{ case = New-Case -Name 'missing-summary' -Mode 'missing-source-summary'; shouldPass = $false },
     [pscustomobject]@{ case = New-Case -Name 'summary-mismatch' -Mode 'source-summary-mismatch'; shouldPass = $false },
     [pscustomobject]@{ case = New-Case -Name 'missing-real-ecg' -Mode 'missing-real-ecg-samples'; shouldPass = $false },
-    [pscustomobject]@{ case = New-Case -Name 'missing-real-blink' -Mode 'missing-real-blink'; shouldPass = $false },
-    [pscustomobject]@{ case = New-Case -Name 'wrong-real-rate' -Mode 'wrong-real-ecg-rate'; shouldPass = $false },
-    [pscustomobject]@{ case = New-Case -Name 'short-real-ecg' -Mode 'short-real-ecg-coverage'; shouldPass = $false },
-    [pscustomobject]@{ case = New-Case -Name 'invalid-real-ecg-package' -Mode 'invalid-real-ecg-package'; shouldPass = $false },
-    [pscustomobject]@{ case = New-Case -Name 'invalid-real-ecg-mtu' -Mode 'invalid-real-ecg-mtu'; shouldPass = $false },
-    [pscustomobject]@{ case = New-Case -Name 'nonmonotonic-real-ecg-timing' -Mode 'nonmonotonic-real-ecg-timing'; shouldPass = $false },
-    [pscustomobject]@{ case = New-Case -Name 'coarse-real-ecg-timing' -Mode 'coarse-real-ecg-timing'; shouldPass = $false },
+    [pscustomobject]@{ case = New-Case -Name 'only-one-real-polar-condition' -Mode 'only-one-real-polar-condition'; shouldPass = $false },
+    [pscustomobject]@{ case = New-Case -Name 'sham-filled-with-simulated-ecg' -Mode 'sham-filled-with-simulated-ecg'; shouldPass = $false },
+    [pscustomobject]@{ case = New-Case -Name 'missing-press-elapsed-ns' -Mode 'missing-press-elapsed-ns'; shouldPass = $false },
+    [pscustomobject]@{ case = New-Case -Name 'missing-nearest-ecg-linkage' -Mode 'missing-nearest-ecg-linkage'; shouldPass = $false },
+    [pscustomobject]@{ case = New-Case -Name 'nonmonotonic-ecg-timing' -Mode 'nonmonotonic-ecg-timing'; shouldPass = $false },
+    [pscustomobject]@{ case = New-Case -Name 'oversized-press-ecg-gap' -Mode 'oversized-press-ecg-gap'; shouldPass = $false },
+    [pscustomobject]@{ case = New-Case -Name 'missing-polar-rr' -Mode 'missing-polar-rr'; shouldPass = $false },
     [pscustomobject]@{ case = New-Case -Name 'missing-low-latency' -Mode 'missing-low-latency-config'; shouldPass = $false }
 )
 

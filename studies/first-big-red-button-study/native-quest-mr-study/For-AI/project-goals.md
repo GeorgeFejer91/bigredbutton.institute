@@ -19,7 +19,7 @@ One button/audio condition should be driven by actual Polar H10 RR events plus r
 ## Participant Flow
 
 1. Consent and demographics.
-2. One-time transparent XR prior-experience prompt in the button/counter location: keep the 3D Big Red Button model and contact collider hidden, ask whether the participant has experience pressing big red buttons, store Yes/No plus timestamp, show humorous feedback, then allow `Start experiment`. This prompt occurs only before condition 1 and never before condition 2.
+2. One-time transparent XR prior-experience prompt in the button/counter location: keep the 3D Big Red Button model and contact collider hidden, ask whether the participant has experience pressing big red buttons, store Yes/No plus timestamp, show humorous feedback, play the supplied pre-start instructions clip, then allow `Start experiment`. This prompt occurs only before condition 1 and never before condition 2.
 3. Condition 1: Big Red Button shown in front of the participant in passthrough/MR while `first-big-red-button-vr-study-instructions-final.mp3` plays; controller-based physical pressing is active for the full track.
 4. Post-condition 1 button experience task, stored as the pictographic closeness/presence/redness measure. Redness starts as VAS, then converts to seven Likert boxes after the first VAS selection.
 5. Post-condition 1 neutral session experience ratings, stored as adapted presence questionnaire responses.
@@ -66,10 +66,10 @@ Finish only when the standalone APK builds and the strongest available validatio
 - 3D model Big Red Button placement, including the human-facing seated visual-angle contract
 - controller-based physical pressing of the 3D button, with accepted press counts matching logs and exports
 - one press-sound trigger per accepted button press; when the final sound replaces the placeholder, button cap motion should align to the sound's main transient/envelope
-- PMD-aware Polar H10 validity status, where the first-menu green check requires HR/RR plus raw PMD ECG samples streaming at 130 Hz; counterbalanced real/simulated ECG assignment; and heartbeat-driven button blinking
+- PMD-aware Polar H10 validity status, where the first-menu green check requires HR/RR plus raw PMD ECG samples streaming at 130 Hz; real Polar physiology recorded in both conditions; counterbalanced real-vs-sham feedback assignment; and heartbeat-driven button blinking
 - Polar PMD raw ECG capture/export at 130 Hz, with exported millisecond and nanosecond capture-window durations matching each instruction-audio duration
 - questionnaire panel layout
-- demographics text entry using the native Quest/system keyboard, including reliable name/age text/numeric mode switching, IME retargeting, and digit sanitization for age
+- demographics intake using the native Quest/system keyboard through visible Name and Age `AndroidView(EditText)` fields, preserving `demographics.name` and `demographics.age` export values with text/Next and number/Done input contracts
 - Button Experience redness scale conversion and export of both final VAS and Likert values
 - fast directional questionnaire/data export validation on the current APK hash, including pulled `ExperimentResults` JSON/CSV files
 - audio track playback and condition timing

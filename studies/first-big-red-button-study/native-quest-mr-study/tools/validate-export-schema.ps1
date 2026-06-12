@@ -21,6 +21,15 @@ $requiredSummaryColumns = @(
     'prior_big_red_button_experience',
     'prior_big_red_button_experience_bool',
     'prior_big_red_button_experience_timestamp_iso',
+    'final_end_confirmation_rating_1_10',
+    'final_end_confirmation_immediate_end',
+    'final_end_confirmation_timestamp_iso',
+    'final_end_confirmation_feedback_text',
+    'final_extra_button_press_requirement',
+    'final_extra_button_press_count',
+    'final_extra_button_press_completed',
+    'final_extra_button_press_started_iso',
+    'final_extra_button_press_completed_iso',
     'ecg_assignment_order',
     'polar_h10_state',
     'polar_h10_detected',
@@ -46,8 +55,12 @@ $conditionColumns = @(
     'scene_object_fallback_press_count',
     'validation_automation_press_count',
     'ecg_source',
+    'feedback_source',
+    'physiology_source',
     'ecg_blink_count',
     'ecg_timeseries_sample_count',
+    'real_ecg_timeseries_sample_count',
+    'polar_rr_event_count',
     'ecg_detector_event_count',
     'external_signal_sample_count',
     'ecg_expected_sample_count',
@@ -77,6 +90,13 @@ $conditionColumns = @(
     'redness_likert_1_7',
     'redness_likert_descriptor',
     'redness_scale_order',
+    'redness_carried_forward_vas_0_100',
+    'redness_carried_forward_likert_1_7',
+    'redness_carried_forward_likert_descriptor',
+    'redness_post_conversion_edited',
+    'redness_post_conversion_edit_scale',
+    'redness_changed_after_conversion',
+    'redness_final_matches_carried_forward',
     'lost_opportunity_for_better_results_quotient',
     'ipq_total_mean_0_6',
     'ipq_general_mean_0_6',
@@ -106,10 +126,29 @@ $requiredPressColumns = @(
     'condition_number',
     'press_index',
     'elapsed_ms',
+    'elapsed_ns',
+    'event_elapsed_realtime_ns',
+    'condition_start_elapsed_realtime_ns',
     'unix_time_ms',
     'iso_timestamp',
     'input_source',
-    'validation_automation'
+    'validation_automation',
+    'feedback_source',
+    'physiology_source',
+    'nearest_ecg_sample_index',
+    'nearest_ecg_elapsed_ns',
+    'nearest_ecg_delta_ns'
+)
+$requiredFinalExtraPressColumns = @(
+    'session_id',
+    'participant_id',
+    'press_index',
+    'elapsed_ms',
+    'unix_time_ms',
+    'iso_timestamp',
+    'input_source',
+    'validation_automation',
+    'requirement'
 )
 $requiredEcgBlinkColumns = @(
     'session_id',
@@ -141,6 +180,20 @@ $requiredEcgDetectorColumns = @(
     'microvolts',
     'threshold_microvolts',
     'sample_index'
+)
+$requiredPolarRrColumns = @(
+    'session_id',
+    'participant_id',
+    'condition_number',
+    'rr_index',
+    'elapsed_ms',
+    'elapsed_ns',
+    'unix_time_ms',
+    'iso_timestamp',
+    'rr_ms',
+    'heart_rate_bpm',
+    'feedback_source',
+    'used_for_feedback'
 )
 $requiredExternalSignalColumns = @(
     'session_id',
@@ -202,9 +255,11 @@ function New-SyntheticExport {
     $jsonPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session.json'
     $summaryPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_summary.csv'
     $pressPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_press_events.csv'
+    $finalExtraPressPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_final_extra_button_presses.csv'
     $ecgBlinkPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_ecg_blink_events.csv'
     $ecgTimeSeriesPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_ecg_timeseries.csv'
     $ecgDetectorPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_ecg_detector_events.csv'
+    $polarRrPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_polar_rr_events.csv'
     $externalSignalPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_external_signal_samples.csv'
     $indexPath = Join-Path $outDir 'session-index.jsonl'
 
@@ -216,33 +271,42 @@ function New-SyntheticExport {
             $rawAnswers[$item] = 3
             $scoredAnswers[$item] = 3
         }
+        $feedbackSource = if ($condition -eq 1) { 'simulated_neurokit2' } else { 'real_polar_h10' }
+        $audioDurationMs = if ($condition -eq 1) { 300774 } else { 325590 }
+        $audioDurationNs = [int64]$audioDurationMs * 1000000L
+        $conditionUnixBaseMs = if ($condition -eq 1) { 1781006400000 } else { 1781006700000 }
+        $conditionIsoBase = if ($condition -eq 1) { '2026-06-09T12:00:00Z' } else { '2026-06-09T12:05:00Z' }
         $conditions += [ordered]@{
             conditionNumber = $condition
             label = "Condition $condition"
             audioAssetPath = if ($condition -eq 1) { 'first-big-red-button-vr-study-instructions-final.mp3' } else { 'first-big-red-button-vr-study-instructions-second-instructions-5-final.mp3' }
             startedIso = '2026-06-09T12:00:00Z'
             endedIso = '2026-06-09T12:05:00Z'
-            elapsedMs = if ($condition -eq 1) { 300774 } else { 325590 }
-            audioDurationMs = if ($condition -eq 1) { 300774 } else { 325590 }
+            elapsedMs = $audioDurationMs
+            audioDurationMs = $audioDurationMs
             buttonPressCount = $condition
-            ecgSource = if ($condition -eq 1) { 'simulated_neurokit2' } else { 'real_polar_h10' }
+            ecgSource = 'real_polar_h10'
+            feedbackSource = $feedbackSource
+            physiologySource = 'real_polar_h10'
             ecgBlinkCount = 1
             ecgCaptureStartedElapsedMs = 0
-            ecgCaptureEndedElapsedMs = if ($condition -eq 1) { 300774 } else { 325590 }
+            ecgCaptureEndedElapsedMs = $audioDurationMs
             ecgCaptureStartedElapsedNs = 0
-            ecgCaptureEndedElapsedNs = if ($condition -eq 1) { 300774000000 } else { 325590000000 }
-            ecgCaptureDurationMs = if ($condition -eq 1) { 300774 } else { 325590 }
-            ecgCaptureDurationNs = if ($condition -eq 1) { 300774000000 } else { 325590000000 }
+            ecgCaptureEndedElapsedNs = $audioDurationNs
+            ecgCaptureDurationMs = $audioDurationMs
+            ecgCaptureDurationNs = $audioDurationNs
             ecgAudioWindowStartMs = 0
-            ecgAudioWindowEndMs = if ($condition -eq 1) { 300774 } else { 325590 }
-            ecgAudioWindowDurationMs = if ($condition -eq 1) { 300774 } else { 325590 }
+            ecgAudioWindowEndMs = $audioDurationMs
+            ecgAudioWindowDurationMs = $audioDurationMs
             ecgFirstSampleElapsedMs = 0
             ecgLastSampleElapsedMs = 15.385
             ecgStartBoundaryGapMs = 0
-            ecgEndBoundaryGapMs = if ($condition -eq 1) { 300758.615 } else { 325574.615 }
+            ecgEndBoundaryGapMs = [math]::Round($audioDurationMs - 15.385, 3)
             ecgSampleRateHz = 130
             ecgExpectedSampleCount = 3
             ecgTimeSeriesSampleCount = 3
+            realEcgTimeSeriesSampleCount = 3
+            polarRrEventCount = 1
             ecgDetectorEventCount = 1
             externalSignalSampleCount = 0
             ecgRequestedMtu = 70
@@ -251,15 +315,29 @@ function New-SyntheticExport {
                 [ordered]@{
                     conditionNumber = $condition
                     blinkIndex = 1
-                    source = if ($condition -eq 1) { 'simulated_neurokit2' } else { 'real_polar_h10' }
+                    source = $feedbackSource
                     elapsedMs = 830
-                    unixTimeMs = 1781006400830
+                    unixTimeMs = $conditionUnixBaseMs + 830
                     isoTimestamp = '2026-06-09T12:00:00.830Z'
                     rrMs = 830.1
                     heartRateBpm = 72
                     pulseIntensity01 = 1.0
-                    pulseSourceTimestampUnixNs = 1781006400830000000
+                    pulseSourceTimestampUnixNs = ($conditionUnixBaseMs + 830) * 1000000L
                     detector = if ($condition -eq 1) { 'simulated_rr_interval' } else { 'polar_h10_rr_interval' }
+                }
+            )
+            polarRrEvents = @(
+                [ordered]@{
+                    conditionNumber = $condition
+                    rrIndex = 1
+                    elapsedMs = 830
+                    elapsedNs = 830000000
+                    unixTimeMs = $conditionUnixBaseMs + 830
+                    isoTimestamp = '2026-06-09T12:00:00.830Z'
+                    rrMs = 830.1
+                    heartRateBpm = 72
+                    feedbackSource = $feedbackSource
+                    usedForFeedback = ($feedbackSource -eq 'real_polar_h10')
                 }
             )
             ecgDetectorEvents = @(
@@ -267,10 +345,10 @@ function New-SyntheticExport {
                     conditionNumber = $condition
                     detectorIndex = 1
                     detector = 'native_threshold_uv800'
-                    source = if ($condition -eq 1) { 'simulated_neurokit2' } else { 'real_polar_h10' }
+                    source = 'real_polar_h10'
                     elapsedMs = 15.385
                     elapsedNs = 15384615
-                    unixTimeMs = 1781006400015
+                    unixTimeMs = $conditionUnixBaseMs + 15
                     isoTimestamp = '2026-06-09T12:00:00.015Z'
                     sensorTimestampNs = 15384615
                     microVolts = 1200
@@ -283,14 +361,14 @@ function New-SyntheticExport {
                 [ordered]@{
                     conditionNumber = $condition
                     sampleIndex = 1
-                    source = if ($condition -eq 1) { 'simulated_neurokit2' } else { 'real_polar_h10' }
+                    source = 'real_polar_h10'
                     elapsedMs = 0
                     elapsedNs = 0
                     audioWindowStartMs = 0
-                    audioWindowEndMs = if ($condition -eq 1) { 300774 } else { 325590 }
-                    audioWindowDurationMs = if ($condition -eq 1) { 300774 } else { 325590 }
-                    unixTimeMs = 1781006400000
-                    isoTimestamp = '2026-06-09T12:00:00Z'
+                    audioWindowEndMs = $audioDurationMs
+                    audioWindowDurationMs = $audioDurationMs
+                    unixTimeMs = $conditionUnixBaseMs
+                    isoTimestamp = $conditionIsoBase
                     sensorTimestampNs = 0
                     microVolts = 0
                     sampleRateHz = 130
@@ -303,13 +381,13 @@ function New-SyntheticExport {
                 [ordered]@{
                     conditionNumber = $condition
                     sampleIndex = 2
-                    source = if ($condition -eq 1) { 'simulated_neurokit2' } else { 'real_polar_h10' }
+                    source = 'real_polar_h10'
                     elapsedMs = 7.692
                     elapsedNs = 7692308
                     audioWindowStartMs = 0
-                    audioWindowEndMs = if ($condition -eq 1) { 300774 } else { 325590 }
-                    audioWindowDurationMs = if ($condition -eq 1) { 300774 } else { 325590 }
-                    unixTimeMs = 1781006400008
+                    audioWindowEndMs = $audioDurationMs
+                    audioWindowDurationMs = $audioDurationMs
+                    unixTimeMs = $conditionUnixBaseMs + 8
                     isoTimestamp = '2026-06-09T12:00:00.008Z'
                     sensorTimestampNs = 7692308
                     microVolts = 512
@@ -323,13 +401,13 @@ function New-SyntheticExport {
                 [ordered]@{
                     conditionNumber = $condition
                     sampleIndex = 3
-                    source = if ($condition -eq 1) { 'simulated_neurokit2' } else { 'real_polar_h10' }
+                    source = 'real_polar_h10'
                     elapsedMs = 15.385
                     elapsedNs = 15384615
                     audioWindowStartMs = 0
-                    audioWindowEndMs = if ($condition -eq 1) { 300774 } else { 325590 }
-                    audioWindowDurationMs = if ($condition -eq 1) { 300774 } else { 325590 }
-                    unixTimeMs = 1781006400015
+                    audioWindowEndMs = $audioDurationMs
+                    audioWindowDurationMs = $audioDurationMs
+                    unixTimeMs = $conditionUnixBaseMs + 15
                     isoTimestamp = '2026-06-09T12:00:00.015Z'
                     sensorTimestampNs = 15384615
                     microVolts = 1200
@@ -345,23 +423,38 @@ function New-SyntheticExport {
                 [ordered]@{
                     conditionNumber = $condition
                     pressIndex = 1
-                    elapsedMs = 1000
-                    unixTimeMs = 1781006400000
+                    elapsedMs = 7
+                    elapsedNs = 7692308
+                    eventElapsedRealtimeNs = 7692308
+                    conditionStartElapsedRealtimeNs = 0
+                    unixTimeMs = $conditionUnixBaseMs + 8
                     isoTimestamp = '2026-06-09T12:00:01Z'
                     inputSource = 'auto_validation'
                     validationAutomation = $true
+                    feedbackSource = $feedbackSource
+                    physiologySource = 'real_polar_h10'
+                    nearestEcgSampleIndex = 2
+                    nearestEcgElapsedNs = 7692308
+                    nearestEcgDeltaNs = 0
                 }
             )
             pictographic = [ordered]@{
                 conditionNumber = $condition
                 feltCloseness0To100 = 50
-                selfButtonDistanceUnits = 220.0
+                selfButtonDistanceUnits = 300.0
                 feltPresence0To100 = 50
                 buttonPresenceRadiusUnits = 81.5
                 rednessVas0To100 = if ($condition -eq 1) { 63 } else { 38 }
                 rednessLikert1To7 = if ($condition -eq 1) { 5 } else { 3 }
                 rednessLikertDescriptor = if ($condition -eq 1) { 'very red' } else { 'moderately red' }
                 rednessScaleOrder = if ($condition -eq 1) { 'vas_then_likert' } else { 'likert_then_vas' }
+                rednessCarriedForwardVas0To100 = if ($condition -eq 1) { 63 } else { 33 }
+                rednessCarriedForwardLikert1To7 = if ($condition -eq 1) { 5 } else { 3 }
+                rednessCarriedForwardLikertDescriptor = if ($condition -eq 1) { 'very red' } else { 'moderately red' }
+                rednessPostConversionEdited = if ($condition -eq 1) { $false } else { $true }
+                rednessPostConversionEditScale = if ($condition -eq 1) { 'none' } else { 'vas' }
+                rednessChangedAfterConversion = if ($condition -eq 1) { $false } else { $true }
+                rednessFinalMatchesCarriedForward = if ($condition -eq 1) { $true } else { $false }
                 timestampIso = '2026-06-09T12:06:00Z'
             }
             presenceQuestionnaire = [ordered]@{
@@ -392,6 +485,8 @@ function New-SyntheticExport {
         appVersion = '0.1.0'
         sessionId = $sessionId
         exportedAtIso = '2026-06-09T12:09:00Z'
+        validationMode = 'participant'
+        participantPhysiologyEvidenceRequired = $true
         demographics = [ordered]@{
             participantId = $participantId
             name = 'Synthetic'
@@ -404,17 +499,94 @@ function New-SyntheticExport {
         }
         priorBigRedButtonExperience = [ordered]@{
             question = 'Oh wait, we have just one more question: Do you have any experience with pressing big red buttons?'
+            sourceQuestionEnglish = 'Oh wait, we have just one more question: Do you have any experience with pressing big red buttons?'
+            languageCode = 'en-US'
             answer = 'yes'
             hasExperience = $true
             timestampIso = '2026-06-09T11:59:30Z'
             shownBeforeCondition = 1
             displayLocation = 'button_counter_panel'
         }
+        finalEndConfirmation = [ordered]@{
+            question = 'How sure are you that you want to end the experiment, on a scale of 1 to 10?'
+            sourceQuestionEnglish = 'How sure are you that you want to end the experiment, on a scale of 1 to 10?'
+            languageCode = 'en-US'
+            scale = '1-10'
+            rating1To10 = 10
+            immediateEnd = $true
+            selectedTimestampIso = '2026-06-09T12:09:30Z'
+            feedbackText = "All right then, I guess you can give the VR headset back then if you don't feel like doing any more button presses."
+            extraPressRequirement = 0
+            extraPressPrompt = 'That is fantastic! I will take your non-decimal response as a big red YES! Yes I want to continue pressing the big red button! Yes the button is big! Yes the button is red! Yes I want to continue pressing it! FOR SCIENCE, for data collection, for the pursuit of knowledge! Only for science! Forever Science. Well then, you may end the experiment, once you pressed the button 1000 more times. Enjoy!'
+            extraPressCount = 0
+            extraPressCompleted = $false
+            extraPressStartedIso = ''
+            extraPressCompletedIso = ''
+            extraPressEvents = @()
+        }
+        questionnaireProtocol = [ordered]@{
+            schema = 'bigredbutton.questionnaire_flow.v1'
+            transport = 'in_process_spatial_panel'
+            stageSequence = @(
+                'language_selection',
+                'consent_demographics',
+                'prior_big_red_button_experience',
+                'condition_1',
+                'post_condition_1_pictographic',
+                'post_condition_1_presence_questionnaire',
+                'post_condition_1_lost_opportunity',
+                'condition_2',
+                'post_condition_2_pictographic',
+                'post_condition_2_presence_questionnaire',
+                'post_condition_2_lost_opportunity',
+                'final_end_confirmation',
+                'final_extra_presses_optional',
+                'complete_export_summary'
+            )
+            validationShortcutsAllowed = $true
+            validationShortcutModes = @(
+                'auto_validation',
+                'physical_press_validation',
+                'keyevent_validation',
+                'fast_controller_flow',
+                'panel_smoke',
+                'demographics_keyboard_validation',
+                'audio_rig_stress',
+                'visual_glow_validation'
+            )
+            productCommunication = 'app_internal'
+            adbProductCommunication = $false
+            publicSharedStorageExchange = $false
+            overlayReturnFlow = $false
+            packageKillReturnFlow = $false
+        }
+        externalSignalProtocol = [ordered]@{
+            schema = 'bigredbutton.external_signal.v1'
+            enabled = $false
+            role = 'diagnostic_only'
+            contaminatesPressCounts = $false
+            streamName = 'HRV_Biofeedback'
+            streamType = 'HRV'
+            channelIndex = 0
+            triggerThreshold01 = 0.5
+            triggerOnRisingEdgeOnly = $true
+            minimumTriggerIntervalMs = 250
+            route = 'external_signal_samples'
+            nativeLibraryPackaged = $false
+            jniEnabled = $false
+            drivesHeartbeatBlink = $false
+            drivesButtonPresses = $false
+        }
         ecgProtocol = [ordered]@{
             schema = 'bigredbutton.ecg_counterbalanced.v1'
             assignmentOrder = 'simulated_then_real'
+            assignmentBasis = 'feedback_source'
             condition1Source = 'simulated_neurokit2'
             condition2Source = 'real_polar_h10'
+            condition1FeedbackSource = 'simulated_neurokit2'
+            condition2FeedbackSource = 'real_polar_h10'
+            condition1PhysiologySource = 'real_polar_h10'
+            condition2PhysiologySource = 'real_polar_h10'
             simulatedRrAsset = 'ecg/neurokit2_simulated_rr_intervals_ms.csv'
             simulatedRrCount = 865
             polarH10Status = [ordered]@{
@@ -467,8 +639,11 @@ function New-SyntheticExport {
 
     Set-Content -LiteralPath $pressPath -Encoding UTF8 -Value @(
         ($requiredPressColumns -join ','),
-        "$sessionId,$participantId,1,1,1000,1781006400000,2026-06-09T12:00:01Z,auto_validation,true",
-        "$sessionId,$participantId,2,1,1000,1781006400000,2026-06-09T12:05:01Z,auto_validation,true"
+        "$sessionId,$participantId,1,1,7,7692308,7692308,0,1781006400008,2026-06-09T12:00:00.008Z,auto_validation,true,simulated_neurokit2,real_polar_h10,2,7692308,0",
+        "$sessionId,$participantId,2,1,7,7692308,7692308,0,1781006700008,2026-06-09T12:05:00.008Z,auto_validation,true,real_polar_h10,real_polar_h10,2,7692308,0"
+    )
+    Set-Content -LiteralPath $finalExtraPressPath -Encoding UTF8 -Value @(
+        ($requiredFinalExtraPressColumns -join ',')
     )
     Set-Content -LiteralPath $ecgBlinkPath -Encoding UTF8 -Value @(
         ($requiredEcgBlinkColumns -join ','),
@@ -477,15 +652,22 @@ function New-SyntheticExport {
     )
     Set-Content -LiteralPath $ecgTimeSeriesPath -Encoding UTF8 -Value @(
         ($requiredEcgTimeSeriesColumns -join ','),
-        "$sessionId,$participantId,1,1,simulated_neurokit2,0,0,0,300774,300774,1781006400000,2026-06-09T12:00:00Z,0,0,130,1,0,16,70,70",
-        "$sessionId,$participantId,1,2,simulated_neurokit2,7.692,7692308,0,300774,300774,1781006400008,2026-06-09T12:00:00.008Z,7692308,512,130,1,0,16,70,70",
+        "$sessionId,$participantId,1,1,real_polar_h10,0,0,0,300774,300774,1781006400000,2026-06-09T12:00:00Z,0,0,130,1,0,16,70,70",
+        "$sessionId,$participantId,1,2,real_polar_h10,7.692,7692308,0,300774,300774,1781006400008,2026-06-09T12:00:00.008Z,7692308,512,130,1,0,16,70,70",
+        "$sessionId,$participantId,1,3,real_polar_h10,15.385,15384615,0,300774,300774,1781006400015,2026-06-09T12:00:00.015Z,15384615,1200,130,1,0,16,70,70",
         "$sessionId,$participantId,2,1,real_polar_h10,0,0,0,325590,325590,1781006700000,2026-06-09T12:05:00Z,0,0,130,1,0,16,70,70",
-        "$sessionId,$participantId,2,2,real_polar_h10,7.692,7692308,0,325590,325590,1781006700008,2026-06-09T12:05:00.008Z,7692308,512,130,1,0,16,70,70"
+        "$sessionId,$participantId,2,2,real_polar_h10,7.692,7692308,0,325590,325590,1781006700008,2026-06-09T12:05:00.008Z,7692308,512,130,1,0,16,70,70",
+        "$sessionId,$participantId,2,3,real_polar_h10,15.385,15384615,0,325590,325590,1781006700015,2026-06-09T12:05:00.015Z,15384615,1200,130,1,0,16,70,70"
     )
     Set-Content -LiteralPath $ecgDetectorPath -Encoding UTF8 -Value @(
         ($requiredEcgDetectorColumns -join ','),
-        "$sessionId,$participantId,1,1,native_threshold_uv800,simulated_neurokit2,15.385,15384615,1781006400015,2026-06-09T12:00:00.015Z,15384615,1200,800,3",
+        "$sessionId,$participantId,1,1,native_threshold_uv800,real_polar_h10,15.385,15384615,1781006400015,2026-06-09T12:00:00.015Z,15384615,1200,800,3",
         "$sessionId,$participantId,2,1,native_threshold_uv800,real_polar_h10,15.385,15384615,1781006700015,2026-06-09T12:05:00.015Z,15384615,1200,800,3"
+    )
+    Set-Content -LiteralPath $polarRrPath -Encoding UTF8 -Value @(
+        ($requiredPolarRrColumns -join ','),
+        "$sessionId,$participantId,1,1,830,830000000,1781006400830,2026-06-09T12:00:00.830Z,830.1,72,simulated_neurokit2,false",
+        "$sessionId,$participantId,2,1,830,830000000,1781006700830,2026-06-09T12:05:00.830Z,830.1,72,real_polar_h10,true"
     )
     Set-Content -LiteralPath $externalSignalPath -Encoding UTF8 -Value @(
         ($requiredExternalSignalColumns -join ',')
@@ -497,9 +679,11 @@ function New-SyntheticExport {
         json = [IO.Path]::GetFileName($jsonPath)
         summaryCsv = [IO.Path]::GetFileName($summaryPath)
         pressEventsCsv = [IO.Path]::GetFileName($pressPath)
+        finalExtraButtonPressesCsv = [IO.Path]::GetFileName($finalExtraPressPath)
         ecgBlinkEventsCsv = [IO.Path]::GetFileName($ecgBlinkPath)
         ecgTimeSeriesCsv = [IO.Path]::GetFileName($ecgTimeSeriesPath)
         ecgDetectorEventsCsv = [IO.Path]::GetFileName($ecgDetectorPath)
+        polarRrEventsCsv = [IO.Path]::GetFileName($polarRrPath)
         externalSignalSamplesCsv = [IO.Path]::GetFileName($externalSignalPath)
     } | ConvertTo-Json -Compress)
     return $outDir
@@ -513,18 +697,22 @@ $ExportDir = (Resolve-Path $ExportDir).Path
 $jsonFile = Get-ChildItem -LiteralPath $ExportDir -Filter 'brb_first_study_*.json' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $summaryFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_summary.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $pressFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_press_events.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$finalExtraPressFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_final_extra_button_presses.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $ecgBlinkFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_ecg_blink_events.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $ecgTimeSeriesFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_ecg_timeseries.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $ecgDetectorFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_ecg_detector_events.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$polarRrFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_polar_rr_events.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $externalSignalFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_external_signal_samples.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $indexFile = Join-Path $ExportDir 'session-index.jsonl'
 
 Assert-Condition ($null -ne $jsonFile) "Missing JSON export in $ExportDir"
 Assert-Condition ($null -ne $summaryFile) "Missing summary CSV export in $ExportDir"
 Assert-Condition ($null -ne $pressFile) "Missing press-events CSV export in $ExportDir"
+Assert-Condition ($null -ne $finalExtraPressFile) "Missing final extra button presses CSV export in $ExportDir"
 Assert-Condition ($null -ne $ecgBlinkFile) "Missing ECG blink-events CSV export in $ExportDir"
 Assert-Condition ($null -ne $ecgTimeSeriesFile) "Missing ECG time-series CSV export in $ExportDir"
 Assert-Condition ($null -ne $ecgDetectorFile) "Missing ECG detector-events CSV export in $ExportDir"
+Assert-Condition ($null -ne $polarRrFile) "Missing Polar RR events CSV export in $ExportDir"
 Assert-Condition ($null -ne $externalSignalFile) "Missing external signal samples CSV export in $ExportDir"
 Assert-Condition (Test-Path $indexFile) "Missing session-index.jsonl in $ExportDir"
 
@@ -538,12 +726,79 @@ Assert-Condition ($exportJson.priorBigRedButtonExperience.answer -in @('yes', 'n
 Assert-Condition ($null -ne $exportJson.priorBigRedButtonExperience.hasExperience) 'Missing priorBigRedButtonExperience.hasExperience'
 Assert-Condition ($exportJson.priorBigRedButtonExperience.shownBeforeCondition -eq 1) 'priorBigRedButtonExperience must be shown before condition 1'
 Assert-Condition ($exportJson.priorBigRedButtonExperience.displayLocation -eq 'button_counter_panel') 'priorBigRedButtonExperience display location mismatch'
-Assert-Condition ($exportJson.priorBigRedButtonExperience.question -match 'experience with pressing big red buttons') 'priorBigRedButtonExperience question text mismatch'
+Assert-Condition ($exportJson.priorBigRedButtonExperience.question.Length -gt 0) 'priorBigRedButtonExperience localized question text missing'
+Assert-Condition ($exportJson.priorBigRedButtonExperience.sourceQuestionEnglish -match 'experience with pressing big red buttons') 'priorBigRedButtonExperience English source question mismatch'
+Assert-Condition ($exportJson.priorBigRedButtonExperience.languageCode -in @('en-US', 'ja-JP')) 'priorBigRedButtonExperience language code mismatch'
+Assert-Condition ($null -ne $exportJson.finalEndConfirmation) 'Missing finalEndConfirmation'
+Assert-Condition ($exportJson.finalEndConfirmation.question.Length -gt 0) 'finalEndConfirmation localized question text missing'
+Assert-Condition ($exportJson.finalEndConfirmation.sourceQuestionEnglish -eq 'How sure are you that you want to end the experiment, on a scale of 1 to 10?') 'finalEndConfirmation English source question mismatch'
+Assert-Condition ($exportJson.finalEndConfirmation.languageCode -in @('en-US', 'ja-JP')) 'finalEndConfirmation language code mismatch'
+Assert-Condition ($exportJson.finalEndConfirmation.scale -eq '1-10') 'finalEndConfirmation scale mismatch'
+Assert-Condition ($exportJson.finalEndConfirmation.rating1To10 -ge 1 -and $exportJson.finalEndConfirmation.rating1To10 -le 10) 'finalEndConfirmation rating out of range'
+Assert-Condition ($null -ne $exportJson.finalEndConfirmation.immediateEnd) 'finalEndConfirmation immediateEnd missing'
+Assert-Condition ($exportJson.finalEndConfirmation.feedbackText.Length -gt 0) 'finalEndConfirmation feedback text missing'
+Assert-Condition ($exportJson.finalEndConfirmation.extraPressCount -ge 0) 'finalEndConfirmation extraPressCount invalid'
+if ($exportJson.finalEndConfirmation.immediateEnd -eq $true) {
+    Assert-Condition ($exportJson.finalEndConfirmation.rating1To10 -eq 10) 'Immediate end requires rating 10'
+    Assert-Condition ($exportJson.finalEndConfirmation.extraPressRequirement -eq 0) 'Immediate end should have no extra press requirement'
+} else {
+    Assert-Condition ($exportJson.finalEndConfirmation.rating1To10 -ge 1 -and $exportJson.finalEndConfirmation.rating1To10 -le 9) 'Extra press branch requires rating 1-9'
+    Assert-Condition ($exportJson.finalEndConfirmation.extraPressRequirement -eq 1000) 'Extra press branch must require 1000 presses'
+    Assert-Condition ($exportJson.finalEndConfirmation.extraPressCompleted -eq $true) 'Extra press branch must complete before export'
+    Assert-Condition ($exportJson.finalEndConfirmation.extraPressCount -ge 1000) 'Extra press branch exported before 1000 presses'
+}
+Assert-Condition ($null -ne $exportJson.questionnaireProtocol) 'Missing questionnaireProtocol'
+Assert-Condition ($exportJson.questionnaireProtocol.schema -eq 'bigredbutton.questionnaire_flow.v1') 'Questionnaire protocol schema mismatch'
+Assert-Condition ($exportJson.questionnaireProtocol.transport -eq 'in_process_spatial_panel') 'Questionnaire protocol transport mismatch'
+Assert-Condition ($exportJson.questionnaireProtocol.productCommunication -eq 'app_internal') 'Questionnaire protocol product communication must be app_internal'
+Assert-Condition ($exportJson.questionnaireProtocol.validationShortcutsAllowed -eq $true) 'Questionnaire validation shortcut allowance missing'
+Assert-Condition (@($exportJson.questionnaireProtocol.stageSequence).Count -eq 14) 'Questionnaire stage sequence length mismatch'
+Assert-Condition (@($exportJson.questionnaireProtocol.stageSequence) -contains 'language_selection') 'Questionnaire stage sequence missing language_selection'
+Assert-Condition (@($exportJson.questionnaireProtocol.stageSequence) -contains 'consent_demographics') 'Questionnaire stage sequence missing consent_demographics'
+Assert-Condition (@($exportJson.questionnaireProtocol.stageSequence) -contains 'prior_big_red_button_experience') 'Questionnaire stage sequence missing prior experience stage'
+Assert-Condition (@($exportJson.questionnaireProtocol.stageSequence) -contains 'post_condition_1_pictographic') 'Questionnaire stage sequence missing condition 1 pictographic stage'
+Assert-Condition (@($exportJson.questionnaireProtocol.stageSequence) -contains 'post_condition_2_lost_opportunity') 'Questionnaire stage sequence missing condition 2 lost opportunity stage'
+Assert-Condition (@($exportJson.questionnaireProtocol.stageSequence) -contains 'final_end_confirmation') 'Questionnaire stage sequence missing final end confirmation'
+Assert-Condition (@($exportJson.questionnaireProtocol.stageSequence) -contains 'complete_export_summary') 'Questionnaire stage sequence missing complete export summary'
+Assert-Condition (@($exportJson.questionnaireProtocol.validationShortcutModes) -contains 'keyevent_validation') 'Questionnaire shortcut modes missing keyevent validation'
+Assert-Condition (@($exportJson.questionnaireProtocol.validationShortcutModes) -contains 'physical_press_validation') 'Questionnaire shortcut modes missing physical press validation'
+Assert-Condition ($exportJson.questionnaireProtocol.adbProductCommunication -eq $false) 'ADB must not be product questionnaire communication'
+Assert-Condition ($exportJson.questionnaireProtocol.publicSharedStorageExchange -eq $false) 'Public shared storage must not be questionnaire exchange'
+Assert-Condition ($exportJson.questionnaireProtocol.overlayReturnFlow -eq $false) 'Overlay return flow must remain disabled'
+Assert-Condition ($exportJson.questionnaireProtocol.packageKillReturnFlow -eq $false) 'Package-kill return flow must remain disabled'
+Assert-Condition ($null -ne $exportJson.externalSignalProtocol) 'Missing externalSignalProtocol'
+Assert-Condition ($exportJson.externalSignalProtocol.schema -eq 'bigredbutton.external_signal.v1') 'External signal protocol schema mismatch'
+Assert-Condition ($exportJson.externalSignalProtocol.enabled -eq $false) 'External signal protocol must remain disabled'
+Assert-Condition ($exportJson.externalSignalProtocol.role -eq 'diagnostic_only') 'External signal role must be diagnostic_only'
+Assert-Condition ($exportJson.externalSignalProtocol.contaminatesPressCounts -eq $false) 'External signal samples must not contaminate press counts'
+Assert-Condition ($exportJson.externalSignalProtocol.streamName -eq 'HRV_Biofeedback') 'External signal stream name should match Unity-compatible default'
+Assert-Condition ($exportJson.externalSignalProtocol.streamType -eq 'HRV') 'External signal stream type should match Unity-compatible default'
+Assert-Condition ($exportJson.externalSignalProtocol.channelIndex -eq 0) 'External signal channel index mismatch'
+Assert-Condition ([math]::Abs(([double]$exportJson.externalSignalProtocol.triggerThreshold01) - 0.5) -lt 0.0001) 'External signal trigger threshold mismatch'
+Assert-Condition ($exportJson.externalSignalProtocol.triggerOnRisingEdgeOnly -eq $true) 'External signal trigger edge policy mismatch'
+Assert-Condition ($exportJson.externalSignalProtocol.minimumTriggerIntervalMs -eq 250) 'External signal minimum trigger interval mismatch'
+Assert-Condition ($exportJson.externalSignalProtocol.route -eq 'external_signal_samples') 'External signal route mismatch'
+Assert-Condition ($exportJson.externalSignalProtocol.nativeLibraryPackaged -eq $false) 'External signal native library must not be packaged while disabled'
+Assert-Condition ($exportJson.externalSignalProtocol.jniEnabled -eq $false) 'External signal JNI must remain disabled'
+Assert-Condition ($exportJson.externalSignalProtocol.drivesHeartbeatBlink -eq $false) 'External signal must not drive heartbeat blink'
+Assert-Condition ($exportJson.externalSignalProtocol.drivesButtonPresses -eq $false) 'External signal must not drive button presses'
 Assert-Condition ($null -ne $exportJson.ecgProtocol) 'Missing ecgProtocol'
 Assert-Condition ($exportJson.ecgProtocol.schema -eq 'bigredbutton.ecg_counterbalanced.v1') 'ECG protocol schema mismatch'
 Assert-Condition ($exportJson.ecgProtocol.assignmentOrder -in @('real_then_simulated', 'simulated_then_real')) 'Invalid ECG assignment order'
-Assert-Condition ($exportJson.ecgProtocol.condition1Source -in @('real_polar_h10', 'simulated_neurokit2')) 'Invalid condition 1 ECG source'
-Assert-Condition ($exportJson.ecgProtocol.condition2Source -in @('real_polar_h10', 'simulated_neurokit2')) 'Invalid condition 2 ECG source'
+Assert-Condition ($exportJson.ecgProtocol.assignmentBasis -eq 'feedback_source') 'ECG assignment basis must be feedback_source'
+Assert-Condition ($exportJson.ecgProtocol.condition1Source -in @('real_polar_h10', 'simulated_neurokit2')) 'Invalid condition 1 feedback alias source'
+Assert-Condition ($exportJson.ecgProtocol.condition2Source -in @('real_polar_h10', 'simulated_neurokit2')) 'Invalid condition 2 feedback alias source'
+Assert-Condition ($exportJson.ecgProtocol.condition1FeedbackSource -in @('real_polar_h10', 'simulated_neurokit2')) 'Invalid condition 1 feedback source'
+Assert-Condition ($exportJson.ecgProtocol.condition2FeedbackSource -in @('real_polar_h10', 'simulated_neurokit2')) 'Invalid condition 2 feedback source'
+Assert-Condition ($exportJson.ecgProtocol.condition1PhysiologySource -eq 'real_polar_h10') 'Condition 1 physiology source must be real_polar_h10'
+Assert-Condition ($exportJson.ecgProtocol.condition2PhysiologySource -eq 'real_polar_h10') 'Condition 2 physiology source must be real_polar_h10'
+Assert-Condition ($exportJson.ecgProtocol.condition1Source -eq $exportJson.ecgProtocol.condition1FeedbackSource) 'Condition 1 source alias must match feedback source'
+Assert-Condition ($exportJson.ecgProtocol.condition2Source -eq $exportJson.ecgProtocol.condition2FeedbackSource) 'Condition 2 source alias must match feedback source'
+Assert-Condition ($exportJson.ecgProtocol.condition1FeedbackSource -ne $exportJson.ecgProtocol.condition2FeedbackSource) 'Feedback sources must be counterbalanced complements'
+Assert-Condition (
+    ($exportJson.ecgProtocol.assignmentOrder -eq 'real_then_simulated' -and $exportJson.ecgProtocol.condition1FeedbackSource -eq 'real_polar_h10' -and $exportJson.ecgProtocol.condition2FeedbackSource -eq 'simulated_neurokit2') -or
+    ($exportJson.ecgProtocol.assignmentOrder -eq 'simulated_then_real' -and $exportJson.ecgProtocol.condition1FeedbackSource -eq 'simulated_neurokit2' -and $exportJson.ecgProtocol.condition2FeedbackSource -eq 'real_polar_h10')
+) 'ECG assignment order must match feedback sources'
 Assert-Condition ($null -ne $exportJson.ecgProtocol.polarH10Status) 'Missing Polar H10 status snapshot'
 Assert-Condition (@($exportJson.conditions).Count -eq 2) 'JSON must contain exactly two conditions'
 Assert-Condition (@($exportJson.presenceQuestionnaire.items).Count -eq 14) 'Presence questionnaire metadata must contain 14 items'
@@ -552,9 +807,13 @@ foreach ($condition in @($exportJson.conditions)) {
     Assert-Condition ($condition.conditionNumber -in @(1, 2)) "Invalid condition number $($condition.conditionNumber)"
     Assert-Condition ($condition.audioDurationMs -gt 0) "Condition $($condition.conditionNumber) missing audioDurationMs"
     Assert-Condition ($condition.buttonPressCount -ge 0) "Condition $($condition.conditionNumber) invalid buttonPressCount"
-    Assert-Condition ($condition.ecgSource -in @('real_polar_h10', 'simulated_neurokit2')) "Condition $($condition.conditionNumber) invalid ecgSource"
+    Assert-Condition ($condition.ecgSource -eq 'real_polar_h10') "Condition $($condition.conditionNumber) ecgSource compatibility alias must be real_polar_h10 physiology"
+    Assert-Condition ($condition.feedbackSource -in @('real_polar_h10', 'simulated_neurokit2')) "Condition $($condition.conditionNumber) invalid feedbackSource"
+    Assert-Condition ($condition.physiologySource -eq 'real_polar_h10') "Condition $($condition.conditionNumber) physiologySource must be real_polar_h10"
     Assert-Condition ($condition.ecgBlinkCount -ge 0) "Condition $($condition.conditionNumber) invalid ecgBlinkCount"
+    Assert-Condition ($condition.polarRrEventCount -ge 0) "Condition $($condition.conditionNumber) invalid polarRrEventCount"
     Assert-Condition ($null -ne $condition.ecgBlinkEvents) "Condition $($condition.conditionNumber) missing ecgBlinkEvents"
+    Assert-Condition ($null -ne $condition.polarRrEvents) "Condition $($condition.conditionNumber) missing polarRrEvents"
     Assert-Condition ($null -ne $condition.ecgDetectorEvents) "Condition $($condition.conditionNumber) missing ecgDetectorEvents"
     Assert-Condition ($null -ne $condition.externalSignalSamples) "Condition $($condition.conditionNumber) missing externalSignalSamples"
     Assert-Condition ($condition.ecgCaptureDurationMs -eq $condition.audioDurationMs) "Condition $($condition.conditionNumber) ECG capture duration must match audio duration"
@@ -567,9 +826,7 @@ foreach ($condition in @($exportJson.conditions)) {
     Assert-Condition ($condition.ecgExpectedSampleCount -ge 1) "Condition $($condition.conditionNumber) missing ECG expected sample count"
     Assert-Condition ($condition.ecgTimeSeriesSampleCount -ge 0) "Condition $($condition.conditionNumber) invalid ECG time-series sample count"
     Assert-Condition ($null -ne $condition.ecgTimeSeries) "Condition $($condition.conditionNumber) missing ecgTimeSeries"
-    if ($condition.ecgSource -eq 'simulated_neurokit2') {
-        Assert-Condition ($condition.ecgTimeSeriesSampleCount -eq $condition.ecgExpectedSampleCount) "Condition $($condition.conditionNumber) simulated ECG must contain expected sample count"
-    }
+    Assert-Condition (@($condition.ecgTimeSeries | Where-Object { $_.source -eq 'simulated_neurokit2' }).Count -eq 0) "Condition $($condition.conditionNumber) must not export simulated ECG rows as real physiology"
     foreach ($event in @($condition.ecgBlinkEvents)) {
         Assert-Condition ($event.source -in @('real_polar_h10', 'simulated_neurokit2')) "Condition $($condition.conditionNumber) ECG blink event has invalid source"
         Assert-Condition ($event.blinkIndex -gt 0) "Condition $($condition.conditionNumber) ECG blink event missing blinkIndex"
@@ -577,13 +834,23 @@ foreach ($condition in @($exportJson.conditions)) {
         Assert-Condition ($event.pulseIntensity01 -ge 0 -and $event.pulseIntensity01 -le 1) "Condition $($condition.conditionNumber) ECG blink event pulseIntensity01 out of range"
         Assert-Condition (-not [string]::IsNullOrWhiteSpace($event.detector)) "Condition $($condition.conditionNumber) ECG blink event missing detector"
     }
+    foreach ($event in @($condition.polarRrEvents)) {
+        Assert-Condition ($event.rrIndex -gt 0) "Condition $($condition.conditionNumber) Polar RR event missing rrIndex"
+        Assert-Condition ($event.elapsedMs -ge 0) "Condition $($condition.conditionNumber) Polar RR event has negative elapsedMs"
+        Assert-Condition ($event.elapsedNs -ge 0) "Condition $($condition.conditionNumber) Polar RR event has negative elapsedNs"
+        Assert-Condition ($event.elapsedNs -le ($condition.audioDurationMs * 1000000)) "Condition $($condition.conditionNumber) Polar RR event elapsedNs exceeds audio duration"
+        Assert-Condition ($event.rrMs -gt 0) "Condition $($condition.conditionNumber) Polar RR event missing rrMs"
+        Assert-Condition ($event.heartRateBpm -gt 0) "Condition $($condition.conditionNumber) Polar RR event missing heartRateBpm"
+        Assert-Condition ($event.feedbackSource -eq $condition.feedbackSource) "Condition $($condition.conditionNumber) Polar RR feedbackSource mismatch"
+        Assert-Condition ($null -ne $event.usedForFeedback) "Condition $($condition.conditionNumber) Polar RR event missing usedForFeedback"
+    }
     foreach ($event in @($condition.ecgDetectorEvents)) {
         Assert-Condition ($event.detectorIndex -gt 0) "Condition $($condition.conditionNumber) ECG detector event missing detectorIndex"
         Assert-Condition ($event.detector -eq 'native_threshold_uv800') "Condition $($condition.conditionNumber) ECG detector name mismatch"
         Assert-Condition ($event.thresholdMicroVolts -eq 800) "Condition $($condition.conditionNumber) ECG detector threshold mismatch"
     }
     foreach ($sample in @($condition.ecgTimeSeries)) {
-        Assert-Condition ($sample.source -in @('real_polar_h10', 'simulated_neurokit2')) "Condition $($condition.conditionNumber) ECG time-series sample has invalid source"
+        Assert-Condition ($sample.source -eq 'real_polar_h10') "Condition $($condition.conditionNumber) ECG time-series sample must be real Polar physiology"
         Assert-Condition ($sample.sampleIndex -gt 0) "Condition $($condition.conditionNumber) ECG time-series sample missing sampleIndex"
         Assert-Condition ($sample.elapsedMs -ge 0) "Condition $($condition.conditionNumber) ECG time-series sample has negative elapsedMs"
         Assert-Condition ($sample.elapsedNs -ge 0) "Condition $($condition.conditionNumber) ECG time-series sample has negative elapsedNs"
@@ -595,14 +862,30 @@ foreach ($condition in @($exportJson.conditions)) {
         Assert-Condition ($sample.sampleRateHz -eq 130) "Condition $($condition.conditionNumber) ECG time-series sample should be 130 Hz"
     }
     foreach ($event in @($condition.pressEvents)) {
+        Assert-Condition ($event.elapsedMs -ge 0) "Condition $($condition.conditionNumber) press event has negative elapsedMs"
+        Assert-Condition ($event.elapsedNs -ge 0) "Condition $($condition.conditionNumber) press event missing elapsedNs"
+        Assert-Condition ($event.elapsedNs -le ($condition.audioDurationMs * 1000000)) "Condition $($condition.conditionNumber) press event elapsedNs exceeds audio duration"
+        Assert-Condition ($event.eventElapsedRealtimeNs -ge $event.conditionStartElapsedRealtimeNs) "Condition $($condition.conditionNumber) press event monotonic clock mismatch"
         Assert-Condition (-not [string]::IsNullOrWhiteSpace($event.inputSource)) "Condition $($condition.conditionNumber) press event missing inputSource"
         Assert-Condition ($null -ne $event.validationAutomation) "Condition $($condition.conditionNumber) press event missing validationAutomation"
+        Assert-Condition ($event.feedbackSource -eq $condition.feedbackSource) "Condition $($condition.conditionNumber) press event feedbackSource mismatch"
+        Assert-Condition ($event.physiologySource -eq $condition.physiologySource) "Condition $($condition.conditionNumber) press event physiologySource mismatch"
+        Assert-Condition ($event.PSObject.Properties.Name -contains 'nearestEcgSampleIndex') "Condition $($condition.conditionNumber) press event missing nearestEcgSampleIndex"
+        Assert-Condition ($event.PSObject.Properties.Name -contains 'nearestEcgElapsedNs') "Condition $($condition.conditionNumber) press event missing nearestEcgElapsedNs"
+        Assert-Condition ($event.PSObject.Properties.Name -contains 'nearestEcgDeltaNs') "Condition $($condition.conditionNumber) press event missing nearestEcgDeltaNs"
     }
     Assert-Condition ($null -ne $condition.pictographic) "Condition $($condition.conditionNumber) missing pictographic"
     Assert-Condition ($condition.pictographic.rednessVas0To100 -ge 0 -and $condition.pictographic.rednessVas0To100 -le 100) "Condition $($condition.conditionNumber) redness VAS out of range"
     Assert-Condition ($condition.pictographic.rednessLikert1To7 -ge 1 -and $condition.pictographic.rednessLikert1To7 -le 7) "Condition $($condition.conditionNumber) redness Likert out of range"
     Assert-Condition (-not [string]::IsNullOrWhiteSpace($condition.pictographic.rednessLikertDescriptor)) "Condition $($condition.conditionNumber) missing redness descriptor"
     Assert-Condition ($condition.pictographic.rednessScaleOrder -in @('vas_then_likert', 'likert_then_vas')) "Condition $($condition.conditionNumber) invalid redness scale order"
+    Assert-Condition ($condition.pictographic.rednessCarriedForwardVas0To100 -ge 0 -and $condition.pictographic.rednessCarriedForwardVas0To100 -le 100) "Condition $($condition.conditionNumber) carried-forward redness VAS out of range"
+    Assert-Condition ($condition.pictographic.rednessCarriedForwardLikert1To7 -ge 1 -and $condition.pictographic.rednessCarriedForwardLikert1To7 -le 7) "Condition $($condition.conditionNumber) carried-forward redness Likert out of range"
+    Assert-Condition (-not [string]::IsNullOrWhiteSpace($condition.pictographic.rednessCarriedForwardLikertDescriptor)) "Condition $($condition.conditionNumber) missing carried-forward redness descriptor"
+    Assert-Condition ($null -ne $condition.pictographic.rednessPostConversionEdited) "Condition $($condition.conditionNumber) missing post-conversion edit flag"
+    Assert-Condition (-not [string]::IsNullOrWhiteSpace($condition.pictographic.rednessPostConversionEditScale)) "Condition $($condition.conditionNumber) missing post-conversion edit scale"
+    Assert-Condition ($null -ne $condition.pictographic.rednessChangedAfterConversion) "Condition $($condition.conditionNumber) missing redness changed-after-conversion flag"
+    Assert-Condition ($null -ne $condition.pictographic.rednessFinalMatchesCarriedForward) "Condition $($condition.conditionNumber) missing redness final-matches-carried flag"
     Assert-Condition ($null -ne $condition.presenceQuestionnaire) "Condition $($condition.conditionNumber) missing presenceQuestionnaire"
     Assert-Condition ($null -ne $condition.lostOpportunity) "Condition $($condition.conditionNumber) missing lostOpportunity"
     Assert-Condition ($condition.lostOpportunity.variableName -eq 'Lost Opportunity for better results quotient') "Condition $($condition.conditionNumber) lostOpportunity variable mismatch"
@@ -628,6 +911,11 @@ foreach ($column in $requiredPressColumns) {
     Assert-Condition ($pressHeader -contains $column) "Missing press-events column $column"
 }
 
+$finalExtraPressHeader = Get-CsvHeader -Path $finalExtraPressFile.FullName
+foreach ($column in $requiredFinalExtraPressColumns) {
+    Assert-Condition ($finalExtraPressHeader -contains $column) "Missing final extra button presses column $column"
+}
+
 $ecgBlinkHeader = Get-CsvHeader -Path $ecgBlinkFile.FullName
 foreach ($column in $requiredEcgBlinkColumns) {
     Assert-Condition ($ecgBlinkHeader -contains $column) "Missing ECG blink-events column $column"
@@ -641,6 +929,11 @@ foreach ($column in $requiredEcgTimeSeriesColumns) {
 $ecgDetectorHeader = Get-CsvHeader -Path $ecgDetectorFile.FullName
 foreach ($column in $requiredEcgDetectorColumns) {
     Assert-Condition ($ecgDetectorHeader -contains $column) "Missing ECG detector-events column $column"
+}
+
+$polarRrHeader = Get-CsvHeader -Path $polarRrFile.FullName
+foreach ($column in $requiredPolarRrColumns) {
+    Assert-Condition ($polarRrHeader -contains $column) "Missing Polar RR events column $column"
 }
 
 $externalSignalHeader = Get-CsvHeader -Path $externalSignalFile.FullName
@@ -658,9 +951,11 @@ $summaryPath = Join-Path $outRoot ("export-schema-validation-" + (Get-Date -Form
     json = $jsonFile.FullName
     summaryCsv = $summaryFile.FullName
     pressEventsCsv = $pressFile.FullName
+    finalExtraButtonPressesCsv = $finalExtraPressFile.FullName
     ecgBlinkEventsCsv = $ecgBlinkFile.FullName
     ecgTimeSeriesCsv = $ecgTimeSeriesFile.FullName
     ecgDetectorEventsCsv = $ecgDetectorFile.FullName
+    polarRrEventsCsv = $polarRrFile.FullName
     externalSignalSamplesCsv = $externalSignalFile.FullName
 } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $summaryPath -Encoding UTF8
 

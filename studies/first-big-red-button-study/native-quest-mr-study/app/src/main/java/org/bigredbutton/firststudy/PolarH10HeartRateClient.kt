@@ -41,6 +41,14 @@ data class PolarStatusSnapshot(
     val requestedMtu: Int = 0,
     val negotiatedMtu: Int = 0,
     val connectionPriorityHighRequested: Boolean = false,
+    val pmdControlPointIndicationsEnabled: Boolean = false,
+    val pmdDataNotificationsEnabled: Boolean = false,
+    val pmdSettingsReceived: Boolean = false,
+    val pmdStartCommandIssued: Boolean = false,
+    val pmdStartResponseReceived: Boolean = false,
+    val pmdLastCommand: String = "",
+    val pmdLastResponse: String = "",
+    val pmdLastErrorCode: Int = -1,
     val ecgSampleRateHz: Int = 0,
     val ecgResolutionBits: Int = 0,
     val missingPermissions: String = "",
@@ -53,6 +61,7 @@ data class PolarRrMeasurement(
     val deviceName: String,
     val deviceAddress: String,
     val elapsedRealtimeMs: Long,
+    val elapsedRealtimeNs: Long,
     val unixTimeMs: Long,
 )
 
@@ -111,12 +120,18 @@ class PolarH10HeartRateClient(
   private var ecgStreaming = false
   private var pmdControlPoint: BluetoothGattCharacteristic? = null
   private var pmdData: BluetoothGattCharacteristic? = null
-  private var pmdCpNotificationsEnabled = false
+  private var pmdControlPointIndicationsEnabled = false
   private var pmdDataNotificationsEnabled = false
   private var requestedMtu = POLAR_LOW_LATENCY_MTU
   private var negotiatedMtu = 0
   private var mtuRetryIndex = 0
   private var connectionPriorityHighRequested = false
+  private var pmdSettingsReceived = false
+  private var pmdStartCommandIssued = false
+  private var pmdStartResponseReceived = false
+  private var pmdLastCommand = ""
+  private var pmdLastResponse = ""
+  private var pmdLastErrorCode = -1
   private var ecgSampleRateHz = POLAR_ECG_SAMPLE_RATE_HZ
   private var ecgResolutionBits = POLAR_ECG_RESOLUTION_BITS
   private var previousEcgFrameTimestampNs = 0L
@@ -171,6 +186,14 @@ class PolarH10HeartRateClient(
     negotiatedMtu = 0
     mtuRetryIndex = 0
     previousEcgFrameTimestampNs = 0L
+    pmdControlPointIndicationsEnabled = false
+    pmdDataNotificationsEnabled = false
+    pmdSettingsReceived = false
+    pmdStartCommandIssued = false
+    pmdStartResponseReceived = false
+    pmdLastCommand = ""
+    pmdLastResponse = ""
+    pmdLastErrorCode = -1
     publishStatus(state = "scanning")
     val settings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build()
     scanner.startScan(null, settings, scanCallback)
@@ -192,6 +215,14 @@ class PolarH10HeartRateClient(
     streamingHr = false
     pmdReady = false
     ecgStreaming = false
+    pmdControlPointIndicationsEnabled = false
+    pmdDataNotificationsEnabled = false
+    pmdSettingsReceived = false
+    pmdStartCommandIssued = false
+    pmdStartResponseReceived = false
+    pmdLastCommand = ""
+    pmdLastResponse = ""
+    pmdLastErrorCode = -1
     publishStatus(state = "stopped")
   }
 
@@ -291,13 +322,17 @@ class PolarH10HeartRateClient(
                 publishStatus(state = "streaming", detected = true, connected = true, streaming = true)
               }
               PMD_CP -> {
-                pmdCpNotificationsEnabled = true
-                publishStatus(state = "pmd_cp_enabled", detected = true, connected = true)
+                pmdControlPointIndicationsEnabled = true
+                pmdReady = pmdDataNotificationsEnabled
+                publishStatus(state = "pmd_cp_indications_enabled", detected = true, connected = true, pmdReady = pmdReady)
+                if (pmdReady) {
+                  requestPmdEcgSettings()
+                }
               }
               PMD_DATA -> {
                 pmdDataNotificationsEnabled = true
-                pmdReady = pmdCpNotificationsEnabled
-                publishStatus(state = if (pmdReady) "pmd_ready" else "pmd_data_enabled", detected = true, connected = true)
+                pmdReady = pmdControlPointIndicationsEnabled
+                publishStatus(state = if (pmdReady) "pmd_ready" else "pmd_data_notifications_enabled", detected = true, connected = true, pmdReady = pmdReady)
                 if (pmdReady) {
                   requestPmdEcgSettings()
                 }
@@ -349,20 +384,40 @@ class PolarH10HeartRateClient(
       publishStatus(state = "pmd_characteristics_missing", detected = true, connected = true)
       return
     }
-    enqueueNotification(gatt, pmdControlPoint!!, "pmd_control_point")
+    enqueueIndication(gatt, pmdControlPoint!!, "pmd_control_point")
     enqueueNotification(gatt, pmdData!!, "pmd_data")
   }
 
   @SuppressLint("MissingPermission")
   private fun enqueueNotification(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, label: String) {
+    enqueueCccdWrite(gatt, characteristic, label, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE, "notification")
+  }
+
+  @SuppressLint("MissingPermission")
+  private fun enqueueIndication(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, label: String) {
+    enqueueCccdWrite(gatt, characteristic, label, BluetoothGattDescriptor.ENABLE_INDICATION_VALUE, "indication")
+  }
+
+  @SuppressLint("MissingPermission")
+  private fun enqueueCccdWrite(
+      gatt: BluetoothGatt,
+      characteristic: BluetoothGattCharacteristic,
+      label: String,
+      cccdValue: ByteArray,
+      mode: String,
+  ) {
     val cccd = characteristic.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG)
     if (cccd == null) {
       publishStatus(state = "cccd_missing", error = "$label CCCD missing.")
       return
     }
-    gatt.setCharacteristicNotification(characteristic, true)
-    cccd.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-    descriptorQueue.add(DescriptorWriteRequest(cccd, label))
+    val issued = gatt.setCharacteristicNotification(characteristic, true)
+    Log.i(
+        "BigRedButtonStudy",
+        "BRB_POLAR_H10_DESCRIPTOR_SUBSCRIBE label=$label mode=$mode characteristic=${characteristic.uuid} setCharacteristicNotification=$issued",
+    )
+    cccd.value = cccdValue
+    descriptorQueue.add(DescriptorWriteRequest(cccd, label, mode))
   }
 
   @SuppressLint("MissingPermission")
@@ -396,7 +451,8 @@ class PolarH10HeartRateClient(
     }
     heartRateBpm = measurement.heartRateBpm
     rrIntervalCount += measurement.rrIntervalsMs.size
-    val elapsedMs = SystemClock.elapsedRealtime()
+    val elapsedNs = SystemClock.elapsedRealtimeNanos()
+    val elapsedMs = elapsedNs / 1_000_000L
     publishStatus(
         state = "streaming",
         detected = true,
@@ -414,6 +470,7 @@ class PolarH10HeartRateClient(
               deviceName = deviceName,
               deviceAddress = deviceAddress,
               elapsedRealtimeMs = elapsedMs,
+              elapsedRealtimeNs = elapsedNs,
               unixTimeMs = System.currentTimeMillis(),
           )
       )
@@ -434,14 +491,21 @@ class PolarH10HeartRateClient(
         "BRB_POLAR_H10_PMD_CONTROL response=$responseCode command=$command measurementType=$measurementType error=$error bytes=${bytes.toHex()}",
     )
     if (error == PMD_ERROR_INVALID_MTU) {
+      pmdLastResponse = bytes.toHex()
+      pmdLastErrorCode = error
       retryLowLatencyMtu()
       return
     }
     if (error != 0) {
+      pmdLastResponse = bytes.toHex()
+      pmdLastErrorCode = error
       publishStatus(state = "pmd_control_error", error = "PMD command $command measurement $measurementType error $error.")
       return
     }
+    pmdLastResponse = bytes.toHex()
+    pmdLastErrorCode = error
     if (command == PMD_COMMAND_GET_MEASUREMENT_SETTINGS && measurementType == PMD_MEASUREMENT_ECG) {
+      pmdSettingsReceived = true
       parsePmdSettings(bytes)?.let { settings ->
         ecgSampleRateHz = settings.sampleRates.maxOrNull() ?: POLAR_ECG_SAMPLE_RATE_HZ
         if (ecgSampleRateHz <= 0) {
@@ -456,8 +520,10 @@ class PolarH10HeartRateClient(
             "BRB_POLAR_H10_ECG_SETTINGS supportedSampleRates=${settings.sampleRates.joinToString("|")} supportedResolutions=${settings.resolutions.joinToString("|")} selectedSampleRateHz=$ecgSampleRateHz selectedResolutionBits=$ecgResolutionBits strategy=highest_available_pmd_ecg_settings",
         )
       }
+      publishStatus(state = "pmd_settings_received", detected = true, connected = true, pmdReady = true)
       startPmdEcgStream()
     } else if (command == PMD_COMMAND_START_MEASUREMENT && measurementType == PMD_MEASUREMENT_ECG) {
+      pmdStartResponseReceived = true
       ecgStreaming = true
       publishStatus(state = "ecg_streaming", detected = true, connected = true, pmdReady = true, ecgStreaming = true)
     } else if (command == PMD_COMMAND_STOP_MEASUREMENT && measurementType == PMD_MEASUREMENT_ECG) {
@@ -599,12 +665,24 @@ class PolarH10HeartRateClient(
     val characteristic = pmdControlPoint ?: return
     characteristic.value = bytes
     val issued = gatt?.writeCharacteristic(characteristic) == true
+    pmdLastCommand = label
+    if (label == "start_ecg_stream") {
+      pmdStartCommandIssued = issued
+    }
     Log.i(
         "BigRedButtonStudy",
         "BRB_POLAR_H10_PMD_COMMAND label=$label issued=$issued bytes=${bytes.toHex()}",
     )
     if (!issued) {
       publishStatus(state = "pmd_command_failed", error = "Could not issue PMD command $label.")
+    } else {
+      publishStatus(
+          state = "pmd_${label}_requested",
+          detected = true,
+          connected = true,
+          pmdReady = pmdReady,
+          ecgStreaming = ecgStreaming,
+      )
     }
   }
 
@@ -634,6 +712,14 @@ class PolarH10HeartRateClient(
       requestedMtu: Int = this.requestedMtu,
       negotiatedMtu: Int = this.negotiatedMtu,
       connectionPriorityHighRequested: Boolean = this.connectionPriorityHighRequested,
+      pmdControlPointIndicationsEnabled: Boolean = this.pmdControlPointIndicationsEnabled,
+      pmdDataNotificationsEnabled: Boolean = this.pmdDataNotificationsEnabled,
+      pmdSettingsReceived: Boolean = this.pmdSettingsReceived,
+      pmdStartCommandIssued: Boolean = this.pmdStartCommandIssued,
+      pmdStartResponseReceived: Boolean = this.pmdStartResponseReceived,
+      pmdLastCommand: String = this.pmdLastCommand,
+      pmdLastResponse: String = this.pmdLastResponse,
+      pmdLastErrorCode: Int = this.pmdLastErrorCode,
       ecgSampleRateHz: Int = this.ecgSampleRateHz,
       ecgResolutionBits: Int = this.ecgResolutionBits,
       missingPermissions: String = "",
@@ -658,6 +744,14 @@ class PolarH10HeartRateClient(
             requestedMtu = requestedMtu,
             negotiatedMtu = negotiatedMtu,
             connectionPriorityHighRequested = connectionPriorityHighRequested,
+            pmdControlPointIndicationsEnabled = pmdControlPointIndicationsEnabled,
+            pmdDataNotificationsEnabled = pmdDataNotificationsEnabled,
+            pmdSettingsReceived = pmdSettingsReceived,
+            pmdStartCommandIssued = pmdStartCommandIssued,
+            pmdStartResponseReceived = pmdStartResponseReceived,
+            pmdLastCommand = pmdLastCommand,
+            pmdLastResponse = pmdLastResponse,
+            pmdLastErrorCode = pmdLastErrorCode,
             ecgSampleRateHz = ecgSampleRateHz,
             ecgResolutionBits = ecgResolutionBits,
             missingPermissions = missingPermissions,
@@ -665,7 +759,7 @@ class PolarH10HeartRateClient(
         )
     Log.i(
         "BigRedButtonStudy",
-        "BRB_POLAR_H10_STATUS state=${snapshot.state} detected=${snapshot.detected} connected=${snapshot.connected} streaming=${snapshot.streaming} pmdReady=${snapshot.pmdReady} ecgStreaming=${snapshot.ecgStreaming} hr=${snapshot.heartRateBpm} rrCount=${snapshot.rrIntervalCount} ecgSamples=${snapshot.ecgSampleCount} pmdFrames=${snapshot.pmdFrameCount} requestedMtu=${snapshot.requestedMtu} negotiatedMtu=${snapshot.negotiatedMtu} ecgHz=${snapshot.ecgSampleRateHz} missing=${snapshot.missingPermissions} error=${snapshot.error}",
+        "BRB_POLAR_H10_STATUS state=${snapshot.state} detected=${snapshot.detected} connected=${snapshot.connected} streaming=${snapshot.streaming} pmdReady=${snapshot.pmdReady} ecgStreaming=${snapshot.ecgStreaming} hr=${snapshot.heartRateBpm} rrCount=${snapshot.rrIntervalCount} ecgSamples=${snapshot.ecgSampleCount} pmdFrames=${snapshot.pmdFrameCount} requestedMtu=${snapshot.requestedMtu} negotiatedMtu=${snapshot.negotiatedMtu} pmdCpIndications=${snapshot.pmdControlPointIndicationsEnabled} pmdDataNotifications=${snapshot.pmdDataNotificationsEnabled} pmdSettingsReceived=${snapshot.pmdSettingsReceived} pmdStartIssued=${snapshot.pmdStartCommandIssued} pmdStartResponse=${snapshot.pmdStartResponseReceived} pmdLastCommand=${snapshot.pmdLastCommand} pmdLastError=${snapshot.pmdLastErrorCode} ecgHz=${snapshot.ecgSampleRateHz} missing=${snapshot.missingPermissions} error=${snapshot.error}",
     )
     mainHandler.post { listener.onPolarStatus(snapshot) }
   }
@@ -692,6 +786,7 @@ class PolarH10HeartRateClient(
   private data class DescriptorWriteRequest(
       val descriptor: BluetoothGattDescriptor,
       val label: String,
+      val mode: String,
   )
 
   private data class DecodedHeartRate(

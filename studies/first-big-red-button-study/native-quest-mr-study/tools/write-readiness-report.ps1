@@ -306,19 +306,20 @@ $qkvCondition1EcgWindowDuration = Get-ComparisonByName $questKeyeventComparisons
 $qkvCondition2EcgWindowDuration = Get-ComparisonByName $questKeyeventComparisons 'condition 2 ECG audio window duration equals audio'
 $qkvCondition1EcgCaptureNs = Get-ComparisonByName $questKeyeventComparisons 'condition 1 ECG capture ns duration equals audio'
 $qkvCondition2EcgCaptureNs = Get-ComparisonByName $questKeyeventComparisons 'condition 2 ECG capture ns duration equals audio'
-$qkvEcgSourcesComplement = Get-ComparisonByName $questKeyeventComparisons 'ECG sources counterbalanced complement'
-$qkvEcgAssignmentMatchesSources = Get-ComparisonByName $questKeyeventComparisons 'ECG assignment order matches condition sources'
+$qkvFeedbackSourcesComplement = Get-ComparisonByName $questKeyeventComparisons 'feedback sources counterbalanced complement'
+$qkvFeedbackAssignmentMatchesSources = Get-ComparisonByName $questKeyeventComparisons 'feedback assignment order matches condition feedback sources'
 $qkvSimulatedBlinkCount = Get-ComparisonByName $questKeyeventComparisons 'simulated ECG blink count exported'
 $qkvSimulatedBlinkRows = Get-ComparisonByName $questKeyeventComparisons 'simulated ECG blink rows match JSON count'
 $qkvSimulatedBlinkRuntimeMarker = Get-ComparisonByName $questKeyeventComparisons 'simulated ECG blink runtime marker observed'
 $qkvSimulatedHeartbeatFlash = Get-ComparisonByName $questKeyeventComparisons 'simulated heartbeat visual flash observed'
-$qkvSimulatedTimeSeriesCount = Get-ComparisonByName $questKeyeventComparisons 'simulated ECG time-series sample count equals expected'
-$qkvSimulatedTimeSeriesRows = Get-ComparisonByName $questKeyeventComparisons 'simulated ECG time-series CSV rows match JSON count'
+$qkvSimulatedFeedbackExcluded = Get-ComparisonByName $questKeyeventComparisons 'simulated feedback excluded from real ECG time-series'
+$qkvPressElapsedNs = Get-ComparisonByName $questKeyeventComparisons 'press elapsed_ns exported'
+$qkvPressAlignmentColumns = Get-ComparisonByName $questKeyeventComparisons 'press alignment columns exported'
 $qkvKeyboardRequest = Get-ComparisonByName $questKeyeventComparisons 'native keyboard request observed'
 $qkvKeyboardNameTextMode = Get-ComparisonByName $questKeyeventComparisons 'native keyboard name text mode observed'
-$qkvKeyboardAgeNumericMode = Get-ComparisonByName $questKeyeventComparisons 'native keyboard age numeric mode observed'
+$qkvAgeNumberKeyboard = Get-ComparisonByName $questKeyeventComparisons 'native keyboard age number mode observed'
 $qkvNativeKeyboardMovablePanel = Get-ComparisonByName $questKeyeventComparisons 'native keyboard movable panel contract observed'
-$qkvNativeKeyboardTargetSwitch = Get-ComparisonByName $questKeyeventComparisons 'native keyboard text-to-number retarget observed'
+$qkvAgeNumericImeTarget = Get-ComparisonByName $questKeyeventComparisons 'age is numeric IME target'
 $qkvStartupKeyboardTextMode = Get-ComparisonByName $questKeyeventComparisons 'startup native keyboard request uses text mode'
 $qkvPanelExitKeyboardHide1 = Get-ComparisonByName $questKeyeventComparisons 'panel-exit keyboard hide before condition 1 observed'
 $qkvPanelExitKeyboardHide2 = Get-ComparisonByName $questKeyeventComparisons 'panel-exit keyboard hide before condition 2 observed'
@@ -359,36 +360,38 @@ $questKeyeventEcgAudioWindowMatched =
     (Get-JsonPropertyValue $qkvCondition1EcgSampleRate 'observed') -eq 130 -and
     (Get-JsonPropertyValue $qkvCondition2EcgSampleRate 'observed') -eq 130
 $questKeyeventEcgBlinkMatched =
-    $null -ne $qkvEcgSourcesComplement -and
-    $null -ne $qkvEcgAssignmentMatchesSources -and
+    $null -ne $qkvFeedbackSourcesComplement -and
+    $null -ne $qkvFeedbackAssignmentMatchesSources -and
     $null -ne $qkvSimulatedBlinkCount -and
     $null -ne $qkvSimulatedBlinkRows -and
     $null -ne $qkvSimulatedBlinkRuntimeMarker -and
     $null -ne $qkvSimulatedHeartbeatFlash -and
-    $null -ne $qkvSimulatedTimeSeriesCount -and
-    $null -ne $qkvSimulatedTimeSeriesRows -and
-    (Get-JsonPropertyValue $qkvEcgSourcesComplement 'pass') -eq $true -and
-    (Get-JsonPropertyValue $qkvEcgAssignmentMatchesSources 'pass') -eq $true -and
+    $null -ne $qkvSimulatedFeedbackExcluded -and
+    $null -ne $qkvPressElapsedNs -and
+    $null -ne $qkvPressAlignmentColumns -and
+    (Get-JsonPropertyValue $qkvFeedbackSourcesComplement 'pass') -eq $true -and
+    (Get-JsonPropertyValue $qkvFeedbackAssignmentMatchesSources 'pass') -eq $true -and
     (Get-JsonPropertyValue $qkvSimulatedBlinkCount 'pass') -eq $true -and
     (Get-JsonPropertyValue $qkvSimulatedBlinkRows 'pass') -eq $true -and
     (Get-JsonPropertyValue $qkvSimulatedBlinkRuntimeMarker 'pass') -eq $true -and
     (Get-JsonPropertyValue $qkvSimulatedHeartbeatFlash 'pass') -eq $true -and
-    (Get-JsonPropertyValue $qkvSimulatedTimeSeriesCount 'pass') -eq $true -and
-    (Get-JsonPropertyValue $qkvSimulatedTimeSeriesRows 'pass') -eq $true
+    (Get-JsonPropertyValue $qkvSimulatedFeedbackExcluded 'pass') -eq $true -and
+    (Get-JsonPropertyValue $qkvPressElapsedNs 'pass') -eq $true -and
+    (Get-JsonPropertyValue $qkvPressAlignmentColumns 'pass') -eq $true
 $questKeyeventKeyboardLifecycleMatched =
     $null -ne $qkvKeyboardRequest -and
     $null -ne $qkvKeyboardNameTextMode -and
-    $null -ne $qkvKeyboardAgeNumericMode -and
+    $null -ne $qkvAgeNumberKeyboard -and
     $null -ne $qkvNativeKeyboardMovablePanel -and
-    $null -ne $qkvNativeKeyboardTargetSwitch -and
+    $null -ne $qkvAgeNumericImeTarget -and
     $null -ne $qkvStartupKeyboardTextMode -and
     $null -ne $qkvPanelExitKeyboardHide1 -and
     $null -ne $qkvPanelExitKeyboardHide2 -and
     (Get-JsonPropertyValue $qkvKeyboardRequest 'pass') -eq $true -and
     (Get-JsonPropertyValue $qkvKeyboardNameTextMode 'pass') -eq $true -and
-    (Get-JsonPropertyValue $qkvKeyboardAgeNumericMode 'pass') -eq $true -and
+    (Get-JsonPropertyValue $qkvAgeNumberKeyboard 'pass') -eq $true -and
     (Get-JsonPropertyValue $qkvNativeKeyboardMovablePanel 'pass') -eq $true -and
-    (Get-JsonPropertyValue $qkvNativeKeyboardTargetSwitch 'pass') -eq $true -and
+    (Get-JsonPropertyValue $qkvAgeNumericImeTarget 'pass') -eq $true -and
     (Get-JsonPropertyValue $qkvStartupKeyboardTextMode 'pass') -eq $true -and
     (Get-JsonPropertyValue $qkvPanelExitKeyboardHide1 'pass') -eq $true -and
     (Get-JsonPropertyValue $qkvPanelExitKeyboardHide2 'pass') -eq $true
@@ -468,6 +471,17 @@ $physicalPressValidationApkSha256 =
 $physicalPressValidationHashMatches =
     (-not [string]::IsNullOrWhiteSpace($physicalPressValidationApkSha256)) -and
     $physicalPressValidationApkSha256 -eq $apkHash
+$physicalPressConditionEvidence = @()
+if ($null -ne $physicalPressValidation) {
+    $physicalPressConditionEvidence = @(Get-JsonPropertyValue $physicalPressValidation 'conditionRealPolarEvidence')
+}
+$physicalPressBothConditionsHavePhysiology =
+    $physicalPressConditionEvidence.Count -eq 2 -and
+    @($physicalPressConditionEvidence | Where-Object {
+        (Get-JsonPropertyValue $_ 'sampleCount') -gt 0 -and
+        (Get-JsonPropertyValue $_ 'polarRrEventCount') -gt 0 -and
+        (Get-JsonPropertyValue $_ 'physiologySource') -eq 'real_polar_h10'
+    }).Count -eq 2
 $physicalPressValidationPass =
     $null -ne $physicalPressValidation -and
     $physicalPressValidation.status -eq 'pass' -and
@@ -476,6 +490,7 @@ $physicalPressValidationPass =
     $physicalPressValidation.condition2ControllerPresses -ge 1 -and
     $physicalPressValidation.realPolarSampleCount -gt 0 -and
     $physicalPressValidation.realPolarBlinkCount -gt 0 -and
+    $physicalPressBothConditionsHavePhysiology -and
     (Get-JsonPropertyValue $physicalPressValidation 'exportMirrorMatched') -eq $true
 $finalHardwareGateApkSha256 = $null
 if ($null -ne $finalHardwareGate) {
@@ -614,22 +629,24 @@ $report = [pscustomobject]@{
             condition2ExpectedCaptureDurationNs = Get-JsonPropertyValue $qkvCondition2EcgCaptureNs 'expected'
         }
         questKeyeventEcgBlinkDriver = [pscustomobject]@{
-            sourcesComplement = Get-JsonPropertyValue $qkvEcgSourcesComplement 'pass'
-            assignmentMatchesSources = Get-JsonPropertyValue $qkvEcgAssignmentMatchesSources 'pass'
+            feedbackSourcesComplement = Get-JsonPropertyValue $qkvFeedbackSourcesComplement 'pass'
+            feedbackAssignmentMatchesSources = Get-JsonPropertyValue $qkvFeedbackAssignmentMatchesSources 'pass'
             simulatedBlinkCount = Get-JsonPropertyValue $qkvSimulatedBlinkCount 'observed'
             simulatedBlinkCountExpected = Get-JsonPropertyValue $qkvSimulatedBlinkCount 'expected'
             simulatedBlinkRows = Get-JsonPropertyValue $qkvSimulatedBlinkRows 'observed'
             simulatedHeartbeatFlashObserved = Get-JsonPropertyValue $qkvSimulatedHeartbeatFlash 'pass'
             simulatedRuntimeBlinkObserved = Get-JsonPropertyValue $qkvSimulatedBlinkRuntimeMarker 'pass'
-            simulatedTimeSeriesRows = Get-JsonPropertyValue $qkvSimulatedTimeSeriesRows 'observed'
-            simulatedTimeSeriesExpectedRows = Get-JsonPropertyValue $qkvSimulatedTimeSeriesRows 'expected'
+            simulatedFeedbackExcludedFromRealEcg = Get-JsonPropertyValue $qkvSimulatedFeedbackExcluded 'pass'
+            pressElapsedNsRows = Get-JsonPropertyValue $qkvPressElapsedNs 'observed'
+            pressElapsedNsExpectedRows = Get-JsonPropertyValue $qkvPressElapsedNs 'expected'
+            pressAlignmentColumnsExported = Get-JsonPropertyValue $qkvPressAlignmentColumns 'pass'
         }
         questKeyeventKeyboardLifecycle = [pscustomobject]@{
             keyboardRequestObserved = Get-JsonPropertyValue $qkvKeyboardRequest 'pass'
             nameTextKeyboardModeObserved = Get-JsonPropertyValue $qkvKeyboardNameTextMode 'pass'
-            ageNumericKeyboardModeObserved = Get-JsonPropertyValue $qkvKeyboardAgeNumericMode 'pass'
+            ageNumberKeyboardModeObserved = Get-JsonPropertyValue $qkvAgeNumberKeyboard 'pass'
             nativeKeyboardMovablePanelObserved = Get-JsonPropertyValue $qkvNativeKeyboardMovablePanel 'pass'
-            nativeKeyboardTextToNumberRetargetObserved = Get-JsonPropertyValue $qkvNativeKeyboardTargetSwitch 'pass'
+            ageNumericImeTargetObserved = Get-JsonPropertyValue $qkvAgeNumericImeTarget 'pass'
             startupTextKeyboardModeObserved = Get-JsonPropertyValue $qkvStartupKeyboardTextMode 'pass'
             beforeCondition1KeyboardHideObserved = Get-JsonPropertyValue $qkvPanelExitKeyboardHide1 'pass'
             beforeCondition2KeyboardHideObserved = Get-JsonPropertyValue $qkvPanelExitKeyboardHide2 'pass'
@@ -708,8 +725,8 @@ $lines = @(
     "- Quest ExperimentResults export pulled: $questKeyeventExperimentResultsPulled json=$($report.evidence.questKeyeventExportJson)",
     "- Quest export mirror byte match: $questKeyeventExportMirrorMatched comparison=$questKeyeventExportMirrorComparison",
     "- Quest ECG audio-window match: $questKeyeventEcgAudioWindowMatched condition1=$($report.evidence.questKeyeventEcgAudioWindow.condition1DurationMs)ms/$($report.evidence.questKeyeventEcgAudioWindow.condition1ExpectedDurationMs)ms window=$($report.evidence.questKeyeventEcgAudioWindow.condition1WindowStartMs)..$($report.evidence.questKeyeventEcgAudioWindow.condition1WindowEndMs)ms ns=$($report.evidence.questKeyeventEcgAudioWindow.condition1CaptureDurationNs)/$($report.evidence.questKeyeventEcgAudioWindow.condition1ExpectedCaptureDurationNs) condition2=$($report.evidence.questKeyeventEcgAudioWindow.condition2DurationMs)ms/$($report.evidence.questKeyeventEcgAudioWindow.condition2ExpectedDurationMs)ms window=$($report.evidence.questKeyeventEcgAudioWindow.condition2WindowStartMs)..$($report.evidence.questKeyeventEcgAudioWindow.condition2WindowEndMs)ms ns=$($report.evidence.questKeyeventEcgAudioWindow.condition2CaptureDurationNs)/$($report.evidence.questKeyeventEcgAudioWindow.condition2ExpectedCaptureDurationNs) sampleRateHz=$($report.evidence.questKeyeventEcgAudioWindow.condition1SampleRateHz),$($report.evidence.questKeyeventEcgAudioWindow.condition2SampleRateHz)",
-    "- Quest simulated ECG blink/runtime flash match: $questKeyeventEcgBlinkMatched sourcesComplement=$($report.evidence.questKeyeventEcgBlinkDriver.sourcesComplement) assignmentMatches=$($report.evidence.questKeyeventEcgBlinkDriver.assignmentMatchesSources) blinkRows=$($report.evidence.questKeyeventEcgBlinkDriver.simulatedBlinkRows) heartbeatFlash=$($report.evidence.questKeyeventEcgBlinkDriver.simulatedHeartbeatFlashObserved) timeSeriesRows=$($report.evidence.questKeyeventEcgBlinkDriver.simulatedTimeSeriesRows)/$($report.evidence.questKeyeventEcgBlinkDriver.simulatedTimeSeriesExpectedRows)",
-    "- Quest keyboard lifecycle match: $questKeyeventKeyboardLifecycleMatched request=$($report.evidence.questKeyeventKeyboardLifecycle.keyboardRequestObserved) nameText=$($report.evidence.questKeyeventKeyboardLifecycle.nameTextKeyboardModeObserved) ageNumeric=$($report.evidence.questKeyeventKeyboardLifecycle.ageNumericKeyboardModeObserved) nativeMovablePanel=$($report.evidence.questKeyeventKeyboardLifecycle.nativeKeyboardMovablePanelObserved) textToNumberRetarget=$($report.evidence.questKeyeventKeyboardLifecycle.nativeKeyboardTextToNumberRetargetObserved) startupText=$($report.evidence.questKeyeventKeyboardLifecycle.startupTextKeyboardModeObserved) beforeC1=$($report.evidence.questKeyeventKeyboardLifecycle.beforeCondition1KeyboardHideObserved) beforeC2=$($report.evidence.questKeyeventKeyboardLifecycle.beforeCondition2KeyboardHideObserved)",
+    "- Quest feedback counterbalance/sham blink match: $questKeyeventEcgBlinkMatched feedbackComplement=$($report.evidence.questKeyeventEcgBlinkDriver.feedbackSourcesComplement) assignmentMatches=$($report.evidence.questKeyeventEcgBlinkDriver.feedbackAssignmentMatchesSources) blinkRows=$($report.evidence.questKeyeventEcgBlinkDriver.simulatedBlinkRows) heartbeatFlash=$($report.evidence.questKeyeventEcgBlinkDriver.simulatedHeartbeatFlashObserved) simulatedExcludedFromRealEcg=$($report.evidence.questKeyeventEcgBlinkDriver.simulatedFeedbackExcludedFromRealEcg) pressElapsedNs=$($report.evidence.questKeyeventEcgBlinkDriver.pressElapsedNsRows)/$($report.evidence.questKeyeventEcgBlinkDriver.pressElapsedNsExpectedRows) alignmentColumns=$($report.evidence.questKeyeventEcgBlinkDriver.pressAlignmentColumnsExported)",
+    "- Quest keyboard EditText lifecycle match: $questKeyeventKeyboardLifecycleMatched request=$($report.evidence.questKeyeventKeyboardLifecycle.keyboardRequestObserved) nameText=$($report.evidence.questKeyeventKeyboardLifecycle.nameTextKeyboardModeObserved) ageNumber=$($report.evidence.questKeyeventKeyboardLifecycle.ageNumberKeyboardModeObserved) nativeMovablePanel=$($report.evidence.questKeyeventKeyboardLifecycle.nativeKeyboardMovablePanelObserved) ageNumericIme=$($report.evidence.questKeyeventKeyboardLifecycle.ageNumericImeTargetObserved) startupText=$($report.evidence.questKeyeventKeyboardLifecycle.startupTextKeyboardModeObserved) beforeC1=$($report.evidence.questKeyeventKeyboardLifecycle.beforeCondition1KeyboardHideObserved) beforeC2=$($report.evidence.questKeyeventKeyboardLifecycle.beforeCondition2KeyboardHideObserved)",
     "- Quest redness conversion match: $questKeyeventRednessMatched c1Vas=$($report.evidence.questKeyeventRednessConversion.condition1Vas) c1Likert=$($report.evidence.questKeyeventRednessConversion.condition1Likert) c1Order=$($report.evidence.questKeyeventRednessConversion.condition1Order) c2Vas=$($report.evidence.questKeyeventRednessConversion.condition2Vas) c2Likert=$($report.evidence.questKeyeventRednessConversion.condition2Likert) c2Order=$($report.evidence.questKeyeventRednessConversion.condition2Order)",
     "- Quest Enter-submit replay match: $questKeyeventEnterSubmitMatched enterReplay=$($report.evidence.questKeyeventEnterSubmitReplay.enterSubmitReplayObserved) submitReplay=$($report.evidence.questKeyeventEnterSubmitReplay.controllerSubmitReplayObserved)",
     "- Quest visual layout: facingParticipant=$($questSmokeSuite.visualLayout.facingParticipant), downwardAngleDeg=$($questSmokeSuite.visualLayout.downwardAngleDeg), angularDiameterDeg=$($questSmokeSuite.visualLayout.angularDiameterDeg)",

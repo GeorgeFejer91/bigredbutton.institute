@@ -69,7 +69,7 @@ Observed state:
 Observed state:
 
 - Local previews show the digital button counter, PMD-aware Polar H10 ECG-ready strip, expanded signature pad, and no obvious overlapping controls or clipped text.
-- The native keyboard preview documents the central questionnaire plus OS-managed movable Quest keyboard behavior: Name uses text mode, Age uses number mode, and text-to-number retargeting is expected on field focus changes.
+- The native keyboard preview documents the central questionnaire plus OS-managed movable Quest keyboard behavior for Name and Age, with Name text/Next and Age number/Done contracts.
 - Session Experience rating rows display the actual 14 adapted items across two preview pages with 0-6 response controls.
 - The Button Experience preview shows calibrated closeness/presence axes and the third redness response scale.
 - The Additional Time 0-100 VAS is visible, centered, and uses the requested twice-as-much-time wording.

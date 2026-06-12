@@ -310,7 +310,7 @@ function Write-PhysicalValidationSummary {
 
 Write-Host "Quest physical press validation target: serial=$Serial model=$model android=$android"
 Write-Host "Operator requirement: press the modeled Big Red Button with a Quest controller at least $MinCondition1ControllerPresses time(s) in condition 1 and $MinCondition2ControllerPresses time(s) in condition 2."
-Write-Host "Physiology requirement: wear an awake Polar H10 so the app exports real 130 Hz PMD ECG time-series rows and RR blink rows for the real_polar_h10 condition."
+Write-Host "Physiology requirement: wear an awake Polar H10 so the app exports real 130 Hz PMD ECG/RR rows throughout both audio conditions; only the glow feedback source is counterbalanced."
 if (-not $SkipPolarPrecheck) {
     Write-Host "Live Polar precheck: enabled. The script will verify PMD ECG streaming before starting the full audio run."
 } else {
