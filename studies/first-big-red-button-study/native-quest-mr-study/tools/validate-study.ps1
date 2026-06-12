@@ -866,6 +866,12 @@ if (Test-Path $activity) {
         -not $activityText.Contains('AlphaMode.TRANSLUCENT') -and
         -not $activityText.Contains('SpatialBlendMode.ADDITIVE')
     ) 'heartbeat flash follows the MesmerPrism Unity material-tint/emission approach by swapping GLB material variants with brighter/emissive cap materials plus small native lights, with no transparent halo/canopy geometry'
+    Add-Check 'heartbeat glow does not animate button geometry' (
+        $activityText.Contains('BUTTON_PRESS_MOTION_GLOW_SUPPRESSION_MS') -and
+        $activityText.Contains('target=idle_model') -and
+        $activityText.Contains('heartbeatGlowMotion=false') -and
+        -not $activityText.Contains('buttonGlowModelEntities.forEach { entity -> playButtonPressedAnimation(entity) }')
+    ) 'ECG/RR heartbeat feedback may change glow/material/light intensity, but button model motion is reserved for accepted button presses'
     Add-Check 'dual hand and controller contact route' (
         $activityText.Contains('PRESS_SOURCE_HAND_CONTACT = "hand_contact"') -and
         $activityText.Contains('getHandForPointerEvent') -and
