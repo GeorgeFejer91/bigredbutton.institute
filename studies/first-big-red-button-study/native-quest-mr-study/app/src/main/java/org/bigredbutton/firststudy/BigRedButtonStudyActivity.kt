@@ -727,7 +727,6 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   private var simulatedRrIndex = 0
   private var simulatedEcgToken = 0
   private var heartbeatFlashToken = 0
-  private var buttonPressGlowSuppressedUntilRealtimeMs = 0L
   private var buttonEntity: Entity? = null
   private var buttonModelEntity: Entity? = null
   private var buttonContactEntity: Entity? = null
@@ -5942,13 +5941,10 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   }
 
   private fun playButtonPressedAnimation() {
-    buttonPressGlowSuppressedUntilRealtimeMs =
-        SystemClock.elapsedRealtime() + BUTTON_PRESS_MOTION_GLOW_SUPPRESSION_MS
-    setButtonGlowPulse(0f)
     playButtonPressedAnimation(buttonModelEntity)
     Log.i(
         TAG,
-        "BRB_BUTTON_MODEL_ANIMATION name=$BUTTON_MODEL_PRESS_ANIMATION target=idle_model playback=clamp motionProfile=native_pressed_clip heartbeatGlowMotion=false heartbeatGlowSuppressionMs=$BUTTON_PRESS_MOTION_GLOW_SUPPRESSION_MS futureSfxAlignment=button_press_noise_profile",
+        "BRB_BUTTON_MODEL_ANIMATION name=$BUTTON_MODEL_PRESS_ANIMATION target=idle_model playback=clamp motionProfile=native_pressed_clip heartbeatGlowMotion=false futureSfxAlignment=button_press_noise_profile",
     )
   }
 
@@ -5967,17 +5963,9 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
 
   private fun setButtonGlowPulse(intensity01: Float) {
     val intensity = intensity01.coerceIn(0f, 1f)
-    val renderedIntensity =
-        if (SystemClock.elapsedRealtime() < buttonPressGlowSuppressedUntilRealtimeMs) {
-          0f
-        } else {
-          intensity
-        }
-    buttonHeartbeatPulseIntensityState.floatValue = renderedIntensity
-    applyButtonGlowModelVisibility(renderedIntensity)
-    updateButtonGlowMaterialLights(
-        if (buttonStimulusVisible && stageState.value == StudyStage.ConditionRunning) renderedIntensity else 0f
-    )
+    buttonHeartbeatPulseIntensityState.floatValue = intensity
+    applyButtonGlowModelVisibility(intensity)
+    updateButtonGlowMaterialLights(if (buttonStimulusVisible && stageState.value == StudyStage.ConditionRunning) intensity else 0f)
   }
 
   private fun applyButtonGlowModelVisibility(intensity01: Float) {
@@ -6396,7 +6384,6 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     private const val NATIVE_BUTTON_GLOW_PEAK_EMISSION_BLUE = 0.026f
     private const val STARTUP_CONTACT_SUPPRESSION_MS = 350L
     private const val BUTTON_PRESS_COOLDOWN_MS = 180L
-    private const val BUTTON_PRESS_MOTION_GLOW_SUPPRESSION_MS = 360L
     private const val PRESS_SOURCE_CONTROLLER_CONTACT = "controller_contact"
     private const val PRESS_SOURCE_HAND_CONTACT = "hand_contact"
     private const val PRESS_SOURCE_TRANSPARENT_PANEL_INTERIM = "transparent_panel_interim"
