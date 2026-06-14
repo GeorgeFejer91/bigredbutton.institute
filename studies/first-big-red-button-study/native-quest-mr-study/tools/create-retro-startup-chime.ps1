@@ -7,8 +7,9 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$studyRoot = (Resolve-Path (Join-Path $projectRoot '..')).Path
 if ([string]::IsNullOrWhiteSpace($OutPath)) {
-    $OutPath = Join-Path $projectRoot 'app\src\main\res\raw\retro_startup_chime.wav'
+    $OutPath = Join-Path $studyRoot 'audio-assets\localized\shared\inactive\raw_9990_retro_startup_chime.wav'
 }
 $outDir = Split-Path -Parent $OutPath
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null

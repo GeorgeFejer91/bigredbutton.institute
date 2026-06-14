@@ -76,10 +76,10 @@ Add-Requirement $requirements 'standalone_apk' 'Standalone native Quest APK buil
     (Get-PropertyValue $evidence 'localPreflight') `
     'Run tools/build-apk.ps1 and tools/run-local-preflight.ps1 on the current APK.'
 
-Add-Requirement $requirements 'native_keyboard_questionnaire_input' 'Demographics native Quest/system keyboard text and numeric modes retarget correctly, and panel exits hide the keyboard.' `
+Add-Requirement $requirements 'native_keyboard_questionnaire_input' 'Demographics app-owned Name keyboard, direct keyevent fallback, Age slider input, and panel exit behavior are validated on the current APK.' `
     ([bool](Get-PropertyValue $checks 'nativeKeyboardContractPass') -and [bool](Get-PropertyValue $checks 'questKeyeventKeyboardLifecycleMatched')) `
     ((Get-PropertyValue $evidence 'nativeKeyboardValidation') + '; ' + (Get-PropertyValue $evidence 'questKeyeventQuestionnaireValidation')) `
-    'Run tools/test-native-keyboard-contract.ps1 and tools/run-quest-keyevent-questionnaire-validation.ps1.'
+    'Run tools/test-native-keyboard-contract.ps1, tools/run-quest-demographics-direct-keyboard-validation.ps1, and tools/run-quest-keyevent-questionnaire-validation.ps1.'
 
 Add-Requirement $requirements 'quest_visual_passthrough_button' 'Quest headset visual gate proves the modeled button is in passthrough, centered, reachable, and facing the participant.' `
     ([bool](Get-PropertyValue $checks 'questSmokeSuitePass') -and [bool](Get-PropertyValue $checks 'questVisualLayoutPass')) `

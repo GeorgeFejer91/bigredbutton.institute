@@ -5,18 +5,9 @@ plugins {
   alias(libs.plugins.jetbrains.kotlin.plugin.compose)
 }
 
-val stagedStudyAudioAssets = layout.buildDirectory.dir("generated/study-audio-assets")
 val stagedLocalizedAudioAssets = layout.buildDirectory.dir("generated/localized-audio-assets")
-val stageStudyAudioAssets =
-    tasks.register<Copy>("stageStudyAudioAssets") {
-      from(layout.projectDirectory.dir("../../audio-assets/final")) {
-        include("first-big-red-button-vr-study-instructions-final.mp3")
-        include("first-big-red-button-vr-study-instructions-second-instructions-5-final.mp3")
-      }
-      into(stagedStudyAudioAssets)
-    }
 val stageLocalizedAudioAssets =
-    tasks.register<Copy>("stageLocalizedAudioAssets") {
+    tasks.register<Sync>("stageLocalizedAudioAssets") {
       from(layout.projectDirectory.dir("../../audio-assets/localized")) {
         include("manifest.json")
         include("en_us/**")
@@ -64,7 +55,6 @@ android {
 
   sourceSets {
     getByName("main") {
-      assets.srcDir(stagedStudyAudioAssets)
       assets.srcDir(stagedLocalizedAudioAssets)
     }
   }
@@ -111,6 +101,5 @@ spatial {
 }
 
 tasks.named("preBuild") {
-  dependsOn(stageStudyAudioAssets)
   dependsOn(stageLocalizedAudioAssets)
 }

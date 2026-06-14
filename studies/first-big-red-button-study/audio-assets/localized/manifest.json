@@ -18,7 +18,8 @@
                                     "Use expressive eleven_v3 speech for all Japanese spoken clips.",
                                     "Preserve absurdist humor for spoken dialogue transcripts.",
                                     "Prefer validated Japanese questionnaire wording where available; do not apply humor-localization rules to psychometric items.",
-                                    "Do not commit or print API keys."
+                                    "Do not commit or print API keys.",
+                                    "Pepper experimenter narration with science-nerd sarcasm and strategic punctuation, while avoiding questionnaire factor spoilers."
                                 ]
                   },
     "stems":  {
@@ -32,19 +33,69 @@
               },
     "shared":  [
                    {
+                       "audioId":  "raw_0400",
+                       "category":  "questionnaire_transition",
+                       "role":  "questionnaire_intro_glitch",
+                       "path":  "shared/questionnaire_transition/raw_0400_questionnaire_intro_glitch.mp3",
+                       "sha256":  "3B78AE610233BBCA731BE13E50E33F5C50D697E0A7170522C38E87923347F087",
+                       "durationMs":  4944,
+                       "participantFacing":  true,
+                       "activeRuntime":  true,
+                       "translationPolicy":  "do_not_translate_non_speech"
+                   },
+                   {
+                       "audioId":  "raw_0410",
+                       "category":  "questionnaire_transition",
+                       "role":  "questionnaire_outro_glitch",
+                       "path":  "shared/questionnaire_transition/raw_0410_questionnaire_outro_glitch.mp3",
+                       "sha256":  "B57A15DA2E1CC9D93A8D915696663E8BABE293FD53A0E8FDD8604D51A931292F",
+                       "durationMs":  3312,
+                       "participantFacing":  true,
+                       "activeRuntime":  true,
+                       "translationPolicy":  "do_not_translate_non_speech"
+                   },
+                   {
                        "audioId":  "sfx_9000",
+                       "category":  "questionnaire_ui",
                        "role":  "questionnaire_choice_blip",
-                       "path":  "shared/sfx_9000_questionnaire_choice_blip.wav",
+                       "path":  "shared/questionnaire_ui/sfx_9000_questionnaire_choice_blip.wav",
                        "sha256":  "5005D0A634AAC456D3D495824C057ED14CF58D21EFC16C06772B48520436F8A4",
                        "durationMs":  90,
+                       "participantFacing":  true,
+                       "activeRuntime":  true,
                        "translationPolicy":  "do_not_translate_non_speech"
                    },
                    {
                        "audioId":  "sfx_9010",
+                       "category":  "questionnaire_ui",
                        "role":  "questionnaire_navigation_blip",
-                       "path":  "shared/sfx_9010_questionnaire_navigation_blip.wav",
+                       "path":  "shared/questionnaire_ui/sfx_9010_questionnaire_navigation_blip.wav",
                        "sha256":  "DEF7603B0786070F01F0EFEACEA74F321F946EF217F0E11EA45B34990BF46F51",
                        "durationMs":  70,
+                       "participantFacing":  true,
+                       "activeRuntime":  true,
+                       "translationPolicy":  "do_not_translate_non_speech"
+                   },
+                   {
+                       "audioId":  "sfx_9020",
+                       "category":  "button_press",
+                       "role":  "button_press_placeholder",
+                       "path":  "shared/button_press/sfx_9020_button_press_placeholder_kenney_bong.ogg",
+                       "sha256":  "D21D0F0B782445DB579D11E2506B24CD1AC9D664EE33AEAF807761AA7B6FD710",
+                       "durationMs":  123,
+                       "participantFacing":  true,
+                       "activeRuntime":  true,
+                       "translationPolicy":  "do_not_translate_non_speech"
+                   },
+                   {
+                       "audioId":  "raw_9990",
+                       "category":  "inactive",
+                       "role":  "retro_startup_chime_reserved",
+                       "path":  "shared/inactive/raw_9990_retro_startup_chime.wav",
+                       "sha256":  "770221EB67F5D02F208DB8BABF2E068E07ADB8E9C0F4D46C85CAA49F2979F7A5",
+                       "durationMs":  1580,
+                       "participantFacing":  false,
+                       "activeRuntime":  false,
                        "translationPolicy":  "do_not_translate_non_speech"
                    }
                ],
@@ -80,7 +131,7 @@
                                                      "status":  "mixed",
                                                      "sha256":  "F88791E5805D317C8455F77E1E6FCC6094CDE3F24D0B6111F3239E9CE4EF8F95",
                                                      "observedDurationMs":  300774,
-                                                     "generatedAt":  "2026-06-12T16:43:09.5168470+02:00",
+                                                     "generatedAt":  "2026-06-13T20:38:48.3116179+02:00",
                                                      "mixTimingPolicy":  "pause_removal_then_subsecond_pad_trim",
                                                      "backgroundStemId":  "backgroundMusic"
                                                  }
@@ -117,7 +168,7 @@
                                                      "status":  "mixed",
                                                      "sha256":  "2F882ACA39BB6355C0A37E172B15F56F21ECF4A758C47117C5EA4A80E27B2C6C",
                                                      "observedDurationMs":  325590,
-                                                     "generatedAt":  "2026-06-12T16:43:09.5168470+02:00",
+                                                     "generatedAt":  "2026-06-13T20:38:48.3116179+02:00",
                                                      "mixTimingPolicy":  "pause_removal_then_subsecond_pad_trim",
                                                      "backgroundStemId":  "backgroundMusic"
                                                  }
@@ -151,7 +202,7 @@
                                                      "transcriptPath":  "transcripts/ja_jp/aud_0200_prior_experience_question__ja_jp.json",
                                                      "backTranslationPath":  "transcripts/ja_jp/aud_0200_prior_experience_question__ja_jp.backtranslation.txt",
                                                      "observedDurationMs":  10449,
-                                                     "generatedAt":  "2026-06-12T16:43:09.5168470+02:00"
+                                                     "generatedAt":  "2026-06-13T20:38:48.3116179+02:00"
                                                  }
                                    }
                    },
@@ -183,7 +234,7 @@
                                                      "transcriptPath":  "transcripts/ja_jp/aud_0210_prior_experience_yes_feedback__ja_jp.json",
                                                      "backTranslationPath":  "transcripts/ja_jp/aud_0210_prior_experience_yes_feedback__ja_jp.backtranslation.txt",
                                                      "observedDurationMs":  8281,
-                                                     "generatedAt":  "2026-06-12T16:43:09.5168470+02:00"
+                                                     "generatedAt":  "2026-06-13T20:38:48.3116179+02:00"
                                                  }
                                    }
                    },
@@ -215,7 +266,7 @@
                                                      "transcriptPath":  "transcripts/ja_jp/aud_0220_prior_experience_no_feedback__ja_jp.json",
                                                      "backTranslationPath":  "transcripts/ja_jp/aud_0220_prior_experience_no_feedback__ja_jp.backtranslation.txt",
                                                      "observedDurationMs":  5146,
-                                                     "generatedAt":  "2026-06-12T16:43:09.5168470+02:00"
+                                                     "generatedAt":  "2026-06-13T20:38:48.3116179+02:00"
                                                  }
                                    }
                    },
@@ -247,7 +298,7 @@
                                                      "transcriptPath":  "transcripts/ja_jp/aud_0230_pre_start_instructions__ja_jp.json",
                                                      "backTranslationPath":  "transcripts/ja_jp/aud_0230_pre_start_instructions__ja_jp.backtranslation.txt",
                                                      "observedDurationMs":  47804,
-                                                     "generatedAt":  "2026-06-12T16:43:09.5168470+02:00"
+                                                     "generatedAt":  "2026-06-13T20:38:48.3116179+02:00"
                                                  }
                                    }
                    },
@@ -279,7 +330,7 @@
                                                      "transcriptPath":  "transcripts/ja_jp/aud_0300_redness_vas_to_likert_changeover__ja_jp.json",
                                                      "backTranslationPath":  "transcripts/ja_jp/aud_0300_redness_vas_to_likert_changeover__ja_jp.backtranslation.txt",
                                                      "observedDurationMs":  23327,
-                                                     "generatedAt":  "2026-06-12T16:43:09.5168470+02:00"
+                                                     "generatedAt":  "2026-06-13T20:38:48.3116179+02:00"
                                                  }
                                    }
                    },
@@ -311,7 +362,95 @@
                                                      "transcriptPath":  "transcripts/ja_jp/aud_0310_redness_likert_to_vas_changeover__ja_jp.json",
                                                      "backTranslationPath":  "transcripts/ja_jp/aud_0310_redness_likert_to_vas_changeover__ja_jp.backtranslation.txt",
                                                      "observedDurationMs":  27559,
-                                                     "generatedAt":  "2026-06-12T16:43:09.5168470+02:00"
+                                                     "generatedAt":  "2026-06-13T20:38:48.3116179+02:00"
+                                                 }
+                                   }
+                   },
+                   {
+                       "audioId":  "aud_0320",
+                       "stage":  "presence_questionnaire",
+                       "role":  "ipq_history_condition_1_intro",
+                       "participantFacing":  true,
+                       "translationPolicy":  "science_nerd_sarcasm_no_psychometric_spoilers",
+                       "durationMatchRequired":  false,
+                       "targetDurationMs":  48718,
+                       "runtimeCue":  "playIpqHistoryNarration(condition=1)",
+                       "tailSilenceMs":  1000,
+                       "locales":  {
+                                       "en-US":  {
+                                                     "path":  "en_us/aud_0320_ipq_history_part1__en_us.mp3",
+                                                     "scriptPath":  "transcripts/en_us/aud_0320_ipq_history_part1__en_us.script.txt",
+                                                     "transcriptPath":  "transcripts/en_us/aud_0320_ipq_history_part1__en_us.json",
+                                                     "ttsProvider":  "elevenlabs",
+                                                     "voiceId":  "IVxgxz5EgbHtWNcgBjOV",
+                                                     "modelId":  "eleven_v3",
+                                                     "languageCode":  "en",
+                                                     "outputFormat":  "mp3_44100_128",
+                                                     "durationMs":  48718,
+                                                     "status":  "generated",
+                                                     "sha256":  "AAD3BDB00F1928D7688790567197C934629300CF038337D6BC66CA364F01C137",
+                                                     "observedDurationMs":  48718,
+                                                     "generatedAt":  "2026-06-13T19:44:07.5006992+02:00"
+                                                 },
+                                       "ja-JP":  {
+                                                     "path":  "ja_jp/aud_0320_ipq_history_part1__ja_jp.mp3",
+                                                     "scriptPath":  "transcripts/ja_jp/aud_0320_ipq_history_part1__ja_jp.script.txt",
+                                                     "transcriptPath":  "transcripts/ja_jp/aud_0320_ipq_history_part1__ja_jp.json",
+                                                     "backTranslationPath":  "transcripts/ja_jp/aud_0320_ipq_history_part1__ja_jp.backtranslation.txt",
+                                                     "ttsProvider":  "elevenlabs",
+                                                     "voiceId":  "IVxgxz5EgbHtWNcgBjOV",
+                                                     "modelId":  "eleven_v3",
+                                                     "languageCode":  "ja",
+                                                     "outputFormat":  "mp3_44100_128",
+                                                     "durationMs":  57835,
+                                                     "status":  "generated",
+                                                     "sha256":  "AAB46B0E6D8FF2E2CE00444E11F4963B309E152B007EBC185D9FCFB69869A0DC",
+                                                     "observedDurationMs":  57835,
+                                                     "generatedAt":  "2026-06-13T20:38:48.3116179+02:00"
+                                                 }
+                                   }
+                   },
+                   {
+                       "audioId":  "aud_0330",
+                       "stage":  "presence_questionnaire",
+                       "role":  "ipq_history_condition_2_intro",
+                       "participantFacing":  true,
+                       "translationPolicy":  "science_nerd_sarcasm_no_psychometric_spoilers",
+                       "durationMatchRequired":  false,
+                       "targetDurationMs":  54491,
+                       "runtimeCue":  "playIpqHistoryNarration(condition=2)",
+                       "tailSilenceMs":  1000,
+                       "locales":  {
+                                       "en-US":  {
+                                                     "path":  "en_us/aud_0330_ipq_history_part2__en_us.mp3",
+                                                     "scriptPath":  "transcripts/en_us/aud_0330_ipq_history_part2__en_us.script.txt",
+                                                     "transcriptPath":  "transcripts/en_us/aud_0330_ipq_history_part2__en_us.json",
+                                                     "ttsProvider":  "elevenlabs",
+                                                     "voiceId":  "IVxgxz5EgbHtWNcgBjOV",
+                                                     "modelId":  "eleven_v3",
+                                                     "languageCode":  "en",
+                                                     "outputFormat":  "mp3_44100_128",
+                                                     "durationMs":  54491,
+                                                     "status":  "generated",
+                                                     "sha256":  "05F81ADFAD49EECEB9245DCBBF0656EE90C0B8ADE0D3856E9DBE40FB65087772",
+                                                     "observedDurationMs":  54491,
+                                                     "generatedAt":  "2026-06-13T19:44:07.5006992+02:00"
+                                                 },
+                                       "ja-JP":  {
+                                                     "path":  "ja_jp/aud_0330_ipq_history_part2__ja_jp.mp3",
+                                                     "scriptPath":  "transcripts/ja_jp/aud_0330_ipq_history_part2__ja_jp.script.txt",
+                                                     "transcriptPath":  "transcripts/ja_jp/aud_0330_ipq_history_part2__ja_jp.json",
+                                                     "backTranslationPath":  "transcripts/ja_jp/aud_0330_ipq_history_part2__ja_jp.backtranslation.txt",
+                                                     "ttsProvider":  "elevenlabs",
+                                                     "voiceId":  "IVxgxz5EgbHtWNcgBjOV",
+                                                     "modelId":  "eleven_v3",
+                                                     "languageCode":  "ja",
+                                                     "outputFormat":  "mp3_44100_128",
+                                                     "durationMs":  58723,
+                                                     "status":  "generated",
+                                                     "sha256":  "6C05D79DC79F5FDAA2C776A0AFEBA00B1889D0027F2B4EB42A9EC82FAE255B63",
+                                                     "observedDurationMs":  58723,
+                                                     "generatedAt":  "2026-06-13T20:38:48.3116179+02:00"
                                                  }
                                    }
                    },
@@ -343,7 +482,7 @@
                                                      "transcriptPath":  "transcripts/ja_jp/aud_0500_final_end_confirmation_question__ja_jp.json",
                                                      "backTranslationPath":  "transcripts/ja_jp/aud_0500_final_end_confirmation_question__ja_jp.backtranslation.txt",
                                                      "observedDurationMs":  8359,
-                                                     "generatedAt":  "2026-06-12T16:43:09.5168470+02:00"
+                                                     "generatedAt":  "2026-06-13T20:38:48.3116179+02:00"
                                                  }
                                    }
                    },
@@ -375,7 +514,7 @@
                                                      "transcriptPath":  "transcripts/ja_jp/aud_0510_final_end_confirmation_10_feedback__ja_jp.json",
                                                      "backTranslationPath":  "transcripts/ja_jp/aud_0510_final_end_confirmation_10_feedback__ja_jp.backtranslation.txt",
                                                      "observedDurationMs":  10371,
-                                                     "generatedAt":  "2026-06-12T16:43:09.5168470+02:00"
+                                                     "generatedAt":  "2026-06-13T20:38:48.3116179+02:00"
                                                  }
                                    }
                    },
@@ -407,10 +546,30 @@
                                                      "transcriptPath":  "transcripts/ja_jp/aud_0600_final_extra_presses_prompt__ja_jp.json",
                                                      "backTranslationPath":  "transcripts/ja_jp/aud_0600_final_extra_presses_prompt__ja_jp.backtranslation.txt",
                                                      "observedDurationMs":  49084,
-                                                     "generatedAt":  "2026-06-12T16:43:09.5168470+02:00"
+                                                     "generatedAt":  "2026-06-13T20:38:48.3116179+02:00"
                                                  }
                                    }
                    }
                ],
-    "updatedAt":  "2026-06-12T16:43:09.5168470+02:00"
+    "updatedAt":  "2026-06-13T20:38:48.3116179+02:00",
+    "libraryLayout":  {
+                          "runtimeAssetRoot":  "localized",
+                          "sourceRoot":  "audio-assets/localized",
+                          "localeDirectories":  {
+                                                    "en-US":  "en_us",
+                                                    "ja-JP":  "ja_jp"
+                                                },
+                          "sharedDirectory":  "shared",
+                          "sharedCategories":  {
+                                                   "questionnaire_ui":  "shared/questionnaire_ui",
+                                                   "questionnaire_transition":  "shared/questionnaire_transition",
+                                                   "button_press":  "shared/button_press",
+                                                   "inactive":  "shared/inactive"
+                                               },
+                          "transcriptDirectories":  {
+                                                        "en-US":  "transcripts/en_us",
+                                                        "ja-JP":  "transcripts/ja_jp"
+                                                    },
+                          "runtimeRule":  "App audio must be opened from assets/localized/**; do not add participant-facing audio under app/src/main/res/raw or app/src/main/assets/sfx."
+                      }
 }

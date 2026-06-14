@@ -279,7 +279,7 @@ function New-SyntheticExport {
         $conditions += [ordered]@{
             conditionNumber = $condition
             label = "Condition $condition"
-            audioAssetPath = if ($condition -eq 1) { 'first-big-red-button-vr-study-instructions-final.mp3' } else { 'first-big-red-button-vr-study-instructions-second-instructions-5-final.mp3' }
+            audioAssetPath = if ($condition -eq 1) { 'localized/en_us/aud_0100_condition_1_instructions__en_us.mp3' } else { 'localized/en_us/aud_0110_condition_2_instructions__en_us.mp3' }
             startedIso = '2026-06-09T12:00:00Z'
             endedIso = '2026-06-09T12:05:00Z'
             elapsedMs = $audioDurationMs
@@ -524,6 +524,99 @@ function New-SyntheticExport {
             extraPressCompletedIso = ''
             extraPressEvents = @()
         }
+        agentIntegrationProtocol = [ordered]@{
+            schema = 'bigredbutton.agent_integration.v1'
+            sourceBrief = 'New-Agent-Integration-Brief.md'
+            sourceBriefRepository = 'MesmerPrism/the-big-red-button-institute'
+            sourceBriefBranch = 'codex/brb-questionnaire-panel-bridge'
+            adaptation = 'native_meta_spatial_sdk_in_process'
+            appPackage = 'org.bigredbutton.firststudy'
+            unityDependency = $false
+            rustyXrBrokerRequired = $false
+            localHeadsetExportsOnly = $true
+            exportMirror = 'ExperimentResults'
+            questionnaire = [ordered]@{
+                transport = 'in_process_spatial_panel'
+                productCommunication = 'app_internal'
+                standalonePanelPackage = 'io.github.mesmerprism.questquestionnaire.panel'
+                standalonePanelAdopted = $false
+                externalPanelContractCompatibleIfAdopted = $true
+                externalPanelContractIfAdopted = [ordered]@{
+                    schema = 'quest.questionnaire.v1'
+                    calleePackage = 'io.github.mesmerprism.questquestionnaire.panel'
+                    launchIntent = 'explicit'
+                    requestJsonExtra = 'request_json'
+                    resultUriScheme = 'content'
+                    resultUriOwner = 'caller'
+                    writeUriGrant = $true
+                    completionCallback = 'one_shot_immutable_broadcast_pending_intent'
+                    answersOnlyWrittenToCallerUri = $true
+                    callerReadsOwnResultUri = $true
+                    adbProductCommunication = $false
+                    publicSharedStorageExchange = $false
+                    mediaStoreExchange = $false
+                    fileUriExchange = $false
+                    packageKillReturnFlow = $false
+                    overlayReturnFlow = $false
+                    queryAllPackages = $false
+                    systemAlertWindow = $false
+                }
+                answersInLogs = $false
+                validationShortcutModes = @(
+                    'auto_validation',
+                    'physical_press_validation',
+                    'keyevent_validation',
+                    'fast_controller_flow',
+                    'panel_smoke',
+                    'demographics_keyboard_validation',
+                    'audio_rig_stress',
+                    'visual_glow_validation'
+                )
+            }
+            directPolar = [ordered]@{
+                enabled = $true
+                transport = 'native_ble_pmd_ecg_rr'
+                primaryPhysiologySource = $true
+                recordsBothConditions = $true
+                brokerRequired = $false
+                heartbeatBlinkRoute = 'HeartbeatPulseDriver'
+                buttonPressRoute = 'none'
+            }
+            directLsl = [ordered]@{
+                enabled = $false
+                role = 'diagnostic_only'
+                unityCompatibleDefaults = $true
+                streamName = 'HRV_Biofeedback'
+                streamType = 'HRV'
+                channelIndex = 0
+                triggerThreshold01 = 0.5
+                triggerOnRisingEdgeOnly = $true
+                minimumTriggerIntervalMs = 250
+                nativeLibraryPackaged = $false
+                jniEnabled = $false
+                drivesHeartbeatBlink = $false
+                drivesButtonPresses = $false
+                finalPressProofAllowed = $false
+            }
+            buttonRoutes = [ordered]@{
+                finalParticipantPressProof = 'controller_contact'
+                handContactSupplemental = $true
+                heartbeatBlinkRoute = 'HeartbeatPulseDriver'
+                stableButtonModelDuringBlink = $true
+                glowGeometrySwap = $false
+                externalSignalPressesSatisfyFinalGate = $false
+            }
+            forbiddenProductMechanisms = @(
+                'adb_relaunch',
+                'public_shared_storage_exchange',
+                'mediastore_exchange',
+                'file_uri',
+                'package_kill_return_flow',
+                'overlay_return_flow',
+                'query_all_packages',
+                'system_alert_window'
+            )
+        }
         questionnaireProtocol = [ordered]@{
             schema = 'bigredbutton.questionnaire_flow.v1'
             transport = 'in_process_spatial_panel'
@@ -747,6 +840,64 @@ if ($exportJson.finalEndConfirmation.immediateEnd -eq $true) {
     Assert-Condition ($exportJson.finalEndConfirmation.extraPressCompleted -eq $true) 'Extra press branch must complete before export'
     Assert-Condition ($exportJson.finalEndConfirmation.extraPressCount -ge 1000) 'Extra press branch exported before 1000 presses'
 }
+Assert-Condition ($null -ne $exportJson.agentIntegrationProtocol) 'Missing agentIntegrationProtocol'
+Assert-Condition ($exportJson.agentIntegrationProtocol.schema -eq 'bigredbutton.agent_integration.v1') 'Agent integration protocol schema mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.sourceBrief -eq 'New-Agent-Integration-Brief.md') 'Agent integration source brief mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.adaptation -eq 'native_meta_spatial_sdk_in_process') 'Agent integration adaptation mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.unityDependency -eq $false) 'Native study must not acquire a Unity dependency'
+Assert-Condition ($exportJson.agentIntegrationProtocol.rustyXrBrokerRequired -eq $false) 'Rusty XR broker must not be required'
+Assert-Condition ($exportJson.agentIntegrationProtocol.localHeadsetExportsOnly -eq $true) 'Agent integration must keep participant exports local to headset'
+Assert-Condition ($exportJson.agentIntegrationProtocol.exportMirror -eq 'ExperimentResults') 'Agent integration export mirror mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.transport -eq 'in_process_spatial_panel') 'Agent integration questionnaire transport mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.productCommunication -eq 'app_internal') 'Agent integration questionnaire communication mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.standalonePanelPackage -eq 'io.github.mesmerprism.questquestionnaire.panel') 'Agent integration panel package reference mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.standalonePanelAdopted -eq $false) 'Standalone panel must not be marked adopted in this native build'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractCompatibleIfAdopted -eq $true) 'External panel compatibility note missing'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.schema -eq 'quest.questionnaire.v1') 'External panel contract schema mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.launchIntent -eq 'explicit') 'External panel contract must use explicit intents'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.requestJsonExtra -eq 'request_json') 'External panel request_json extra mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.resultUriScheme -eq 'content') 'External panel result URI must be content://'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.resultUriOwner -eq 'caller') 'External panel result URI must be caller-owned'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.writeUriGrant -eq $true) 'External panel contract must grant result URI write access'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.completionCallback -eq 'one_shot_immutable_broadcast_pending_intent') 'External panel completion callback mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.answersOnlyWrittenToCallerUri -eq $true) 'External panel answers must be written only to caller URI'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.callerReadsOwnResultUri -eq $true) 'External panel caller must read its own result URI'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.adbProductCommunication -eq $false) 'ADB cannot be questionnaire product communication'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.publicSharedStorageExchange -eq $false) 'Public shared storage cannot be questionnaire exchange'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.mediaStoreExchange -eq $false) 'MediaStore cannot be questionnaire exchange'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.fileUriExchange -eq $false) 'file:// cannot be questionnaire exchange'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.packageKillReturnFlow -eq $false) 'Package killing cannot be questionnaire return flow'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.overlayReturnFlow -eq $false) 'Overlays cannot be questionnaire return flow'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.queryAllPackages -eq $false) 'QUERY_ALL_PACKAGES cannot be required'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.systemAlertWindow -eq $false) 'SYSTEM_ALERT_WINDOW cannot be required'
+Assert-Condition ($exportJson.agentIntegrationProtocol.questionnaire.answersInLogs -eq $false) 'Agent integration must not log answers'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directPolar.enabled -eq $true) 'Agent integration direct Polar route must be active'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directPolar.transport -eq 'native_ble_pmd_ecg_rr') 'Agent integration direct Polar transport mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directPolar.recordsBothConditions -eq $true) 'Agent integration direct Polar must record both conditions'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directPolar.brokerRequired -eq $false) 'Agent integration direct Polar must be brokerless'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directPolar.heartbeatBlinkRoute -eq 'HeartbeatPulseDriver') 'Agent integration direct Polar blink route mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directLsl.enabled -eq $false) 'Agent integration direct LSL must remain disabled until JNI/library validation'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directLsl.role -eq 'diagnostic_only') 'Agent integration direct LSL role mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directLsl.unityCompatibleDefaults -eq $true) 'Agent integration direct LSL defaults should remain Unity-compatible'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directLsl.streamName -eq 'HRV_Biofeedback') 'Agent integration direct LSL stream name mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directLsl.streamType -eq 'HRV') 'Agent integration direct LSL stream type mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directLsl.channelIndex -eq 0) 'Agent integration direct LSL channel index mismatch'
+Assert-Condition ([math]::Abs(([double]$exportJson.agentIntegrationProtocol.directLsl.triggerThreshold01) - 0.5) -lt 0.0001) 'Agent integration direct LSL threshold mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directLsl.minimumTriggerIntervalMs -eq 250) 'Agent integration direct LSL minimum interval mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directLsl.nativeLibraryPackaged -eq $false) 'Agent integration direct LSL native library must not be packaged'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directLsl.jniEnabled -eq $false) 'Agent integration direct LSL JNI must remain disabled'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directLsl.drivesButtonPresses -eq $false) 'Agent integration direct LSL must not drive button presses'
+Assert-Condition ($exportJson.agentIntegrationProtocol.directLsl.finalPressProofAllowed -eq $false) 'Agent integration direct LSL cannot satisfy final press proof'
+Assert-Condition ($exportJson.agentIntegrationProtocol.buttonRoutes.finalParticipantPressProof -eq 'controller_contact') 'Agent integration final press proof mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.buttonRoutes.handContactSupplemental -eq $true) 'Agent integration hand-contact provenance missing'
+Assert-Condition ($exportJson.agentIntegrationProtocol.buttonRoutes.heartbeatBlinkRoute -eq 'HeartbeatPulseDriver') 'Agent integration blink route mismatch'
+Assert-Condition ($exportJson.agentIntegrationProtocol.buttonRoutes.stableButtonModelDuringBlink -eq $true) 'Agent integration stable blink model contract missing'
+Assert-Condition ($exportJson.agentIntegrationProtocol.buttonRoutes.externalSignalPressesSatisfyFinalGate -eq $false) 'External signal presses must not satisfy the final gate'
+Assert-Condition (@($exportJson.agentIntegrationProtocol.forbiddenProductMechanisms) -contains 'adb_relaunch') 'Agent integration forbidden mechanisms missing adb_relaunch'
+Assert-Condition (@($exportJson.agentIntegrationProtocol.forbiddenProductMechanisms) -contains 'public_shared_storage_exchange') 'Agent integration forbidden mechanisms missing public shared storage'
+Assert-Condition (@($exportJson.agentIntegrationProtocol.forbiddenProductMechanisms) -contains 'file_uri') 'Agent integration forbidden mechanisms missing file_uri'
+Assert-Condition (@($exportJson.agentIntegrationProtocol.forbiddenProductMechanisms) -contains 'query_all_packages') 'Agent integration forbidden mechanisms missing query_all_packages'
+Assert-Condition (@($exportJson.agentIntegrationProtocol.forbiddenProductMechanisms) -contains 'system_alert_window') 'Agent integration forbidden mechanisms missing system_alert_window'
 Assert-Condition ($null -ne $exportJson.questionnaireProtocol) 'Missing questionnaireProtocol'
 Assert-Condition ($exportJson.questionnaireProtocol.schema -eq 'bigredbutton.questionnaire_flow.v1') 'Questionnaire protocol schema mismatch'
 Assert-Condition ($exportJson.questionnaireProtocol.transport -eq 'in_process_spatial_panel') 'Questionnaire protocol transport mismatch'

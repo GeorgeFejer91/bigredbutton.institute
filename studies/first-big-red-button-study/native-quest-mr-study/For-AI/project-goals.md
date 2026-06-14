@@ -69,7 +69,7 @@ Finish only when the standalone APK builds and the strongest available validatio
 - PMD-aware Polar H10 validity status, where the first-menu green check requires HR/RR plus raw PMD ECG samples streaming at 130 Hz; real Polar physiology recorded in both conditions; counterbalanced real-vs-sham feedback assignment; and heartbeat-driven button blinking
 - Polar PMD raw ECG capture/export at 130 Hz, with exported millisecond and nanosecond capture-window durations matching each instruction-audio duration
 - questionnaire panel layout
-- demographics intake using the native Quest/system keyboard through visible Name and Age `AndroidView(EditText)` fields, preserving `demographics.name` and `demographics.age` export values with text/Next and number/Done input contracts
+- demographics intake using a visible app-owned pop-out Name keyboard panel that appears on Name focus, is separate from the questionnaire panel, and is placed by headset-centered radial visual angle: questionnaire on the central ray, keyboard on a neighboring left ray, both oriented toward the headset, close to the user without obstructing the questionnaire. The Name keyboard must keep direct hardware/ADB keyevent fallback; Age remains an in-panel `ComposeSlider` from 0 to 100, preserving `demographics.name` and `demographics.age` export values with Name Next/Enter and slider/Done input contracts.
 - Button Experience redness scale conversion and export of both final VAS and Likert values
 - fast directional questionnaire/data export validation on the current APK hash, including pulled `ExperimentResults` JSON/CSV files
 - audio track playback and condition timing

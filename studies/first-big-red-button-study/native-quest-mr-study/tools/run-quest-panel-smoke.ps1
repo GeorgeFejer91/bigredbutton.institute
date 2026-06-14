@@ -22,6 +22,8 @@ $runId = Get-Date -Format 'yyyyMMdd-HHmmss'
 $outDir = Join-Path $projectRoot "artifacts\quest-panel-smoke\$runId"
 $remoteDemographics = '/sdcard/Download/brb_panel_smoke_demographics.png'
 $remotePictographic = '/sdcard/Download/brb_panel_smoke_pictographic.png'
+$runtimeFailurePattern = 'FATAL EXCEPTION|E/AndroidRuntime'
+$conflictingValidationPattern = 'BRB_AUDIO_RIG_STRESS_COMMAND|BRB_DEMOGRAPHICS_VALIDATION_COMMAND|BRB_KEYEVENT_VALIDATION_COMMAND'
 
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
@@ -56,6 +58,8 @@ try {
         }
     }
 
+    Invoke-Adb shell am force-stop $package | Out-Null
+    Start-Sleep -Milliseconds 500
     Invoke-Adb logcat -c
     Invoke-Adb shell am start -n $activity --ez brb.panelSmoke true |
         Tee-Object -FilePath (Join-Path $outDir 'launch.txt') |
@@ -69,10 +73,14 @@ try {
     while ((Get-Date) -lt $deadline) {
         Start-Sleep -Seconds 1
         $markers = Invoke-Adb logcat -d -v time |
-            Select-String -Pattern 'BRB_QUESTIONNAIRE_INTRO_CUE trigger=demographics|BRB_PANEL_GLITCH state=start mode=intro trigger=demographics|FATAL EXCEPTION|E/AndroidRuntime'
-        if ($markers | Select-String -Pattern 'FATAL EXCEPTION|E/AndroidRuntime') {
+            Select-String -Pattern "BRB_QUESTIONNAIRE_INTRO_CUE trigger=demographics|BRB_PANEL_GLITCH state=start mode=intro trigger=demographics|$runtimeFailurePattern|$conflictingValidationPattern"
+        if ($markers | Select-String -Pattern $runtimeFailurePattern) {
             $markers | Set-Content -LiteralPath (Join-Path $outDir 'failure-markers.txt') -Encoding UTF8
             throw "Fatal runtime marker detected before demographics screenshot."
+        }
+        if ($markers | Select-String -Pattern $conflictingValidationPattern) {
+            $markers | Set-Content -LiteralPath (Join-Path $outDir 'failure-markers.txt') -Encoding UTF8
+            throw "Conflicting validation mode marker detected before demographics screenshot."
         }
         if ($markers | Select-String -Pattern 'BRB_QUESTIONNAIRE_INTRO_CUE trigger=demographics') {
             $demographicsReady = $true
@@ -80,6 +88,12 @@ try {
         }
     }
     if (-not $demographicsReady) {
+        Invoke-Adb logcat -d -v time |
+            Select-String -Pattern 'BigRedButtonStudy|BRB_|FATAL EXCEPTION|E/AndroidRuntime' |
+            Set-Content -LiteralPath (Join-Path $outDir 'timeout-logcat.txt') -Encoding UTF8
+        Invoke-Adb shell dumpsys activity activities |
+            Select-String -Pattern 'bigredbutton|mCurrentFocus|mFocusedApp|ResumedActivity|topResumedActivity' |
+            Set-Content -LiteralPath (Join-Path $outDir 'timeout-foreground.txt') -Encoding UTF8
         throw "Demographics questionnaire intro cue marker was not observed within $TimeoutSeconds seconds."
     }
     Start-Sleep -Seconds 3
@@ -90,10 +104,14 @@ try {
     while ((Get-Date) -lt $deadline) {
         Start-Sleep -Seconds 1
         $markers = Invoke-Adb logcat -d -v time |
-            Select-String -Pattern 'BRB_PANEL_SMOKE_PICTOGRAPHIC_READY|BRB_QUESTIONNAIRE_INTRO_CUE|BRB_PANEL_GLITCH|FATAL EXCEPTION|E/AndroidRuntime'
-        if ($markers | Select-String -Pattern 'FATAL EXCEPTION|E/AndroidRuntime') {
+            Select-String -Pattern "BRB_PANEL_SMOKE_PICTOGRAPHIC_READY|BRB_QUESTIONNAIRE_INTRO_CUE|BRB_PANEL_GLITCH|$runtimeFailurePattern|$conflictingValidationPattern"
+        if ($markers | Select-String -Pattern $runtimeFailurePattern) {
             $markers | Set-Content -LiteralPath (Join-Path $outDir 'failure-markers.txt') -Encoding UTF8
             throw "Fatal runtime marker detected during panel smoke."
+        }
+        if ($markers | Select-String -Pattern $conflictingValidationPattern) {
+            $markers | Set-Content -LiteralPath (Join-Path $outDir 'failure-markers.txt') -Encoding UTF8
+            throw "Conflicting validation mode marker detected during panel smoke."
         }
         if ($markers | Select-String -Pattern 'BRB_PANEL_SMOKE_PICTOGRAPHIC_READY') {
             $pictographicReady = $true
@@ -102,6 +120,12 @@ try {
     }
 
     if (-not $pictographicReady) {
+        Invoke-Adb logcat -d -v time |
+            Select-String -Pattern 'BigRedButtonStudy|BRB_|FATAL EXCEPTION|E/AndroidRuntime' |
+            Set-Content -LiteralPath (Join-Path $outDir 'timeout-logcat.txt') -Encoding UTF8
+        Invoke-Adb shell dumpsys activity activities |
+            Select-String -Pattern 'bigredbutton|mCurrentFocus|mFocusedApp|ResumedActivity|topResumedActivity' |
+            Set-Content -LiteralPath (Join-Path $outDir 'timeout-foreground.txt') -Encoding UTF8
         throw "Pictographic panel was not reached within $TimeoutSeconds seconds."
     }
 

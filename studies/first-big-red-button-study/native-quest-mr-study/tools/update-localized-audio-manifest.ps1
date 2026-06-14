@@ -79,6 +79,17 @@ foreach ($asset in @(Get-JsonPropertyValue $manifest 'assets')) {
     }
 }
 
+foreach ($item in @(Get-JsonPropertyValue $manifest 'shared')) {
+    $relativePath = Get-JsonPropertyValue $item 'path'
+    if ([string]::IsNullOrWhiteSpace($relativePath)) { continue }
+
+    $fullPath = Join-Path $localizedRoot $relativePath
+    if (-not (Test-Path $fullPath)) { continue }
+
+    Set-JsonPropertyValue $item 'sha256' ((Get-FileHash -Algorithm SHA256 -LiteralPath $fullPath).Hash)
+    Set-JsonPropertyValue $item 'durationMs' (Get-AudioDurationMs $fullPath)
+}
+
 Set-JsonPropertyValue $manifest 'updatedAt' $updatedAt
 $manifest | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
 Write-Host "Updated localized audio manifest: $manifestPath"

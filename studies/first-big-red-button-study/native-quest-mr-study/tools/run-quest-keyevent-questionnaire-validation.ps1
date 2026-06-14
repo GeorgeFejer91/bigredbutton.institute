@@ -5,6 +5,7 @@ param(
     [string]$AdbPath = 'adb',
     [string]$ApkPath = '',
     [int]$TimeoutSeconds = 120,
+    [string]$StudyLanguage = '',
     [switch]$SkipInstall
 )
 
@@ -73,7 +74,11 @@ function Test-TargetForeground {
 }
 
 function Start-KeyeventValidationActivity {
-    Invoke-Adb shell am start -n $activity --ez brb.keyeventValidation true |
+    $launchArgs = @('shell', 'am', 'start', '-n', $activity, '--ez', 'brb.keyeventValidation', 'true')
+    if (-not [string]::IsNullOrWhiteSpace($StudyLanguage)) {
+        $launchArgs += @('--es', 'brb.studyLanguage', $StudyLanguage)
+    }
+    Invoke-Adb @launchArgs |
         Tee-Object -FilePath (Join-Path $outDir 'launch.txt') |
         Out-Host
     if ($LASTEXITCODE -ne 0) {
@@ -327,6 +332,8 @@ try {
 
     Write-Host "Clearing prior exports/logcat"
     Invoke-Adb shell rm -rf $deviceExportDir $deviceResultsDir | Out-Null
+    Invoke-Adb shell am force-stop $package | Out-Null
+    Start-Sleep -Milliseconds 500
     Invoke-Adb logcat -c
 
     Write-Host "Launching keyevent validation mode"
@@ -335,7 +342,8 @@ try {
 
     Wait-LogPattern 'BRB_QUESTIONNAIRE_CONTRACT schema=bigredbutton.questionnaire_flow.v1 .*transport=in_process_spatial_panel .*productCommunication=app_internal' 'questionnaire protocol contract marker'
     Wait-LogPattern 'BRB_LSL status=disabled .*role=diagnostic_only .*streamName=HRV_Biofeedback .*streamType=HRV .*contaminatesPressCounts=false' 'disabled diagnostic external signal contract marker'
-    Wait-LogPattern 'BRB_SOFT_KEYBOARD_REQUEST reason=field_name keyboardMode=text' 'startup native text keyboard request'
+    Wait-LogPattern 'BRB_AGENT_INTEGRATION_CONTRACT schema=bigredbutton.agent_integration.v1 .*adaptation=native_meta_spatial_sdk_in_process .*rustyXrBrokerRequired=false .*directPolarPmdActive=true .*directLslEnabled=false .*finalPressProof=controller_contact' 'native agent integration contract marker'
+    Wait-LogPattern 'BRB_NAME_APP_KEYBOARD_FOCUS field=name .*platformControl=AppOwnedKeyboard' 'startup app-owned name keyboard focus'
     Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN' 'prior big-red-button experience prompt'
     Wait-LogPattern 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pre_button_experience direction=right' 'prior big-red-button experience right-select replay'
     Wait-LogPattern 'BRB_CONTROLLER_SUBMIT_REPLAY condition=1 stage=pre_button_experience submitted=true' 'prior big-red-button experience enter-submit replay'
@@ -345,12 +353,16 @@ try {
     Wait-LogPattern 'BRB_QUESTIONNAIRE_INTRO_CUE trigger=post_condition_1' 'condition 1 questionnaire intro'
 
     Wait-LogPattern 'BRB_PICTOGRAPHIC_SAVED condition=1' 'condition 1 pictographic save'
+    Wait-LogPattern 'BRB_IPQ_HISTORY_NARRATION_CUE condition=1 .*cue=ipq_history_part1 .*audioId=aud_0320 .*blocking=false' 'condition 1 IPQ history narration cue'
+    Wait-LogPattern 'BRB_SFX_PLAY cue=ipq_history_part1 audioId=aud_0320 asset=.*aud_0320_ipq_history_part1__.*\.mp3 .*durationMs=' 'condition 1 IPQ history narration playback'
     Wait-LogPattern 'BRB_IPQ_SAVED condition=1' 'condition 1 ratings save'
     Wait-LogPattern 'BRB_LOST_OPPORTUNITY_SAVED condition=1' 'condition 1 additional-time save'
     Wait-LogPattern 'BRB_CONDITION_START condition=2' 'condition 2 start after outro'
     Wait-LogPattern 'BRB_CONDITION_END condition=2' 'condition 2 shortcut end'
     Wait-LogPattern 'BRB_QUESTIONNAIRE_INTRO_CUE trigger=post_condition_2' 'condition 2 questionnaire intro'
     Wait-LogPattern 'BRB_PICTOGRAPHIC_SAVED condition=2' 'condition 2 pictographic save'
+    Wait-LogPattern 'BRB_IPQ_HISTORY_NARRATION_CUE condition=2 .*cue=ipq_history_part2 .*audioId=aud_0330 .*blocking=false' 'condition 2 IPQ history narration cue'
+    Wait-LogPattern 'BRB_SFX_PLAY cue=ipq_history_part2 audioId=aud_0330 asset=.*aud_0330_ipq_history_part2__.*\.mp3 .*durationMs=' 'condition 2 IPQ history narration playback'
     Wait-LogPattern 'BRB_IPQ_SAVED condition=2' 'condition 2 ratings save'
     Wait-LogPattern 'BRB_LOST_OPPORTUNITY_SAVED condition=2' 'condition 2 additional-time save'
     Wait-LogPattern 'BRB_FINAL_END_CONFIRMATION_SHOWN' 'final end-confirmation questionnaire shown'
@@ -410,6 +422,19 @@ try {
         Select-Object -First 1
 
     $exportJson = Get-Content -Raw -LiteralPath $jsonFile.FullName | ConvertFrom-Json
+    $runLogText = $logText
+    $exportSessionId = "$($exportJson.sessionId)"
+    if (-not [string]::IsNullOrWhiteSpace($exportSessionId)) {
+        $exportSessionPattern =
+            "BigRedButtonStudy\((?<pid>\d+)\): BRB_EXPORT_COMPLETE .*sessionId=$([regex]::Escape($exportSessionId))"
+        $exportSessionMatches = [regex]::Matches($logText, $exportSessionPattern)
+        if ($exportSessionMatches.Count -gt 0) {
+            $exportPid = $exportSessionMatches.Item(($exportSessionMatches.Count - 1)).Groups['pid'].Value
+            $runLogText =
+                (($logText -split "`r?`n") |
+                    Where-Object { $_ -match "BigRedButtonStudy\($([regex]::Escape($exportPid))\):" }) -join "`n"
+        }
+    }
     $summaryCsv = Import-Csv -LiteralPath $summaryFile.FullName
     $pressCsv = Import-Csv -LiteralPath $pressFile.FullName
     $finalExtraPressCsv = if ($null -ne $finalExtraPressFile) { Import-Csv -LiteralPath $finalExtraPressFile.FullName } else { @() }
@@ -449,8 +474,10 @@ try {
         ($exportJson.ecgProtocol.assignmentOrder -eq 'real_then_simulated' -and $c1.feedbackSource -eq 'real_polar_h10' -and $c2.feedbackSource -eq 'simulated_neurokit2') -or
         ($exportJson.ecgProtocol.assignmentOrder -eq 'simulated_then_real' -and $c1.feedbackSource -eq 'simulated_neurokit2' -and $c2.feedbackSource -eq 'real_polar_h10')
     $row = @($summaryCsv)[0]
+    $expectedIpqLocaleSegment = if ($StudyLanguage -match '^(ja|ja-JP|jp|japanese)$') { 'ja_jp' } else { 'en_us' }
+    $expectedIpqLanguageCode = if ($expectedIpqLocaleSegment -eq 'ja_jp') { 'ja-JP' } else { 'en-US' }
     $uniquePriorExperiencePromptLines = @(
-        $logText -split "`r?`n" |
+        $runLogText -split "`r?`n" |
             Where-Object { $_ -match 'BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN' } |
             Sort-Object -Unique
     )
@@ -470,8 +497,16 @@ try {
     Add-Comparison $comparisons 'prior big-red-button experience summary boolean' 'true' $row.prior_big_red_button_experience_bool 'summary CSV'
     Add-Comparison $comparisons 'prior big-red-button experience summary timestamp present' $true (-not [string]::IsNullOrWhiteSpace($row.prior_big_red_button_experience_timestamp_iso)) 'summary CSV'
     Add-Comparison $comparisons 'prior big-red-button experience prompt shown once' 1 $uniquePriorExperiencePromptLines.Count 'unique logcat lines'
-    Add-Comparison $comparisons 'prior big-red-button experience not repeated in condition 2' $false ($logText -match 'BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN .*condition=2') 'logcat'
-    Add-Comparison $comparisons 'prior big-red-button experience controller replay observed' $true ($logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pre_button_experience direction=right' -and $logText -match 'BRB_CONTROLLER_DIRECTION stage=pre_button_experience direction=right answer=yes' -and $logText -match 'BRB_CONTROLLER_SUBMIT_REPLAY condition=1 stage=pre_button_experience submitted=true') 'logcat'
+    Add-Comparison $comparisons 'prior big-red-button experience not repeated in condition 2' $false ($runLogText -match 'BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN .*condition=2') 'logcat'
+    Add-Comparison $comparisons 'prior big-red-button experience controller replay observed' $true ($runLogText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pre_button_experience direction=right' -and $runLogText -match 'BRB_CONTROLLER_DIRECTION stage=pre_button_experience direction=right answer=yes' -and $runLogText -match 'BRB_CONTROLLER_SUBMIT_REPLAY condition=1 stage=pre_button_experience submitted=true') 'logcat'
+    Add-Comparison $comparisons 'condition 1 IPQ history narration cue observed' $true (
+        $runLogText -match 'BRB_IPQ_HISTORY_NARRATION_CUE condition=1 .*cue=ipq_history_part1 .*audioId=aud_0320 .*blocking=false' -and
+        $runLogText -match "BRB_SFX_PLAY cue=ipq_history_part1 audioId=aud_0320 asset=localized/$expectedIpqLocaleSegment/aud_0320_ipq_history_part1__.*\.mp3 language=$expectedIpqLanguageCode durationMs="
+    ) 'logcat'
+    Add-Comparison $comparisons 'condition 2 IPQ history narration cue observed' $true (
+        $runLogText -match 'BRB_IPQ_HISTORY_NARRATION_CUE condition=2 .*cue=ipq_history_part2 .*audioId=aud_0330 .*blocking=false' -and
+        $runLogText -match "BRB_SFX_PLAY cue=ipq_history_part2 audioId=aud_0330 asset=localized/$expectedIpqLocaleSegment/aud_0330_ipq_history_part2__.*\.mp3 language=$expectedIpqLanguageCode durationMs="
+    ) 'logcat'
     Add-Comparison $comparisons 'final end confirmation JSON rating' 10 $exportJson.finalEndConfirmation.rating1To10 'JSON finalEndConfirmation.rating1To10'
     Add-Comparison $comparisons 'final end confirmation JSON immediate end' $true $exportJson.finalEndConfirmation.immediateEnd 'JSON finalEndConfirmation.immediateEnd'
     Add-Comparison $comparisons 'final end confirmation JSON extra press count' 0 $exportJson.finalEndConfirmation.extraPressCount 'JSON finalEndConfirmation.extraPressCount'
@@ -480,8 +515,8 @@ try {
     Add-Comparison $comparisons 'final extra button press summary count' 0 $row.final_extra_button_press_count 'summary CSV'
     Add-Comparison $comparisons 'final extra button press CSV exists' $true ($null -ne $finalExtraPressFile) 'ExperimentResults final extra button presses CSV'
     Add-Comparison $comparisons 'final extra button press CSV rows' 0 @($finalExtraPressCsv).Count 'ExperimentResults final extra button presses CSV'
-    Add-Comparison $comparisons 'final end confirmation options ready before replay' $true ($logText -match 'BRB_FINAL_END_CONFIRMATION_OPTIONS_READY .*optionsVisible=true' -and $logText -match 'BRB_FINAL_END_CONFIRMATION_VALIDATION_WAIT .*reason=question_audio_active') 'logcat'
-    Add-Comparison $comparisons 'final end confirmation controller replay observed' $true ($logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=0 stage=final_end_confirmation direction=right' -and $logText -match 'BRB_CONTROLLER_SUBMIT_REPLAY condition=0 stage=final_end_confirmation submitted=true' -and $logText -match 'BRB_FINAL_END_CONFIRMATION_SAVED rating=10 immediateEnd=true') 'logcat'
+    Add-Comparison $comparisons 'final end confirmation options ready before replay' $true ($runLogText -match 'BRB_FINAL_END_CONFIRMATION_OPTIONS_READY .*optionsVisible=true' -and $runLogText -match 'BRB_FINAL_END_CONFIRMATION_VALIDATION_WAIT .*reason=question_audio_active') 'logcat'
+    Add-Comparison $comparisons 'final end confirmation controller replay observed' $true ($runLogText -match 'BRB_KEYEVENT_REPLAY_STEP condition=0 stage=final_end_confirmation direction=right' -and $runLogText -match 'BRB_CONTROLLER_SUBMIT_REPLAY condition=0 stage=final_end_confirmation submitted=true' -and $runLogText -match 'BRB_FINAL_END_CONFIRMATION_SAVED rating=10 immediateEnd=true') 'logcat'
 
     Add-Comparison $comparisons 'condition 1 emulated button count' 2 $c1.buttonPressCount 'JSON condition 1 buttonPressCount'
     Add-Comparison $comparisons 'condition 2 emulated button count' 2 $c2.buttonPressCount 'JSON condition 2 buttonPressCount'
@@ -497,8 +532,8 @@ try {
     Add-Comparison $comparisons 'Polar RR event CSV readable' $true ($null -ne $polarRrFile) 'ExperimentResults Polar RR events CSV'
     Add-Comparison $comparisons 'simulated ECG blink count exported' $true (($null -ne $simulatedCondition) -and ([int]$simulatedCondition.ecgBlinkCount -gt 0)) 'JSON simulated condition ecgBlinkCount'
     Add-Comparison $comparisons 'simulated ECG blink rows match JSON count' ([int]$simulatedCondition.ecgBlinkCount) @($simulatedBlinkRows).Count 'ExperimentResults ECG blink-events CSV'
-    Add-Comparison $comparisons 'simulated ECG blink runtime marker observed' $true ($logText -match "BRB_ECG_BLINK condition=$simulatedConditionNumber .*source=simulated_neurokit2") 'logcat'
-    Add-Comparison $comparisons 'simulated heartbeat visual flash observed' $true ($logText -match "BRB_HEARTBEAT_FLASH condition=$simulatedConditionNumber source=simulated_neurokit2") 'logcat'
+    Add-Comparison $comparisons 'simulated ECG blink runtime marker observed' $true ($runLogText -match "BRB_ECG_BLINK condition=$simulatedConditionNumber .*source=simulated_neurokit2") 'logcat'
+    Add-Comparison $comparisons 'simulated heartbeat visual flash observed' $true ($runLogText -match "BRB_HEARTBEAT_FLASH condition=$simulatedConditionNumber source=simulated_neurokit2") 'logcat'
     Add-Comparison $comparisons 'simulated feedback excluded from real ECG time-series' 0 @($simulatedTimeSeriesRows).Count 'ExperimentResults ECG time-series CSV'
     Add-Comparison $comparisons 'press elapsed_ns exported' @($pressCsv).Count $pressRowsWithElapsedNs.Count 'ExperimentResults press-events CSV'
     Add-Comparison $comparisons 'press alignment columns exported' $true $pressAlignmentColumnsPresent 'ExperimentResults press-events CSV'
@@ -552,6 +587,70 @@ try {
     $automationFlags = @($pressCsv | Select-Object -ExpandProperty validation_automation -Unique)
     Add-Comparison $comparisons 'press validation automation flag' 'true' ($automationFlags -join '|') 'press-events CSV'
     Add-Comparison $comparisons 'press event rows' 4 @($pressCsv).Count 'press-events CSV'
+    Add-Comparison $comparisons 'agent integration protocol native adaptation' $true (
+        $exportJson.agentIntegrationProtocol.schema -eq 'bigredbutton.agent_integration.v1' -and
+        $exportJson.agentIntegrationProtocol.sourceBrief -eq 'New-Agent-Integration-Brief.md' -and
+        $exportJson.agentIntegrationProtocol.adaptation -eq 'native_meta_spatial_sdk_in_process' -and
+        $exportJson.agentIntegrationProtocol.unityDependency -eq $false -and
+        $exportJson.agentIntegrationProtocol.rustyXrBrokerRequired -eq $false -and
+        $exportJson.agentIntegrationProtocol.localHeadsetExportsOnly -eq $true -and
+        $exportJson.agentIntegrationProtocol.exportMirror -eq 'ExperimentResults'
+    ) 'JSON agentIntegrationProtocol'
+    Add-Comparison $comparisons 'agent integration questionnaire route' $true (
+        $exportJson.agentIntegrationProtocol.questionnaire.transport -eq 'in_process_spatial_panel' -and
+        $exportJson.agentIntegrationProtocol.questionnaire.productCommunication -eq 'app_internal' -and
+        $exportJson.agentIntegrationProtocol.questionnaire.standalonePanelPackage -eq 'io.github.mesmerprism.questquestionnaire.panel' -and
+        $exportJson.agentIntegrationProtocol.questionnaire.standalonePanelAdopted -eq $false -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractCompatibleIfAdopted -eq $true -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.schema -eq 'quest.questionnaire.v1' -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.launchIntent -eq 'explicit' -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.requestJsonExtra -eq 'request_json' -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.resultUriScheme -eq 'content' -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.resultUriOwner -eq 'caller' -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.writeUriGrant -eq $true -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.completionCallback -eq 'one_shot_immutable_broadcast_pending_intent' -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.answersOnlyWrittenToCallerUri -eq $true -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.callerReadsOwnResultUri -eq $true -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.adbProductCommunication -eq $false -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.publicSharedStorageExchange -eq $false -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.mediaStoreExchange -eq $false -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.fileUriExchange -eq $false -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.packageKillReturnFlow -eq $false -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.overlayReturnFlow -eq $false -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.queryAllPackages -eq $false -and
+        $exportJson.agentIntegrationProtocol.questionnaire.externalPanelContractIfAdopted.systemAlertWindow -eq $false -and
+        $exportJson.agentIntegrationProtocol.questionnaire.answersInLogs -eq $false
+    ) 'JSON agentIntegrationProtocol.questionnaire'
+    Add-Comparison $comparisons 'agent integration direct routes' $true (
+        $exportJson.agentIntegrationProtocol.directPolar.enabled -eq $true -and
+        $exportJson.agentIntegrationProtocol.directPolar.transport -eq 'native_ble_pmd_ecg_rr' -and
+        $exportJson.agentIntegrationProtocol.directPolar.recordsBothConditions -eq $true -and
+        $exportJson.agentIntegrationProtocol.directPolar.brokerRequired -eq $false -and
+        $exportJson.agentIntegrationProtocol.directPolar.heartbeatBlinkRoute -eq 'HeartbeatPulseDriver' -and
+        $exportJson.agentIntegrationProtocol.directLsl.enabled -eq $false -and
+        $exportJson.agentIntegrationProtocol.directLsl.role -eq 'diagnostic_only' -and
+        $exportJson.agentIntegrationProtocol.directLsl.streamName -eq 'HRV_Biofeedback' -and
+        $exportJson.agentIntegrationProtocol.directLsl.streamType -eq 'HRV' -and
+        $exportJson.agentIntegrationProtocol.directLsl.channelIndex -eq 0 -and
+        [math]::Abs(([double]$exportJson.agentIntegrationProtocol.directLsl.triggerThreshold01) - 0.5) -lt 0.0001 -and
+        $exportJson.agentIntegrationProtocol.directLsl.minimumTriggerIntervalMs -eq 250 -and
+        $exportJson.agentIntegrationProtocol.directLsl.nativeLibraryPackaged -eq $false -and
+        $exportJson.agentIntegrationProtocol.directLsl.jniEnabled -eq $false -and
+        $exportJson.agentIntegrationProtocol.directLsl.drivesButtonPresses -eq $false -and
+        $exportJson.agentIntegrationProtocol.directLsl.finalPressProofAllowed -eq $false
+    ) 'JSON agentIntegrationProtocol direct routes'
+    Add-Comparison $comparisons 'agent integration button/final gate route' $true (
+        $exportJson.agentIntegrationProtocol.buttonRoutes.finalParticipantPressProof -eq 'controller_contact' -and
+        $exportJson.agentIntegrationProtocol.buttonRoutes.handContactSupplemental -eq $true -and
+        $exportJson.agentIntegrationProtocol.buttonRoutes.heartbeatBlinkRoute -eq 'HeartbeatPulseDriver' -and
+        $exportJson.agentIntegrationProtocol.buttonRoutes.stableButtonModelDuringBlink -eq $true -and
+        $exportJson.agentIntegrationProtocol.buttonRoutes.externalSignalPressesSatisfyFinalGate -eq $false -and
+        @($exportJson.agentIntegrationProtocol.forbiddenProductMechanisms) -contains 'adb_relaunch' -and
+        @($exportJson.agentIntegrationProtocol.forbiddenProductMechanisms) -contains 'public_shared_storage_exchange' -and
+        @($exportJson.agentIntegrationProtocol.forbiddenProductMechanisms) -contains 'file_uri' -and
+        @($exportJson.agentIntegrationProtocol.forbiddenProductMechanisms) -contains 'query_all_packages' -and
+        @($exportJson.agentIntegrationProtocol.forbiddenProductMechanisms) -contains 'system_alert_window'
+    ) 'JSON agentIntegrationProtocol button routes'
     Add-Comparison $comparisons 'questionnaire protocol schema' 'bigredbutton.questionnaire_flow.v1' $exportJson.questionnaireProtocol.schema 'JSON questionnaireProtocol.schema'
     Add-Comparison $comparisons 'questionnaire protocol transport' 'in_process_spatial_panel' $exportJson.questionnaireProtocol.transport 'JSON questionnaireProtocol.transport'
     Add-Comparison $comparisons 'questionnaire protocol product communication' 'app_internal' $exportJson.questionnaireProtocol.productCommunication 'JSON questionnaireProtocol.productCommunication'
@@ -590,36 +689,42 @@ try {
         $exportJson.externalSignalProtocol.drivesButtonPresses -eq $false
     ) 'JSON externalSignalProtocol'
     Add-Comparison $comparisons 'questionnaire lifecycle markers observed' $true (
-        $logText -match 'BRB_QUESTIONNAIRE_CONTRACT schema=bigredbutton.questionnaire_flow.v1 .*answersLogged=false' -and
-        $logText -match 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=consent_demographics .*answersLogged=false' -and
-        $logText -match 'BRB_QUESTIONNAIRE_STAGE_COMPLETE stageId=consent_demographics .*nextStageId=prior_big_red_button_experience .*answersLogged=false' -and
-        $logText -match 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=post_condition_1_pictographic .*condition=1 .*answersLogged=false' -and
-        $logText -match 'BRB_QUESTIONNAIRE_STAGE_COMPLETE stageId=post_condition_2_lost_opportunity .*nextStageId=final_end_confirmation .*answersLogged=false' -and
-        $logText -match 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=complete_export_summary .*answersLogged=false'
+        $runLogText -match 'BRB_QUESTIONNAIRE_CONTRACT schema=bigredbutton.questionnaire_flow.v1 .*answersLogged=false' -and
+        $runLogText -match 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=consent_demographics .*answersLogged=false' -and
+        $runLogText -match 'BRB_QUESTIONNAIRE_STAGE_COMPLETE stageId=consent_demographics .*nextStageId=prior_big_red_button_experience .*answersLogged=false' -and
+        $runLogText -match 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=post_condition_1_pictographic .*condition=1 .*answersLogged=false' -and
+        $runLogText -match 'BRB_QUESTIONNAIRE_STAGE_COMPLETE stageId=post_condition_2_lost_opportunity .*nextStageId=final_end_confirmation .*answersLogged=false' -and
+        $runLogText -match 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=complete_export_summary .*answersLogged=false'
     ) 'logcat'
     Add-Comparison $comparisons 'external signal diagnostic marker observed' $true (
-        $logText -match 'BRB_LSL status=disabled .*role=diagnostic_only .*streamName=HRV_Biofeedback .*streamType=HRV .*drivesButtonPresses=false'
+        $runLogText -match 'BRB_LSL status=disabled .*role=diagnostic_only .*streamName=HRV_Biofeedback .*streamType=HRV .*drivesButtonPresses=false'
     ) 'logcat'
-    Add-Comparison $comparisons 'native keyboard request observed' $true ($logText -match 'BRB_SOFT_KEYBOARD_REQUEST reason=field_name .*focusedView=EditText .*implementation=system_native') 'logcat'
-    Add-Comparison $comparisons 'native keyboard name text mode observed' $true ($logText -match 'BRB_SYSTEM_KEYBOARD_FIELD_CONTRACT field=name .*keyboardMode=text .*keyboardType=Text .*platformControl=EditText') 'logcat'
-    Add-Comparison $comparisons 'native keyboard age number mode observed' $true ($logText -match 'BRB_SYSTEM_KEYBOARD_FIELD_CONTRACT field=age .*keyboardMode=number .*keyboardType=Number .*platformControl=EditText') 'logcat'
-    Add-Comparison $comparisons 'native keyboard movable panel contract observed' $true ($logText -match 'BRB_SYSTEM_KEYBOARD_FIELD_CONTRACT field=name .*movablePanel=true .*closeToParticipant=system_managed' -and $logText -match 'BRB_SOFT_KEYBOARD_REQUEST reason=field_name .*movablePanel=true .*closeToParticipant=system_managed') 'logcat'
-    Add-Comparison $comparisons 'age is numeric IME target' $true ($logText -match 'BRB_SOFT_KEYBOARD_REQUEST reason=field_age .*keyboardMode=number .*focusedView=EditText .*restartInput=true') 'logcat'
-    Add-Comparison $comparisons 'startup native keyboard request uses text mode' $true ($logText -match 'BRB_SOFT_KEYBOARD_REQUEST reason=field_name .*keyboardMode=text') 'logcat'
+    Add-Comparison $comparisons 'agent integration marker observed' $true (
+        $runLogText -match 'BRB_AGENT_INTEGRATION_CONTRACT schema=bigredbutton.agent_integration.v1 .*sourceBrief=New-Agent-Integration-Brief.md .*unityDependency=false .*rustyXrBrokerRequired=false .*directPolarPmdActive=true .*directLslEnabled=false .*finalPressProof=controller_contact .*answersLogged=false'
+    ) 'logcat'
+    Add-Comparison $comparisons 'app-owned name keyboard observed' $true ($runLogText -match 'BRB_NAME_APP_KEYBOARD_FOCUS field=name .*platformControl=AppOwnedKeyboard') 'logcat'
+    Add-Comparison $comparisons 'app-owned name text mode observed' $true ($runLogText -match 'BRB_NAME_APP_KEYBOARD_CONTRACT field=name .*keyboardMode=text .*keyboardType=Text .*platformControl=AppOwnedKeyboard') 'logcat'
+    Add-Comparison $comparisons 'age slider contract observed' $true ($runLogText -match 'BRB_DEMOGRAPHICS_AGE_SLIDER_CONTRACT field=age .*min=0 .*max=100 .*platformControl=ComposeSlider') 'logcat'
+    Add-Comparison $comparisons 'app-owned name pop-out keyboard panel contract observed' $true (
+        $runLogText -match 'BRB_NAME_APP_KEYBOARD_CONTRACT field=name .*keyboardPanel=keyboard_panel .*presentation=pop_out_spatial_panel .*integratedInQuestionnaire=false .*closeToParticipant=left_of_questionnaire_near_user' -and
+        $runLogText -match 'BRB_NAME_APP_KEYBOARD_PANEL_LAYOUT .*placement=left_of_questionnaire_near_user .*radialReference=headset_center .*orientation=faces_headset .*keyboardPanel=keyboard_panel .*nonObstructing=true .*fovVisible=true .*presentation=pop_out_spatial_panel .*integratedInQuestionnaire=false'
+    ) 'logcat'
+    Add-Comparison $comparisons 'age is not an IME target' $true (-not ($runLogText -match 'BRB_SOFT_KEYBOARD_REQUEST reason=field_age')) 'logcat'
+    Add-Comparison $comparisons 'startup app-owned name keyboard uses text mode' $true ($runLogText -match 'BRB_NAME_APP_KEYBOARD_CONTRACT field=name .*keyboardMode=text') 'logcat'
     Add-Comparison $comparisons 'redness conversion cue observed' $true (
-        $logText -match 'BRB_REDNESS_SCALE_CONVERSION condition=1 .*from=vas to=likert' -and
-        $logText -match 'BRB_REDNESS_SCALE_CONVERSION condition=2 .*from=likert to=vas' -and
-        $logText -match 'BRB_REDNESS_SCALE_CONVERSION_CUE order=vas_then_likert .*cue=first_questionnaire_change .*placeholder=false .*microTimeline=.*supervisor_ping.*seven_boxes_assemble.*validationShortcut=true' -and
-        $logText -match 'BRB_REDNESS_SCALE_CONVERSION_CUE order=likert_then_vas .*cue=second_questionnaire_change_excuse .*placeholder=false .*microTimeline=.*professional_warning.*boxes_erased.*validationShortcut=true'
+        $runLogText -match 'BRB_REDNESS_SCALE_CONVERSION condition=1 .*from=vas to=likert' -and
+        $runLogText -match 'BRB_REDNESS_SCALE_CONVERSION condition=2 .*from=likert to=vas' -and
+        $runLogText -match 'BRB_REDNESS_SCALE_CONVERSION_CUE order=vas_then_likert .*cue=first_questionnaire_change .*placeholder=false .*microTimeline=.*supervisor_ping.*seven_boxes_assemble.*validationShortcut=true' -and
+        $runLogText -match 'BRB_REDNESS_SCALE_CONVERSION_CUE order=likert_then_vas .*cue=second_questionnaire_change_excuse .*placeholder=false .*microTimeline=.*professional_warning.*boxes_erased.*validationShortcut=true'
     ) 'logcat'
-    Add-Comparison $comparisons 'panel-exit keyboard hide before condition 1 observed' $true ($logText -match 'BRB_SOFT_KEYBOARD_HIDE reason=before_condition_1') 'logcat'
-    Add-Comparison $comparisons 'panel-exit keyboard hide before condition 2 observed' $true ($logText -match 'BRB_SOFT_KEYBOARD_HIDE reason=before_condition_2') 'logcat'
-    Add-Comparison $comparisons 'directional replay observed' $true ($logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pictographic direction=left') 'logcat'
-    Add-Comparison $comparisons 'enter submit replay observed' $true ($logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pre_button_experience direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pictographic direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=presence_questionnaire direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=lost_opportunity direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=2 stage=pictographic direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=2 stage=presence_questionnaire direction=enter' -and $logText -match 'BRB_KEYEVENT_REPLAY_STEP condition=2 stage=lost_opportunity direction=enter') 'logcat'
-    Add-Comparison $comparisons 'controller submit replay observed' $true ($logText -match 'BRB_CONTROLLER_SUBMIT_REPLAY condition=1 stage=pictographic submitted=true' -and $logText -match 'BRB_CONTROLLER_SUBMIT_REPLAY condition=2 stage=lost_opportunity submitted=true') 'logcat'
-    Add-Comparison $comparisons 'intro glitch observed' $true ($logText -match 'BRB_PANEL_GLITCH state=start mode=intro') 'logcat'
-    Add-Comparison $comparisons 'outro glitch observed' $true ($logText -match 'BRB_PANEL_GLITCH state=start mode=outro') 'logcat'
-    Add-Comparison $comparisons 'SideQuest results folder marker observed' $true ($logText -match 'BRB_EXPERIMENT_RESULTS_FOLDER') 'logcat'
+    Add-Comparison $comparisons 'panel-exit keyboard hide before condition 1 observed' $true ($runLogText -match 'BRB_SOFT_KEYBOARD_HIDE reason=before_condition_1') 'logcat'
+    Add-Comparison $comparisons 'panel-exit keyboard hide before condition 2 observed' $true ($runLogText -match 'BRB_SOFT_KEYBOARD_HIDE reason=before_condition_2') 'logcat'
+    Add-Comparison $comparisons 'directional replay observed' $true ($runLogText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pictographic direction=left') 'logcat'
+    Add-Comparison $comparisons 'enter submit replay observed' $true ($runLogText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pre_button_experience direction=enter' -and $runLogText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=pictographic direction=enter' -and $runLogText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=presence_questionnaire direction=enter' -and $runLogText -match 'BRB_KEYEVENT_REPLAY_STEP condition=1 stage=lost_opportunity direction=enter' -and $runLogText -match 'BRB_KEYEVENT_REPLAY_STEP condition=2 stage=pictographic direction=enter' -and $runLogText -match 'BRB_KEYEVENT_REPLAY_STEP condition=2 stage=presence_questionnaire direction=enter' -and $runLogText -match 'BRB_KEYEVENT_REPLAY_STEP condition=2 stage=lost_opportunity direction=enter') 'logcat'
+    Add-Comparison $comparisons 'controller submit replay observed' $true ($runLogText -match 'BRB_CONTROLLER_SUBMIT_REPLAY condition=1 stage=pictographic submitted=true' -and $runLogText -match 'BRB_CONTROLLER_SUBMIT_REPLAY condition=2 stage=lost_opportunity submitted=true') 'logcat'
+    Add-Comparison $comparisons 'intro glitch observed' $true ($runLogText -match 'BRB_PANEL_GLITCH state=start mode=intro') 'logcat'
+    Add-Comparison $comparisons 'outro glitch observed' $true ($runLogText -match 'BRB_PANEL_GLITCH state=start mode=outro') 'logcat'
+    Add-Comparison $comparisons 'SideQuest results folder marker observed' $true ($runLogText -match 'BRB_EXPERIMENT_RESULTS_FOLDER') 'logcat'
 
     $failed = @($comparisons | Where-Object { -not $_.pass })
     $summary = [pscustomobject]@{
@@ -629,6 +734,7 @@ try {
         model = $model
         android = $android
         package = $package
+        studyLanguageOverride = $StudyLanguage
         apk = $ApkPath
         apkSha256 = $apkSha256
         apkSizeBytes = $apkItem.Length
@@ -651,7 +757,7 @@ try {
         exportMirrorMatched = ($mirrorComparison.status -eq 'pass')
         exportMirrorFileCount = $mirrorComparison.primaryFileCount
         comparisons = $comparisons
-        note = 'Fast directional questionnaire validation. It shortcuts instruction-audio waiting, replays bounded up/down/left/right/enter-equivalent commands through the app controller-direction/submit handlers, validates Name text keyboard evidence, Age numeric keyboard evidence, redness VAS/Likert conversion markers, panel-exit hide markers, glitch markers, questionnaire protocol metadata, and disabled diagnostic-only external signal protocol metadata, pulls both export folders, and compares exported values against expected outcomes. ADB input keyevent is not treated as the reliable transport for Spatial SDK panels. This is not physical controller-contact evidence.'
+        note = 'Fast directional questionnaire validation. It shortcuts instruction-audio waiting, replays bounded up/down/left/right/enter-equivalent commands through the app controller-direction/submit handlers, validates app-owned Name keyboard evidence, Age slider evidence, redness VAS/Likert conversion markers, panel-exit hide markers, glitch markers, questionnaire protocol metadata, and disabled diagnostic-only external signal protocol metadata, pulls both export folders, and compares exported values against expected outcomes. Raw ADB Name keyevent transport is validated separately by run-quest-demographics-direct-keyboard-validation.ps1. This is not physical controller-contact evidence.'
     }
     $summaryPath = Join-Path $outDir 'quest-keyevent-questionnaire-validation-summary.json'
     $summary | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $summaryPath -Encoding UTF8

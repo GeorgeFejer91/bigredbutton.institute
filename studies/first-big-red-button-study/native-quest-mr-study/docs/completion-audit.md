@@ -1,10 +1,33 @@
 # Completion Audit
 
-Generated for the current native Quest MR app state on 2026-06-10 13:48.
+Last refreshed for the current native Quest MR app state on 2026-06-13 15:28.
 
-This audit tracks the requested final state: a standalone no-Unity Meta Quest 3 mixed-reality Big Red Button experiment with passthrough, a reachable 3D button, real audio-timed conditions, questionnaire panels, local JSON/CSV exports, native Quest keyboard text entry for Name, controller-trigger Age selection, and validation evidence.
+This audit tracks the requested final state: a standalone no-Unity Meta Quest 3 mixed-reality Big Red Button experiment with passthrough, a reachable 3D button, real audio-timed conditions, questionnaire panels, local JSON/CSV exports, app-owned radial pop-out Name keyboard entry with direct keyevent validation, an in-panel 0-100 Age slider, and validation evidence.
 
-## Current Evidence Snapshot
+## Latest Software Evidence Refresh
+
+- APK: `app/build/outputs/apk/debug/app-debug.apk`, SHA-256 `C706C57E4B814AD920B74C187ECE834933581F8A886DF1D8D89B343D1B6372A2`, size `165366005` bytes.
+- Full local preflight: `artifacts/local-preflight/20260613-024935/local-preflight-summary.json`, status `pass` before the demographics input hotfix; the current APK is covered by the focused build/static/headset gates below.
+- Static validation: `artifacts/local-validation/validation-20260613-153139.json`, status `pass`.
+- Exact audio validation: `artifacts/audio-validation/audio-validation-20260613-025021.json`, status `pass`.
+- Localized audio catalog validation: `artifacts/localized-audio-validation/localized-audio-validation-20260613-025021.json`, status `pass`.
+- Synthetic export schema validation: `artifacts/export-schema-validation/export-schema-validation-20260613-025022.json`, status `pass`.
+- Demographics keyboard contract validation: `artifacts/native-keyboard-validation/native-keyboard-validation-20260613-152759.json`, status `pass`.
+- Quest direct raw-keyevent demographics validation: `artifacts/quest-demographics-direct-keyboard/20260613-152127/quest-demographics-direct-keyboard-validation-summary.json`, status `pass`, installed/uploaded APK SHA-256 `C706C57E4B814AD920B74C187ECE834933581F8A886DF1D8D89B343D1B6372A2`, and captured `demographics-direct-keyboard-name-entry.png` plus `demographics-direct-keyboard-after-entry.png`.
+- Focused Quest demographics smoke: `artifacts/quest-demographics-keyboard/20260613-152350/quest-demographics-keyboard-validation-summary.json`, status `pass`.
+- Quest demographics repeated-entry stress: `artifacts/quest-demographics-keypress-stress/20260613-152428/quest-demographics-keypress-stress-summary.json`, status `pass`.
+- Fast Quest directional/data validation: `artifacts/qkv/20260613-152518/quest-keyevent-questionnaire-validation-summary.json`, status `pass`, APK SHA-256 `C706C57E4B814AD920B74C187ECE834933581F8A886DF1D8D89B343D1B6372A2`, with `exportMirrorMatched=true`.
+- Visual layout preview: `artifacts/layout-previews/preview-20260613-152759/demographics-app-owned-keyboard-preview.png`, showing the app-owned Name keyboard and Age slider layout.
+- Quest panel/glitch visual smoke: `artifacts/quest-panel-smoke/20260613-152617/quest-panel-smoke-summary.json`, status `pass`, with fresh headset screenshots in that folder.
+- Physical evidence validator test: `artifacts/ppe-tests/t-20260613-025022/physical-evidence-validator-test-summary.json`, status `pass`.
+- Final hardware post-run audit validator behavioral test: `artifacts/final-hardware-postrun-audit-tests/t-20260613-025035/final-hardware-postrun-audit-validator-test-summary.json`, status `pass`.
+- Final hardware post-run audit binding verifier: `artifacts/final-hardware-postrun-audit-validation/validation-20260613-025035/final-hardware-postrun-audit-validation.json`, status `pass`.
+- Local layout previews: `artifacts/layout-previews/preview-20260613-152759`.
+- New-agent integration audit: `docs/new-agent-integration-audit.md`.
+
+The 2026-06-10 Quest smoke and failed external-gate rows below remain useful headset history, but they do not complete the final human controller-contact or live Polar H10 requirements for the current APK.
+
+## Prior Full Evidence Snapshot - 2026-06-10
 
 - APK: `app/build/outputs/apk/debug/app-debug.apk`, SHA-256 `55E3B082077BD55D939D1610E5FEC7AC56641B8FA62C201804AEE322CC951C2A`, size `107315659` bytes.
 - Full local preflight: `artifacts/local-preflight/20260610-132615/local-preflight-summary.json`.
@@ -37,12 +60,12 @@ This audit tracks the requested final state: a standalone no-Unity Meta Quest 3 
 | Smooth realistic GLB button is packaged and loaded | `app/src/main/assets/models/BigRedButton.glb`, SHA-256 `4BA2C479EAE6A103ADCE0B7D0AB70C94A5F21A12435DD90ACD0071F66EF5F52B`; static validation confirms GLB structure/materials/pressed animation |
 | Instruction MP3 bytes and durations are preserved | `artifacts/audio-validation/audio-validation-20260610-132618.json`; condition 1 `300.773878` s, condition 2 `325.590204` s |
 | Button remains visible during condition audio and panel is hidden | Static source checks plus Quest visual smoke screenshot `artifacts/quest-visual-layout-smoke/20260610-132347/button-condition-screenshot.png` |
-| Demographics, Button Experience, adapted presence ratings, and additional-time VAS exist | Static validation plus local previews in `artifacts/layout-previews/preview-20260610-132626` |
-| Participant ID hidden, gender four-choice, handedness three-choice, signature drawing pad | Static validation and qkv export validation `artifacts/qkv/20260610-132449/quest-keyevent-questionnaire-validation-summary.json` |
-| Demographics intake has single-owner Name/Age keyboard fields | Native EditText keyboard contract validation; qkv should confirm native text keyboard for Name, numeric keyboard for Age, EditText retarget markers, and panel-exit keyboard hide |
+| Demographics, Button Experience, adapted presence ratings, and additional-time VAS exist | Static validation plus local previews in `artifacts/layout-previews/preview-20260613-152759` |
+| Participant ID hidden, gender four-choice, handedness three-choice, signature drawing pad | Static validation and qkv export validation `artifacts/qkv/20260613-152518/quest-keyevent-questionnaire-validation-summary.json` |
+| Demographics intake has app-owned Name keyboard plus Age slider | `artifacts/native-keyboard-validation/native-keyboard-validation-20260613-152759.json`, `artifacts/quest-demographics-direct-keyboard/20260613-152127/quest-demographics-direct-keyboard-validation-summary.json`, `artifacts/quest-demographics-keyboard/20260613-152350/quest-demographics-keyboard-validation-summary.json`, and `artifacts/quest-demographics-keypress-stress/20260613-152428/quest-demographics-keypress-stress-summary.json` prove app-owned Name keyboard ownership, multi-character Name retention, Backspace/Space/Enter handling, Age 0-100 slider/no-IME, and panel-exit behavior |
 | Retired custom loose keyboard is absent | `tools/test-native-keyboard-contract.ps1` now fails if `useLooseKeyboard`, `requestLooseKeyboard`, `LooseKeyboard`, or `BRB_LOOSE_KEYBOARD` reappears in the activity |
-| Questionnaire panels spawn in gaze line and use BRB website-style aesthetics | Static validation, local previews, and headset panel/glitch screenshots in `artifacts/quest-panel-smoke/20260610-132413` |
-| Glitch intro/outro sound and blue software-failure overlay fire | Quest panel smoke `artifacts/quest-panel-smoke/20260610-132413/quest-panel-smoke-summary.json` and qkv `artifacts/qkv/20260610-132449/quest-keyevent-questionnaire-validation-summary.json` |
+| Questionnaire panels spawn in gaze line and use BRB website-style aesthetics | Static validation, local previews, and headset panel/glitch screenshots in `artifacts/quest-panel-smoke/20260613-152617` |
+| Glitch intro/outro sound and blue software-failure overlay fire | Quest panel smoke `artifacts/quest-panel-smoke/20260613-152617/quest-panel-smoke-summary.json` and qkv `artifacts/qkv/20260613-152518/quest-keyevent-questionnaire-validation-summary.json` |
 | Pictographic task uses same-button visual identity and calibrated self-origin distance axis | Static validation and `artifacts/layout-previews/preview-20260610-132626/pictographic-panel-preview.png`; qkv confirms exported closeness/presence values |
 | Redness VAS/Likert conversion exports both formats | qkv `artifacts/qkv/20260610-132449/quest-keyevent-questionnaire-validation-summary.json` confirms condition 1 `VAS=60`, `Likert=5`, `order=vas_then_likert`; condition 2 `VAS=66`, `Likert=5`, `order=likert_then_vas` |
 | Digital red transparent press counter is above the 3D button | Static validation and Quest visual screenshot `artifacts/quest-visual-layout-smoke/20260610-132347/button-condition-screenshot.png` |
@@ -51,7 +74,8 @@ This audit tracks the requested final state: a standalone no-Unity Meta Quest 3 
 | Polar H10 validity panel, real-vs-sham feedback assignment, simulated RR asset, and raw ECG/RR export schema exist | Static validation, synthetic export schema validation, and qkv feedback/export checks |
 | JSON, summary CSV, press-event CSV, ECG blink CSV, raw ECG time-series CSV, and `session-index.jsonl` schema exist | `artifacts/export-schema-validation/export-schema-validation-20260610-132618.json` and pulled qkv exports under `artifacts/qkv/20260610-132449/pulled` |
 | SideQuest-readable `ExperimentResults` mirror exists and is byte-comparable | qkv pulled `/sdcard/Android/data/org.bigredbutton.firststudy/files/ExperimentResults` and passed `exportMirrorMatched=true` with `artifacts/qkv/20260610-132449/export-mirror-comparison.json` |
-| Directional questionnaire/data replay works without full audio wait | qkv `artifacts/qkv/20260610-132449/quest-keyevent-questionnaire-validation-summary.json` compares expected vs observed demographics, button counts, pictographic responses, all adapted IPQ raw fields, Lost Opportunity scores, redness values, press provenance, ECG windows, and exports |
+| New-agent integration brief is represented as a native contract | `docs/new-agent-integration-audit.md`, `BRB_AGENT_INTEGRATION_CONTRACT`, JSON `agentIntegrationProtocol`, `tools/validate-export-schema.ps1 -Synthetic`, and `tools/validate-study.ps1 -SkipBuild` prove no Unity dependency, no Rusty XR broker, in-process questionnaires, brokerless native Polar PMD ECG/RR, disabled diagnostic LSL defaults, explicit standalone-panel bridge compatibility metadata, forbidden product mechanisms, and `controller_contact` final proof |
+| Directional questionnaire/data replay works without full audio wait | qkv `artifacts/qkv/20260613-133433/quest-keyevent-questionnaire-validation-summary.json` compares expected vs observed demographics, button counts, pictographic responses, all adapted IPQ raw fields, Lost Opportunity scores, redness values, press provenance, ECG windows, and exports |
 | ECG capture windows equal instruction-audio durations in qkv | qkv reports condition 1 `0..300774 ms` and `300774000000 ns`; condition 2 `0..325590 ms` and `325590000000 ns`; both at `130 Hz` |
 | Sham feedback blink/runtime flash path works | qkv reports simulated blink rows, runtime `BRB_ECG_BLINK`, runtime `BRB_HEARTBEAT_FLASH`, press timing columns, and zero simulated rows in the real ECG time-series export |
 | Final physical-gate tooling rejects automation and low-quality Polar evidence | `artifacts/ppe-tests/t-20260610-132618/physical-evidence-validator-test-summary.json` and static validation of `tools/validate-physical-press-evidence.ps1` |

@@ -2,4 +2,5 @@
 <resources>
   <item type="id" name="button_panel" />
   <item type="id" name="questionnaire_panel" />
+  <item type="id" name="keyboard_panel" />
 </resources>

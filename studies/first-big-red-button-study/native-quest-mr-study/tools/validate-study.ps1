@@ -89,32 +89,54 @@ function Get-KotlinFloatConst {
     return [double]::Parse($match.Groups[1].Value, [Globalization.CultureInfo]::InvariantCulture)
 }
 
+function Get-KotlinLongConst {
+    param(
+        [string]$Text,
+        [string]$Name
+    )
+    $pattern = "private const val\s+$([regex]::Escape($Name))\s*=\s*([0-9]+)L"
+    $match = [regex]::Match($Text, $pattern)
+    if (-not $match.Success) {
+        return $null
+    }
+    return [int64]::Parse($match.Groups[1].Value, [Globalization.CultureInfo]::InvariantCulture)
+}
+
 $manifest = Join-Path $projectRoot 'app\src\main\AndroidManifest.xml'
 $buildGradle = Join-Path $projectRoot 'app\build.gradle.kts'
 $activity = Join-Path $projectRoot 'app\src\main\java\org\bigredbutton\firststudy\BigRedButtonStudyActivity.kt'
-$audio1 = Join-Path $studyRoot 'audio-assets\final\first-big-red-button-vr-study-instructions-final.mp3'
-$audio2 = Join-Path $studyRoot 'audio-assets\final\first-big-red-button-vr-study-instructions-second-instructions-5-final.mp3'
+$ids = Join-Path $projectRoot 'app\src\main\res\values\ids.xml'
+$audio1 = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0100_condition_1_instructions__en_us.mp3'
+$audio2 = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0110_condition_2_instructions__en_us.mp3'
 $buttonModel = Join-Path $projectRoot 'app\src\main\assets\models\BigRedButton.glb'
 $buttonThumbnail = Join-Path $projectRoot 'app\src\main\res\drawable-nodpi\big_red_button_model_thumbnail.png'
-$questionnaireIntroGlitch = Join-Path $projectRoot 'app\src\main\res\raw\questionnaire_intro_glitch.mp3'
-$questionnaireOutroGlitch = Join-Path $projectRoot 'app\src\main\res\raw\questionnaire_outro_glitch.mp3'
-$firstQuestionnaireChange = Join-Path $projectRoot 'app\src\main\res\raw\first_questionnaire_change.mp3'
-$secondQuestionnaireChange = Join-Path $projectRoot 'app\src\main\res\raw\second_questionnaire_change_excuse.mp3'
+$questionnaireIntroGlitch = Join-Path $studyRoot 'audio-assets\localized\shared\questionnaire_transition\raw_0400_questionnaire_intro_glitch.mp3'
+$questionnaireOutroGlitch = Join-Path $studyRoot 'audio-assets\localized\shared\questionnaire_transition\raw_0410_questionnaire_outro_glitch.mp3'
+$firstQuestionnaireChange = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0300_redness_vas_to_likert_changeover__en_us.mp3'
+$secondQuestionnaireChange = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0310_redness_likert_to_vas_changeover__en_us.mp3'
 $firstQuestionnaireChangeSource = Join-Path $projectRoot '..\audio-assets\questionnaire\first-questionnaire-change.mp3'
 $secondQuestionnaireChangeSource = Join-Path $projectRoot '..\audio-assets\questionnaire\second-questionnaire-change-excuse.mp3'
-$questionnaireChoiceSound = Join-Path $projectRoot 'app\src\main\res\raw\ui_choice_blip.wav'
-$questionnaireNavigationSound = Join-Path $projectRoot 'app\src\main\res\raw\ui_navigation_blip.wav'
-$priorButtonExperienceQuestionSound = Join-Path $projectRoot 'app\src\main\res\raw\prior_button_experience_question.mp3'
-$priorButtonExperienceYesSound = Join-Path $projectRoot 'app\src\main\res\raw\prior_button_experience_yes.mp3'
-$priorButtonExperienceNoSound = Join-Path $projectRoot 'app\src\main\res\raw\prior_button_experience_no.mp3'
-$priorButtonExperiencePreStartSound = Join-Path $projectRoot 'app\src\main\res\raw\pre_start_instructions.mp3'
-$finalEndConfirmationQuestionSound = Join-Path $projectRoot 'app\src\main\res\raw\final_end_confirmation_question_prompt.mp3'
-$finalEndConfirmation10FeedbackSound = Join-Path $projectRoot 'app\src\main\res\raw\final_end_confirmation_10_feedback.mp3'
-$finalExtraPressPromptSound = Join-Path $projectRoot 'app\src\main\res\raw\final_extra_presses_prompt.mp3'
-$buttonPressSound = Join-Path $projectRoot 'app\src\main\assets\sfx\button-press-placeholder-kenney-bong.ogg'
+$questionnaireChoiceSound = Join-Path $studyRoot 'audio-assets\localized\shared\questionnaire_ui\sfx_9000_questionnaire_choice_blip.wav'
+$questionnaireNavigationSound = Join-Path $studyRoot 'audio-assets\localized\shared\questionnaire_ui\sfx_9010_questionnaire_navigation_blip.wav'
+$priorButtonExperienceQuestionSound = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0200_prior_experience_question__en_us.mp3'
+$priorButtonExperienceYesSound = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0210_prior_experience_yes_feedback__en_us.mp3'
+$priorButtonExperienceNoSound = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0220_prior_experience_no_feedback__en_us.mp3'
+$priorButtonExperiencePreStartSound = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0230_pre_start_instructions__en_us.mp3'
+$finalEndConfirmationQuestionSound = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0500_final_end_confirmation_question__en_us.mp3'
+$finalEndConfirmation10FeedbackSound = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0510_final_end_confirmation_10_feedback__en_us.mp3'
+$finalExtraPressPromptSound = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0600_final_extra_presses_prompt__en_us.mp3'
+$localizedAudioManifest = Join-Path $studyRoot 'audio-assets\localized\manifest.json'
+$audioScriptLookupTable = Join-Path $projectRoot 'docs\audio-script-lookup-table.csv'
+$ipqHistoryPart1EnglishSound = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0320_ipq_history_part1__en_us.mp3'
+$ipqHistoryPart1JapaneseSound = Join-Path $studyRoot 'audio-assets\localized\ja_jp\aud_0320_ipq_history_part1__ja_jp.mp3'
+$ipqHistoryPart2EnglishSound = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0330_ipq_history_part2__en_us.mp3'
+$ipqHistoryPart2JapaneseSound = Join-Path $studyRoot 'audio-assets\localized\ja_jp\aud_0330_ipq_history_part2__ja_jp.mp3'
+$buttonPressSound = Join-Path $studyRoot 'audio-assets\localized\shared\button_press\sfx_9020_button_press_placeholder_kenney_bong.ogg'
 $simulatedRrAsset = Join-Path $projectRoot 'app\src\main\assets\ecg\neurokit2_simulated_rr_intervals_ms.csv'
 $polarClient = Join-Path $projectRoot 'app\src\main\java\org\bigredbutton\firststudy\PolarH10HeartRateClient.kt'
 $glowVariantGenerator = Join-Path $projectRoot 'tools\create-button-glow-variants.py'
+$appRawDir = Join-Path $projectRoot 'app\src\main\res\raw'
+$appSfxDir = Join-Path $projectRoot 'app\src\main\assets\sfx'
 
 Add-Check 'manifest exists' (Test-Path $manifest) $manifest
 Add-Check 'activity exists' (Test-Path $activity) $activity
@@ -133,10 +155,28 @@ Add-Check 'pre-start instructions sound exists' (Test-Path $priorButtonExperienc
 Add-Check 'final end confirmation question prompt sound exists' (Test-Path $finalEndConfirmationQuestionSound) $finalEndConfirmationQuestionSound
 Add-Check 'final end confirmation 10 feedback sound exists' (Test-Path $finalEndConfirmation10FeedbackSound) $finalEndConfirmation10FeedbackSound
 Add-Check 'final extra presses prompt sound exists' (Test-Path $finalExtraPressPromptSound) $finalExtraPressPromptSound
+Add-Check 'localized audio manifest exists' (Test-Path $localizedAudioManifest) $localizedAudioManifest
+Add-Check 'audio script lookup table exists' (Test-Path $audioScriptLookupTable) $audioScriptLookupTable
+Add-Check 'IPQ history part 1 English sound exists' (Test-Path $ipqHistoryPart1EnglishSound) $ipqHistoryPart1EnglishSound
+Add-Check 'IPQ history part 1 Japanese sound exists' (Test-Path $ipqHistoryPart1JapaneseSound) $ipqHistoryPart1JapaneseSound
+Add-Check 'IPQ history part 2 English sound exists' (Test-Path $ipqHistoryPart2EnglishSound) $ipqHistoryPart2EnglishSound
+Add-Check 'IPQ history part 2 Japanese sound exists' (Test-Path $ipqHistoryPart2JapaneseSound) $ipqHistoryPart2JapaneseSound
 Add-Check 'button press sound placeholder exists' (Test-Path $buttonPressSound) $buttonPressSound
 Add-Check 'simulated NeuroKit2 RR asset exists' (Test-Path $simulatedRrAsset) $simulatedRrAsset
 Add-Check 'Polar H10 BLE client exists' (Test-Path $polarClient) $polarClient
 Add-Check 'button glow variant generator exists' (Test-Path $glowVariantGenerator) $glowVariantGenerator
+if (Test-Path $appRawDir) {
+    $appRawAudioFiles = @(Get-ChildItem -LiteralPath $appRawDir -File | Where-Object { $_.Extension -in @('.mp3', '.wav', '.ogg') })
+    Add-Check 'app raw directory has no runtime audio files' ($appRawAudioFiles.Count -eq 0) (($appRawAudioFiles | ForEach-Object { $_.Name }) -join ',')
+} else {
+    Add-Check 'app raw directory has no runtime audio files' $true 'directory absent'
+}
+if (Test-Path $appSfxDir) {
+    $appSfxAudioFiles = @(Get-ChildItem -LiteralPath $appSfxDir -File | Where-Object { $_.Extension -in @('.mp3', '.wav', '.ogg') })
+    Add-Check 'app assets sfx directory has no runtime audio files' ($appSfxAudioFiles.Count -eq 0) (($appSfxAudioFiles | ForEach-Object { $_.Name }) -join ',')
+} else {
+    Add-Check 'app assets sfx directory has no runtime audio files' $true 'directory absent'
+}
 
 if (Test-Path $audio1) {
     Add-Check 'condition 1 audio nonempty' ((Get-Item $audio1).Length -gt 100000) ((Get-Item $audio1).Length.ToString())
@@ -145,6 +185,22 @@ if (Test-Path $audio1) {
 if (Test-Path $audio2) {
     Add-Check 'condition 2 audio nonempty' ((Get-Item $audio2).Length -gt 100000) ((Get-Item $audio2).Length.ToString())
     Add-Check 'condition 2 audio hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $audio2).Hash -eq 'E52E53640DF5398FEC3DFE328877CBE429EDD3F5D3AB60E5A19FB1C6EBAD48A7') 'original final MP3 SHA256'
+}
+if (Test-Path $ipqHistoryPart1EnglishSound) {
+    Add-Check 'IPQ history part 1 English sound nonempty' ((Get-Item $ipqHistoryPart1EnglishSound).Length -gt 100000) ((Get-Item $ipqHistoryPart1EnglishSound).Length.ToString())
+    Add-Check 'IPQ history part 1 English sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $ipqHistoryPart1EnglishSound).Hash -eq 'AAD3BDB00F1928D7688790567197C934629300CF038337D6BC66CA364F01C137') 'aud_0320 English MP3 SHA256'
+}
+if (Test-Path $ipqHistoryPart1JapaneseSound) {
+    Add-Check 'IPQ history part 1 Japanese sound nonempty' ((Get-Item $ipqHistoryPart1JapaneseSound).Length -gt 100000) ((Get-Item $ipqHistoryPart1JapaneseSound).Length.ToString())
+    Add-Check 'IPQ history part 1 Japanese sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $ipqHistoryPart1JapaneseSound).Hash -eq 'AAB46B0E6D8FF2E2CE00444E11F4963B309E152B007EBC185D9FCFB69869A0DC') 'aud_0320 Japanese MP3 SHA256'
+}
+if (Test-Path $ipqHistoryPart2EnglishSound) {
+    Add-Check 'IPQ history part 2 English sound nonempty' ((Get-Item $ipqHistoryPart2EnglishSound).Length -gt 100000) ((Get-Item $ipqHistoryPart2EnglishSound).Length.ToString())
+    Add-Check 'IPQ history part 2 English sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $ipqHistoryPart2EnglishSound).Hash -eq '05F81ADFAD49EECEB9245DCBBF0656EE90C0B8ADE0D3856E9DBE40FB65087772') 'aud_0330 English MP3 SHA256'
+}
+if (Test-Path $ipqHistoryPart2JapaneseSound) {
+    Add-Check 'IPQ history part 2 Japanese sound nonempty' ((Get-Item $ipqHistoryPart2JapaneseSound).Length -gt 100000) ((Get-Item $ipqHistoryPart2JapaneseSound).Length.ToString())
+    Add-Check 'IPQ history part 2 Japanese sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $ipqHistoryPart2JapaneseSound).Hash -eq '6C05D79DC79F5FDAA2C776A0AFEBA00B1889D0027F2B4EB42A9EC82FAE255B63') 'aud_0330 Japanese MP3 SHA256'
 }
 if (Test-Path $buttonModel) {
     Add-Check 'Big Red Button model hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $buttonModel).Hash -eq '4BA2C479EAE6A103ADCE0B7D0AB70C94A5F21A12435DD90ACD0071F66EF5F52B') 'smooth realistic BigRedButton.glb SHA256'
@@ -195,7 +251,7 @@ if ((Test-Path $firstQuestionnaireChange) -and (Test-Path $firstQuestionnaireCha
     ) 'first-questionnaire-change.mp3 recovered from Gmail raw MIME and packaged byte-identically'
     Add-Check 'first redness questionnaire-change sound nonempty' ((Get-Item $firstQuestionnaireChange).Length -gt 300000) ((Get-Item $firstQuestionnaireChange).Length.ToString())
 } else {
-    Add-Check 'first redness questionnaire-change sound exists' $false 'source audio-assets/questionnaire and app raw resource must both exist'
+    Add-Check 'first redness questionnaire-change sound exists' $false 'source audio-assets/questionnaire and centralized localized English asset must both exist'
 }
 if ((Test-Path $secondQuestionnaireChange) -and (Test-Path $secondQuestionnaireChangeSource)) {
     Add-Check 'second redness questionnaire-change sound hash preserved' (
@@ -204,7 +260,7 @@ if ((Test-Path $secondQuestionnaireChange) -and (Test-Path $secondQuestionnaireC
     ) 'second-questionnaire-change-excuse.mp3 recovered from Gmail raw MIME and packaged byte-identically'
     Add-Check 'second redness questionnaire-change sound nonempty' ((Get-Item $secondQuestionnaireChange).Length -gt 250000) ((Get-Item $secondQuestionnaireChange).Length.ToString())
 } else {
-    Add-Check 'second redness questionnaire-change sound exists' $false 'source audio-assets/questionnaire and app raw resource must both exist'
+    Add-Check 'second redness questionnaire-change sound exists' $false 'source audio-assets/questionnaire and centralized localized English asset must both exist'
 }
 if (Test-Path $questionnaireChoiceSound) {
     Add-Check 'questionnaire choice sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $questionnaireChoiceSound).Hash -eq '5005D0A634AAC456D3D495824C057ED14CF58D21EFC16C06772B48520436F8A4') 'short UI choice cue SHA256'
@@ -294,6 +350,11 @@ if (Test-Path $manifest) {
         $manifestText.Contains('android.permission.BLUETOOTH_CONNECT') -and
         $manifestText.Contains('android.permission.ACCESS_FINE_LOCATION')
     ) 'runtime BLE scan/connect permissions'
+    Add-Check 'forbidden product-route permissions absent' (
+        -not $manifestText.Contains('android.permission.QUERY_ALL_PACKAGES') -and
+        -not $manifestText.Contains('android.permission.SYSTEM_ALERT_WINDOW') -and
+        -not $manifestText.Contains('ACTION_MANAGE_OVERLAY_PERMISSION')
+    ) 'questionnaire/signal integration must not depend on broad package visibility or overlay permissions'
 }
 
 if (Test-Path $buildGradle) {
@@ -303,23 +364,72 @@ if (Test-Path $buildGradle) {
 
 if (Test-Path $activity) {
     $activityText = Get-Content -Raw -LiteralPath $activity
+    $idsText = if (Test-Path $ids) { Get-Content -Raw -LiteralPath $ids } else { '' }
     $ipqItemCount = ([regex]::Matches($activityText, 'PresenceItem\s*\(')).Count - 1
     Add-Check 'adapted IPQ item count' ($ipqItemCount -eq 14) "count=$ipqItemCount"
     Add-Check 'passthrough enabled in scene' ($activityText.Contains('scene.enablePassthrough(true)')) 'scene.enablePassthrough(true)'
-    Add-Check 'condition 1 audio asset reference' ($activityText.Contains('first-big-red-button-vr-study-instructions-final.mp3')) 'condition 1 final MP3'
-    Add-Check 'condition 2 audio asset reference' ($activityText.Contains('first-big-red-button-vr-study-instructions-second-instructions-5-final.mp3')) 'condition 2 final MP3'
+    Add-Check 'condition 1 centralized audio asset reference' ($activityText.Contains('localized/en_us/aud_0100_condition_1_instructions__en_us.mp3')) 'central localized aud_0100 English MP3'
+    Add-Check 'condition 2 centralized audio asset reference' ($activityText.Contains('localized/en_us/aud_0110_condition_2_instructions__en_us.mp3')) 'central localized aud_0110 English MP3'
+    Add-Check 'no app raw audio references in activity' (-not $activityText.Contains('R.raw.') -and -not $activityText.Contains('resources.openRawResourceFd')) 'runtime audio resolves through assets/localized/**'
+    Add-Check 'IPQ history narration cue wired' (
+        $activityText.Contains('AUDIO_ID_IPQ_HISTORY_PART_1 = "aud_0320"') -and
+        $activityText.Contains('AUDIO_ID_IPQ_HISTORY_PART_2 = "aud_0330"') -and
+        $activityText.Contains('LOCALIZED_EN_IPQ_HISTORY_PART_1_AUDIO') -and
+        $activityText.Contains('LOCALIZED_EN_IPQ_HISTORY_PART_2_AUDIO') -and
+        $activityText.Contains('LOCALIZED_JA_IPQ_HISTORY_PART_1_AUDIO') -and
+        $activityText.Contains('LOCALIZED_JA_IPQ_HISTORY_PART_2_AUDIO') -and
+        $activityText.Contains('playIpqHistoryNarration(run.conditionNumber, "pictographic_submit")') -and
+        $activityText.Contains('BRB_IPQ_HISTORY_NARRATION_CUE condition=$conditionNumber') -and
+        $activityText.Contains('blocking=false') -and
+        $activityText.Contains('localized/en_us/aud_0320_ipq_history_part1__en_us.mp3') -and
+        $activityText.Contains('localized/ja_jp/aud_0320_ipq_history_part1__ja_jp.mp3') -and
+        $activityText.Contains('localized/en_us/aud_0330_ipq_history_part2__en_us.mp3') -and
+        $activityText.Contains('localized/ja_jp/aud_0330_ipq_history_part2__ja_jp.mp3')
+    ) 'localized aud_0320/aud_0330 play when the presence questionnaire opens after each block'
     Add-Check 'media completion ends condition' ($activityText.Contains('setOnCompletionListener { endConditionFromAudio() }')) 'MediaPlayer completion gate'
     Add-Check 'model-backed 3D button visual' ($activityText.Contains('buttonVisual=model-asset') -and $activityText.Contains('BUTTON_MODEL_ASSET_URI = "apk:///models/BigRedButton.glb"')) 'BigRedButton.glb model marker'
     Add-Check 'model material not flattened' (-not $activityText.Contains('defaultShaderOverride = SceneMaterial.UNLIT_SHADER')) 'model uses embedded/material PBR path instead of forced unlit shader'
     Add-Check 'model press animation named' ($activityText.Contains('BUTTON_MODEL_PRESS_ANIMATION = "pressed"') -and $activityText.Contains('animationName = BUTTON_MODEL_PRESS_ANIMATION')) 'GLB pressed animation track'
     Add-Check 'model press animation clamps' ($activityText.Contains('PlaybackType.CLAMP')) 'Meta Spatial SDK clamp playback for one-shot press'
+    $pressCooldownMs = Get-KotlinLongConst $activityText 'BUTTON_PRESS_COOLDOWN_MS'
+    $pressClipMs = Get-KotlinLongConst $activityText 'BUTTON_PRESS_ANIMATION_CLIP_MS'
+    $pressRestartGuardMs = Get-KotlinLongConst $activityText 'BUTTON_PRESS_MOTION_RESTART_GUARD_MS'
+    Add-Check 'button press animation visual restart guard' (
+        $pressCooldownMs -eq 180 -and
+        $pressClipMs -eq 160 -and
+        $pressRestartGuardMs -ge ($pressCooldownMs + 40) -and
+        $pressRestartGuardMs -gt $pressClipMs -and
+        $activityText.Contains('buttonPressMotionSequence') -and
+        $activityText.Contains('lastButtonPressMotionStartRealtimeMs') -and
+        $activityText.Contains('BRB_BUTTON_MODEL_ANIMATION_SCHEDULE state=deferred') -and
+        $activityText.Contains('state=canceled reason=newer_press') -and
+        $activityText.Contains('BRB_BUTTON_MODEL_ANIMATION_RESET') -and
+        $activityText.Contains('BRB_BUTTON_PRESS_ANIMATION_STRESS state=scheduled') -and
+        $activityText.Contains('safeCommand == "button_press_animation_stress"') -and
+        $activityText.Contains('recordButtonPress(PRESS_SOURCE_AUDIO_RIG_STRESS)') -and
+        $activityText.Contains('BUTTON_PRESS_ANIMATION_STRESS_INTERVAL_MS = 200L') -and
+        $activityText.Contains('PRESS_SOURCE_AUDIO_RIG_STRESS = "audio_rig_stress"') -and
+        $activityText.Contains('inputSource == PRESS_SOURCE_AUDIO_RIG_STRESS') -and
+        $activityText.Contains('startButtonPressMotion(') -and
+        $activityText.Contains('setButtonPressedAnimationComponent(buttonModelEntity') -and
+        $activityText.Contains('applyStableButtonModelVisibility()') -and
+        $activityText.Contains('target=stable_idle_model') -and
+        $activityText.Contains('acceptedPressImmediate=true countSoundImmediate=true') -and
+        $activityText.Contains('glowGeometrySwap=false') -and
+        $activityText.Contains('stage == StudyStage.ConditionRunning || stage == StudyStage.FinalExtraPresses') -and
+        $activityText.Contains('mainHandler.postDelayed(') -and
+        -not $activityText.Contains('playButtonPressedAnimation(buttonModelEntity)')
+    ) "press visual restart guard $pressRestartGuardMs ms is longer than cooldown $pressCooldownMs ms and clip $pressClipMs ms"
     Add-Check 'controller contact collider' (
         $activityText.Contains('IsdkBoxCollider') -and
-        $activityText.Contains('shape=multi_box_cap') -and
+        $activityText.Contains('shape=multi_box_cap_plus_full_surface') -and
         $activityText.Contains('buttonContactTargets') -and
         $activityText.Contains('BUTTON_CONTACT_RING_BOX_COUNT = 6') -and
+        $activityText.Contains('BUTTON_CONTACT_FULL_SURFACE_WIDTH_METERS') -and
+        $activityText.Contains('tapAnyCapSurface=true') -and
+        $activityText.Contains('controllerProofPreserved=true') -and
         $activityText.Contains('COLLIDER_HOVER_CONTACT_ACTUATE')
-    ) 'seven-box ISDK cap contact target accepts controller contact'
+    ) 'ISDK cap contact target includes center/ring boxes plus a full-surface cap target for easier hand touch while preserving controller proof'
     Add-Check 'controller contact latch' (
         $activityText.Contains('ButtonContactLatch') -and
         $activityText.Contains('BUTTON_CONTACT_LATCH_FORCE_REARM_MS') -and
@@ -436,10 +546,12 @@ if (Test-Path $activity) {
         $activityText.Contains('transparentCounterQuestionnaire = stage == StudyStage.FinalEndQuestionnaire') -and
         $activityText.Contains('FinalEndQuestionnaireScreen') -and
         $activityText.Contains('color = CounterDigitRed') -and
-        $activityText.Contains('R.raw.final_end_confirmation_question_prompt') -and
+        $activityText.Contains('AUDIO_ID_FINAL_END_QUESTION = "aud_0500"') -and
+        $activityText.Contains('LOCALIZED_EN_FINAL_END_QUESTION_AUDIO') -and
         $activityText.Contains('BRB_FINAL_END_CONFIRMATION_QUESTION_CUE') -and
         $activityText.Contains('FINAL_END_CONFIRMATION_QUESTION_AUDIO_DURATION_MS = 5146L') -and
-        $activityText.Contains('R.raw.final_end_confirmation_10_feedback') -and
+        $activityText.Contains('AUDIO_ID_FINAL_END_10_FEEDBACK = "aud_0510"') -and
+        $activityText.Contains('LOCALIZED_EN_FINAL_END_10_FEEDBACK_AUDIO') -and
         $activityText.Contains('BRB_FINAL_END_CONFIRMATION_FEEDBACK_CUE') -and
         $activityText.Contains('FINAL_END_CONFIRMATION_10_FEEDBACK_AUDIO_DURATION_MS = 16274L') -and
         $activityText.Contains('FINAL_END_CONFIRMATION_FEEDBACK_HOLD_MS = 16550L') -and
@@ -447,7 +559,8 @@ if (Test-Path $activity) {
         $activityText.Contains('BRB_FINAL_END_CONFIRMATION_SAVED') -and
         $activityText.Contains('BRB_FINAL_EXTRA_BUTTON_CHALLENGE_START') -and
         $activityText.Contains('That is fantastic! I will take your non-decimal response as a big red YES!') -and
-        $activityText.Contains('R.raw.final_extra_presses_prompt') -and
+        $activityText.Contains('AUDIO_ID_FINAL_EXTRA_PRESSES = "aud_0600"') -and
+        $activityText.Contains('LOCALIZED_EN_FINAL_EXTRA_PRESSES_AUDIO') -and
         $activityText.Contains('BRB_FINAL_EXTRA_PROMPT_CUE') -and
         $activityText.Contains('FINAL_EXTRA_PRESSES_PROMPT_AUDIO_DURATION_MS = 45636L') -and
         $activityText.Contains('FINAL_EXTRA_PRESSES_PROMPT_HOLD_MS = 46100L') -and
@@ -507,6 +620,59 @@ if (Test-Path $activity) {
         -not (Test-Path (Join-Path $projectRoot 'app\src\main\jniLibs\arm64-v8a\liblsl.so')) -and
         -not $activityText.Contains('System.loadLibrary("lsl")')
     ) 'disabled-by-default Unity-compatible LSL/external signal schema is present without adding an untested JNI dependency'
+    Add-Check 'new-agent integration brief native contract' (
+        $activityText.Contains('agentIntegrationProtocolJson') -and
+        $activityText.Contains('bigredbutton.agent_integration.v1') -and
+        $activityText.Contains('New-Agent-Integration-Brief.md') -and
+        $activityText.Contains('sourceBriefRepository", "MesmerPrism/the-big-red-button-institute"') -and
+        $activityText.Contains('sourceBriefBranch", "codex/brb-questionnaire-panel-bridge"') -and
+        $activityText.Contains('adaptation", "native_meta_spatial_sdk_in_process"') -and
+        $activityText.Contains('unityDependency", false') -and
+        $activityText.Contains('rustyXrBrokerRequired", false') -and
+        $activityText.Contains('localHeadsetExportsOnly", true') -and
+        $activityText.Contains('standalonePanelPackage", QUEST_QUESTIONNAIRE_PANEL_PACKAGE') -and
+        $activityText.Contains('standalonePanelAdopted", false') -and
+        $activityText.Contains('externalPanelContractCompatibleIfAdopted", true') -and
+        $activityText.Contains('externalPanelContractIfAdopted') -and
+        $activityText.Contains('quest.questionnaire.v1') -and
+        $activityText.Contains('launchIntent", "explicit"') -and
+        $activityText.Contains('requestJsonExtra", "request_json"') -and
+        $activityText.Contains('resultUriScheme", "content"') -and
+        $activityText.Contains('resultUriOwner", "caller"') -and
+        $activityText.Contains('writeUriGrant", true') -and
+        $activityText.Contains('completionCallback", "one_shot_immutable_broadcast_pending_intent"') -and
+        $activityText.Contains('answersOnlyWrittenToCallerUri", true') -and
+        $activityText.Contains('callerReadsOwnResultUri", true') -and
+        $activityText.Contains('adbProductCommunication", false') -and
+        $activityText.Contains('publicSharedStorageExchange", false') -and
+        $activityText.Contains('mediaStoreExchange", false') -and
+        $activityText.Contains('fileUriExchange", false') -and
+        $activityText.Contains('packageKillReturnFlow", false') -and
+        $activityText.Contains('overlayReturnFlow", false') -and
+        $activityText.Contains('queryAllPackages", false') -and
+        $activityText.Contains('systemAlertWindow", false') -and
+        $activityText.Contains('transport", "native_ble_pmd_ecg_rr"') -and
+        $activityText.Contains('recordsBothConditions", true') -and
+        $activityText.Contains('unityCompatibleDefaults", true') -and
+        $activityText.Contains('finalPressProofAllowed", false') -and
+        $activityText.Contains('finalParticipantPressProof", PRESS_SOURCE_CONTROLLER_CONTACT') -and
+        $activityText.Contains('stableButtonModelDuringBlink", true') -and
+        $activityText.Contains('externalSignalPressesSatisfyFinalGate", false') -and
+        $activityText.Contains('AGENT_INTEGRATION_FORBIDDEN_PRODUCT_MECHANISMS') -and
+        $activityText.Contains('BRB_AGENT_INTEGRATION_CONTRACT') -and
+        $activityText.Contains('directPolarPmdActive=true') -and
+        $activityText.Contains('directLslEnabled=$LSL_INPUT_ENABLED') -and
+        $activityText.Contains('finalPressProof=controller_contact') -and
+        $activityText.Contains('answersLogged=false')
+    ) 'native app exports/logs the integration brief as a versioned contract without importing Unity, broker, or standalone-panel runtime dependencies'
+    Add-Check 'forbidden product communication mechanisms absent from activity' (
+        -not $activityText.Contains('QUERY_ALL_PACKAGES') -and
+        -not $activityText.Contains('SYSTEM_ALERT_WINDOW') -and
+        -not $activityText.Contains('ACTION_MANAGE_OVERLAY_PERMISSION') -and
+        -not $activityText.Contains('MediaStore') -and
+        -not $activityText.Contains('getExternalStoragePublicDirectory') -and
+        -not $activityText.Contains('file://')
+    ) 'product communication remains app-internal/local export; development ADB scripts remain separate from participant flow'
     Add-Check 'pictographic distance variable' ($activityText.Contains('self_button_distance_units')) 'self_button_distance_units'
     Add-Check 'pictographic radius variable' ($activityText.Contains('button_presence_radius_units')) 'button_presence_radius_units'
     Add-Check 'lost opportunity variable' ($activityText.Contains('lost_opportunity_for_better_results_quotient')) 'lost_opportunity_for_better_results_quotient'
@@ -549,8 +715,11 @@ if (Test-Path $activity) {
         $activityText.Contains('BRB_REDNESS_POST_CONVERSION_EDIT') -and
         $activityText.Contains('Modifier.fillMaxWidth().padding(horizontal = 28.dp)') -and
         $activityText.Contains('Arrangement.spacedBy(10.dp)') -and
-        $activityText.Contains('R.raw.first_questionnaire_change') -and
-        $activityText.Contains('R.raw.second_questionnaire_change_excuse') -and
+        $activityText.Contains('AUDIO_ID_REDNESS_VAS_TO_LIKERT = "aud_0300"') -and
+        $activityText.Contains('AUDIO_ID_REDNESS_LIKERT_TO_VAS = "aud_0310"') -and
+        $activityText.Contains('LOCALIZED_EN_REDNESS_VAS_TO_LIKERT_AUDIO') -and
+        $activityText.Contains('LOCALIZED_EN_REDNESS_LIKERT_TO_VAS_AUDIO') -and
+        $activityText.Contains('playLocalizedAssetCue(cue.audioId, cue.cueName)') -and
         $activityText.Contains('placeholder=false') -and
         -not $activityText.Contains('redness_scale_conversion_pending_apology')
     ) 'third redness control flips VAS to Likert in block 1 and Likert to VAS in block 2, with real questionnaire-change audio and timed visual choreography'
@@ -580,9 +749,13 @@ if (Test-Path $activity) {
         $activityText.Contains('condition_${condition}_redness_carried_forward_vas_0_100') -and
         $activityText.Contains('condition_${condition}_redness_changed_after_conversion')
     ) 'both final redness values, carried-forward closest analogues, and post-conversion change flags are written to JSON, logcat, and summary CSV'
-    Add-Check 'pictographic circle boundaries thickened' (
-        ([regex]::Matches($activityText, 'style = Stroke\(width = 9f\)')).Count -ge 2
-    ) 'self boundary and button-presence boundary use thicker 9 px strokes'
+    Add-Check 'pictographic circle boundaries thickened and start-matched' (
+        ([regex]::Matches($activityText, 'style = Stroke\(width = 9f\)')).Count -ge 2 -and
+        $activityText.Contains('val selfBoundaryRadius = buttonPresenceRadiusUnits(50f)') -and
+        $activityText.Contains('drawCircle(') -and
+        $activityText.Contains('BrbInk.copy(alpha = 0.78f)') -and
+        $activityText.Contains('radius = selfBoundaryRadius')
+    ) 'self boundary encloses the stick figure, matches the default button-presence circle, and uses a darker 9 px stroke'
     Add-Check 'website-style intake header' ($activityText.Contains('IntakeWebsiteHeader') -and $activityText.Contains('Brush.linearGradient') -and $activityText.Contains('Big Red Button Institute | Intake')) 'demographics page mirrors BRB website header treatment'
     Add-Check 'participant-facing start experiment label' (
         ($activityText.Contains('PrimaryActionButton("Start experiment"') -or
@@ -592,29 +765,59 @@ if (Test-Path $activity) {
     Add-Check 'participant ID assigned under hood' ($activityText.Contains('participantIdSource=${if (participantIdOverride.isNullOrBlank()) "generated" else "validation_override"}') -and -not $activityText.Contains('LabeledTextField("Participant ID"')) 'participant ID is generated or validation-overridden, not typed by participant'
     Add-Check 'gender four-choice' ($activityText.Contains('GenderChoice') -and $activityText.Contains('"male" to activity.t("male")') -and $activityText.Contains('"female" to activity.t("female")') -and $activityText.Contains('"other" to activity.t("other")') -and $activityText.Contains('"prefer_not_to_say" to activity.t("prefer_not_to_say")')) 'Male/Female/Other/Prefer not to say choice buttons'
     Add-Check 'handedness tri-choice' ($activityText.Contains('HandednessChoice') -and $activityText.Contains('"left" to activity.t("left")') -and $activityText.Contains('"right" to activity.t("right")') -and $activityText.Contains('"ambidextrous" to activity.t("ambidextrous")')) 'Left/Right/Ambidextrous choice buttons'
-    Add-Check 'visible Android EditText demographics keyboard hooks' (
-        $activityText.Contains('AndroidView(') -and
-        $activityText.Contains('EditText(context).apply') -and
-        $activityText.Contains('fieldId = "name"') -and
-        $activityText.Contains('fieldId = "age"') -and
-        $activityText.Contains('InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS') -and
-        $activityText.Contains('InputType.TYPE_CLASS_NUMBER') -and
-        $activityText.Contains('EditorInfo.IME_ACTION_NEXT') -and
-        $activityText.Contains('EditorInfo.IME_ACTION_DONE') -and
+    Add-Check 'app-owned Name keyboard and Age slider demographics hooks' (
+        $activityText.Contains('NamePanelKeyboard') -and
+        $activityText.Contains('NameKeyboardPopupPanel') -and
+        $activityText.Contains('Panel(R.id.keyboard_panel)') -and
+        $activityText.Contains('R.id.keyboard_panel') -and
+        $idsText.Contains('name="keyboard_panel"') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_Y_METERS') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_Z_METERS') -and
+        $activityText.Contains('BRB_NAME_APP_KEYBOARD_CONTRACT') -and
+        $activityText.Contains('BRB_NAME_APP_KEYBOARD_PANEL_LAYOUT') -and
+        $activityText.Contains('BRB_NAME_APP_KEYBOARD_VISIBILITY') -and
+        $activityText.Contains('implementation=app_owned') -and
+        $activityText.Contains('platformControl=AppOwnedKeyboard') -and
+        $activityText.Contains('inputOwner=appOwnedNameKeyboard') -and
+        $activityText.Contains('keyboardPanel=keyboard_panel') -and
+        $activityText.Contains('presentation=pop_out_spatial_panel') -and
+        $activityText.Contains('integratedInQuestionnaire=false') -and
+        $activityText.Contains('appearsOnTextFieldFocus=true') -and
+        $activityText.Contains('noSystemImeDependency=true') -and
+        $activityText.Contains('directAdbKeyeventValidation=true') -and
+        $activityText.Contains('hardwareKeyeventFallback=true') -and
+        $activityText.Contains('"QWERTYUIOP"') -and
+        $activityText.Contains('"ASDFGHJKL"') -and
+        $activityText.Contains('"ZXCVBNM"') -and
+        $activityText.Contains('"Clear", "Space", "Back", "Next"') -and
+        $activityText.Contains('"Clear" ->') -and
+        $activityText.Contains('"Space" ->') -and
+        $activityText.Contains('"Back" ->') -and
+        $activityText.Contains('"Next" ->') -and
         $activityText.Contains('DEMOGRAPHICS_NAME_MAX_CHARS = 80') -and
-        $activityText.Contains('DEMOGRAPHICS_AGE_MAX_DIGITS = 3') -and
-        $activityText.Contains('normalizeAgeInput(raw)') -and
-        $activityText.Contains('InputFilter.LengthFilter(maxChars)') -and
-        $activityText.Contains('requestDemographicsTextInputFocus("age", "name_submit_next")') -and
+        $activityText.Contains('DEMOGRAPHICS_AGE_MIN = 0') -and
+        $activityText.Contains('DEMOGRAPHICS_AGE_MAX = 100') -and
+        $activityText.Contains('normalizeAgeSliderInput(raw)') -and
+        $activityText.Contains('focusDemographicsAgeSlider("app_owned_keyboard_next")') -and
+        $activityText.Contains('focusDemographicsAgeSlider("validation_app_keyboard_submit")') -and
+        $activityText.Contains('pressSelectedDemographicsNameKeyboardKey("hardware_key_event")') -and
+        $activityText.Contains('focusDemographicsAgeSlider("${safeSource}_name_next")') -and
         -not $activityText.Contains('name_valid_auto_advance') -and
-        $activityText.Contains('hideSoftKeyboardForReason("field_age_done")') -and
-        $activityText.Contains('focus_request_retry_') -and
+        $activityText.Contains('field_name_to_age_slider') -and
         $activityText.Contains('requiredTextField') -and
+        $activityText.Contains('setNameKeyboardVisible(true') -and
+        $activityText.Contains('setNameKeyboardVisible(false') -and
+        -not $activityText.Contains('showNameKeyboard') -and
         $activityText.Contains('isRequired = requiredTextField == "name"') -and
         $activityText.Contains('isRequired = requiredTextField == "age"') -and
         $activityText.Contains('isGuidedField = isFocused || isRequired') -and
         $activityText.Contains('handleDemographicsHardwareKeyEvent(event)') -and
-        $activityText.Contains('appendDemographicsNameCharacter') -and
+        $activityText.Contains('if (focusedField == "name")') -and
+        $activityText.Contains('appendDemographicsNameCharacter(hardwareChar, "hardware_key_event")') -and
+        $activityText.Contains('backspaceDemographicsName("hardware_key_event")') -and
+        $activityText.Contains('KeyEvent.KEYCODE_DPAD_CENTER') -and
+        $activityText.Contains('KeyEvent.KEYCODE_DEL') -and
+        $activityText.Contains('setDemographicsAgeSliderValue') -and
         $activityText.Contains('activity_key_event') -and
         $activityText.Contains('.height(72.dp)') -and
         $activityText.Contains('demographicsFocusRequestSourceState') -and
@@ -634,29 +837,51 @@ if (Test-Path $activity) {
         $activityText.Contains('BRB_DEMOGRAPHICS_VALIDATION_COMMAND') -and
         $activityText.Contains('BRB_DEMOGRAPHICS_VALIDATION_TEXT_APPLIED') -and
         $activityText.Contains('sameSanitizer=true') -and
+        $activityText.Contains('"type_name_app_keyboard"') -and
+        $activityText.Contains('"submit_name_app_keyboard"') -and
+        $activityText.Contains('BRB_DEMOGRAPHICS_VALIDATION_APP_KEYBOARD_TYPE') -and
+        $activityText.Contains('BRB_DEMOGRAPHICS_VALIDATION_APP_KEYBOARD_SUBMIT') -and
+        $activityText.Contains('sameStatePath=true') -and
         $activityText.Contains('"focus_age"') -and
         $activityText.Contains('"set_age"') -and
         $activityText.Contains('"age_done"') -and
-        $activityText.Contains('platformControl=EditText') -and
-        $activityText.Contains('inputOwner=androidViewEditText') -and
-        $activityText.Contains('visibleControl=androidViewEditText') -and
-        $activityText.Contains('focusedView=EditText') -and
-        $activityText.Contains('restartInput=true') -and
-        $activityText.Contains('inputMethodManager.restartInput(editText)') -and
-        $activityText.Contains('BRB_SYSTEM_KEYBOARD_FIELD_CONTRACT') -and
+        $activityText.Contains('BRB_DEMOGRAPHICS_AGE_SLIDER_CONTRACT') -and
+        $activityText.Contains('BRB_DEMOGRAPHICS_AGE_SLIDER_VALUE') -and
+        $activityText.Contains('platformControl=ComposeSlider') -and
+        $activityText.Contains('inputOwner=composeSlider') -and
+        $activityText.Contains('keyboardTarget=none') -and
         $activityText.Contains('BRB_DEMOGRAPHICS_TEXT_VALUE') -and
         $activityText.Contains('BRB_DEMOGRAPHICS_TEXT_EDITOR_ACTION') -and
-        $activityText.Contains('BRB_DEMOGRAPHICS_EDITTEXT_FOCUS') -and
+        $activityText.Contains('BRB_NAME_APP_KEYBOARD_FOCUS') -and
         $activityText.Contains('DEMOGRAPHICS_KEYBOARD_VALIDATION_EXTRA = "brb.demographicsKeyboardValidation"') -and
-        $activityText.Contains('BRB_SOFT_KEYBOARD_REQUEST') -and
-        $activityText.Contains('BRB_SOFT_KEYBOARD_SWITCH') -and
-        $activityText.Contains('failSafeRetarget=true') -and
         $activityText.Contains('movablePanel=true') -and
-        $activityText.Contains('closeToParticipant=system_managed') -and
+        $activityText.Contains('closeToParticipant=left_of_questionnaire_near_user') -and
+        $activityText.Contains('placement=left_of_questionnaire_near_user') -and
+        $activityText.Contains('radialReference=headset_center') -and
+        $activityText.Contains('orientation=faces_headset') -and
+        $activityText.Contains('nonObstructing=true') -and
+        $activityText.Contains('fovVisible=true') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_DISPLAY_WIDTH_DP') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_DISPLAY_HEIGHT_DP') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_WIDTH_METERS = 0.66f') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_HEIGHT_METERS = 0.245f') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_DISPLAY_WIDTH_DP = 960f') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_DISPLAY_HEIGHT_DP = 356f') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_RADIAL_DISTANCE_METERS = 0.92f') -and
+        $activityText.Contains('aspectMatched=true') -and
+        $activityText.Contains('comfortableDistance=true') -and
+        $activityText.Contains('nativeLikeRows=true') -and
+        $activityText.Contains('prerenderedPreview=true') -and
+        -not $activityText.Contains('AndroidView(') -and
+        -not $activityText.Contains('EditText(context).apply') -and
+        -not $activityText.Contains('BRB_SYSTEM_KEYBOARD_FIELD_CONTRACT') -and
+        -not $activityText.Contains('BRB_SOFT_KEYBOARD_REQUEST reason=field_name') -and
+        -not $activityText.Contains('androidViewEditText') -and
         -not $activityText.Contains('SpatialTextField') -and
         -not $activityText.Contains('AgeTriggerDial') -and
         -not $activityText.Contains('AgeDialStepButton') -and
         -not $activityText.Contains('ComposeTriggerDial') -and
+        -not $activityText.Contains('BRB_DEMOGRAPHICS_AGE_DIAL') -and
         -not $activityText.Contains('keyboardTarget=false') -and
         -not $activityText.Contains('demographicsInputBridge') -and
         -not $activityText.Contains('demographicsBridgeActiveFieldId') -and
@@ -668,7 +893,7 @@ if (Test-Path $activity) {
         -not $activityText.Contains('BRB_LOOSE_KEYBOARD') -and
         -not $activityText.Contains('R.id.loose_keyboard_panel') -and
         -not ($activityText.Contains('DemographicsInlineKeyboard') -or $activityText.Contains('requestInlineKeyboard'))
-    ) 'Name and Age use visible AndroidView(EditText) controls as the single IME owners, with Name text/Next and Age number/Done contracts'
+    ) 'Name uses an app-owned pop-out keyboard panel with hardware keyevent fallback, while Age uses a 0-100 Compose slider saved to demographics.age with no IME owner'
     Add-Check 'demographics validation can smoke prior audio prompt' (
         $activityText.Contains('"submit_demographics" ->') -and
         $activityText.Contains('safeCommand == "prior_answer_yes"') -and
@@ -706,17 +931,28 @@ if (Test-Path $activity) {
         ($activityText.Contains('PrimaryActionButton("Start experiment", canSubmit, height = 48.dp)') -or $activityText.Contains('PrimaryActionButton(activity.t("start_experiment"), canSubmit, height = 48.dp)')) -and
         -not [regex]::IsMatch($activityText, 'private fun ConsentDemographicsScreen(?s:(?!@Composable\s+private fun PolarH10ValidityPanel).)*verticalScroll')
     ) 'intake page fits the 1180x820 Quest panel without requiring scroll'
-    Add-Check 'questionnaire panel spawns in gaze line' ($activityText.Contains('BRB_QUESTIONNAIRE_PANEL_LAYOUT') -and $activityText.Contains('placement=current-gaze-line') -and $activityText.Contains('QUESTIONNAIRE_PANEL_Y_METERS = 1.52f') -and $activityText.Contains('QUESTIONNAIRE_PANEL_Z_METERS = 1.55f')) 'view-origin reset and gaze-line panel placement marker'
+    Add-Check 'questionnaire panel spawns in gaze line' (
+        $activityText.Contains('BRB_QUESTIONNAIRE_PANEL_LAYOUT') -and
+        $activityText.Contains('placement=current-gaze-line') -and
+        $activityText.Contains('radialReference=headset_center') -and
+        $activityText.Contains('orientation=faces_headset') -and
+        $activityText.Contains('QUESTIONNAIRE_PANEL_RADIAL_ANGLE_DEGREES = 0f') -and
+        $activityText.Contains('QUESTIONNAIRE_PANEL_RADIAL_DISTANCE_METERS = 1.55f') -and
+        $activityText.Contains('QUESTIONNAIRE_PANEL_Y_METERS = 1.52f') -and
+        $activityText.Contains('QUESTIONNAIRE_PANEL_Z_METERS = QUESTIONNAIRE_PANEL_RADIAL_DISTANCE_METERS')
+    ) 'view-origin reset and headset-centered radial gaze-line panel placement marker'
     Add-Check 'questionnaire intro/outro glitch cues' (
-        $activityText.Contains('R.raw.questionnaire_intro_glitch') -and
-        $activityText.Contains('R.raw.questionnaire_outro_glitch') -and
+        $activityText.Contains('SHARED_AUDIO_ID_QUESTIONNAIRE_INTRO_GLITCH = "raw_0400"') -and
+        $activityText.Contains('SHARED_AUDIO_ID_QUESTIONNAIRE_OUTRO_GLITCH = "raw_0410"') -and
+        $activityText.Contains('SHARED_QUESTIONNAIRE_INTRO_GLITCH_AUDIO') -and
+        $activityText.Contains('SHARED_QUESTIONNAIRE_OUTRO_GLITCH_AUDIO') -and
         $activityText.Contains('BRB_QUESTIONNAIRE_${mode.uppercase(Locale.US)}_CUE') -and
         $activityText.Contains('mode = "intro"') -and
         $activityText.Contains('mode = "outro"') -and
         $activityText.Contains('AudioAttributes.CONTENT_TYPE_SONIFICATION') -and
         $activityText.Contains('durationMs=${player.duration} isPlaying=${player.isPlaying} audioUsage=media contentType=sonification volume=1.0') -and
-        $activityText.Contains('reason=open_raw_resource_fd_returned_null')
-    ) 'intro/outro MP3s drive panel transitions through explicit raw-resource playback with runtime evidence'
+        $activityText.Contains('asset=$assetPath')
+    ) 'intro/outro MP3s drive panel transitions through centralized asset playback with runtime evidence'
     Add-Check 'blue failure glitch overlay' (
         $activityText.Contains('BlueFailureGlitchOverlay') -and
         $activityText.Contains('BRB_PANEL_GLITCH') -and
@@ -763,19 +999,26 @@ if (Test-Path $activity) {
         $activityText.Contains('priorBigRedButtonExperienceOptionsReadyState') -and
         $activityText.Contains('priorBigRedButtonExperienceFeedbackReadyState') -and
         $activityText.Contains('priorBigRedButtonExperiencePreStartReadyState') -and
-        $activityText.Contains('R.raw.prior_button_experience_question') -and
-        $activityText.Contains('R.raw.prior_button_experience_yes') -and
-        $activityText.Contains('R.raw.prior_button_experience_no') -and
-        $activityText.Contains('R.raw.pre_start_instructions') -and
+        $activityText.Contains('AUDIO_ID_PRIOR_QUESTION = "aud_0200"') -and
+        $activityText.Contains('AUDIO_ID_PRIOR_YES = "aud_0210"') -and
+        $activityText.Contains('AUDIO_ID_PRIOR_NO = "aud_0220"') -and
+        $activityText.Contains('AUDIO_ID_PRE_START = "aud_0230"') -and
+        $activityText.Contains('LOCALIZED_EN_PRIOR_QUESTION_AUDIO') -and
+        $activityText.Contains('LOCALIZED_EN_PRIOR_YES_AUDIO') -and
+        $activityText.Contains('LOCALIZED_EN_PRIOR_NO_AUDIO') -and
+        $activityText.Contains('LOCALIZED_EN_PRE_START_AUDIO') -and
         $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_QUESTION_CUE') -and
         $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_OPTIONS_READY') -and
         $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_FEEDBACK_CUE') -and
+        $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_PAUSE') -and
         $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_CUE') -and
         $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_READY') -and
         $activityText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_START_CLICK') -and
         $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_QUESTION_AUDIO_DURATION_MS = 10527L') -and
         $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_YES_AUDIO_DURATION_MS = 5251L') -and
         $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_NO_AUDIO_DURATION_MS = 4284L') -and
+        $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_FEEDBACK_TO_PRE_START_PAUSE_MS = 4000L') -and
+        $activityText.Contains('preStartDelayMs=$PRIOR_BUTTON_EXPERIENCE_FEEDBACK_TO_PRE_START_PAUSE_MS') -and
         $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_PRE_START_AUDIO_DURATION_MS = 34273L') -and
         $activityText.Contains('reason=question_audio_active') -and
         $activityText.Contains('reason=answer_locked') -and
@@ -795,16 +1038,16 @@ if (Test-Path $activity) {
         -not $activityText.Contains('Color(0xFF110606).copy(alpha = 0.90f)') -and
         -not $activityText.Contains('Color(0xFF3D0A0A)')
     ) 'counter digits/label are red and the counter has no filled backing panel, so passthrough remains visible behind it'
-    Add-Check 'questionnaire UI sound cues wired' ($activityText.Contains('playQuestionnaireChoiceCue') -and $activityText.Contains('R.raw.ui_choice_blip') -and $activityText.Contains('playQuestionnaireNavigationCue') -and $activityText.Contains('R.raw.ui_navigation_blip')) 'multiple-choice and navigation feedback sounds'
-    Add-Check 'raw speech cue playback uses explicit audio attributes' (
-        $activityText.Contains('resources.openRawResourceFd(resourceId)') -and
+    Add-Check 'questionnaire UI sound cues wired' ($activityText.Contains('playQuestionnaireChoiceCue') -and $activityText.Contains('SHARED_QUESTIONNAIRE_CHOICE_AUDIO') -and $activityText.Contains('playQuestionnaireNavigationCue') -and $activityText.Contains('SHARED_QUESTIONNAIRE_NAVIGATION_AUDIO')) 'multiple-choice and navigation feedback sounds'
+    Add-Check 'centralized asset cue playback uses explicit audio attributes' (
+        $activityText.Contains('assets.openFd(assetPath)') -and
         $activityText.Contains('AudioAttributes.Builder()') -and
         $activityText.Contains('AudioAttributes.USAGE_MEDIA') -and
         $activityText.Contains('AudioAttributes.CONTENT_TYPE_SPEECH') -and
         $activityText.Contains('setVolume(1.0f, 1.0f)') -and
         $activityText.Contains('durationMs=${player.duration} isPlaying=${player.isPlaying}') -and
         $activityText.Contains('what=$what extra=$extra')
-    ) 'raw packaged prompt MP3s are played through an explicit MediaPlayer path with auditable runtime errors'
+    ) 'centralized prompt assets are played through an explicit MediaPlayer path with auditable runtime errors'
     Add-Check 'button press sound cue wired' (
         $activityText.Contains('playButtonPressCue()') -and
         $activityText.Contains('BUTTON_PRESS_SFX_ASSET') -and
@@ -830,19 +1073,30 @@ if (Test-Path $activity) {
     Add-Check 'Polar PMD ECG uses highest available settings' ($polarClientText.Contains('settings.sampleRates.maxOrNull()') -and $polarClientText.Contains('settings.resolutions.maxOrNull()') -and $polarClientText.Contains('strategy=highest_available_pmd_ecg_settings')) 'PMD ECG start command selects the highest advertised sample rate and resolution before falling back to H10 defaults'
     Add-Check 'condition ECG capture window markers' ($activityText.Contains('BRB_ECG_CAPTURE_START') -and $activityText.Contains('BRB_ECG_CAPTURE_END') -and $activityText.Contains('ecgCaptureDurationMs') -and $activityText.Contains('ecgCaptureDurationNs') -and $activityText.Contains('ecgCaptureStartedElapsedNs') -and $activityText.Contains('audioWindowStartMs=0') -and $activityText.Contains('audioWindowEndMs=${run.audioDurationMs}') -and $activityText.Contains('audioDurationMs')) 'raw ECG capture window is tied to each instruction-audio duration with exact nanosecond window metadata'
     Add-Check 'condition ECG anchor precedes MediaPlayer start' ([regex]::IsMatch($activityText, 'val conditionStartNs = SystemClock\.elapsedRealtimeNanos\(\)(?s:.*?)BRB_CONDITION_AUDIO_START_ANCHOR(?s:.*?)^\s*start\(\)', [System.Text.RegularExpressions.RegexOptions]::Multiline) -and $activityText.Contains('anchor=pre_media_player_start')) 'condition clock is anchored before MediaPlayer.start so no early audio samples are missed'
-    $glowVariantAssetsPresent = $true
+    $retiredGlowVariantAssetsPresent = $true
     foreach ($level in 1..32) {
         $variantPath = Join-Path $projectRoot ('app\src\main\assets\models\glow\BigRedButtonGlowLevel{0:D2}.glb' -f $level)
         if (-not (Test-Path -LiteralPath $variantPath)) {
-            $glowVariantAssetsPresent = $false
+            $retiredGlowVariantAssetsPresent = $false
         }
     }
-    Add-Check 'warm heartbeat GLB material variant swap' (
-        $glowVariantAssetsPresent -and
+    Add-Check 'warm heartbeat stable-surface light blink' (
+        $retiredGlowVariantAssetsPresent -and
         $activityText.Contains('createButtonGlowModelEntities') -and
         $activityText.Contains('BUTTON_GLOW_MODEL_LEVEL_COUNT = 32') -and
-        $activityText.Contains('buttonGlowModelAssetUri') -and
+        $activityText.Contains('variantsAvailable=$BUTTON_GLOW_MODEL_LEVEL_COUNT') -and
+        $activityText.Contains('variantsActive=${buttonGlowModelEntities.size}') -and
         $activityText.Contains('BUTTON_GLOW_MODEL_ASSET_PATTERN') -and
+        $activityText.Contains('BRB_BUTTON_GLOW_STABLE_SURFACE_READY') -and
+        $activityText.Contains('modelGlow=stable_idle_model_native_lights') -and
+        $activityText.Contains('actualGlowPath=stable_idle_model_native_lights') -and
+        $activityText.Contains('geometrySwap=false') -and
+        $activityText.Contains('shapeStable=true') -and
+        $activityText.Contains('placementStable=true') -and
+        $activityText.Contains('scaleStable=true') -and
+        $activityText.Contains('buttonModelEntity?.setComponent(Visible(buttonStimulusVisible))') -and
+        $activityText.Contains('buttonGlowModelEntities.forEach { entity ->') -and
+        $activityText.Contains('entity.setComponent(Visible(false))') -and
         $activityText.Contains('surfaceGeometry=false') -and
         $activityText.Contains('transparentHalo=false') -and
         $activityText.Contains('pulseDurationMs=$HEARTBEAT_PULSE_DURATION_MS') -and
@@ -857,38 +1111,79 @@ if (Test-Path $activity) {
         $activityText.Contains('NATIVE_BUTTON_GLOW_PEAK_EMISSION_RED') -and
         $activityText.Contains('nativePeakTint=') -and
         $activityText.Contains('nativePeakEmission=') -and
-        $activityText.Contains('BRB_BUTTON_GLOW_MODEL_VARIANTS_READY') -and
         $activityText.Contains('HeartbeatPulseDriver') -and
-        $activityText.Contains('modelGlow=glb_material_variant_swap') -and
-        $activityText.Contains('actualGlowPath=glb_material_variant_swap') -and
         $activityText.Contains('MODEL_GLOW_PANEL_FALLBACK_ENABLED = false') -and
         $activityText.Contains('buttonHeartbeatFlashState') -and
         $activityText.Contains('BRB_HEARTBEAT_FLASH') -and
+        -not $activityText.Contains('BRB_BUTTON_GLOW_MODEL_VARIANTS_READY') -and
+        -not $activityText.Contains('modelGlow=glb_material_variant_swap') -and
+        -not $activityText.Contains('actualGlowPath=glb_material_variant_swap') -and
+        -not $activityText.Contains('activeIndex') -and
         -not $activityText.Contains('BRB_BUTTON_GLOW_SHELL_READY') -and
         -not $activityText.Contains('modelGlow=cap_shell') -and
         -not $activityText.Contains('AlphaMode.TRANSLUCENT') -and
         -not $activityText.Contains('SpatialBlendMode.ADDITIVE')
-    ) 'heartbeat flash follows the MesmerPrism Unity material-tint/emission approach by swapping GLB material variants with brighter/emissive cap materials plus small native lights, with no transparent halo/canopy geometry'
+    ) 'heartbeat flash keeps the original visible GLB fixed in shape, placement, and scale; ECG/mock blink changes only fixed native light intensity, with retired GLB variants inactive'
     Add-Check 'heartbeat glow does not animate button geometry' (
-        $activityText.Contains('target=idle_model') -and
+        $activityText.Contains('target=stable_idle_model') -and
         $activityText.Contains('heartbeatGlowMotion=false') -and
+        $activityText.Contains('geometrySwap=false') -and
+        $activityText.Contains('shapeStable=true') -and
+        $activityText.Contains('placementStable=true') -and
+        $activityText.Contains('scaleStable=true') -and
+        $activityText.Contains('buttonModelEntity?.setComponent(Visible(buttonStimulusVisible))') -and
+        -not $activityText.Contains('buttonModelEntity?.setComponent(Visible(buttonStimulusVisible && activeIndex == -1))') -and
         -not $activityText.Contains('buttonGlowModelEntities.forEach { entity -> playButtonPressedAnimation(entity) }')
-    ) 'ECG/RR heartbeat feedback may change glow/material/light intensity, but button model motion is reserved for accepted button presses'
+    ) 'ECG/RR heartbeat feedback may change only glow/light intensity; button model motion, visible-model swaps, and size changes are reserved out of the blink path'
     Add-Check 'dual hand and controller contact route' (
         $activityText.Contains('PRESS_SOURCE_HAND_CONTACT = "hand_contact"') -and
         $activityText.Contains('getHandForPointerEvent') -and
         $activityText.Contains('BRB_BUTTON_HAND_CONTACT_SELECT') -and
         $activityText.Contains('COLLIDER_HOVER_SIGNAL_ACTUATE') -and
         $activityText.Contains('target=${contactTarget.spec.name}') -and
+        $activityText.Contains('surfaceRole') -and
+        $activityText.Contains('controllersRecentlyActive') -and
+        $activityText.Contains('HAND_TRACKING_CONTROLLER_QUIET_MS') -and
+        $activityText.Contains('handOutlineAllowed=false') -and
+        $activityText.Contains('reason=controllers_active') -and
+        $activityText.Contains('BRB_HAND_TRACKING_SYSTEM_BUTTON_POLICY') -and
+        $activityText.Contains('BRB_HAND_TRACKING_SYSTEM_BUTTON_SUPPRESSION') -and
+        $activityText.Contains('osMetaHomeButtonControllable=false') -and
         $activityText.Contains('source=dual_controller_hand_contact') -and
         $activityText.Contains('condition_${condition}_hand_contact_press_count')
-    ) 'button contact path accepts controller contact and records hand-tracked collider selects as a separate provenance source'
+    ) 'button contact path accepts controller contact, allows hands-only collider/pinch selects, and suppresses hand mode while controllers are active'
     Add-Check 'controller direction questionnaire handler' ($activityText.Contains('handleControllerDirection') -and $activityText.Contains('BRB_CONTROLLER_DIRECTION') -and $activityText.Contains('KEYCODE_DPAD_LEFT') -and $activityText.Contains('KEYCODE_DPAD_RIGHT') -and $activityText.Contains('KEYCODE_DPAD_UP') -and $activityText.Contains('KEYCODE_DPAD_DOWN')) 'up/down/left/right questionnaire command route'
     Add-Check 'controller enter questionnaire submit handler' ($activityText.Contains('submitCurrentControllerStage') -and $activityText.Contains('KEYCODE_DPAD_CENTER') -and $activityText.Contains('KEYCODE_ENTER') -and $activityText.Contains('KEYCODE_BUTTON_A') -and $activityText.Contains('BRB_CONTROLLER_SUBMIT_REPLAY') -and $activityText.Contains('direction=enter')) 'enter/A button submit route is logged in fast replay evidence'
     Add-Check 'fast validation skips full audio wait' ($activityText.Contains('FAST_CONDITION_AUDIO_SHORTCUT_MS') -and $activityText.Contains('BRB_FAST_CONDITION_AUDIO_SHORTCUT')) 'fast controller flow reads MP3 duration but shortcuts wait'
     Add-Check 'participant-facing questionnaire names hidden' (-not ($activityText.Contains('BrandKicker("Post-condition $condition | Adapted IPQ")') -or $activityText.Contains('PanelTitle("Adapted Presence Questionnaire")' ) -or $activityText.Contains('PanelTitle("Lost Opportunity For Better Results Quotient")') -or $activityText.Contains('PanelTitle("Self-Button Pictographic Scale")'))) 'participant panels use neutral task titles'
     Add-Check 'participant-facing variable text hidden' (-not $activityText.Contains('Logged variables:')) 'research variable labels stay out of participant UI'
     Add-Check 'participant-facing rating instructions' ($activityText.Contains('where 0 means not at all and 6 means very much')) 'neutral response-set instruction'
+    if (Test-Path $localizedAudioManifest) {
+        $localizedAudioManifestText = Get-Content -Raw -LiteralPath $localizedAudioManifest
+        Add-Check 'IPQ history localized audio manifest entries' (
+            $localizedAudioManifestText.Contains('"audioId":  "aud_0320"') -and
+            $localizedAudioManifestText.Contains('"audioId":  "aud_0330"') -and
+            $localizedAudioManifestText.Contains('"role":  "ipq_history_condition_1_intro"') -and
+            $localizedAudioManifestText.Contains('"role":  "ipq_history_condition_2_intro"') -and
+            $localizedAudioManifestText.Contains('"translationPolicy":  "science_nerd_sarcasm_no_psychometric_spoilers"') -and
+            $localizedAudioManifestText.Contains('"tailSilenceMs":  1000') -and
+            $localizedAudioManifestText.Contains('"path":  "en_us/aud_0320_ipq_history_part1__en_us.mp3"') -and
+            $localizedAudioManifestText.Contains('"path":  "ja_jp/aud_0320_ipq_history_part1__ja_jp.mp3"') -and
+            $localizedAudioManifestText.Contains('"path":  "en_us/aud_0330_ipq_history_part2__en_us.mp3"') -and
+            $localizedAudioManifestText.Contains('"path":  "ja_jp/aud_0330_ipq_history_part2__ja_jp.mp3"')
+        ) 'localized manifest registers the English/Japanese IPQ history narration clips and policy'
+    }
+    if (Test-Path $audioScriptLookupTable) {
+        $audioScriptLookupTableText = Get-Content -Raw -LiteralPath $audioScriptLookupTable
+        Add-Check 'IPQ history audio script lookup rows' (
+            $audioScriptLookupTableText.Contains('"aud_0320","ipq_history_part1","en-US"') -and
+            $audioScriptLookupTableText.Contains('"aud_0320","ipq_history_part1","ja-JP"') -and
+            $audioScriptLookupTableText.Contains('"aud_0330","ipq_history_part2","en-US"') -and
+            $audioScriptLookupTableText.Contains('"aud_0330","ipq_history_part2","ja-JP"') -and
+            $audioScriptLookupTableText.Contains('science_nerd_sarcasm_no_psychometric_spoilers') -and
+            -not $audioScriptLookupTableText.Contains('manifest.json"aud_0320"')
+        ) 'lookup table contains separate documented rows for both IPQ history clips in both languages'
+    }
 }
 
 Add-Check 'Quest autorun validation script' (Test-Path (Join-Path $projectRoot 'tools\run-quest-autovalidation.ps1')) 'tools\run-quest-autovalidation.ps1'
@@ -1011,6 +1306,12 @@ Add-Check 'export schema validator covers ECG detector and external signal expor
     (Test-Path $exportSchemaScript) -and
     ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('requiredEcgDetectorColumns')) -and
     ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('requiredExternalSignalColumns')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('agentIntegrationProtocol')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('bigredbutton.agent_integration.v1')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('New-Agent-Integration-Brief.md')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('quest.questionnaire.v1')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('request_json')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('one_shot_immutable_broadcast_pending_intent')) -and
     ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('questionnaireProtocol')) -and
     ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('externalSignalProtocol')) -and
     ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('HRV_Biofeedback')) -and
@@ -1074,24 +1375,24 @@ if (Test-Path $readinessReportScript) {
         $readinessReportText.Contains('Quest feedback counterbalance/sham blink match') -and
         $readinessReportText.Contains('$questKeyeventEcgBlinkMatched -and')
     ) 'current readiness must require qkv feedback counterbalance, sham blink rows, press timing columns, and runtime flash proof'
-    Add-Check 'readiness report requires Quest keyboard and enter replay proof' (
+    Add-Check 'readiness report requires Quest demographics input and enter replay proof' (
         $readinessReportText.Contains('questKeyeventKeyboardLifecycleMatched') -and
         $readinessReportText.Contains('questKeyeventEnterSubmitMatched') -and
-        $readinessReportText.Contains('native keyboard request observed') -and
-        $readinessReportText.Contains('native keyboard name text mode observed') -and
-        $readinessReportText.Contains('native keyboard age number mode observed') -and
-        $readinessReportText.Contains('native keyboard movable panel contract observed') -and
-        $readinessReportText.Contains('age is numeric IME target') -and
-        $readinessReportText.Contains('startup native keyboard request uses text mode') -and
+        $readinessReportText.Contains('app-owned name keyboard observed') -and
+        $readinessReportText.Contains('app-owned name text mode observed') -and
+        $readinessReportText.Contains('age slider contract observed') -and
+        $readinessReportText.Contains('app-owned name pop-out keyboard panel contract observed') -and
+        $readinessReportText.Contains('age is not an IME target') -and
+        $readinessReportText.Contains('startup app-owned name keyboard uses text mode') -and
         $readinessReportText.Contains('panel-exit keyboard hide before condition 1 observed') -and
         $readinessReportText.Contains('panel-exit keyboard hide before condition 2 observed') -and
         $readinessReportText.Contains('enter submit replay observed') -and
         $readinessReportText.Contains('controller submit replay observed') -and
         $readinessReportText.Contains('$questKeyeventKeyboardLifecycleMatched -and') -and
         $readinessReportText.Contains('$questKeyeventEnterSubmitMatched -and') -and
-        $readinessReportText.Contains('Quest keyboard EditText lifecycle match') -and
+        $readinessReportText.Contains('Quest demographics input lifecycle match') -and
         $readinessReportText.Contains('Quest Enter-submit replay match')
-    ) 'current readiness must require qkv Name text keyboard, Age numeric keyboard, panel-exit keyboard hide, and Enter-submit replay evidence'
+    ) 'current readiness must require qkv app-owned Name keyboard, Age slider, panel-exit keyboard hide, and Enter-submit replay evidence'
     Add-Check 'readiness report requires Quest redness conversion proof' (
         $readinessReportText.Contains('questKeyeventRednessMatched') -and
         $readinessReportText.Contains('redness conversion cue observed') -and
@@ -1219,24 +1520,36 @@ if (Test-Path $keyeventValidationScript) {
     ) 'fast replay checks BigRedButtonFirstStudyExports and ExperimentResults are byte-identical after pull'
     Add-Check 'Quest keyevent validation proves native integration protocols' (
         $keyeventValidationText.Contains('BRB_QUESTIONNAIRE_CONTRACT schema=bigredbutton.questionnaire_flow.v1') -and
+        $keyeventValidationText.Contains('BRB_AGENT_INTEGRATION_CONTRACT schema=bigredbutton.agent_integration.v1') -and
+        $keyeventValidationText.Contains('agent integration protocol native adaptation') -and
+        $keyeventValidationText.Contains('agent integration questionnaire route') -and
+        $keyeventValidationText.Contains('agent integration direct routes') -and
+        $keyeventValidationText.Contains('agent integration button/final gate route') -and
+        $keyeventValidationText.Contains('agent integration marker observed') -and
+        $keyeventValidationText.Contains('externalPanelContractIfAdopted') -and
+        $keyeventValidationText.Contains('quest.questionnaire.v1') -and
+        $keyeventValidationText.Contains('one_shot_immutable_broadcast_pending_intent') -and
+        $keyeventValidationText.Contains('New-Agent-Integration-Brief.md') -and
+        $keyeventValidationText.Contains('native_meta_spatial_sdk_in_process') -and
+        $keyeventValidationText.Contains('directPolarPmdActive=true') -and
         $keyeventValidationText.Contains('questionnaire protocol schema') -and
         $keyeventValidationText.Contains('questionnaire lifecycle markers observed') -and
         $keyeventValidationText.Contains('external signal protocol disabled diagnostic') -and
         $keyeventValidationText.Contains('external signal diagnostic marker observed') -and
         $keyeventValidationText.Contains('HRV_Biofeedback') -and
         $keyeventValidationText.Contains('drivesButtonPresses')
-    ) 'fast replay validates in-process questionnaire contract metadata and disabled diagnostic-only external signal defaults'
+    ) 'fast replay validates the new-agent integration contract, in-process questionnaire metadata, and disabled diagnostic-only external signal defaults'
     Add-Check 'Quest keyevent validation proves keyboard and enter lifecycle' (
-        $keyeventValidationText.Contains('native keyboard name text mode observed') -and
-        $keyeventValidationText.Contains('native keyboard age number mode observed') -and
-        $keyeventValidationText.Contains('native keyboard movable panel contract observed') -and
-        $keyeventValidationText.Contains('age is numeric IME target') -and
-        $keyeventValidationText.Contains('startup native keyboard request uses text mode') -and
+        $keyeventValidationText.Contains('app-owned name text mode observed') -and
+        $keyeventValidationText.Contains('age slider contract observed') -and
+        $keyeventValidationText.Contains('app-owned name pop-out keyboard panel contract observed') -and
+        $keyeventValidationText.Contains('age is not an IME target') -and
+        $keyeventValidationText.Contains('startup app-owned name keyboard uses text mode') -and
         $keyeventValidationText.Contains('panel-exit keyboard hide before condition 1 observed') -and
         $keyeventValidationText.Contains('panel-exit keyboard hide before condition 2 observed') -and
         $keyeventValidationText.Contains('enter submit replay observed') -and
         $keyeventValidationText.Contains('controller submit replay observed')
-    ) 'fast replay now fails without Name text keyboard, Age numeric keyboard, panel-exit hide, and enter-submit markers'
+    ) 'fast replay now fails without app-owned Name keyboard, Age slider, panel-exit hide, and enter-submit markers'
     Add-Check 'Quest keyevent validation proves prior button experience prompt' (
         $keyeventValidationText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN') -and
         $keyeventValidationText.Contains('prior big-red-button experience JSON answer') -and
@@ -1245,6 +1558,17 @@ if (Test-Path $keyeventValidationScript) {
         $keyeventValidationText.Contains('prior big-red-button experience not repeated in condition 2') -and
         $keyeventValidationText.Contains('BRB_CONTROLLER_SUBMIT_REPLAY condition=1 stage=pre_button_experience submitted=true')
     ) 'fast replay now selects the new one-time XR prior-experience question, starts condition 1, and checks JSON/CSV/log evidence'
+    Add-Check 'Quest keyevent validation proves IPQ history narration cue' (
+        $keyeventValidationText.Contains('BRB_IPQ_HISTORY_NARRATION_CUE condition=1') -and
+        $keyeventValidationText.Contains('BRB_IPQ_HISTORY_NARRATION_CUE condition=2') -and
+        $keyeventValidationText.Contains('BRB_SFX_PLAY cue=ipq_history_part1 audioId=aud_0320') -and
+        $keyeventValidationText.Contains('BRB_SFX_PLAY cue=ipq_history_part2 audioId=aud_0330') -and
+        $keyeventValidationText.Contains('StudyLanguage') -and
+        $keyeventValidationText.Contains('expectedIpqLocaleSegment') -and
+        $keyeventValidationText.Contains('studyLanguageOverride') -and
+        $keyeventValidationText.Contains('condition 1 IPQ history narration cue observed') -and
+        $keyeventValidationText.Contains('condition 2 IPQ history narration cue observed')
+    ) 'fast replay proves the aud_0320/aud_0330 IPQ narration cue and locale-specific MediaPlayer start markers after each pictographic submit'
     Add-Check 'Quest keyevent validation proves final end-confirmation branch' (
         $keyeventValidationText.Contains('BRB_FINAL_END_CONFIRMATION_SHOWN') -and
         $keyeventValidationText.Contains('BRB_KEYEVENT_REPLAY_STEP condition=0 stage=final_end_confirmation direction=right') -and
@@ -1289,8 +1613,9 @@ if (Test-Path $keyeventValidationScript) {
         $keyeventValidationText.Contains('Ensure-TargetForeground') -and
         $keyeventValidationText.Contains('foreground-after-launch.txt') -and
         $keyeventValidationText.Contains('foreground-after-relaunch.txt') -and
+        $keyeventValidationText.Contains('Invoke-Adb shell am force-stop $package') -and
         $keyeventValidationText.Contains('force-stopping it once before relaunching')
-    ) 'fast qkv validation force-stops a stale non-Oculus foreground OpenXR app and relaunches the study once before waiting for markers'
+    ) 'fast qkv validation starts from a fresh singleTask activity, then force-stops stale non-Oculus foreground apps and relaunches the study once before waiting for markers'
 }
 $controllerContactSmokeScript = Join-Path $projectRoot 'tools\run-quest-controller-contact-smoke.ps1'
 Add-Check 'Quest controller contact smoke script' (Test-Path $controllerContactSmokeScript) 'tools\run-quest-controller-contact-smoke.ps1'
@@ -1416,6 +1741,14 @@ if (Test-Path $finalHardwarePostRunAuditValidatorTestScript) {
 }
 Add-Check 'Quest panel glitch smoke script' (Test-Path (Join-Path $projectRoot 'tools\run-quest-panel-smoke.ps1')) 'tools\run-quest-panel-smoke.ps1'
 Add-Check 'Quest visual layout smoke script' (Test-Path (Join-Path $projectRoot 'tools\run-quest-visual-layout-smoke.ps1')) 'tools\run-quest-visual-layout-smoke.ps1'
+Add-Check 'Quest button press animation stress script' (
+    (Test-Path (Join-Path $projectRoot 'tools\run-quest-button-press-animation-stress.ps1')) -and
+    ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-button-press-animation-stress.ps1')).Contains('button_press_animation_stress')) -and
+    ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-button-press-animation-stress.ps1')).Contains('BRB_BUTTON_MODEL_ANIMATION_SCHEDULE state=deferred')) -and
+    ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-button-press-animation-stress.ps1')).Contains('target=stable_idle_model')) -and
+    ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-button-press-animation-stress.ps1')).Contains('validationAutomation=true')) -and
+    ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-button-press-animation-stress.ps1')).Contains('quest-button-press-animation-stress-summary.json'))
+) 'on-device hidden stress verifies rapid accepted presses defer GLB visual replay without proving human controller contact'
 if (Test-Path (Join-Path $projectRoot 'tools\run-quest-visual-layout-smoke.ps1')) {
     $visualLayoutSmokeText = Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-visual-layout-smoke.ps1')
     Add-Check 'Quest visual layout smoke preserves logcat fallback evidence' (
@@ -1432,6 +1765,9 @@ if (Test-Path (Join-Path $projectRoot 'tools\run-quest-audio-rig-stress.ps1')) {
         $audioRigStressText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_ANSWER_BLOCKED answer=yes') -and
         $audioRigStressText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_OPTIONS_READY') -and
         $audioRigStressText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_FEEDBACK_READY answer=yes') -and
+        $audioRigStressText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_PAUSE answer=yes') -and
+        $audioRigStressText.Contains('preStartDelayMs=4000') -and
+        $audioRigStressText.Contains('prior yes inserts 4s pause before pre-start instructions') -and
         $audioRigStressText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_READY answer=yes') -and
         $audioRigStressText.Contains('cue=pre_start_instructions') -and
         $audioRigStressText.Contains('BRB_FINAL_END_CONFIRMATION_SELECTION_BLOCKED rating=10') -and
@@ -1450,56 +1786,93 @@ Add-Check 'pictographic button thumbnail generator' (Test-Path (Join-Path $proje
 Add-Check 'retired panel chime generator retained' (Test-Path (Join-Path $projectRoot 'tools\create-retro-startup-chime.ps1')) 'legacy helper kept for provenance; active panel transitions use supplied intro/outro glitch MP3s'
 Add-Check 'press sound plan documentation' (Test-Path (Join-Path $projectRoot 'docs\button-press-sound-and-motion.md')) 'docs\button-press-sound-and-motion.md'
 Add-Check 'physical validation operator guide' (Test-Path (Join-Path $projectRoot 'docs\physical-validation-operator-guide.md')) 'docs\physical-validation-operator-guide.md'
+$newAgentIntegrationAuditPath = Join-Path $projectRoot 'docs\new-agent-integration-audit.md'
+Add-Check 'new-agent integration audit documentation' (
+    (Test-Path $newAgentIntegrationAuditPath) -and
+    ((Get-Content -Raw -LiteralPath $newAgentIntegrationAuditPath).Contains('New-Agent-Integration-Brief.md')) -and
+    ((Get-Content -Raw -LiteralPath $newAgentIntegrationAuditPath).Contains('quest.questionnaire.v1')) -and
+    ((Get-Content -Raw -LiteralPath $newAgentIntegrationAuditPath).Contains('request_json')) -and
+    ((Get-Content -Raw -LiteralPath $newAgentIntegrationAuditPath).Contains('controller_contact')) -and
+    ((Get-Content -Raw -LiteralPath $newAgentIntegrationAuditPath).Contains('run-final-hardware-gates.ps1'))
+) 'docs\new-agent-integration-audit.md maps the public brief onto the native app and preserves the hardware gate boundary'
 Add-Check 'native keyboard contract test script' (Test-Path (Join-Path $projectRoot 'tools\test-native-keyboard-contract.ps1')) 'tools\test-native-keyboard-contract.ps1'
+$nameKeyboardPreviewScript = Join-Path $projectRoot 'tools\render-name-keyboard-preview.ps1'
+Add-Check 'Name keyboard 2D preview renderer' (
+    (Test-Path $nameKeyboardPreviewScript) -and
+    ((Get-Content -Raw -LiteralPath $nameKeyboardPreviewScript).Contains('name-keyboard-popup-preview.png')) -and
+    ((Get-Content -Raw -LiteralPath $nameKeyboardPreviewScript).Contains('aspectMatched')) -and
+    ((Get-Content -Raw -LiteralPath $nameKeyboardPreviewScript).Contains('comfortableDistance')) -and
+    ((Get-Content -Raw -LiteralPath $nameKeyboardPreviewScript).Contains('keyShapeNativeLike'))
+) 'tools\render-name-keyboard-preview.ps1 prerenders and checks the pop-out keyboard geometry before headset validation'
 $demographicsKeyboardValidationScript = Join-Path $projectRoot 'tools\run-quest-demographics-keyboard-entry-validation.ps1'
 Add-Check 'Quest demographics keyboard entry validation script' (Test-Path $demographicsKeyboardValidationScript) 'tools\run-quest-demographics-keyboard-entry-validation.ps1'
 if (Test-Path $demographicsKeyboardValidationScript) {
     $demographicsKeyboardValidationText = Get-Content -Raw -LiteralPath $demographicsKeyboardValidationScript
-    Add-Check 'Quest demographics keyboard validation covers EditText Name/Age route' (
-        $demographicsKeyboardValidationText.Contains('BRB_DEMOGRAPHICS_EDITTEXT_FOCUS_REQUEST') -and
-        $demographicsKeyboardValidationText.Contains('actual name EditText focus marker') -and
-        $demographicsKeyboardValidationText.Contains('age number keyboard request after retarget') -and
-        $demographicsKeyboardValidationText.Contains('BRB_SOFT_KEYBOARD_REQUEST reason=field_age') -and
-        $demographicsKeyboardValidationText.Contains('platformControl=EditText') -and
+    Add-Check 'Quest demographics validation covers app-owned Name keyboard and Age slider route' (
+        $demographicsKeyboardValidationText.Contains('app-owned pop-out Name keyboard') -and
+        $demographicsKeyboardValidationText.Contains('BRB_NAME_APP_KEYBOARD_CONTRACT') -and
+        $demographicsKeyboardValidationText.Contains('BRB_NAME_APP_KEYBOARD_FOCUS') -and
+        $demographicsKeyboardValidationText.Contains('BRB_NAME_APP_KEYBOARD_PANEL_LAYOUT') -and
+        $demographicsKeyboardValidationText.Contains('BRB_DEMOGRAPHICS_AGE_SLIDER_CONTRACT') -and
+        $demographicsKeyboardValidationText.Contains('BRB_DEMOGRAPHICS_AGE_SLIDER_FOCUS') -and
+        $demographicsKeyboardValidationText.Contains('age keyboard not requested') -and
+        $demographicsKeyboardValidationText.Contains('platformControl=AppOwnedKeyboard') -and
+        $demographicsKeyboardValidationText.Contains('platformControl=ComposeSlider') -and
         $demographicsKeyboardValidationText.Contains('Invoke-DemographicsValidationCommand') -and
         $demographicsKeyboardValidationText.Contains('brb.demographicsKeyboardValidationCommand') -and
         $demographicsKeyboardValidationText.Contains('brb.demographicsKeyboardValidationSession') -and
         $demographicsKeyboardValidationText.Contains('source=validation_intent') -and
-        $demographicsKeyboardValidationText.Contains("Invoke-DemographicsValidationCommand 'set_age' 'a1234'") -and
-        $demographicsKeyboardValidationText.Contains('BRB_DEMOGRAPHICS_AGE_FILTER source=validation_intent rawLength=5 digitCount=4 cleanedLength=3 stripped=true truncated=true') -and
+        $demographicsKeyboardValidationText.Contains("Invoke-DemographicsValidationCommand 'set_age' '1234'") -and
+        $demographicsKeyboardValidationText.Contains('BRB_DEMOGRAPHICS_AGE_SLIDER_SANITIZE source=validation_intent rawLength=4 digitCount=4 cleanedValue=100') -and
         $demographicsKeyboardValidationText.Contains("Invoke-DemographicsValidationCommand 'clear_age'") -and
         $demographicsKeyboardValidationText.Contains("Invoke-DemographicsValidationCommand 'set_age' '34'") -and
         $demographicsKeyboardValidationText.Contains("Invoke-DemographicsValidationCommand 'age_done'") -and
         -not $demographicsKeyboardValidationText.Contains('SpatialTextField') -and
         -not $demographicsKeyboardValidationText.Contains('trigger dial') -and
-        -not $demographicsKeyboardValidationText.Contains('input text')
-    ) 'focused Quest smoke proves visible AndroidView(EditText) Name text/Next and Age number/Done contracts, mixed-input cleanup, then exact George/34 values'
+        -not $demographicsKeyboardValidationText.Contains('AndroidView(EditText)')
+    ) 'focused Quest smoke proves app-owned Name keyboard text/Next and Age 0-100 slider contracts, clamp behavior, then exact George Fejer/34 values'
 }
 $demographicsKeypressStressScript = Join-Path $projectRoot 'tools\run-quest-demographics-keypress-stress.ps1'
 Add-Check 'Quest demographics keypress stress script' (Test-Path $demographicsKeypressStressScript) 'tools\run-quest-demographics-keypress-stress.ps1'
 if (Test-Path $demographicsKeypressStressScript) {
     $demographicsKeypressStressText = Get-Content -Raw -LiteralPath $demographicsKeypressStressScript
-    Add-Check 'Quest demographics keypress stress types full name and age' (
-        $demographicsKeypressStressText.Contains("Send-TextToken 'George'") -and
-        $demographicsKeypressStressText.Contains("Send-KeyCode 62 'SPACE'") -and
-        $demographicsKeypressStressText.Contains("Send-TextToken 'Fejer'") -and
+    Add-Check 'Quest demographics keypress stress types full name and sets slider age' (
+        $demographicsKeypressStressText.Contains("'type_name_app_keyboard'") -and
+        $demographicsKeypressStressText.Contains('BRB_DEMOGRAPHICS_VALIDATION_APP_KEYBOARD_TYPE') -and
+        $demographicsKeypressStressText.Contains('sameStatePath=true') -and
         $demographicsKeypressStressText.Contains('value=george_fejer') -and
-        $demographicsKeypressStressText.Contains("Send-TextToken '3'") -and
-        $demographicsKeypressStressText.Contains("Send-TextToken '4'") -and
+        $demographicsKeypressStressText.Contains('source=validation_app_keyboard') -and
+        $demographicsKeypressStressText.Contains("'submit_name_app_keyboard'") -and
+        $demographicsKeypressStressText.Contains('validation_app_keyboard_submit') -and
+        $demographicsKeypressStressText.Contains("Send-KeyCode 19 'AGE_PLUS_10'") -and
+        $demographicsKeypressStressText.Contains("Send-KeyCode 22 'AGE_PLUS_1'") -and
+        $demographicsKeypressStressText.Contains('BRB_DEMOGRAPHICS_AGE_SLIDER_VALUE') -and
         $demographicsKeypressStressText.Contains('value=34') -and
-        $demographicsKeypressStressText.Contains('source=activity_key_event') -and
-        $demographicsKeypressStressText.Contains("Send-KeyCode 66 'ENTER_NEXT'") -and
-        $demographicsKeypressStressText.Contains("Send-KeyCode 66 'ENTER_DONE'")
-    ) 'headset stress uses real focused demographics key events for George Fejer, Enter/Next, age 34, and Enter/Done'
+        $demographicsKeypressStressText.Contains("Send-KeyCode 66 'ENTER_DONE'") -and
+        $demographicsKeypressStressText.Contains('BRB_DEMOGRAPHICS_AGE_SLIDER_DONE')
+    ) 'headset stress uses the app-owned keyboard path for George Fejer and Next, then validates age 34 through the slider route'
+}
+$demographicsDirectKeyboardScript = Join-Path $projectRoot 'tools\run-quest-demographics-direct-keyboard-validation.ps1'
+Add-Check 'Quest demographics direct keyboard validation script' (Test-Path $demographicsDirectKeyboardScript) 'tools\run-quest-demographics-direct-keyboard-validation.ps1'
+if (Test-Path $demographicsDirectKeyboardScript) {
+    $demographicsDirectKeyboardText = Get-Content -Raw -LiteralPath $demographicsDirectKeyboardScript
+    Add-Check 'Quest demographics direct keyboard validation sends raw keyevents' (
+        $demographicsDirectKeyboardText.Contains('input keyevent') -and
+        $demographicsDirectKeyboardText.Contains('BRB_DEMOGRAPHICS_TEXT_VALUE field=name keyboardMode=text value=george_fejer') -and
+        $demographicsDirectKeyboardText.Contains('BRB_DEMOGRAPHICS_NAME_BACKSPACE accepted=true source=hardware_key_event') -and
+        $demographicsDirectKeyboardText.Contains('system IME not required for Name') -and
+        $demographicsDirectKeyboardText.Contains("Send-KeyCode 66 'ENTER_NAME_NEXT'") -and
+        $demographicsDirectKeyboardText.Contains("Send-KeyCode 66 'ENTER_AGE_DONE'")
+    ) 'headset direct keyboard validation types Name with raw KEYCODE letters/backspace/space/enter, then drives Age by D-pad'
 }
 
 $localPreflightScript = Join-Path $projectRoot 'tools\run-local-preflight.ps1'
 if (Test-Path $localPreflightScript) {
     $localPreflightText = Get-Content -Raw -LiteralPath $localPreflightScript
-    Add-Check 'local preflight runs native keyboard contract test' (
+    Add-Check 'local preflight runs demographics keyboard contract test' (
         $localPreflightText.Contains('test-native-keyboard-contract') -and
         $localPreflightText.Contains('nativeKeyboardValidation')
-    ) 'local preflight includes name/age native keyboard switching validation artifact'
+    ) 'local preflight includes app-owned Name keyboard and Age slider validation artifact'
     Add-Check 'local preflight runs final hardware post-run audit validator when available' (
         $localPreflightText.Contains('validate-final-hardware-postrun-audit.ps1') -and
         $localPreflightText.Contains('validate-final-hardware-postrun-audit') -and
@@ -1558,18 +1931,25 @@ if (Test-Path $layoutPreviewScript) {
         $layoutPreviewText.Contains('No-scroll compact intake') -and
         $layoutPreviewText.Contains('Start experiment')
     ) 'preview labels the intake panel as compact/no-scroll with all controls visible'
-    Add-Check 'layout preview shows native demographics keyboard' (
-        $layoutPreviewText.Contains('Draw-DemographicsNativeKeyboardPreview') -and
-        $layoutPreviewText.Contains('demographics-native-keyboard-preview.png') -and
-        $layoutPreviewText.Contains('native movable Quest keyboard') -and
-        $layoutPreviewText.Contains('Age uses the numeric Quest keyboard')
-    ) 'preview documents the native movable Quest keyboard for Name and Age'
+    Add-Check 'layout preview shows app-owned demographics keyboard' (
+        $layoutPreviewText.Contains('Draw-DemographicsAppOwnedKeyboardPreview') -and
+        $layoutPreviewText.Contains('demographics-app-owned-keyboard-preview.png') -and
+        $layoutPreviewText.Contains('Native-like Pop-out Name Keyboard') -and
+        $layoutPreviewText.Contains('neighboring left radial ray') -and
+        $layoutPreviewText.Contains('with both panels facing the user') -and
+        $layoutPreviewText.Contains('left_of_questionnaire_near_user') -and
+        $layoutPreviewText.Contains('nonObstructing=true') -and
+        $layoutPreviewText.Contains('fovVisible=true') -and
+        $layoutPreviewText.Contains('main questionnaire remains readable and unobstructed')
+    ) 'preview documents the app-owned pop-out Name keyboard and the 0-100 Age slider'
     Add-Check 'layout preview shows calibrated pictographic axis' (
         $layoutPreviewText.Contains('How Big and how Red was this button experience?') -and
         $layoutPreviewText.Contains('Please rate how subjectively close the button felt') -and
         $layoutPreviewText.Contains('$sliderW = 640') -and
         $layoutPreviewText.Contains('$thumbRadius = 20') -and
         $layoutPreviewText.Contains('$axisStartX = $sliderX + $thumbRadius') -and
+        $layoutPreviewText.Contains('$selfCircleRadius = 105') -and
+        $layoutPreviewText.Contains('$buttonCircleRadius = $selfCircleRadius') -and
         $layoutPreviewText.Contains('very close') -and
         $layoutPreviewText.Contains('very distant') -and
         $layoutPreviewText.Contains('small presence') -and

@@ -1,6 +1,22 @@
 # Visual Validation Notes
 
-Latest visual inspection: 2026-06-10 18:50.
+Latest visual inspection: 2026-06-13 15:28.
+
+## Fresh Demographics Keyboard Recheck
+
+- Current APK after replacing the fragile Quest/system IME Name path: `app/build/outputs/apk/debug/app-debug.apk`, SHA-256 `C706C57E4B814AD920B74C187ECE834933581F8A886DF1D8D89B343D1B6372A2`.
+- Direct raw-keyevent headset validation: `artifacts/quest-demographics-direct-keyboard/20260613-152127/quest-demographics-direct-keyboard-validation-summary.json`.
+- Screenshots: `artifacts/quest-demographics-direct-keyboard/20260613-152127/demographics-direct-keyboard-name-entry.png` shows `George Fejer` in Name with the app-owned QWERTY keyboard visible; `artifacts/quest-demographics-direct-keyboard/20260613-152127/demographics-direct-keyboard-after-entry.png` shows Age set to `34` after Enter moves focus to the slider.
+- Supporting headset gates: focused demographics smoke `artifacts/quest-demographics-keyboard/20260613-152350/quest-demographics-keyboard-validation-summary.json`, repeated-entry stress `artifacts/quest-demographics-keypress-stress/20260613-152428/quest-demographics-keypress-stress-summary.json`, qkv `artifacts/qkv/20260613-152518/quest-keyevent-questionnaire-validation-summary.json`, and panel/glitch smoke `artifacts/quest-panel-smoke/20260613-152617/quest-panel-smoke-summary.json`.
+- Observed result: Name no longer depends on an OS-managed Quest keyboard surface. The visible pop-out keyboard panel is placed by headset-centered radial visual angle: the questionnaire occupies the central ray, the keyboard occupies a neighboring left ray, and both panels face the user. Raw hardware/ADB keyevents and app-side validation commands all write the same Name state; Age remains a visible 0-100 slider with no IME owner.
+
+## Stable-Surface Heartbeat Glow Recheck
+
+- Current APK after removing visible GLB glow-variant swapping from the heartbeat path: `app/build/outputs/apk/debug/app-debug.apk`, SHA-256 `5E65AFFB84D93CFC71A95F6188A84DED46917CB7D2286172CCF8C34B10BB4A1D`.
+- Quest glow screenshots with no synthesized button presses: `artifacts/quest-glow-stable-surface/20260613-024056/button-glow-off.png` and `artifacts/quest-glow-stable-surface/20260613-024056/button-glow-on.png`.
+- Runtime markers: `BRB_BUTTON_GLOW_STABLE_SURFACE_READY ... modelGlow=stable_idle_model_native_lights ... geometrySwap=false shapeStable=true placementStable=true scaleStable=true` and `BRB_VISUAL_GLOW_VALIDATION ... actualGlowPath=stable_idle_model_native_lights`.
+- Pixel check: `artifacts/quest-glow-stable-surface/20260613-024056/button-glow-bounds-comparison.json` thresholds the saturated red cap below the counter and compares the two largest connected components, one per eye, with a 1 px screenshot-threshold tolerance. Both eyes pass: widths stay unchanged, one eye is exact, and the other differs by only `deltaHeightPx=1` with `deltaCenterYPx=-0.5`.
+- Observed result: the button body, cap outline, placement, and scale remain visually fixed between ECG/mock glow off/on. The on state adds only the fixed native light warmth on the cap/bezel area; button motion remains reserved for accepted physical button presses.
 
 ## Fresh MesmerPrism Glow Port Recheck
 
@@ -54,12 +70,12 @@ Observed state:
 - The demographics panel spawns in the headset view with the Big Red Button Institute-style paper/red/serif aesthetic. Participant ID is not shown; gender is four-choice, handedness is three-choice, and the signature pad is a large pointer drawing field.
 - The Button Experience panel spawns in the headset view with the same-button pictographic task; local preview evidence confirms the button thumbnail is centered in the presence circle, circle boundaries are thick, and closeness/presence/redness controls are visible.
 - The older panel screenshots were captured during the earlier blue glitch transition. Use the `20260610-152025` panel-smoke screenshots above for the current whole-panel contour disruption and buffer-wheel treatment.
-- The native Quest/system keyboard is an OS-managed surface, not a custom Compose panel. It is validated by qkv log evidence and the local native-keyboard preview rather than by a detached in-app keyboard screenshot.
+- The Name keyboard is now an app-owned pop-out spatial panel, not an OS-managed Quest/system keyboard and not an integrated section inside the questionnaire panel. It is positioned by headset-centered radial reference to the left of the main questionnaire with `orientation=faces_headset`, `nonObstructing=true`, and `fovVisible=true` runtime layout evidence, and is validated by direct keyevent headset screenshots, qkv log evidence, D-pad-only export validation, and the local app-owned keyboard preview.
 
 ## Fresh Local Preview Evidence
 
-- Latest local preview folder: `artifacts/layout-previews/preview-20260610-132626`
-- Native keyboard preview: `demographics-native-keyboard-preview.png`
+- Latest local preview folder: `artifacts/layout-previews/preview-20260613-152759`
+- App-owned keyboard preview: `demographics-app-owned-keyboard-preview.png`
 - Button preview: `button-layout-preview.png`
 - Demographics preview: `demographics-panel-preview.png`
 - Button Experience preview: `pictographic-panel-preview.png`
@@ -69,7 +85,7 @@ Observed state:
 Observed state:
 
 - Local previews show the digital button counter, PMD-aware Polar H10 ECG-ready strip, expanded signature pad, and no obvious overlapping controls or clipped text.
-- The native keyboard preview documents the central questionnaire plus OS-managed movable Quest keyboard behavior for Name and Age, with Name text/Next and Age number/Done contracts.
+- The app-owned keyboard preview documents the central questionnaire plus the visible Name QWERTY surface, with Name text/Next, direct keyevent fallback, and an in-panel 0-100 Age slider that has no IME owner.
 - Session Experience rating rows display the actual 14 adapted items across two preview pages with 0-6 response controls.
 - The Button Experience preview shows calibrated closeness/presence axes and the third redness response scale.
 - The Additional Time 0-100 VAS is visible, centered, and uses the requested twice-as-much-time wording.

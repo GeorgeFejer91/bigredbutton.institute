@@ -121,13 +121,17 @@ function Draw-JapaneseDemographicsPreview {
     $g.FillRectangle((Brush 255 255 255 184), 45, 260, 1090, 390)
     $g.DrawRectangle((Pen 201 193 176 2), 45, 260, 1090, 390)
     Draw-Text $g '参加者情報' 64 290 18 360 30 $true
-    $fields = @(@('名前',64), @('年齢',608))
-    foreach ($field in $fields) {
-        $x = [int]$field[1]
-        $g.FillRectangle((Brush 255 251 244), $x, 335, 490, 58)
-        $g.DrawRectangle((Pen 201 193 176 2), $x, 335, 490, 58)
-        Draw-Text $g $field[0] ($x + 16) 352 15 420 30 $false (Brush 95 103 117)
-    }
+    $g.FillRectangle((Brush 255 251 244), 64, 335, 490, 58)
+    $g.DrawRectangle((Pen 201 193 176 2), 64, 335, 490, 58)
+    Draw-Text $g '名前' 80 352 15 420 30 $false (Brush 95 103 117)
+    $g.FillRectangle((Brush 255 251 244), 608, 335, 490, 58)
+    $g.DrawRectangle((Pen 201 193 176 2), 608, 335, 490, 58)
+    Draw-Text $g '年齢' 624 344 11 80 20 $true (Brush 95 103 117)
+    Draw-Text $g '34' 1060 344 18 40 28 $true (Brush 26 30 40)
+    $g.DrawLine((Pen 150 150 150 5), 654, 374, 1038, 374)
+    $g.FillEllipse((Brush 223 44 44), 776, 363, 22, 22)
+    Draw-Text $g '0' 624 365 10 28 20 $false (Brush 95 103 117)
+    Draw-Text $g '100' 1048 365 10 42 20 $false (Brush 95 103 117)
     Draw-Text $g '性別' 64 425 15 120 28 $false (Brush 95 103 117)
     $gender = @(@('男性',160,96), @('女性',266,96), @('その他',372,116), @('回答しない',498,150))
     foreach ($choice in $gender) {
@@ -188,13 +192,15 @@ function Draw-JapanesePictographicPreview {
     $axisTravel = $sliderW - (2 * $thumbRadius)
     $selfCenterX = $axisStartX
     $buttonCenterX = $axisStartX + ($axisTravel / 2)
-    $buttonCenterY = 325
+    $buttonCenterY = 315
+    $selfCircleRadius = 105
+    $buttonCircleRadius = $selfCircleRadius
     $axisEndX = $axisStartX + $axisTravel
     $g.FillRectangle((Brush 255 251 244), 70, 150, 1040, 270)
     $g.DrawRectangle((Pen 201 193 176 2), 70, 150, 1040, 270)
     $g.DrawLine((Pen 92 88 82 4 140), $selfCenterX, 315, $axisEndX, 315)
-    $g.DrawEllipse((Pen 26 30 40 9 190), $selfCenterX - 75, 235, 150, 150)
-    $g.DrawEllipse((Pen 223 44 44 9 180), $buttonCenterX - 115, $buttonCenterY - 115, 230, 230)
+    $g.DrawEllipse((Pen 26 30 40 9 230), ($selfCenterX - $selfCircleRadius), ($buttonCenterY - $selfCircleRadius), (2 * $selfCircleRadius), (2 * $selfCircleRadius))
+    $g.DrawEllipse((Pen 223 44 44 9 180), ($buttonCenterX - $buttonCircleRadius), ($buttonCenterY - $buttonCircleRadius), (2 * $buttonCircleRadius), (2 * $buttonCircleRadius))
     $thumbPath = Join-Path $projectRoot 'app\src\main\res\drawable-nodpi\big_red_button_model_thumbnail.png'
     if (Test-Path $thumbPath) {
         $thumb = [Drawing.Bitmap]::FromFile($thumbPath)
@@ -428,14 +434,17 @@ function Draw-DemographicsPreview {
     $g.FillRectangle((Brush 255 255 255 184), 45, 260, 1090, 390)
     $g.DrawRectangle((Pen 201 193 176 2), 45, 260, 1090, 390)
     Draw-Text $g 'Participant details' 64 290 18 360 30 $true
-    $labels = @('Name','Age')
-    $x = 64; $y = 335
-    foreach ($label in $labels) {
-        $g.FillRectangle((Brush 255 251 244), $x, $y, 490, 58)
-        $g.DrawRectangle((Pen 201 193 176 2), $x, $y, 490, 58)
-        Draw-Text $g $label ($x + 16) ($y + 17) 15 420 30 $false (Brush 95 103 117)
-        if ($x -lt 560) { $x = 608 } else { $x = 64; $y += 72 }
-    }
+    $g.FillRectangle((Brush 255 251 244), 64, 335, 490, 58)
+    $g.DrawRectangle((Pen 201 193 176 2), 64, 335, 490, 58)
+    Draw-Text $g 'Name' 80 352 15 420 30 $false (Brush 95 103 117)
+    $g.FillRectangle((Brush 255 251 244), 608, 335, 490, 58)
+    $g.DrawRectangle((Pen 201 193 176 2), 608, 335, 490, 58)
+    Draw-Text $g 'Age' 624 344 11 80 20 $true (Brush 95 103 117)
+    Draw-Text $g '34' 1060 344 18 40 28 $true (Brush 26 30 40)
+    $g.DrawLine((Pen 150 150 150 5), 654, 374, 1038, 374)
+    $g.FillEllipse((Brush 223 44 44), 776, 363, 22, 22)
+    Draw-Text $g '0' 624 365 10 28 20 $false (Brush 95 103 117)
+    Draw-Text $g '100' 1048 365 10 42 20 $false (Brush 95 103 117)
     Draw-Text $g 'Gender' 64 425 15 240 28 $false (Brush 95 103 117)
     $genderX = 160
     foreach ($choice in @('Male', 'Female', 'Other', 'Prefer not to say')) {
@@ -475,96 +484,114 @@ function Draw-DemographicsPreview {
     return Save-Canvas $c 'demographics-panel-preview.png'
 }
 
-function Draw-DemographicsNativeKeyboardPreview {
+function Draw-DemographicsAppOwnedKeyboardPreview {
     $c = New-Canvas
     $g = $c.Graphics
-    Draw-Text $g 'Demographics Native EditText Keyboard' 40 34 32 900 50 $true
-    Draw-Text $g 'The questionnaire stays centered. Name and Age are visible Android EditText fields inside the BRB intake shell. Name uses text/Next; Age uses the numeric Quest keyboard/Done.' 42 88 16 1050 56 $false (Brush 95 103 117)
+    Draw-Text $g 'Native-like Pop-out Name Keyboard' 40 34 32 900 50 $true
+    Draw-Text $g 'Name focus opens a separate app-owned QWERTY keyboard panel on a neighboring left radial ray from the headset, with both panels facing the user.' 42 88 16 1050 56 $false (Brush 95 103 117)
 
-    $g.FillRectangle((Brush 255 255 255 190), 50, 160, 1080, 310)
-    $g.DrawRectangle((Pen 201 193 176 2), 50, 160, 1080, 310)
-    Draw-Text $g 'Participant details' 72 184 18 360 30 $true
+    $mainX = 430
+    $mainY = 150
+    $mainW = 700
+    $mainH = 520
+    $g.FillRectangle((Brush 255 255 255 190), $mainX, $mainY, $mainW, $mainH)
+    $g.DrawRectangle((Pen 201 193 176 2), $mainX, $mainY, $mainW, $mainH)
+    Draw-Text $g 'Participant details' ($mainX + 22) ($mainY + 28) 18 360 30 $true
 
-    $g.FillRectangle((Brush 255 251 244), 72, 230, 505, 64)
-    $g.DrawRectangle((Pen 201 193 176 2), 72, 230, 505, 64)
-    Draw-Text $g 'Name' 90 240 11 120 20 $true (Brush 95 103 117)
-    Draw-Text $g 'George' 90 260 17 360 28 $false (Brush 26 30 40)
+    $g.FillRectangle((Brush 255 251 244), ($mainX + 22), ($mainY + 78), 310, 64)
+    $g.DrawRectangle((Pen 143 23 23 3), ($mainX + 22), ($mainY + 78), 310, 64)
+    Draw-Text $g 'Name' ($mainX + 40) ($mainY + 88) 11 120 20 $true (Brush 143 23 23)
+    Draw-Text $g 'George Fejer' ($mainX + 40) ($mainY + 108) 17 250 28 $false (Brush 26 30 40)
 
-    $g.FillRectangle((Brush 255 251 244), 620, 230, 430, 64)
-    $g.DrawRectangle((Pen 143 23 23 3), 620, 230, 430, 64)
-    Draw-Text $g 'Age' 638 240 11 120 20 $true (Brush 143 23 23)
-    Draw-Text $g '34' 638 260 17 340 28 $false (Brush 26 30 40)
+    $g.FillRectangle((Brush 255 251 244), ($mainX + 360), ($mainY + 78), 300, 64)
+    $g.DrawRectangle((Pen 201 193 176 2), ($mainX + 360), ($mainY + 78), 300, 64)
+    Draw-Text $g 'Age' ($mainX + 378) ($mainY + 88) 11 120 20 $true (Brush 95 103 117)
+    Draw-Text $g '34' ($mainX + 620) ($mainY + 86) 18 40 28 $true (Brush 26 30 40)
+    $g.DrawLine((Pen 150 150 150 5), ($mainX + 410), ($mainY + 120), ($mainX + 585), ($mainY + 120))
+    $g.FillEllipse((Brush 223 44 44), ($mainX + 468), ($mainY + 109), 22, 22)
+    Draw-Text $g '0' ($mainX + 378) ($mainY + 111) 10 28 20 $false (Brush 95 103 117)
+    Draw-Text $g '100' ($mainX + 594) ($mainY + 111) 10 42 20 $false (Brush 95 103 117)
 
-    Draw-Text $g 'Gender' 72 330 15 170 28 $false (Brush 95 103 117)
-    $genderX = 170
+    Draw-Text $g 'Gender' ($mainX + 22) ($mainY + 178) 15 170 28 $false (Brush 95 103 117)
+    $genderX = $mainX + 120
     foreach ($choice in @('Male', 'Female', 'Other', 'Prefer not to say')) {
-        $w = if ($choice -eq 'Prefer not to say') { 205 } else { 105 }
-        $g.FillRectangle((Brush 255 251 244), $genderX, 318, $w, 42)
-        $g.DrawRectangle((Pen 201 193 176 2), $genderX, 318, $w, 42)
-        Draw-Text $g $choice ($genderX + 13) 330 12 ($w - 20) 24 $true (Brush 26 30 40)
-        $genderX += $w + 10
+        $w = if ($choice -eq 'Prefer not to say') { 165 } else { 88 }
+        $g.FillRectangle((Brush 255 251 244), $genderX, ($mainY + 166), $w, 42)
+        $g.DrawRectangle((Pen 201 193 176 2), $genderX, ($mainY + 166), $w, 42)
+        Draw-Text $g $choice ($genderX + 10) ($mainY + 178) 11 ($w - 16) 24 $true (Brush 26 30 40)
+        $genderX += $w + 8
     }
 
-    Draw-Text $g 'Handedness' 72 390 15 170 28 $false (Brush 95 103 117)
-    $handX = 220
+    Draw-Text $g 'Handedness' ($mainX + 22) ($mainY + 238) 15 170 28 $false (Brush 95 103 117)
+    $handX = $mainX + 145
     foreach ($choice in @('Left', 'Right', 'Ambidextrous')) {
-        $w = if ($choice -eq 'Ambidextrous') { 185 } else { 115 }
-        $g.FillRectangle((Brush 255 251 244), $handX, 378, $w, 42)
-        $g.DrawRectangle((Pen 201 193 176 2), $handX, 378, $w, 42)
-        Draw-Text $g $choice ($handX + 18) 390 13 ($w - 26) 26 $true (Brush 26 30 40)
-        $handX += $w + 12
+        $w = if ($choice -eq 'Ambidextrous') { 150 } else { 92 }
+        $g.FillRectangle((Brush 255 251 244), $handX, ($mainY + 226), $w, 42)
+        $g.DrawRectangle((Pen 201 193 176 2), $handX, ($mainY + 226), $w, 42)
+        Draw-Text $g $choice ($handX + 12) ($mainY + 238) 12 ($w - 22) 24 $true (Brush 26 30 40)
+        $handX += $w + 10
     }
+    Draw-Text $g 'The main questionnaire remains readable and unobstructed.' ($mainX + 22) ($mainY + 420) 14 640 28 $false (Brush 95 103 117)
 
-    $kbX = 170
-    $kbY = 490
-    $kbW = 840
-    $g.FillRectangle((Brush 230 234 244 245), $kbX, $kbY, $kbW, 255)
-    $g.DrawRectangle((Pen 67 76 96 3), $kbX, $kbY, $kbW, 255)
-    $g.FillRectangle((Brush 26 42 88 245), $kbX, $kbY, $kbW, 34)
-    Draw-Text $g 'Native Quest keyboard' ($kbX + 18) ($kbY + 8) 15 280 24 $true (Brush 255 255 255)
-    Draw-Text $g 'Active field: Age | number keyboard after Name Next' ($kbX + 18) ($kbY + 44) 12 480 22 $false (Brush 67 76 96)
+    $g.DrawLine((Pen 143 23 23 2 170), 405, 250, 335, 305)
+    $g.DrawLine((Pen 143 23 23 2 170), 348, 304, 335, 305)
+    $g.DrawLine((Pen 143 23 23 2 170), 342, 291, 335, 305)
+
+    $kbX = 70
+    $kbY = 210
+    $kbW = 310
+    $kbH = 420
+    $g.FillRectangle((Brush 255 251 244 248), $kbX, $kbY, $kbW, $kbH)
+    $g.DrawRectangle((Pen 143 23 23 3), $kbX, $kbY, $kbW, $kbH)
+    Draw-Text $g 'keyboard_panel' ($kbX + 16) ($kbY + 12) 15 260 24 $true (Brush 143 23 23)
+    Draw-Text $g 'left_of_questionnaire_near_user' ($kbX + 16) ($kbY + 38) 10 300 20 $false (Brush 95 103 117)
+    $g.FillRectangle((Brush 255 255 255 235), ($kbX + 16), ($kbY + 66), ($kbW - 32), 38)
+    $g.DrawRectangle((Pen 201 193 176 2), ($kbX + 16), ($kbY + 66), ($kbW - 32), 38)
+    Draw-Text $g 'George Fejer|' ($kbX + 28) ($kbY + 74) 13 280 24 $false (Brush 26 30 40)
 
     $rows = @(
-        @('1','2','3','4','5'),
-        @('6','7','8','9','0')
+        @('Q','W','E','R','T','Y','U','I','O','P'),
+        @('A','S','D','F','G','H','J','K','L'),
+        @('Z','X','C','V','B','N','M')
     )
-    $keyY = $kbY + 82
+    $keyY = $kbY + 126
     foreach ($row in $rows) {
-        $keyX = $kbX + 18
+        $rowWidth = ($row.Count * 26) + (($row.Count - 1) * 6)
+        $keyX = $kbX + [int](($kbW - $rowWidth) / 2)
         foreach ($key in $row) {
-            $g.FillRectangle((Brush 255 255 255 245), $keyX, $keyY, 154, 38)
-            $g.DrawRectangle((Pen 146 154 171 2), $keyX, $keyY, 154, 38)
-            Draw-Text $g $key ($keyX + 67) ($keyY + 9) 12 30 20 $true
-            $keyX += 160
+            $g.FillRectangle((Brush 255 255 255 245), $keyX, $keyY, 26, 34)
+            $g.DrawRectangle((Pen 146 154 171 2), $keyX, $keyY, 26, 34)
+            Draw-Text $g $key ($keyX + 7) ($keyY + 9) 10 16 18 $true
+            $keyX += 32
         }
-        $keyY += 44
+        $keyY += 42
     }
 
-    $controlY = $kbY + 178
+    $controlY = $kbY + 292
     $controls = @(
-        @{ Label = 'Name'; W = 110; Selected = $false },
-        @{ Label = 'Delete'; W = 145; Selected = $false },
-        @{ Label = 'Done'; W = 120; Selected = $false }
+        @{ Label = 'Clear'; W = 58; Selected = $false },
+        @{ Label = 'Space'; W = 118; Selected = $false },
+        @{ Label = 'Back'; W = 58; Selected = $false },
+        @{ Label = 'Next'; W = 66; Selected = $false }
     )
-    $keyX = $kbX + 18
+    $keyX = $kbX + [int](($kbW - 58 - 118 - 58 - 66 - 24) / 2)
     foreach ($control in $controls) {
         $selected = [bool]$control.Selected
-        $fill = if ($control.Label -eq 'Done') { Brush 223 44 44 } elseif ($selected) { Brush 216 226 255 } else { Brush 255 255 255 235 }
-        $pen = if ($selected -or $control.Label -eq 'Done') { Pen 26 42 88 2 } else { Pen 146 154 171 2 }
+        $fill = if ($control.Label -eq 'Next') { Brush 223 44 44 } elseif ($selected) { Brush 216 226 255 } else { Brush 255 255 255 235 }
+        $pen = if ($selected -or $control.Label -eq 'Next') { Pen 26 42 88 2 } else { Pen 146 154 171 2 }
         $g.FillRectangle($fill, $keyX, $controlY, $control.W, 36)
         $g.DrawRectangle($pen, $keyX, $controlY, $control.W, 36)
-        $textBrush = if ($control.Label -eq 'Done') { Brush 255 255 255 } elseif ($selected) { Brush 26 42 88 } else { Brush 26 30 40 }
-        Draw-Text $g $control.Label ($keyX + 10) ($controlY + 9) 10 ($control.W - 12) 20 $true $textBrush
+        $textBrush = if ($control.Label -eq 'Next') { Brush 255 255 255 } elseif ($selected) { Brush 26 42 88 } else { Brush 26 30 40 }
+        Draw-Text $g $control.Label ($keyX + 5) ($controlY + 9) 9 ($control.W - 8) 20 $true $textBrush
         $fill.Dispose()
         $pen.Dispose()
         $textBrush.Dispose()
         $keyX += $control.W + 8
     }
 
-    Draw-Text $g 'native movable Quest keyboard opens for Name and retargets to Age with restartInput=true.' 70 468 15 980 28 $true (Brush 143 23 23)
-    Draw-Text $g 'Age uses the numeric Quest keyboard; digits are filtered to max three characters and saved as demographics.age.' 70 758 13 980 34 $false (Brush 95 103 117)
-    Draw-Text $g 'Validated by tools/test-native-keyboard-contract.ps1 and qkv log comparisons.' 70 792 13 900 24 $false (Brush 95 103 117)
-    return Save-Canvas $c 'demographics-native-keyboard-preview.png'
+    Draw-Text $g 'Separate spatial keyboard_panel: headset-centered radial left, faces user, nonObstructing=true, fovVisible=true.' 58 656 13 1040 22 $true (Brush 143 23 23)
+    Draw-Text $g 'Validated by static, direct raw keyevent, D-pad-only export, focused smoke, stress, and qkv.' 58 684 12 1000 18 $false (Brush 95 103 117)
+    return Save-Canvas $c 'demographics-app-owned-keyboard-preview.png'
 }
 
 function Draw-PictographicPreview {
@@ -581,16 +608,18 @@ function Draw-PictographicPreview {
     $axisTravel = $sliderW - (2 * $thumbRadius)
     $selfCenterX = $axisStartX
     $buttonCenterX = $axisStartX + ($axisTravel / 2)
-    $buttonCenterY = 325
+    $buttonCenterY = 315
+    $selfCircleRadius = 105
+    $buttonCircleRadius = $selfCircleRadius
     $axisEndX = $axisStartX + $axisTravel
     $g.DrawLine((Pen 92 88 82 4 140), $selfCenterX, 315, $axisEndX, 315)
-    $g.DrawEllipse((Pen 26 30 40 9 190), $selfCenterX - 75, 235, 150, 150)
+    $g.DrawEllipse((Pen 26 30 40 9 230), ($selfCenterX - $selfCircleRadius), ($buttonCenterY - $selfCircleRadius), (2 * $selfCircleRadius), (2 * $selfCircleRadius))
     $g.DrawEllipse((Pen 26 30 40 5), $selfCenterX - 17, 257, 34, 34)
     $g.DrawLine((Pen 26 30 40 5), $selfCenterX, 292, $selfCenterX, 352)
     $g.DrawLine((Pen 26 30 40 5), $selfCenterX - 40, 315, $selfCenterX + 40, 315)
     $g.DrawLine((Pen 26 30 40 5), $selfCenterX, 352, $selfCenterX - 30, 400)
     $g.DrawLine((Pen 26 30 40 5), $selfCenterX, 352, $selfCenterX + 30, 400)
-    $g.DrawEllipse((Pen 223 44 44 9 180), $buttonCenterX - 115, $buttonCenterY - 115, 230, 230)
+    $g.DrawEllipse((Pen 223 44 44 9 180), ($buttonCenterX - $buttonCircleRadius), ($buttonCenterY - $buttonCircleRadius), (2 * $buttonCircleRadius), (2 * $buttonCircleRadius))
     $thumbPath = Join-Path $projectRoot 'app\src\main\res\drawable-nodpi\big_red_button_model_thumbnail.png'
     if (Test-Path $thumbPath) {
         $thumb = [Drawing.Bitmap]::FromFile($thumbPath)
@@ -858,7 +887,7 @@ $paths = @(
     Draw-ButtonPreview
     Draw-PreButtonExperiencePromptPreview
     Draw-DemographicsPreview
-    Draw-DemographicsNativeKeyboardPreview
+    Draw-DemographicsAppOwnedKeyboardPreview
     Draw-PictographicPreview
     Draw-RednessChangeoverPreviews
     Draw-IpqPreview

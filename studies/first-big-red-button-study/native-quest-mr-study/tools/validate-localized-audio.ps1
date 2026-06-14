@@ -51,6 +51,13 @@ $checks = New-Object System.Collections.Generic.List[object]
 
 Add-Check 'localized audio schema' ((Get-JsonPropertyValue $manifest 'schema') -eq 'bigredbutton.localized_audio.v1') (Get-JsonPropertyValue $manifest 'schema')
 Add-Check 'localized audio default locale' ((Get-JsonPropertyValue $manifest 'defaultLocale') -eq 'en-US') (Get-JsonPropertyValue $manifest 'defaultLocale')
+$libraryLayout = Get-JsonPropertyValue $manifest 'libraryLayout'
+Add-Check 'localized audio library layout declared' ($null -ne $libraryLayout) ''
+if ($null -ne $libraryLayout) {
+    Add-Check 'localized audio runtime root centralized' ((Get-JsonPropertyValue $libraryLayout 'runtimeAssetRoot') -eq 'localized') (Get-JsonPropertyValue $libraryLayout 'runtimeAssetRoot')
+    Add-Check 'localized audio source root centralized' ((Get-JsonPropertyValue $libraryLayout 'sourceRoot') -eq 'audio-assets/localized') (Get-JsonPropertyValue $libraryLayout 'sourceRoot')
+    Add-Check 'localized shared categories declared' ($null -ne (Get-JsonPropertyValue $libraryLayout 'sharedCategories')) ''
+}
 
 $ttsPolicy = Get-JsonPropertyValue $manifest 'ttsPolicy'
 Add-Check 'Japanese TTS uses eleven_v3' ((Get-JsonPropertyValue $ttsPolicy 'modelId') -eq 'eleven_v3') (Get-JsonPropertyValue $ttsPolicy 'modelId')
@@ -129,13 +136,20 @@ foreach ($asset in $assets) {
 $shared = @(Get-JsonPropertyValue $manifest 'shared')
 foreach ($item in $shared) {
     $audioId = Get-JsonPropertyValue $item 'audioId'
-    $path = Join-Path $localizedRoot (Get-JsonPropertyValue $item 'path')
+    $relativePath = Get-JsonPropertyValue $item 'path'
+    $path = Join-Path $localizedRoot $relativePath
+    Add-Check "$audioId shared file is categorized" ($relativePath -match '^shared/[^/]+/[^/]+$') $relativePath
     Add-Check "$audioId shared file exists" (Test-Path $path) $path
     if (Test-Path $path) {
         $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $path).Hash
+        $duration = Get-AudioDurationMs $path
         Add-Check "$audioId shared hash matches manifest" ($hash -eq (Get-JsonPropertyValue $item 'sha256')) $hash
+        Add-Check "$audioId shared duration matches manifest" ($duration -eq [int](Get-JsonPropertyValue $item 'durationMs')) "observed=$duration expected=$([int](Get-JsonPropertyValue $item 'durationMs'))"
     }
 }
+
+$uncategorizedSharedFiles = @(Get-ChildItem -LiteralPath (Join-Path $localizedRoot 'shared') -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in @('.mp3', '.wav', '.ogg') })
+Add-Check 'localized shared root has no loose runtime audio' ($uncategorizedSharedFiles.Count -eq 0) (($uncategorizedSharedFiles | ForEach-Object { $_.Name }) -join ',')
 
 $failed = @($checks | Where-Object { -not $_.pass })
 $outRoot = Join-Path $projectRoot 'artifacts\localized-audio-validation'

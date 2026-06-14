@@ -5,7 +5,7 @@
 Temporary button press placeholder:
 
 ```text
-app/src/main/assets/sfx/button-press-placeholder-kenney-bong.ogg
+../audio-assets/localized/shared/button_press/sfx_9020_button_press_placeholder_kenney_bong.ogg
 ```
 
 Source:

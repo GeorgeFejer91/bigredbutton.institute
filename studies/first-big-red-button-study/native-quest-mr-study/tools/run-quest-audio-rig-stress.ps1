@@ -205,7 +205,9 @@ function Run-PriorYesStress {
     Wait-LogPattern 'BRB_SFX_PLAY cue=prior_button_experience_yes .*isPlaying=true' 'prior yes feedback playback' 10 | Out-Null
     Invoke-AudioStressCommand 'prior_answer_no'
     Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_ANSWER_BLOCKED answer=no .*reason=answer_locked' 'prior yes switch blocked' 10 | Out-Null
-    Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_FEEDBACK_READY answer=yes .*startEnabled=false .*preStartInstructionsActive=true' 'prior yes feedback ready before pre-start clip' 20 | Out-Null
+    Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_FEEDBACK_READY answer=yes .*startEnabled=false .*preStartDelayActive=true .*preStartDelayMs=4000' 'prior yes feedback ready before pre-start pause' 20 | Out-Null
+    Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_PAUSE answer=yes .*state=start .*delayMs=4000' 'prior yes 4s pre-start pause begins' 10 | Out-Null
+    Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_PAUSE answer=yes .*state=end .*delayMs=4000' 'prior yes 4s pre-start pause ends' 10 | Out-Null
     Wait-LogPattern 'BRB_SFX_PLAY cue=pre_start_instructions .*isPlaying=true' 'prior yes pre-start instructions playback' 10 | Out-Null
     $log = Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_READY answer=yes .*startEnabled=true' 'prior yes pre-start instructions complete' 45
     $path = Save-FilteredLog 'prior-yes' $log
@@ -216,6 +218,7 @@ function Run-PriorYesStress {
     Add-Comparison 'prior yes pre-start instructions audio starts' $true ($log -match 'BRB_SFX_PLAY cue=pre_start_instructions .*isPlaying=true') $path
     Add-TimeWindowComparison 'prior options wait for question audio' $log 'BRB_SFX_PLAY cue=prior_button_experience_question' 'BRB_PRIOR_BUTTON_EXPERIENCE_OPTIONS_READY' 10250 12500
     Add-TimeWindowComparison 'prior yes start waits for feedback audio' $log 'BRB_SFX_PLAY cue=prior_button_experience_yes' 'BRB_PRIOR_BUTTON_EXPERIENCE_FEEDBACK_READY answer=yes' 5000 7600
+    Add-TimeWindowComparison 'prior yes inserts 4s pause before pre-start instructions' $log 'BRB_PRIOR_BUTTON_EXPERIENCE_FEEDBACK_READY answer=yes' 'BRB_SFX_PLAY cue=pre_start_instructions' 3800 5500
     Add-TimeWindowComparison 'prior yes start waits for pre-start instructions' $log 'BRB_SFX_PLAY cue=pre_start_instructions' 'BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_READY answer=yes' 34000 37000
 }
 
@@ -229,7 +232,9 @@ function Run-PriorNoStress {
     Invoke-AudioStressCommand 'prior_answer_no'
     Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_ANSWER answer=no .*locked=true .*otherOptionsHidden=true' 'prior no answer locked' 10 | Out-Null
     Wait-LogPattern 'BRB_SFX_PLAY cue=prior_button_experience_no .*isPlaying=true' 'prior no feedback playback' 10 | Out-Null
-    Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_FEEDBACK_READY answer=no .*startEnabled=false .*preStartInstructionsActive=true' 'prior no feedback ready before pre-start clip' 20 | Out-Null
+    Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_FEEDBACK_READY answer=no .*startEnabled=false .*preStartDelayActive=true .*preStartDelayMs=4000' 'prior no feedback ready before pre-start pause' 20 | Out-Null
+    Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_PAUSE answer=no .*state=start .*delayMs=4000' 'prior no 4s pre-start pause begins' 10 | Out-Null
+    Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_PAUSE answer=no .*state=end .*delayMs=4000' 'prior no 4s pre-start pause ends' 10 | Out-Null
     Wait-LogPattern 'BRB_SFX_PLAY cue=pre_start_instructions .*isPlaying=true' 'prior no pre-start instructions playback' 10 | Out-Null
     $log = Wait-LogPattern 'BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_READY answer=no .*startEnabled=true' 'prior no pre-start instructions complete' 45
     $path = Save-FilteredLog 'prior-no' $log
@@ -237,6 +242,7 @@ function Run-PriorNoStress {
     Add-Comparison 'prior no pre-start instructions audio starts' $true ($log -match 'BRB_SFX_PLAY cue=pre_start_instructions .*isPlaying=true') $path
     Add-Comparison 'prior no answer blocked during question audio' $true ($log -match 'BRB_PRIOR_BUTTON_EXPERIENCE_ANSWER_BLOCKED answer=no .*reason=question_audio_active') $path
     Add-TimeWindowComparison 'prior no start waits for feedback audio' $log 'BRB_SFX_PLAY cue=prior_button_experience_no' 'BRB_PRIOR_BUTTON_EXPERIENCE_FEEDBACK_READY answer=no' 4050 6600
+    Add-TimeWindowComparison 'prior no inserts 4s pause before pre-start instructions' $log 'BRB_PRIOR_BUTTON_EXPERIENCE_FEEDBACK_READY answer=no' 'BRB_SFX_PLAY cue=pre_start_instructions' 3800 5500
     Add-TimeWindowComparison 'prior no start waits for pre-start instructions' $log 'BRB_SFX_PLAY cue=pre_start_instructions' 'BRB_PRIOR_BUTTON_EXPERIENCE_PRE_START_READY answer=no' 34000 37000
 }
 
@@ -278,12 +284,12 @@ function Run-FinalExtraStress {
     Start-Sleep -Seconds 1
     Invoke-AudioStressCommand 'final_extra_press_attempt'
     Wait-LogPattern 'BRB_FINAL_EXTRA_BUTTON_PRESS index=1 .*source=audio_rig_stress' 'final extra button accepts after prompt audio' 10 | Out-Null
-    $log = Wait-LogPattern 'BRB_SFX_PLAY cue=button_press asset=.*durationMs=' 'final extra button press sound' 10
+    $log = Wait-LogPattern 'BRB_SFX_PLAY cue=button_press .*asset=.*durationMs=' 'final extra button press sound' 10
     $path = Save-FilteredLog 'final-extra' $log
     Add-Comparison 'final extra prompt audio starts' $true ($log -match 'BRB_SFX_PLAY cue=final_extra_presses_prompt .*isPlaying=true') $path
     Add-Comparison 'final extra press blocked while prompt audio active' $true ($log -match 'BRB_FINAL_EXTRA_BUTTON_PRESS_SUPPRESSED reason=prompt_audio_active source=audio_rig_stress') $path
     Add-Comparison 'final extra button appears after prompt audio' $true ($log -match 'BRB_FINAL_EXTRA_PROMPT_HIDDEN reason=audio_complete .*buttonModelVisible=true .*counterOnly=true') $path
-    Add-Comparison 'button press sound cue starts after prompt' $true ($log -match 'BRB_SFX_PLAY cue=button_press asset=.*durationMs=') $path
+    Add-Comparison 'button press sound cue starts after prompt' $true ($log -match 'BRB_SFX_PLAY cue=button_press .*asset=.*durationMs=') $path
     Add-TimeWindowComparison 'final extra button waits for prompt audio' $log 'BRB_SFX_PLAY cue=final_extra_presses_prompt' 'BRB_FINAL_EXTRA_PROMPT_HIDDEN reason=audio_complete' 45200 49000
 }
 
@@ -342,6 +348,7 @@ try {
 
     Start-AudioStressRun 'audio-stress'
     Run-PriorYesStress
+    Start-AudioStressRun 'audio-stress-prior-no'
     Run-PriorNoStress
     Run-FinalTenStress
     Run-FinalExtraStress

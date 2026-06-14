@@ -141,6 +141,10 @@ try {
         Invoke-PreflightStep 'render-layout-previews' {
             & (Join-Path $PSScriptRoot 'render-layout-previews.ps1')
         }
+
+        Invoke-PreflightStep 'render-name-keyboard-preview' {
+            & (Join-Path $PSScriptRoot 'render-name-keyboard-preview.ps1')
+        }
     }
 
     $apkPath = Join-Path $projectRoot 'app\build\outputs\apk\debug\app-debug.apk'
@@ -164,6 +168,7 @@ try {
     $latestFinalHardwarePostRunAuditTest = Get-LatestDirectory (Join-Path $projectRoot 'artifacts\final-hardware-postrun-audit-tests')
     $latestFinalHardwarePostRunAuditValidation = Get-LatestDirectory (Join-Path $projectRoot 'artifacts\final-hardware-postrun-audit-validation')
     $latestLayoutPreview = Get-LatestDirectory (Join-Path $projectRoot 'artifacts\layout-previews')
+    $latestNameKeyboardPreview = Get-LatestDirectory (Join-Path $projectRoot 'artifacts\name-keyboard-preview')
 
     $summaryPath = Join-Path $outDir 'local-preflight-summary.json'
     $summary = [pscustomobject]@{
@@ -186,6 +191,7 @@ try {
             finalHardwarePostRunAuditValidatorTest = if ($latestFinalHardwarePostRunAuditTest) { Join-Path $latestFinalHardwarePostRunAuditTest.FullName 'final-hardware-postrun-audit-validator-test-summary.json' } else { $null }
             finalHardwarePostRunAuditValidation = if ($latestFinalHardwarePostRunAuditValidation) { Join-Path $latestFinalHardwarePostRunAuditValidation.FullName 'final-hardware-postrun-audit-validation.json' } else { $null }
             layoutPreview = if ($latestLayoutPreview) { $latestLayoutPreview.FullName } else { $null }
+            nameKeyboardPreview = if ($latestNameKeyboardPreview) { Join-Path $latestNameKeyboardPreview.FullName 'name-keyboard-preview-summary.json' } else { $null }
         }
         remainingHardGate = 'Human-worn Quest controller-contact plus live-H10 ECG export validation via tools/run-quest-physical-press-validation.ps1'
     }

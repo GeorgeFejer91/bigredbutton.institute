@@ -7,7 +7,7 @@ This file tracks press-sound work for the native Quest app. A temporary placehol
 The app contains and plays a temporary CC0 press-sound placeholder:
 
 ```text
-app/src/main/assets/sfx/button-press-placeholder-kenney-bong.ogg
+../audio-assets/localized/shared/button_press/sfx_9020_button_press_placeholder_kenney_bong.ogg
 ```
 
 Provenance:
