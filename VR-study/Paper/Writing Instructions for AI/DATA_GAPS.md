@@ -30,4 +30,4 @@ This note records the empirical materials that are still missing from the reposi
 
 ## Replacement rule
 
-When the missing materials are added, update `sections/04_results.tex` first, then revise `sections/05_discussion.tex`, and finally refresh `PROJECT_STATE.md` and `SESSION_LOG.md`.
+When the missing materials are added, update `results.tex` first, then revise `discussion.tex`, and finally refresh `Writing Instructions for AI/PROJECT_STATE.md` and `Writing Instructions for AI/SESSION_LOG.md`.

@@ -8,8 +8,10 @@ Use that file for end-to-end execution. This file remains supporting context and
 
 For multi-person collaboration, also read and update:
 
-- `VR-study/Paper/PROJECT_STATE.md`
-- `VR-study/Paper/SESSION_LOG.md`
+- `VR-study/Paper/Writing Instructions for AI/PROJECT_STATE.md`
+- `VR-study/Paper/Writing Instructions for AI/SESSION_LOG.md`
+
+Before writing or revising prose, read `VR-study/Paper/Writing Instructions for AI/global-writing-constraints.md`.
 
 ## Mission
 
@@ -19,7 +21,9 @@ Target voice:
 
 - Scientifically serious in claims, methods, and interpretation.
 - Stylistically adaptive by domain: HCI when making empirical claims, STS when tracing technological genealogy, humanities/media theory when unpacking symbolism.
-- Dry and laconically funny only where conceptually useful.
+- Academic, parsimonious, and suitable for a computer science or HCI journal.
+- Dry, deadpan, satirical, and laconically funny only where conceptually useful.
+- Never use em dashes.
 - Never let irony replace evidence.
 
 This paper should read like a serious HCI paper that knows exactly how absurd its object is, but refuses to become unserious about studying it.
@@ -51,7 +55,7 @@ The methods framing in `index.html` should inform interpretation throughout the 
 - criticality signatures
 - networked and multilevel coupling
 
-The strongest current empirical rationale for placement, reach, and salience is in `VR-study/Paper/bigredbutton_placement.tex`.
+The strongest current empirical rationale for placement, reach, and salience is in `VR-study/Paper/archive/bigredbutton_placement.tex`.
 
 Important placement details already grounded there:
 

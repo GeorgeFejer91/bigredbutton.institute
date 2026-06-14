@@ -1,0 +1,566 @@
+                                                             How Metaphors Impact Political Discourse:
+                                                 A Large-Scale Topic-Agnostic Study Using Neural Metaphor Detection
+                                                                   Vinodkumar Prabhakaran1 , Marek Rei2 , Ekaterina Shutova3
+                                                                                                   1
+                                                                                             Google Research, USA
+                                                                                               2
+                                                                                          Imperial College London, UK
+                                                                                    3
+                                                                                      University of Amsterdam, Netherlands
+                                                                        vinodkpg@google.com, marek.rei@imperial.ac.uk, e.shutova@uva.nl
+arXiv:2104.03928v1 [cs.CL] 8 Apr 2021
+
+
+
+
+                                                                    Abstract                                metaphor detection, when employed at scale, could help an-
+                                                                                                            swer some of the fundamental questions in social sciences
+                                             Metaphors are widely used in political rhetoric as an          about metaphors and their ability to shape the public dis-
+                                             effective framing device. While the efficacy of spe-           course.
+                                             cific metaphors such as the war metaphor in political
+                                             discourse has been documented before, those studies
+                                                                                                               Social scientists have demonstrated the importance of
+                                             often rely on small number of hand-coded instances             metaphors in political rhetoric — their role as a framing
+                                             of metaphor use. Larger-scale topic-agnostic studies           technique (Lakoff 1991; Tannen 1993; Entman 2003), their
+                                             are required to establish the general persuasiveness of        tendency to elicit stronger emotions than their literal coun-
+                                             metaphors as a device, and to shed light on the broader        terparts (Citron and Goldberg 2014), and their effectiveness
+                                             patterns that guide their persuasiveness. In this paper,       in influencing decision-making (Thibodeau and Boroditsky
+                                             we present a large-scale data-driven study of metaphors        2011). For instance, metaphors help with the framing of
+                                             used in political discourse. We conduct this study on          an issue by selecting and emphasising its facets that rein-
+                                             a publicly available dataset of over 85K posts made            force a particular point of view (Lakoff 1991; Musolff 2000;
+                                             by 412 US politicians in their Facebook public pages,          Lakoff and Wehling 2012). Discussing war as a competitive
+                                             up until Feb 2017. Our contributions are threefold: we
+                                             show evidence that metaphor use correlates with ideo-
+                                                                                                            game emphasizes the victory vs. defeat aspect of war, while
+                                             logical leanings in complex ways that depend on con-           neglecting its human cost, a strategy politicians could use
+                                             current political events such as winning or losing elec-       to arouse a pro-war sentiment in the public (Lakoff 1991).
+                                             tions; we show that posts with metaphors elicit more           While the role metaphors play in shaping the public dis-
+                                             engagement from their audience overall even after con-         course has been documented before, these qualitative studies
+                                             trolling for various socio-political factors such as gen-      are often limited to a few specific domains or topics (e.g., the
+                                             der and political party affiliation; and finally, we demon-    war domain above) and the metaphors used in them.
+                                             strate that metaphoricity is indeed the reason for in-            In this paper, aided by a neural network based metaphor
+                                             creased engagement of posts, through a fine-grained lin-       detection approach, we present a large-scale domain-
+                                             guistic analysis of metaphorical vs. literal usages of 513
+                                                                                                            agnostic study of the effects of metaphors in political dis-
+                                             words across 70K posts.
+                                                                                                            course. Our study is conducted on a dataset of 85K Face-
+                                                                                                            book status message posts made by 412 US politicians over
+                                        Metaphorical expressions arise in the presence of systematic        a period of around nine years. Our three main findings are:
+                                        metaphorical associations, or conceptual metaphors, map-
+                                        ping one concept or domain to another (Lakoff and Johnson           • We find that politicians’ rate of metaphor use is correlated
+                                        1980). For instance, when we talk about “curing juvenile              with their ideological leanings in complex ways that de-
+                                        delinquency” or “diagnosing corruption”, we view crime                pend on contemporaneous political events. Specifically,
+                                        (the target domain) in terms of a disease (the source domain)         our analysis found that Democratic politicians used sig-
+                                        and map various elements of the disease knowledge system              nificantly more metaphors during the three months imme-
+                                        to our reasoning about crime. Since recognizing metaphori-            diately after the 2016 election loss, compared to them-
+                                        cal expressions is critical in order to correctly interpret their     selves in prior months, as well as to Republican politi-
+                                        intended meanings, computational approaches to metaphor               cians during the same period of time or prior months.
+                                        detection has long been an active area of research in Natural       • We find that politicians’ posts that include metaphorical
+                                        Language Processing (NLP) (Shutova 2010). While recent                language tend to have significantly higher engagement
+                                        research has achieved great advances in automatic metaphor            from their audience. The scale of our study enabled us to
+                                        detection performance (Gutiérrez et al. 2016; Bulat, Clark,          control for various socio-political factors, such as gender
+                                        and Shutova 2017; Rei et al. 2017; Gao et al. 2018; Dankers           and party affiliation, strengthening our findings compared
+                                        et al. 2019), not much research has investigated whether              to prior studies.
+                                        Copyright © 2021, Association for the Advancement of Artificial     • We also conduct a finer-grained linguistic analysis that re-
+                                        Intelligence (www.aaai.org). All rights reserved.                     veals (1) that metaphorical uses of source domain words
+  lead to a higher engagement than their literal usage, and      metaphors for crime: crime is a virus vs. crime is a beast
+  (2) aspects of target domains (i.e. specific political is-     and then asked how crime should be tackled. They found
+  sues) that receive a greater engagement when described         that the first group tended to opt for preventive measures and
+  metaphorically, as compared to literally.                      the second group for punishment-oriented ones. According
+                                                                 to the authors, their results demonstrate the influence that
+To our knowledge, this is the first computational study of
+                                                                 metaphors have on how we conceptualize and act with re-
+this scale on the impact of metaphor use in political commu-
+                                                                 spect to societal issues.
+nication in a topic-agnostic manner.
+                                                                    Drawing inspiration from this line of research, we demon-
+                                                                 strate through a large-scale domain-agnostic study that auto-
+                     Related Work                                matic metaphor detection could help us better understand the
+Computational social scientists have demonstrated the im-        broader patterns that guide the impact of metaphor in politi-
+pact language use has on the reaction it can evoke on its        cal discourse.
+audience in large-scale data-driven studies. For instance,
+(Danescu-Niculescu-Mizil et al. 2012) demonstrated that                                      Data
+lexical distinctiveness — i.e., using less common word
+choices, while relying on common syntactic patterns —            We use the dataset of Facebook posts made by US politicians
+boosts the memorability of movie quotes. Others have stud-       in their public Facebook pages created by (Voigt et al. 2018).
+ied how linguistic features and techniques shape the per-        The dataset contains over 399K posts, all made in English,
+ception of helpfulness of online product reviews (Danescu-       by 402 politicians who were either a US House Represen-
+Niculescu-Mizil et al. 2009), persuasiveness of funding re-      tative or a US Senator at the time of data collection. The
+quests (Yang et al. 2019), and virality of social media posts    dataset captures the politicians’ binary-gender (306 male
+(Guerini, Strapparava, and Ozbal 2012; Tan, Lee, and Pang        and 96 female) and party affiliation. The dataset also con-
+2014). Studies have also looked into the effects of usage of     tains the statistics on the number of reactions each post got
+titles, names etc. (Lakkaraju, McAuley, and Leskovec 2013)       (Like, Love, Haha, Wow, Angry, and Sad), the number of
+for better social media targeting. Computational linguistics     times it was shared, and the comments it received.
+analysis has also been employed to study various aspects            Of all the posts, about 85K were text-only status mes-
+of political speech, for instance, persuasiveness (Guerini,      sages. We limit our study to this subset of the data since we
+Strapparava, and Stock 2008), charisma (Rosenberg and            are interested in understanding the impact of language use
+Hirschberg 2009), and power dynamics (Prabhakaran, John,         specifically, and the presence of images, videos and links
+and Seligmann 2013; Prabhakaran, Arora, and Rambow               makes it difficult to tease that apart. As our dataset contains
+2014). Our work is situated within this line of computational    only US politicians, our study is limited to the English lan-
+inquiries that look into the social effects of linguistic pat-   guage and to the sociopolitical context of the US. Follow up
+terns used in political speech. Specifically, we study the use   work may investigate whether our findings extend to other
+of metaphors in political discourse.                             geographic regions, cultural contexts, and languages.
+    Political science offers a rich literature on the value of
+metaphor in political rhetoric. Studies have documented the                     Metaphor Identification
+effectiveness of metaphors as a framing technique (Lakoff
+1991; Tannen 1993; Entman 2003) that shapes public senti-        Metaphors are frequently used in political discourse. For
+ment by exposing desired aspects of an issue, while seam-        instance, the following three sentence fragments from our
+lessly concealing the less desired ones (Musolff 2000;           dataset demonstrate literal vs. metaphorical description of
+Lakoff and Wehling 2012) (as in the war example above).          the same concept, economy:
+Metaphors have also been found to express and elicit               My top priority is to improve the local economy and
+stronger emotions than literal expressions (Crawford 2009;         create jobs. (1)
+Citron and Goldberg 2014; Mohammad, Shutova, and Tur-
+ney 2016); e.g., the phrase “a tsunami of immigrants” por-         it’s time to jumpstart the economy and put it to work
+trays immigration as a threat and spurs fear, as compared to       for the middle-class (2)
+“high numbers of immigrants”.                                      we need to stop stifling our own economy (3)
+    Studies have also documented differences in the
+metaphors used across communities with different political       In (1), the politician is describing the term economy liter-
+views. For instance, (Lakoff 2002) shows that two conflict-      ally by using the verb improve, whereas in (2) and (3), the
+ing instantiations of the NATION IS A FAMILY metaphor, us-       politician uses the verbs jumpstart and stifle to metaphori-
+ing nurturing-parent vs. strict-father family models, explain    cally describe the term economy. The verb jumpstart evokes
+the liberal-conservative divide in the US politics. (Lakoff      the frame of economy being like a car that has broken down,
+and Wehling 2012) show that the two models are consistent        while the verb stifle evokes the frame of economy being a
+with both the parties’ rhetoric and their policies, and can      person who is suffocated or restrained. We are interested in
+be used to promote liberal vs. conservative values. Taking a     studying the patterns associated with metaphor use in polit-
+step further, (Thibodeau and Boroditsky 2011) investigated       ical discourse, and whether they result in increased engage-
+how metaphors affect our decision-making. In their experi-       ment with the audience. We start by automatically identify-
+ment, two groups of subjects were primed by two different        ing metaphors in our data.
+Background                                                         Model and Training
+                                                                   We now describe our metaphor detection model, along with
+Corpus linguistics studies have long documented that a large
+                                                                   the experiments we conducted, as well as the configura-
+majority of metaphors involve metaphorically-used verbs,
+                                                                   tions we used for training. We train two metaphor classifiers
+with adjectives being another frequent category (Cameron
+                                                                   following the architecture described by (Rei et al. 2017).
+2003; Shutova 2011). Motivated by their frequency in
+                                                                   The model is designed to take a word pair, such as (cure,
+metaphorical constructions, we focus on metaphorically-
+                                                                   crime) or (blind, hope), as input and return a score indicating
+used verbs and adjectives in our study. Our decision is also
+                                                                   whether the corresponding phrase is metaphorical or literal.
+in part driven by the availability of resources for these types
+                                                                      The network takes as input two words and maps them to
+of metaphors (Tsvetkov et al. 2014; Gutiérrez et al. 2016;
+                                                                   their corresponding word embeddings x1 and x2 . Next, the
+Mohammad, Shutova, and Turney 2016). Specifically, we
+                                                                   representation of the first word is used to apply gating on the
+study verb-noun metaphors in both subject-verb and verb-
+                                                                   second word:
+direct object phrases. In addition, we also study adjective-
+                                                                                        g = σ(Wg x1 + bg )                     (1)
+noun metaphors, which are relatively rare in our corpus com-
+pared to metaphorical uses of verbs (similar to previous cor-                              e2 = g
+                                                                                           x          x2                      (2)
+pus studies mentioned above).                                      where Wg is a weight matrix, bg is a bias vector and is
+   Early research on automatic metaphor detection in text          element-wise multiplication. This is designed to mimic the
+used supervised learning methods with hand-engineered              interaction between the domains of the two words and how
+features, encoding lexico-syntactic patterns (Mohler et al.        the meaning of the target word can change in a metaphorical
+2013; Dunn 2013; Tsvetkov et al. 2014; Beigman Klebanov            phrase depending on the context in which it appears.
+et al. 2016); topical structure (Heintz et al. 2013; Strza-           Each word representation is then mapped to a new space
+lkowski et al. 2013); topic-based frame templates (Jang et al.     using a tanh layer:
+2017; Jang 2017); selectional preferences (Wilks et al. 2013;
+Shutova 2013); and psycholinguistic features e.g. abstract-                         z1 = tanh(Wz1 x1 + bz1 )                  (3)
+ness (Turney et al. 2011) and imageability (Strzalkowski                                          e2 + bz2 )
+                                                                                    z2 = tanh(Wz2 x                           (4)
+et al. 2013). More recent approaches use distributed repre-
+sentations and neural models (Gutiérrez et al. 2016; Bulat,       where Wz1 and Wz2 are weight matrices, bz1 and bz2 are
+Clark, and Shutova 2017; Rei et al. 2017; Gao et al. 2018;         bias vectors.
+Dankers et al. 2019).                                                 The original input embeddings are trained with the skip-
+   In this work, we employed the neural framework of (Rei          gram objective (Mikolov et al. 2013) on Wikipedia. By
+et al. 2017), where a metaphor classifier takes a word pair,       learning this explicit mapping, we allow the model to find
+such as (cure, crime) or (blind, hope), as input and returns a     a new space that takes advantage of the pre-training but also
+score between 0 and 1 indicating the likelihood that the pair      better captures the differences between metaphorical and
+is a metaphorical rather than literal usage. The method builds     literal meanings. Importantly, the mappings are position-
+on the idea that cosine similarity between the embeddings          specific; each word in the pair is treated differently depend-
+of two words is indicative of metaphoricity (Shutova, Kiela,       ing on its linguistic role in the phrase.
+and Maillard 2016), and extends it to a supervised version of         Finally, the two word representations are combined
+similarity optimized for metaphor detection using annotated        through element-wise multiplication and passed through a
+examples.                                                          hidden layer, which allows the model to learn a supervised
+                                                                   approximation of cosine similarity for this task. The output
+   We opted for the model of (Rei et al. 2017) for a num-
+                                                                   prediction is made through a logistic activation function.
+ber of reasons. This model achieves (near) state-of-the-art
+performance on two metaphor identification benchmarks:
+                                                                                  d = tanh(Wd (z1       z2 ) + bd )           (5)
+(Tsvetkov et al. 2014) and (Mohammad, Shutova, and Tur-
+ney 2016). Since it is applied to individual word pairs, it is
+likely to be less sensitive to domain shifts than the models                            ye = σ(Wy d + by )                    (6)
+that process complete sentences. This domain robustness is         where Wd and Wy are trainable weight matrices, bd and
+critical for our study, since in-domain (i.e., in political dis-   by are bias vectors and a high output value ye indicates a
+course) metaphor annotations are not available. In contrast,       metaphorical phrase.
+alternative models of metaphor (Gao et al. 2018; Dankers             The model parameters are optimized using a hinge loss
+et al. 2019) were trained on the VU Amsterdam Metaphor             described by (Rei et al. 2017), which only trains using dat-
+Corpus (Steen et al. 2010), which focuses on historical as-        apoints selected based on their distance from the decision
+pects of metaphor and includes a high number of highly             boundary. We train two versions of this architecture:
+conventionalised and dead metaphors (e.g. prepositions used
+metaphorically). Such metaphors are less interesting in our        1. Detecting metaphors in adjective–noun phrases, trained
+study as we focus on contemporary and productive metaphor             using the combined datasets of (Tsvetkov et al. 2014) and
+use, which are best captured by the model of (Rei et al. 2017)        (Gutiérrez et al. 2016).
+due to their choice of training data. Furthermore, the code        2. Detecting metaphors in verb–subject and verb–direct ob-
+and trained models of (Rei et al. 2017) are publicly avail-           ject word pairs, trained using the dataset from (Moham-
+able, which facilitates replicability of our experiments.             mad, Shutova, and Turney 2016).
+   These two models are applied at the same time in order to
+detect metaphors of both types in Facebook posts. While the
+architecture by (Rei et al. 2017) also used attribute-based
+vectors as input, we train the model only with skip-gram
+embeddings. The attribute vectors are very large and need to
+be pre-calculated for a specific vocabulary. By using skip-
+gram embeddings instead, we are able to apply the model to
+a wider range of text.
+   The 100-dimensional input word embeddings were pre-
+trained on Wikipedia and are kept fixed while the rest of the
+model is optimized, to prevent overfitting. The mapped rep-                      (a)                         (b)
+resentations z1 and z2 have size 300, layer d has size 50. The
+input word embeddings have a vocabulary size of 184, 805,         Figure 1: Box plots showing differences in metaphor use
+resulting in a total of 18, 480, 500 fixed parameters. The net-   across gender and party affiliation
+work itself contains 85, 801 trainable parameters. The net-
+work was optimized using AdaDelta (Zeiler 2012) on a sin-
+gle Titan Xp GPU and training was stopped based on perfor-        difference across gender, while we found that Democratic
+mance on the respective development splits for each dataset.      politicians used significantly more metaphors in our data.
+                                                                      Our next question was how the political events may shape
+Evaluation                                                        the use of metaphors. For instance, winning or losing an
+                                                                  election may influence one’s need to evoke emotional re-
+Metaphor detection on the (Mohammad, Shutova, and                 sponses. To answer this question, we analyzed the metaphor
+Turney 2016) dataset is normally evaluated with cross-            use differences in the months leading up to and after the Nov
+validation, but in order to train a single model that can be      2016 US elections. For this subset of the study, we limit our
+applied on the Facebook dataset we split this dataset into        analysis to only 8K posts made between 07 Feb 2016 and
+517/65/65 instances for train/dev/test. To evaluate the clas-     06 Feb 2017, divided into 4 quarters — three quarters (Q−3 ,
+sifier for adjective-noun metaphors the combined training         Q−2 , and Q−1 ) prior to the election, and one quarter (Q+1 )
+data contains 9,880 examples and the (Tsvetkov et al. 2014)       after the election.
+dev/test sets contain 200 examples each. The verb–argument            After controlling for post length, we found no signif-
+classifier has 73.85% accuracy on the dev set and 75.38%          icant difference in metaphoricity across gender (b=.025,
+accuracy on the test set of the (Mohammad, Shutova, and           t(1.411), p=0.158) or party (b=.0260, t(1.648), p=0.099),
+Turney 2016) dataset. The adjective–noun classifier achieves      reconfirming the results from above. However, the differ-
+85.71% F-score on the (Tsvetkov et al. 2014) dev set and          ence in metaphor use along party affiliation was present
+86.73% F-score on the test set.                                   on in Q+1 . A one-way ANOVA showed significant differ-
+                                                                  ences (p < 0.001) in metaphoricity of posts across quarters,
+Metaphoricity of Facebook Posts                                   while a two-way ANOVA revealed a significant interaction
+We parse the text of each Facebook post in our data using the     (p < 0.05) between the party and the quarter, suggesting that
+spaCy tool (Honnibal and Johnson 2015) to identify the can-       Democrats and Republicans differed in their metaphor use
+didate verb–subject, verb–object, and adjective–noun pairs,       across the quarters. Figure 2 shows average metaphoricity
+which are then passed to the corresponding classifier. We         of posts across both parties in different quarters. The main
+use a threshold of 0.7 for the score (ranging between 0 and       significant shift was in terms of Democratic politicians using
+1) for a word pair to be considered a metaphor (as used in        more metaphors in Q+1 than other quarters and than Repub-
+the evaluation described above).1 We define the metaphoric-       licans. In fact, a post-hoc analysis using Tukey’s pairwise
+ity of a post as the number of metaphors present in it. Only      HSD test revealed that it was the only group of posts that
+17% of posts in our corpus had a non-zero metaphoricity,          significantly differed from all other groups.
+and 96% of them were between 1 and 3. Note that longer                We speculate that this difference in behavior between Re-
+posts are likely to contain more metaphors; so we control         publicans and Democrats is caused by the increased emo-
+for post length in all our analyses.                              tions on the Democratic side in response to the election loss.
+                                                                  While establishing the underlying reason for this difference
+               Study 1: Usage Analysis                            is outside the scope of this paper, this finding demonstrates
+                                                                  that it is important to account for the contemporaneous po-
+Does the frequency of metaphors used by politicians depend        litical wins and setbacks while analysing differences in lan-
+on their gender and political party affiliation? Figure 1 shows   guage use across party lines.
+the box plots of differences in metaphor use across gen-
+der (binary) and party affiliation.2 We found no significant                Study 2: Engagement Analysis
+   1
+     Experiments using lower thresholds (0.5 and 0.6) were con-   We now turn to studying how much engagement the politi-
+ducted, which also obtained similar results.                      cians’ posts generate and whether the use of metaphors may
+   2                                                              be associated with increased engagement. One of the core
+     We count Bernie Sanders (Independent) among Democrats,
+based on his voting records.                                      reasons politicians engage in social media is to engage with
+                                                                     Metric                    Coefficient of Metaphoricity
+                                                                     PARTICIPATION                        0.19***
+                                                                     P ROPAGATION                         0.12***
+                                                                     ACCEPTANCE                           0.13***
+                                                                     P OS P ROVOCATION                     0.08*
+                                                                     N EG P ROVOCATION                     0.10*
+
+                                                                 Table 1: Coefficients obtained on mixed-effects model anal-
+                                                                 ysis at post level, controlling for fixed effects for post length,
+                                                                 gender, party, and random effect for each politician. Statis-
+Figure 2: Use of metaphors along party lines in different        tical Significance values (*: p < 0.05; **: p < 0.01; ***:
+quarters relative to the 2016 US Elections                       p < 0.001) reported after Bonferroni correction.
+
+
+their constituents, and the larger electorate of the country.       However, there are other factors such as gender and party
+The level of engagement generated in terms of number of          of the politician that may affect this relationship. Further-
+likes, comments etc. have been used in the past for mea-         more, factors associated with individual politicians (e.g., fol-
+suring the level of engagement social media personalities        lower network size, approval rating etc.) may also impact the
+manage to elicit from their followers (Guerini, Strapparava,     engagement their posts generate. In order to account for this
+and Ozbal 2012; Cvijikj and Michahelles 2013; Muñiz et al.      correctly, we did two things: 1) balancing our data for this
+2019; Heiss, Schmuck, and Matthes 2019). For our study,          analysis by choosing a random sample of 100 posts from
+we define five engagement metrics for each post:                 each politician who has made that many posts, and 2) ac-
+ • PARTICIPATION: audience engaging in discussion; mea-          counting for group-level effects in each politician’s posts
+   sured log(x + 1) where x is the number of direct com-         by employing a Linear Mixed Effects (Lindstrom and Bates
+   ments in response to the post.                                1988) analysis that allows random intercepts for each group.
+                                                                 Linear mixed models allow both fixed and random effects,
+ • P ROPAGATION: audience propagating the message in the         that accounts for the non independence in our data: multi-
+   post; measured log(x + 1) where x is the no. of times the     ple posts are made by the same politician. Table 1 shows
+   post was shared.                                              the coefficients obtained on the mixed-effects model analy-
+ • ACCEPTANCE: audience accepting or agreeing with the           sis at post level, controlling for fixed effects for post length,
+   post, measured as log(x + 1) where x is the no. of Like       gender, party, and adding a random effect for each politi-
+   reactions the post received.                                  cian. Significance values (*: p < 0.05; **: p < 0.01; ***:
+                                                                 p < 0.001) are reported after Bonferroni correction.
+ • P OS P ROVOCATION: log(x + 1) where x is the number of
+                                                                    We find that despite the controls, metaphoricity of posts
+   positive reactions (Love, Haha, Wow).
+                                                                 has significant positive associations with all engagement
+ • N EG P ROVOCATION: log(x + 1) where x is the number of        metrics. The largest coefficient is for PARTICIPATION fol-
+   negative reactions (Angry, Sad).                              lowed by ACCEPTANCE and P ROPAGATION. Note that since
+Note that we use the log(x + 1) value for each engagement        the engagement metrics are in log scale, a coefficient of .19
+metric in order to account for zero-metaphoricity. Since         for PARTICIPATION means: per unit increase in metaphoric-
+Facebook launched the Love, Haha, Wow, Angry, and Sad            ity, we expect around 21% (e0.19 = 1.21) increase in the
+reactions only in Feb 2016, we limit any analysis involving      number of comments the post receives. Despite the fewer
+P OS P ROVOCATION and N EG P ROVOCATION to only those            data points (and hence less statistical power), P OS P ROVO -
+posts authored on or after 01 Mar ’16.                           CATION and N EG P ROVOCATION also showed smaller, but
+                                                                 significant positive association with metaphoricity.
+Post-level Engagement Analysis
+Do posts with higher metaphoricity result in more engage-        Word-level Engagement Analysis
+ment from readers? Figure 3 shows the regression plots of        While the previous section finds that posts with metaphors
+post-level engagement features with respect to metaphoric-       are associated with higher engagement, it does not prove that
+ity of posts. To control for the post length (since longer       the increased engagement is owing to the metaphorical use
+substantive posts may generate more engagement), we nor-         alone. For instance, it may be the case that some words have
+malized the metaphoricity value by dividing them by the          high engagement potential (due to the topics they are asso-
+number of words in the posts. As can be seen from the fig-       ciated with, e.g., law, economy) and they happen to be often
+ure, metaphoricity has a significant positive association with   used in metaphorical contexts. To account for this issue, we
+all three engagement features: PARTICIPATION, P ROPAGA -         need to compare the engagements in posts where a word is
+TION , and ACCEPTANCE. However, the P OS P ROVOCATION            used metaphorically vs. where it is used literally.
+and N EG P ROVOCATION features did not show a significant           To do this, we first identify all lemmas in our corpus that
+association, which may in part be due to the limited statisti-   were used in at least 10 posts metaphorically and 10 posts lit-
+cal power for those analyses, as described above.                erally. This ensures a sufficient number of occurrences (N >
+                           (a)                                    (b)                                   (c)
+
+
+
+
+                                              (d)                                     (e)
+
+Figure 3: Regression plots showing post-level engagement differences depending on Metaphoricity. The metaphoricity of a post
+is normalized w.r.t. post length (number of words), denoted by Metaphoricity Norm
+
+
+ Metric                   Verbs       Adjectives    Nouns               ing the framing in the source domain, whereas a noun tak-
+                                                                        ing part in a metaphor is usually representing the target do-
+  PARTICIPATION           0.20***         0.08      0.10***             main. In other words, verbs and adjectives are the source
+  P ROPAGATION            0.12***        -0.01      0.05*               domain words of the metaphor (i.e. they are themselves used
+  ACCEPTANCE              0.12***        -0.02      0.10***             metaphorically) and nouns are the target domain words (i.e.,
+  P OS P ROVOCATION       0.04           -0.05      0.07                they are described metaphorically by the verbs or adjec-
+  N EG P ROVOCATION       0.03           -0.11      0.07                tives). We first analyze whether our findings at the post level
+                                                                        hold at the lemma level. For verbs and adjectives, this tests
+Table 2: Coefficients on mixed effects linear model at                  whether their metaphorical sense generates more engage-
+lemma level, controlling for post length, gender, party, and            ment than the literal sense of the same word. For nouns, this
+random effect for each lemma (similar results with random               tests whether they evoke more engagement when described
+effect for each politician). Significance values (*: p < 0.05;          metaphorically, than when described literally.
+**: p < 0.01; ***: p < 0.001) after Bonferroni correction.                 As Table 2 shows, we find that when target domains (i.e.,
+                                                                        nouns) are described metaphorically, they generate signif-
+                                                                        icantly more engagement in PARTICIPATION, P ROPAGA -
+20) per lemma, that enables the multi-level analysis we wish            TION , and ACCEPTANCE. In the source domain, only verbs,
+to perform. We exclude posts with multiple metaphors in or-             not adjectives, when used in their metaphorical sense re-
+der to eliminate effects from other metaphors. This results in          sult in increased engagement. We do not see any effect on
+a set of 513 lemmas and their instances in over 70K posts.              P OS P ROVOCATION or N EG P ROVOCATION; it could partly
+Each such lemma instance, along with information about the              be due to the smaller dataset size (less than 50 lemmas qual-
+post (length, engagement) and the politician who made the               ified for these two analyses).
+post (gender, party, etc.) forms the dataset for this analysis.            Next, we inspect how individual words’ engagement
+   Each lemma could take part in the metaphors as either                scores differ depending on whether they are used in
+a verb, an adjective, or a noun. We separated out the lem-              metaphorical vs. literal sense. Figure 4 shows the point plots
+mas according to the syntactic role they play. When a word              for PARTICIPATION, P ROPAGATION, and ACCEPTANCE for
+takes part in a metaphor as a verb or an adjective, it is evok-         a few verbs and nouns with the most difference (chosen from
+Figure 4: Point plots of Engagement features for some verbs and nouns chosen from those with the highest difference across metaphorical
+(green) vs. literal (red) use.
+
+
+the top-10 in each category). We don’t show examples of ad-            more likely to contain more interesting content that may
+jectives, as well as P OS P ROVOCATION and N EG P ROVOCA -             drive engagement, we control for post length (i.e., the num-
+TION , since we didn’t find any overall effects in them.               ber of words) in all our analyses. This way, we ensure that
+    The plots in the top row show source domain words                  our results hold true regardless of the length of the posts.
+(verbs) that have higher engagement in their metaphorical              Where applicable, we also control for the random effects
+sense (green), than in their literal sense (red). One com-             due to individual politicians using a mixed effects model to
+mon theme we observe in these verbs is that they all come              ensure that the increased engagement we find in posts with
+from source domains related to physical experiences, asso-             more metaphoricity is not driven by a handful of politicians
+ciated with motion and movement (stop, drop), mechanisms               who use more metaphors or happen to have more engaging
+(break) and wholeness (cut). The bottom row shows the ex-              followers. These controls are also applied to our word-level
+amples for target domain words (nouns). In contrast to verbs,          engagement analysis, which goes one step further to test the
+nouns with the most difference in engagement metrics ex-               difference in engagement when the same word is used liter-
+emplify abstract target domains, relating to key topics of po-         ally vs. metaphorically.
+litical discourse, such as values (liberty), political process
+(strategy, law) and finances (prosperity, debt). When de-                 In addition to the above controls, we performed further
+scribed metaphorically, as opposed to literally, these target          post-hoc analyses to eliminate other potential confounds.
+domain words exhibit a significantly greater engagement,               First, we already found that metaphor use was higher af-
+further supporting our findings on the impact of metaphor              ter the elections (especially for Democrats), and it is pos-
+in political discourse.                                                sible that the election loss could have caused high engage-
+                                                                       ment. So the association we find between engagement and
+                                                                       metaphoricity may be mediated by the election result (i.e.,
+                            Discussion                                 both positively impacted by the election). To ensure that this
+In this paper, we demonstrated the positive effect of                  is not solely driving our findings, we first re-ran our anal-
+metaphor use in generating engagement in political dis-                yses only on posts authored prior to election results, and
+course. We used an NLP-based metaphor detection approach               verified that our findings do indeed hold true for that sub-
+that allowed us to perform a large-scale data-driven topic-            set of the data. To further understand the effect of election
+agnostic study, unlike previous work on this topic. Our re-            results, we introduced a binary variable denoting whether a
+sults hold true despite controlling for gender and party af-           post was made prior to or after the election as an extra con-
+filiation of politicians. Furthermore, since longer posts are          trol into our post-level mixed effects analyses. As expected,
+we found that the engagement metrics had a positive asso-              tisement, to see if the patterns we observe in this study do
+ciation with whether the post was made after the elections             transfer to other domains. Future work should also look into
+(e.g., b = 1.225, t(0.066), p < 0.001 for PARTICIPATION).              whether these findings extend to other geographies, cultures,
+However, our findings on the impact of metaphoricity on en-            and languages.
+gagement metrics (Table 1) stayed stable across all analyses
+(i.e., direction of relationship and statistical significance), al-                           References
+though the effect size was reduced marginally. We did not              Beigman Klebanov, B.; Leong, C. W.; Gutierrez, E. D.;
+find any interaction effects between these variables. In other         Shutova, E.; and Flor, M. 2016. Semantic classifications for
+words, while the posts made after the election resulted in             detection of verb metaphors. In Proceedings of ACL, 101–
+higher engagement, the relationship between metaphoricity              106. Berlin, Germany.
+and engagement metrics holds true regardless of whether the
+post was made before or after elections.                               Bulat, L.; Clark, S.; and Shutova, E. 2017. Modelling
+   Another interesting question is whether the engagement              metaphor with attribute-based semantics. EACL 2017 .
+patterns in response to metaphoricity differs based on the             Cameron, L. 2003. Metaphor in educational discourse.
+posters’ political affiliation. In order to test this, we tested for   A&C Black.
+interaction effects between political affiliation of the poster        Citron, F. M.; and Goldberg, A. E. 2014. Metaphorical sen-
+and metaphoricity of the post on the engagement metrics (re-           tences are more emotionally engaging than their literal coun-
+taining the other controls as in previous analyses). We found          terparts. Journal of cognitive neuroscience 26(11): 2585–
+no significant interaction effects between the two. In other           2595.
+words, political affiliation do not have a significant effect on
+how metaphoricity impacts engagement.                                  Crawford, E. 2009. Conceptual Metaphors of Affect. Emo-
+                                                                       tion Review 1(2).
+                         Conclusion                                    Cvijikj, I. P.; and Michahelles, F. 2013. Online engagement
+We presented a large-scale domain-agnostic study of the                factors on Facebook brand pages. Social network analysis
+use and impact of metaphors in political discourse, using              and mining 3(4): 843–861.
+a dataset of Facebook posts made by US politicians. We                 Danescu-Niculescu-Mizil, C.; Cheng, J.; Kleinberg, J.; and
+showed that posts with metaphors exhibit higher engage-                Lee, L. 2012. You had me at hello: How phrasing affects
+ment from their audience. We further performed a finer-                memorability. In Proceedings of the ACL.
+grained analysis of over 500 words’ metaphorical vs. lit-
+eral usage across 70K posts to demonstrate that metaphor-              Danescu-Niculescu-Mizil, C.; Kossinets, G.; Kleinberg, J.;
+ical uses/expressions do indeed generate more engagement               and Lee, L. 2009. How opinions are received by online com-
+than the corresponding literal ones. We also found interest-           munities: a case study on amazon. com helpfulness votes. In
+ing nuances in how words of different parts of speech tags,            Proceedings of the 18th international conference on World
+and of different domains/topics pattern differently in their           wide web, 141–150.
+engagement potential with regard to metaphoricity. To our              Dankers, V.; Rei, M.; Lewis, M.; and Shutova, E. 2019.
+knowledge, this is the first large-scale study of the efficacy of      Modelling the interplay of metaphor and emotion through
+metaphor use in eliciting engagement in political discourse.           multitask learning. In Proceedings of EMNLP 2019. Hong
+   Our topic-agnostic method of studying metaphor use in               Kong.
+political discourse may aid in further studies on how politi-          Dunn, J. 2013. Evaluating the premises and results of four
+cians’ speech can evoke actions from their followers. While            metaphor identification systems. In Proceedings of CI-
+we focused on the online engagement metrics measured                   CLing’13, 471–486. Samos, Greece.
+through shares, comments and reactions, future work could
+also study how metaphors may evoke offline engagements                 Entman, R. 2003. Language: The Loaded Weapon. Political
+and actions in followers, such as turning out for elections,           Communication (20): 415–432.
+violent protests and insurrections etc. This may be an es-             Gao, G.; Choi, E.; Choi, Y.; and Zettlemoyer, L. 2018.
+pecially important aspect to study, as politicians across the          Neural Metaphor Detection in Context. In Conference on
+world are increasingly using social media to interact with             Empirical Methods in Natural Language Processing. doi:
+and influence their electorate.                                        10.18653/v1/D18-1060.
+   Future work may also look further into the semantic and             Guerini, M.; Strapparava, C.; and Ozbal, G. 2012. Ex-
+topical regularities in these phenomena, as we observed in             ploring text virality in social networks. arXiv preprint
+Figure 4. Understanding what kinds of metaphors are likely             arXiv:1203.5502 .
+to elicit higher engagement might be of importance to polit-
+ical scientists and strategists. Such word level analyses will         Guerini, M.; Strapparava, C.; and Stock, O. 2008. Trust-
+also aid in studying how certain types of metaphors might              ing politicians’ words (for persuasive NLP). In Interna-
+evoke certain kinds of offline reactions in followers; for in-         tional Conference on Intelligent Text Processing and Com-
+stance, are certain kinds of metaphors more likely to evoke            putational Linguistics, 263–274. Springer.
+the followers to turn to violent acts offline?                         Gutiérrez, E. D.; Shutova, E.; Marghetis, T.; and Bergen, B.
+   Another direction of future work is to extend the study             2016. Literal and Metaphorical Senses in Compositional
+to other domains, such as brand management and adver-                  Distributional Semantic Models. In Proceedings of the 54th
+Annual Meeting of the Association for Computational Lin-        Mohler, M.; Bracewell, D.; Tomlinson, M.; and Hinote, D.
+guistics, ACL 2016, August 7-12, 2016, Berlin, Germany,         2013. Semantic Signatures for Example-Based Linguistic
+Volume 1: Long Papers.                                          Metaphor Detection. In Proceedings of the First Workshop
+                                                                on Metaphor in NLP, 27–35. Atlanta, Georgia. URL http:
+Heintz, I.; Gabbard, R.; Srivastava, M.; Barner, D.; Black,
+                                                                //www.aclweb.org/anthology/W13-0904.
+D.; Friedman, M.; and Weischedel, R. 2013. Automatic Ex-
+traction of Linguistic Metaphors with LDA Topic Model-          Muñiz, C.; Campos-Domı́nguez, E.; Saldierna, A. R.; and
+ing. In Proceedings of the First Workshop on Metaphor in        Dader, J. L. 2019. Engagement of politicians and citizens
+NLP, 58–66. Atlanta, Georgia. URL http://www.aclweb.org/        in the cyber campaign on Facebook: a comparative analysis
+anthology/W13-0908.                                             between Mexico and Spain. Contemporary Social Science
+                                                                14(1): 102–113.
+Heiss, R.; Schmuck, D.; and Matthes, J. 2019. What drives
+interaction in political actors’ Facebook posts? Profile and    Musolff, A. 2000. Mirror images of Europe: Metaphors in
+content predictors of user engagement and political actors’     the public debate about Europe in Britain and Germany.
+reactions. Information, Communication & Society 22(10):         Muenchen: Iudicium.
+1497–1513.                                                      Prabhakaran, V.; Arora, A.; and Rambow, O. 2014. Stay-
+Honnibal, M.; and Johnson, M. 2015. An Improved Non-            ing on Topic: An Indicator of Power in Political Debates.
+monotonic Transition System for Dependency Parsing. In          In Proceedings of the 2014 Conference on Empirical Meth-
+Proceedings of the 2015 Conference on Empirical Meth-           ods in Natural Language Processing (EMNLP), 1481–1486.
+ods in Natural Language Processing, 1373–1378. Lisbon,          Doha, Qatar: Association for Computational Linguistics.
+Portugal: Association for Computational Linguistics. URL        doi:10.3115/v1/D14-1157. URL https://www.aclweb.org/
+https://aclweb.org/anthology/D/D15/D15-1162.                    anthology/D14-1157.
+                                                                Prabhakaran, V.; John, A.; and Seligmann, D. D. 2013. Who
+Jang, H. 2017. Computational Modeling of Metaphor in Dis-
+                                                                Had the Upper Hand? Ranking Participants of Interactions
+course. Ph.D. thesis, Carnegie Mellon University.
+                                                                Based on Their Relative Power. In Proceedings of the Sixth
+Jang, H.; Maki, K.; Hovy, E.; and Rose, C. 2017. Find-          International Joint Conference on Natural Language Pro-
+ing structure in figurative language: Metaphor detection with   cessing, 365–373. Nagoya, Japan: Asian Federation of Nat-
+topic-based frames. In Proceedings of the 18th Annual SIG-      ural Language Processing. URL https://www.aclweb.org/
+dial Meeting on Discourse and Dialogue, 320–330.                anthology/I13-1042.
+Lakkaraju, H.; McAuley, J. J.; and Leskovec, J. 2013.           Rei, M.; Bulat, L.; Kiela, D.; and Shutova, E. 2017. Grasp-
+What’s in a Name? Understanding the Interplay between Ti-       ing the Finer Point: A Supervised Similarity Network for
+tles, Content, and Communities in Social Media. ICWSM           Metaphor Detection. In Proceedings of EMNLP 2017.
+1(2): 3.                                                        Rosenberg, A.; and Hirschberg, J. 2009. Charisma percep-
+Lakoff, G. 1991. Metaphor and war: The metaphor system          tion from text and speech. Speech Communication 51(7):
+used to justify war in the Gulf. Peace Research 23: 25–32.      640–655.
+Lakoff, G. 2002. Moral Politics: How Liberals and Conser-       Shutova, E. 2010. Models of metaphor in NLP. In Pro-
+vatives Think. University of Chicago Press.                     ceedings of the 48th annual meeting of the association for
+                                                                computational linguistics, 688–697. Association for Com-
+Lakoff, G.; and Johnson, M. 1980. Metaphors We Live By.         putational Linguistics.
+Chicago: University of Chicago Press.
+                                                                Shutova, E. 2011. Computational Approaches to Figurative
+Lakoff, G.; and Wehling, E. 2012. The Little Blue Book: The     Language. Ph.D. thesis, University of Cambridge, UK.
+Essential Guide to Thinking and Talking Democratic. New         Shutova, E. 2013. Metaphor Identification as Interpretation.
+York: Free Press.                                               In Second Joint Conference on Lexical and Computational
+Lindstrom, M. J.; and Bates, D. M. 1988.           New-         Semantics (*SEM), Volume 1: Proceedings of the Main Con-
+ton—Raphson and EM algorithms for linear mixed-effects          ference and the Shared Task: Semantic Textual Similarity,
+models for repeated-measures data. Journal of the Ameri-        276–285. Atlanta, Georgia, USA: Association for Computa-
+can Statistical Association 83(404): 1014–1022.                 tional Linguistics. URL https://www.aclweb.org/anthology/
+                                                                S13-1040.
+Mikolov, T.; Chen, K.; Corrado, G.; and Dean, J. 2013. Ef-
+ficient Estimation of Word Representations in Vector Space.     Shutova, E.; Kiela, D.; and Maillard, J. 2016. Black Holes
+In Proceedings of the International Conference on Learn-        and White Rabbits: Metaphor Identification with Visual Fea-
+ing Representations (ICLR 2013). ISBN 9781577357384.            tures. In Proceedings of NAACL-HLT 2016. San Diego, CA.
+ISSN 10450823. doi:10.1162/153244303322533223. URL              Steen, G. J.; Dorst, A. G.; Herrmann, J. B.; Kaal, A. A.;
+http://arxiv.org/pdf/1301.3781v3.pdf.                           Krennmayr, T.; and Pasma, T. 2010. A method for linguis-
+Mohammad, S.; Shutova, E.; and Turney, P. 2016. Metaphor        tic metaphor identification: From MIP to MIPVU. Amster-
+as a medium for emotion: An empirical study. In Proceed-        dam/Philadelphia: John Benjamins.
+ings of the Fifth Joint Conference on Lexical and Computa-      Strzalkowski, T.; Broadwell, G. A.; Taylor, S.; Feldman, L.;
+tional Semantics, 23–33.                                        Shaikh, S.; Liu, T.; Yamrom, B.; Cho, K.; Boz, U.; Cases,
+I.; and Elliot, K. 2013. Robust Extraction of Metaphor
+from Novel Data. In Proceedings of the First Workshop
+on Metaphor in NLP, 67–76. Atlanta, Georgia. URL http:
+//www.aclweb.org/anthology/W13-0909.
+Tan, C.; Lee, L.; and Pang, B. 2014. The effect of wording on
+message propagation: Topic- and author-controlled natural
+experiments on Twitter. In Proceedings of the 52nd Annual
+Meeting of the Association for Computational Linguistics
+(Volume 1: Long Papers), 175–185. Baltimore, Maryland:
+Association for Computational Linguistics. doi:10.3115/
+v1/P14-1017. URL https://www.aclweb.org/anthology/P14-
+1017.
+Tannen, D. 1993. Framing in Discourse. Oxford, UK: Ox-
+ford University Press.
+Thibodeau, P. H.; and Boroditsky, L. 2011. Metaphors We
+Think With: The Role of Metaphor in Reasoning. PLoS
+ONE 6(2): e16782.
+Tsvetkov, Y.; Boytsov, L.; Gershman, A.; Nyberg, E.; and
+Dyer, C. 2014. Metaphor Detection with Cross-Lingual
+Model Transfer. Proceedings of the 52nd Annual Meeting of
+the Association for Computational Linguistics (ACL 2014)
+248–258. doi:10.3115/v1/P14-1024.
+Turney, P. D.; Neuman, Y.; Assaf, D.; and Cohen, Y. 2011.
+Literal and metaphorical sense identification through con-
+crete and abstract context. In Proceedings of the Confer-
+ence on Empirical Methods in Natural Language Process-
+ing, EMNLP ’11, 680–690. Stroudsburg, PA, USA: Associ-
+ation for Computational Linguistics.
+Voigt, R.; Jurgens, D.; Prabhakaran, V.; Jurafsky, D.; and
+Tsvetkov, Y. 2018. RtGender: A Corpus for Studying
+Differential Responses to Gender. In Proceedings of the
+Eleventh International Conference on Language Resources
+and Evaluation (LREC-2018). Miyazaki, Japan: European
+Languages Resources Association (ELRA). URL https:
+//www.aclweb.org/anthology/L18-1445.
+Wilks, Y.; Dalton, A.; Allen, J.; and Galescu, L. 2013. Au-
+tomatic Metaphor Detection using Large-Scale Lexical Re-
+sources and Conventional Metaphor Extraction. In Proceed-
+ings of the First Workshop on Metaphor in NLP, 36–44.
+Atlanta, Georgia. URL http://www.aclweb.org/anthology/
+W13-0905.
+Yang, D.; Chen, J.; Yang, Z.; Jurafsky, D.; and Hovy, E.
+2019. Let’s make your request more persuasive: Model-
+ing persuasive strategies via semi-supervised neural nets on
+crowdfunding platforms. In Proceedings of the 2019 Con-
+ference of the North American Chapter of the Association
+for Computational Linguistics: Human Language Technolo-
+gies, Volume 1 (Long and Short Papers), 3620–3630.
+Zeiler, M. D. 2012. ADADELTA: An Adaptive Learning
+Rate Method. arXiv preprint arXiv:1212.5701 URL http:
+//arxiv.org/abs/1212.5701.
+

@@ -22,6 +22,9 @@ The job is not just to draft prose. The job is to carry the paper from source ga
 - Do not fabricate results, statistics, or participant outcomes.
 - Use primary academic sources whenever possible.
 - Treat the object with dry, serious, theory-aware HCI writing. Humor may sharpen a point but may never replace evidence.
+- Omit em dashes in all manuscript prose and AI-generated drafts.
+- Use academic, parsimonious prose suitable for a computer science or HCI journal.
+- Preserve the paper's deadpan satirical stance while framing every claim with scientific seriousness.
 - Preserve existing user changes. Do not overwrite unrelated work.
 - If data are missing, produce the most complete truthful manuscript scaffold possible and clearly mark what remains unresolved.
 - When the task is complete, commit the work and push the repository unless the user explicitly says not to.
@@ -52,22 +55,23 @@ Default collaboration rules:
 Before starting substantive work:
 
 1. Run `git status --short`, `git branch --show-current`, and inspect remote tracking state.
-2. Read `VR-study/Paper/PROJECT_STATE.md` if it exists.
-3. Read the most recent entries in `VR-study/Paper/SESSION_LOG.md` if it exists.
-4. If the worktree is clean and the branch is behind remote, sync first with a safe pull strategy.
-5. If local and remote work have diverged, reconcile carefully without discarding local changes.
+2. Read `VR-study/Paper/Writing Instructions for AI/PROJECT_STATE.md` if it exists.
+3. Read the most recent entries in `VR-study/Paper/Writing Instructions for AI/SESSION_LOG.md` if it exists.
+4. Read `VR-study/Paper/Writing Instructions for AI/global-writing-constraints.md` before writing or revising prose.
+5. If the worktree is clean and the branch is behind remote, sync first with a safe pull strategy.
+6. If local and remote work have diverged, reconcile carefully without discarding local changes.
 
 During work:
 
-- Update `VR-study/Paper/PROJECT_STATE.md` whenever priorities, blockers, manuscript status, or canonical outputs materially change.
-- Append a new entry to `VR-study/Paper/SESSION_LOG.md` for each meaningful work session.
+- Update `VR-study/Paper/Writing Instructions for AI/PROJECT_STATE.md` whenever priorities, blockers, manuscript status, or canonical outputs materially change.
+- Append a new entry to `VR-study/Paper/Writing Instructions for AI/SESSION_LOG.md` for each meaningful work session.
 - If a blocker prevents completion, record it explicitly rather than leaving the next collaborator to infer it from the diff.
 
 Before pushing:
 
 1. Review the diff.
-2. Ensure `VR-study/Paper/PROJECT_STATE.md` reflects the current state of the manuscript.
-3. Ensure `VR-study/Paper/SESSION_LOG.md` contains a current session entry.
+2. Ensure `VR-study/Paper/Writing Instructions for AI/PROJECT_STATE.md` reflects the current state of the manuscript.
+3. Ensure `VR-study/Paper/Writing Instructions for AI/SESSION_LOG.md` contains a current session entry.
 4. Commit with a clear message.
 5. Push the current branch if remote write access exists.
 6. If push is rejected, fetch and reconcile carefully, then push again.
@@ -77,8 +81,8 @@ Before pushing:
 Use these repo files as first-order grounding:
 
 - `index.html`
-- `VR-study/Paper/bigredbutton_placement.tex`
-- `VR-study/Paper/bigredbutton_placement.bib`
+- `VR-study/Paper/archive/bigredbutton_placement.tex`
+- `VR-study/Paper/archive/bigredbutton_placement.bib`
 
 Use these instruction files as secondary context only if more detail is needed:
 
@@ -209,7 +213,7 @@ Portability note:
 Execute the following steps in order.
 
 1. Read this file completely, then inspect git status and current paper files.
-2. Read `VR-study/Paper/PROJECT_STATE.md` and `VR-study/Paper/SESSION_LOG.md` if they exist.
+2. Read `VR-study/Paper/Writing Instructions for AI/PROJECT_STATE.md` and `VR-study/Paper/Writing Instructions for AI/SESSION_LOG.md` if they exist.
 3. Sync the current branch with remote if it is safe to do so.
 4. Do not discard unrelated local changes. Work around them unless the user explicitly asks otherwise.
 5. Verify or install the required skills.
@@ -217,10 +221,9 @@ Execute the following steps in order.
    - `archive/`
    - `notes/`
    - `citations/`
-   - `sections/`
+   - `Introduction.tex`, `methods.tex`, `results.tex`, and `discussion.tex`
    - `figures/` if needed
-   - `PROJECT_STATE.md`
-   - `SESSION_LOG.md`
+   - `Writing Instructions for AI/`
 7. Catalog all relevant papers and sources.
    - search the repo for existing PDFs, notes, and references
    - if the user has local PDFs, organize them under `archive/`
@@ -230,8 +233,8 @@ Execute the following steps in order.
    - humanities lane: STS, media archaeology, design theory, interface history, philosophy of action, cultural history of red buttons
 9. Dedupe sources, generate structured notes, and extract claims.
 10. Verify all citations and build or update the consolidated bibliography.
-   - preferred output file: `VR-study/Paper/bigredbutton_full.bib`
-   - keep legacy `bigredbutton_placement.bib` if needed, but the final manuscript should point to one clearly maintained primary `.bib`
+   - preferred output file: `VR-study/Paper/references.bib`
+   - keep legacy `archive/bigredbutton_placement.bib` if needed, but the final manuscript should point to one clearly maintained primary `.bib`
 11. Build a paper outline that covers at minimum:
    - abstract
    - introduction
@@ -243,7 +246,7 @@ Execute the following steps in order.
    - conclusion
 12. Write the manuscript in LaTeX.
     - create a compile-ready main file, preferably `VR-study/Paper/main.tex`
-    - place section files under `VR-study/Paper/sections/`
+    - place editable segment files at `VR-study/Paper/Introduction.tex`, `VR-study/Paper/methods.tex`, `VR-study/Paper/results.tex`, and `VR-study/Paper/discussion.tex`
     - reuse grounded content from `bigredbutton_placement.tex` where appropriate
 13. For the introduction and discussion, explicitly integrate:
     - cultural-symbolic history
@@ -255,7 +258,7 @@ Execute the following steps in order.
     - temporal complexity and multilevel interpretation
 14. For results:
     - if real data and analysis outputs exist, analyze them and write the results section truthfully
-    - if real data do not exist, do not invent them; instead create a clearly labeled results scaffold and a short gap note such as `VR-study/Paper/DATA_GAPS.md`
+    - if real data do not exist, do not invent them; instead create a clearly labeled results scaffold and a short gap note such as `VR-study/Paper/Writing Instructions for AI/DATA_GAPS.md`
 15. Run citation cleanup and manuscript polish.
     - verify every empirical claim
     - diversify citations where needed
@@ -263,7 +266,7 @@ Execute the following steps in order.
 16. If a TeX toolchain is available, compile-check the manuscript.
     - if compilation fails, fix what is possible
     - if TeX tools are missing, leave compile-ready files and state that limitation clearly
-17. Update `VR-study/Paper/PROJECT_STATE.md` and append a new entry to `VR-study/Paper/SESSION_LOG.md`.
+17. Update `VR-study/Paper/Writing Instructions for AI/PROJECT_STATE.md` and append a new entry to `VR-study/Paper/Writing Instructions for AI/SESSION_LOG.md`.
 18. Finish by reviewing the diff, committing the work, and pushing the repository if remote write access is available and the user has not said not to push.
 
 ## Required Outputs
@@ -271,18 +274,18 @@ Execute the following steps in order.
 By the end of the task, produce as many of these as truthfully possible:
 
 - `VR-study/Paper/main.tex`
-- `VR-study/Paper/bigredbutton_full.bib`
-- `VR-study/Paper/sections/01_introduction.tex`
-- `VR-study/Paper/sections/02_related_work.tex`
-- `VR-study/Paper/sections/03_methods.tex`
-- `VR-study/Paper/sections/04_results.tex` or equivalent truthful scaffold
-- `VR-study/Paper/sections/05_discussion.tex`
-- `VR-study/Paper/sections/06_conclusion.tex`
+- `VR-study/Paper/references.bib`
+- `VR-study/Paper/Introduction.tex`
+- `VR-study/Paper/methods.tex`
+- `VR-study/Paper/results.tex` or equivalent truthful scaffold
+- `VR-study/Paper/discussion.tex`
+- `VR-study/Paper/figures/`
+- `VR-study/Paper/Writing Instructions for AI/global-writing-constraints.md`
 - `VR-study/Paper/archive/source_catalog.md`
 - `VR-study/Paper/citations/verified.jsonl` or equivalent verification artifact if generated by the tooling
-- `VR-study/Paper/DATA_GAPS.md` only if data limitations prevent a full truthful results section
-- `VR-study/Paper/PROJECT_STATE.md`
-- `VR-study/Paper/SESSION_LOG.md`
+- `VR-study/Paper/Writing Instructions for AI/DATA_GAPS.md` only if data limitations prevent a full truthful results section
+- `VR-study/Paper/Writing Instructions for AI/PROJECT_STATE.md`
+- `VR-study/Paper/Writing Instructions for AI/SESSION_LOG.md`
 
 ## Success Criteria
 
@@ -294,8 +297,8 @@ The task is complete only when all of the following are true:
 - the LaTeX manuscript is substantially complete and grounded in the repo's actual study
 - the introduction and discussion are theory-rich, disciplined, and aligned with BRB themes
 - any missing data or result limitations are stated explicitly rather than hidden
-- `VR-study/Paper/PROJECT_STATE.md` reflects current manuscript status, blockers, and next steps
-- `VR-study/Paper/SESSION_LOG.md` contains a current handoff entry
+- `VR-study/Paper/Writing Instructions for AI/PROJECT_STATE.md` reflects current manuscript status, blockers, and next steps
+- `VR-study/Paper/Writing Instructions for AI/SESSION_LOG.md` contains a current handoff entry
 - the final changes are committed and pushed
 
 ## Invocation Phrase
