@@ -1,0 +1,1969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head prefix="og: https://ogp.me/ns#">
+<script src="https://cdn.cookielaw.org/consent/tcf.stub.js" type="text/javascript" charset="UTF-8"></script>
+<script type="text/javascript">
+            (function(d, s, u) {
+    var j = d.createElement(s);
+    j.src=u;
+    j.setAttribute('charSet', 'UTF-8');
+    j.setAttribute('data-document-language', 'true');
+    j.setAttribute('data-domain-script', 'b8f578b7-0b59-46c6-bbc7-94854d5b56f1');
+    d.head.appendChild(j);
+})(document, 'script', 'https://cdn.cookielaw.org/scripttemplates/otSDKStub.js');
+        </script>
+<link rel="preconnect" href="https://cp.springerprofessional.de"/>
+<script type="text/javascript" charset="UTF-8">
+            !function () {
+                var onFullConsentFunction = function () {
+                    if (window.springer && window.springer.consent && window.springer.consent.changed) {
+                        
+                        window.dataLayer = window.dataLayer || [];
+                        window.dataLayer.push({'event': 'cp-fullconsent'});
+                        window.springer.consent.changed = false;
+                    }
+                };
+                !(function() {
+  var cpBaseUrl = 'https:\/\/cp.springerprofessional.de';
+  var cpPropertyId = 'b00b35da';
+
+  (function(C, o, n, t, P, a, s) {
+    C.CPObject = n;
+    if (!C[n]) {
+      C[n] = function() {
+        for (var _len = arguments.length, cpFnArgs = new Array(_len), _key = 0; _key < _len; _key++) {
+          cpFnArgs[_key] = arguments[_key];
+        }
+        const [operation, operationArg1, operationArg2] = cpFnArgs;
+        if (!C[n].q) {
+          C[n].q = [];
+        }
+        t = Array.prototype.slice.call(arguments, 0);
+        if (!C[n].patched) {
+          if (operation === "fatal" && operationArg1) {
+            C[n].le = operationArg1;
+            Array.prototype.forEach.call(C[n].q, (function(args) {
+              if (args[0] === "error" && typeof args[1] === "function") {
+                args[1](operationArg1);
+              }
+            }));
+          }
+          if (operation === "error" && typeof operationArg1 === "function") {
+            if (C[n].le) {
+              operationArg1(C[n].le);
+            }
+          }
+          if (operation === "extension" && operationArg1) {
+            if (operationArg2 && typeof operationArg2.init === "function") {
+              operationArg2.init();
+              operationArg2.initialized = true;
+            }
+          }
+          if (operation === "authenticate" && operationArg1) {
+            try {
+              P = (o.cookie || "").indexOf("_cpauthhint=") === -1 && !(C.localStorage || {})._cpuser && C.location.href.toLowerCase().indexOf("cpauthenticated") === -1;
+            } catch (e) {
+              P = false;
+            }
+            if (P) {
+              a = {
+                isLoggedIn: function() {
+                  return false;
+                },
+                hasValidSubscription: function() {
+                  return false;
+                }
+              };
+              if (typeof operationArg1 === "function") {
+                operationArg1(null, a);
+              }
+              t = [ "authenticate", null ];
+            }
+          }
+        }
+        C[n].q.push(t);
+      };
+    }
+    try {
+      s = (o.cookie.split("_cpauthhint=")[1] || "").split(";")[0];
+      if ((s ? Number(s[1]) : NaN) > 0) {
+        if (o.body) {
+          o.body.classList.add("cpauthenticated");
+        } else {
+          o.addEventListener("DOMContentLoaded", (function() {
+            o.body.classList.add("cpauthenticated");
+          }));
+        }
+      }
+    } catch (e) {}
+    C[n].l = +new Date;
+    C[n].sv = 5;
+  })(window, document, "cp");
+
+  cp("extension", "onetrust", {
+    version: 1,
+    init: function() {
+      function hideDarkFilter() {
+        if (typeof window.MutationObserver === "function") {
+          new MutationObserver((function(mutationsList, observer) {
+            Array.prototype.forEach.call(mutationsList, (function(mutation) {
+              if (mutation.type === "childList" && mutation.target && mutation.target.id === "onetrust-consent-sdk") {
+                Array.prototype.forEach.call(mutation.addedNodes, (function(node) {
+                  if (node.classList.contains("onetrust-pc-dark-filter")) {
+                    node.classList.add("ot-hide");
+                    observer.disconnect();
+                  }
+                }));
+              }
+            }));
+          })).observe(document.documentElement, {
+            childList: true,
+            subtree: true
+          });
+        } else {
+          const intervalHdl = setInterval((function() {
+            const oneTrustContainer = document.getElementById("onetrust-consent-sdk");
+            if (!oneTrustContainer) {
+              return;
+            }
+            const darkFilter = oneTrustContainer.querySelector(".onetrust-pc-dark-filter");
+            if (darkFilter) {
+              darkFilter.classList.add("ot-hide");
+              clearInterval(intervalHdl);
+            }
+          }), 50);
+        }
+      }
+      function hideFirstLayer() {
+        let element = document.getElementById("__cp_ot_hide_banner");
+        if (element) {
+          return;
+        }
+        element = document.createElement("style");
+        element.id = "__cp_ot_hide_banner";
+        element.appendChild(document.createTextNode("#onetrust-banner-sdk { display: none !important; }"));
+        if (document.head) {
+          document.head.appendChild(element);
+        } else if (document.body) {
+          document.body.appendChild(element);
+        } else {}
+      }
+      function hideOneTrustElements() {
+        hideFirstLayer();
+        hideDarkFilter();
+      }
+      function unhideFirstLayer() {
+        const style = document.getElementById("__cp_ot_hide_banner");
+        if (style && style.parentElement) {
+          style.parentElement.removeChild(style);
+        }
+      }
+      function unhideDarkFilterImpl() {
+        const container = document.getElementById("onetrust-consent-sdk");
+        if (!container) {
+          return;
+        }
+        const darkFilter = Array.prototype.find.call(container.children, (function(v) {
+          return v.classList.contains("onetrust-pc-dark-filter");
+        }));
+        if (darkFilter) {
+          darkFilter.classList.remove("ot-hide");
+          darkFilter.removeAttribute("style");
+          darkFilter.style.zIndex = "2147483644";
+        }
+      }
+      function unhideDarkFilter() {
+        const banner = document.getElementById("onetrust-banner-sdk");
+        if (banner) {
+          const attr = banner.getAttribute("style");
+          if (!banner.classList.contains("ot-hide") && !attr) {
+            banner.style.zIndex = "2147483645";
+            unhideDarkFilterImpl();
+          }
+        } else {
+          if (typeof window.MutationObserver !== "function") {
+            return;
+          }
+          new MutationObserver((function(mutationsList, observer) {
+            Array.prototype.forEach.call(mutationsList, (function(mutation) {
+              if (mutation.type === "childList" && mutation.target && mutation.target.id === "onetrust-consent-sdk") {
+                Array.prototype.forEach.call(mutation.addedNodes, (function(node) {
+                  if (node.id === "onetrust-banner-sdk") {
+                    const attr = node.getAttribute("style");
+                    if (!node.classList.contains("ot-hide") && !attr) {
+                      node.style.zIndex = "2147483645";
+                      unhideDarkFilterImpl();
+                    }
+                    observer.disconnect();
+                  }
+                }));
+              }
+            }));
+          })).observe(document.documentElement, {
+            childList: true,
+            subtree: true
+          });
+        }
+      }
+      function unhideOneTrustElements() {
+        unhideDarkFilter();
+        unhideFirstLayer();
+      }
+      hideOneTrustElements();
+      return cp("error", (function() {
+        unhideOneTrustElements();
+      }));
+    }
+  });
+
+  cp('create', cpPropertyId, { baseUrl: cpBaseUrl });
+  cp('render', {
+    
+    onFullConsent: onFullConsentFunction
+  });
+  cp('authenticate');
+})();
+            }();
+        </script>
+<script type="text/javascript" charset="UTF-8">
+            !function() {
+  const script = document.createElement('script');
+  script.src = 'https:\/\/cp.springerprofessional.de/now.js';
+  script.async = true;
+  script.fetchPriority = 'high';
+  script.onerror = function() {
+    cp('fatal', arguments);
+  }
+  document.head.appendChild(script);
+}();
+        </script>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="msapplication-config" content="https://nemo-assets-live.public.springernature.app/resource/img/springerprofessional-favicons/browserconfig.xml"/>
+<meta name="application-name" content="springerprofessional.de">
+<meta name="apple-mobile-web-app-title" content="springerprofessional.de">
+<meta name="last-modified" content="Sun, 9 Jul 2023 04:01:43 GMT">
+<meta name="description" content="The button is a familiar technology that is used to control and regulate things and machines in our everyday lives. With the digitalization of the">
+<meta name="discipline" content="Elektrotechnik + Elektronik, Business IT + Informatik">
+<meta name="image" content="">
+<meta name="id" content="25594764">
+<meta name="doi" content="10.1007/978-3-031-35989-7_26">
+<meta name="title" content="Understanding the Pushbutton Revisited: From on and off to Input and Output">
+<meta name="url" content="https://link.springer.com/chapter/10.1007/978-3-031-35989-7_26">
+<meta name="content-category" content="OriginalPaper">
+<meta name="theme-color" content="#024BA6">
+<link rel="canonical" href="https://link.springer.com/chapter/10.1007/978-3-031-35989-7_26">
+<meta property="og:title" content="Understanding the Pushbutton Revisited: From on and off to Input and Output"/>
+<meta property="og:image" content="https://media.springernature.com/lw400/springer-static/cover-hires/book/978-3-031-35989-7?as=jpg"/>
+<meta property="og:url" content="https://www.springerprofessional.de/en/understanding-the-pushbutton-revisited-from-on-and-off-to-input-/25594764"/>
+<meta property="og:description" content="The button is a familiar technology that is used to control and regulate things and machines in our everyday lives. With the digitalization of the button, many possibilities for novel and innovative functions have been invented and implemented."/>
+<meta property="og:site_name" content="springerprofessional.de"/>
+<meta property="optly:type" content="Chapter"/>
+<meta property="optly:parent" content="10.1007/978-3-031-35989-7"/>
+<meta property="twitter:card" content="summary">
+<meta property="twitter:title" content="Understanding the Pushbutton Revisited: From on and off to Input and Output">
+<meta property="twitter:description" content="The button is a familiar technology that is used to control and regulate things and machines in our everyday lives. With the digitalization of the">
+<meta property="twitter:image" content="https://nemo-assets-live.public.springernature.app/resource/img/springerprofessional-favicons/apple-touch-icon.png">
+<link rel="dns-prefetch" href="https://media.springernature.com">
+<link rel="dns-prefetch" href="https://nemo-assets-live.public.springernature.app/resource/">
+<link rel="preload" href="https://nemo-assets-live.public.springernature.app/resource/js/basic.js" as="script">
+<link rel="preload" href="https://nemo-assets-live.public.springernature.app/resource/js/springerprofessional-extra.js" as="script">
+<link rel="preload" href="https://nemo-assets-live.public.springernature.app/resource/css/springerprofessional.css" as="style">
+<title>Understanding the Pushbutton Revisited: From on and off to Input and Output | springerprofessional.de</title>
+<link rel="stylesheet" href="https://nemo-assets-live.public.springernature.app/resource/css/springerprofessional.css">
+<link data-style-link rel="stylesheet" href="https://nemo-assets-live.public.springernature.app/resource/dynamic/base-a1-a10-a13-a14-a17-a18-a19-a20-a21-a22-a24-a25-a29-a30-a36-a37-a39-a40-a47-a7-a9-m108-m109-m117-m12-m13-m15-m2-m25-m27-m30-m36-m4-m41-m50-m51-m56-m57-m77-m87-m89-m90-m95-m96-o10-o30-o33-o44-o45-o46-o52-o54-o9-p5.css">
+<link rel="shortcut icon" sizes="16x16 32x32 96x96 194x194" href="https://nemo-assets-live.public.springernature.app/resource/img/springerprofessional-favicons/favicon.ico">
+<link rel="apple-touch-icon" sizes="57x57" href="https://nemo-assets-live.public.springernature.app/resource/img/springerprofessional-favicons/apple-touch-icon-57x57.png">
+<link rel="apple-touch-icon" sizes="60x60" href="https://nemo-assets-live.public.springernature.app/resource/img/springerprofessional-favicons/apple-touch-icon-60x60.png">
+<link rel="apple-touch-icon" sizes="72x72" href="https://nemo-assets-live.public.springernature.app/resource/img/springerprofessional-favicons/apple-touch-icon-72x72.png">
+<link rel="apple-touch-icon" sizes="76x76" href="https://nemo-assets-live.public.springernature.app/resource/img/springerprofessional-favicons/apple-touch-icon-76x76.png">
+<link rel="apple-touch-icon" sizes="114x114" href="https://nemo-assets-live.public.springernature.app/resource/img/springerprofessional-favicons/apple-touch-icon-114x114.png">
+<link rel="apple-touch-icon" sizes="120x120" href="https://nemo-assets-live.public.springernature.app/resource/img/springerprofessional-favicons/apple-touch-icon-120x120.png">
+<link rel="apple-touch-icon" sizes="144x144" href="https://nemo-assets-live.public.springernature.app/resource/img/springerprofessional-favicons/apple-touch-icon-144x144.png">
+<link rel="apple-touch-icon" sizes="152x152" href="https://nemo-assets-live.public.springernature.app/resource/img/springerprofessional-favicons/apple-touch-icon-152x152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://nemo-assets-live.public.springernature.app/resource/img/springerprofessional-favicons/apple-touch-icon-180x180.png">
+<link rel="alternate" hreflang="de" href="https://www.springerprofessional.de/understanding-the-pushbutton-revisited-from-on-and-off-to-input-/25594764">
+<link rel="alternate" hreflang="en" href="https://www.springerprofessional.de/en/understanding-the-pushbutton-revisited-from-on-and-off-to-input-/25594764">
+<script src="https://nemo-assets-live.public.springernature.app/resource/dynamic/essential.js"></script>
+<script src="https://nemo-assets-live.public.springernature.app/resource/js/basic.js"></script>
+<script type="text/javascript">
+                        
+                        
+                        var optimizelyUserType = 'anonymous';
+                    </script>
+<meta data-consent-feature-name="optimizely" data-consent-feature-context="head">
+<script>
+            dataLayer = [{"content":{"contentInfo":{"publisher":"Springer Nature Switzerland","contentId":25594764,"fullText":true,"title":"Understanding the Pushbutton Revisited: From on and off to Input and Output","doi":"10.1007/978-3-031-35989-7_26","publishedAt":"2023-07-09T00:00:00Z","contentType":"Chapter","authors":"Heidi Bråthen; Jo Herstad","language":"en"},"relatesTo":{"book":{"electronicIsbn":"978-3-031-35989-7","printIsbn":"978-3-031-35988-0","copyrightYear":2023},"contentId":25594722,"title":"HCI International 2023 Posters","doi":"10.1007/978-3-031-35989-7","publishedAt":"2023-07-08T00:00:00Z","contentType":"Book","language":"en"},"restriction":{"loginRequired":true,"products":["90040332","40331E","40330E"],"userHasAccess":false},"tags":{"contentCategory":["OriginalPaper.255906"],"discipline":["Elektrotechnik + Elektronik.15145716","Business IT + Informatik.716582"]}},"page":{"pageInfo":{"paginatedFormCode":"Understanding the Pushbutton Revisited: From on and off to Input and Output.25594764","language":"en","pageName":"Understanding the Pushbutton Revisited: From on and off to Input and Output | springerprofessional.de","fullTextView":false,"destinationURL":"/en/understanding-the-pushbutton-revisited-from-on-and-off-to-input-/25594764"},"search":{"query":""}},"session":{"sessionInfo":{"internalEmployee":false},"authentication":{"loginStatus":false}},"OnetrustActiveGroups":",C0001,"}];
+        </script>
+<!-- Google Tag Manager -->
+<script type="text/javascript">
+ (function(w,d,s,l,i) {
+    w[l]=w[l]||[];
+    w[l].push({
+        'gtm.start': new Date().getTime(),
+        event: 'gtm.js'
+    });
+    var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
+    j.async=true;
+    j.src='\/\/www.googletagmanager.com/gtm.js?id='+i+dl;
+    
+    j.setAttribute('class','optanon-category-C0001');
+    f.parentNode.insertBefore(j, f.nextSibling);
+})(window,document,'script','dataLayer','GTM-MBT36G');
+
+</script>
+<!-- End Google Tag Manager -->
+<script type="text/javascript" src="https://data-588cbce106.springerprofessional.de/iomm/latest/bootstrap/stub.js"></script>
+<script src="https://cdn-eu.readspeaker.com/script/15112/webReader/webReader.js?pids=wr" type="text/javascript" id="rs_req_Init"></script>
+</head>
+<body class="customisation-for-springerprofessional">
+<noscript>
+<iframe src="//www.googletagmanager.com/ns.html?id=GTM-MBT36G"
+height="0"
+width="0"
+style="display:none;visibility:hidden"
+title="Google Tag Manager No Script">
+</iframe>
+</noscript>
+<script>
+                        var Ads_BA_ADIDsite = "springerprofessional.de";
+                        var Ads_BA_ADIDsection = "tec-elektro";
+                        var Ads_BA_keyword = "english, tec-elektro, wirt_informatik";
+                        
+                    </script>
+<div data-consent-feature-name="advertisement" data-consent-feature-context="dynamic"></div>
+<a class="is-hidden" href="#main">Understanding the Pushbutton Revisited: From on and off to Input and Output | springerprofessional.de</a>
+<a data-style="a47" class="a-skip-link " href="#main">
+Skip to main content
+</a>
+<div
+class="remodal-bg">
+<header data-style="a18 a17 o9" data-script="o1 m18" class="o-main-header" data-main-header="true">
+<section data-style="a17 a18 " class="a-layout-row a-layout-row__no-margin">
+<div class="a-layout-content-block">
+<div class="o-main-header__container">
+<div class="o-main-header__menu o-main-header__dropdown-menu o-main-header__dropdown-menu__main-menu-wrapper">
+<button type="button" aria-expanded="false" aria-controls="id_menu" class="o-main-header__dropdown-menu__button o-main-header__main-menu-button">
+<svg data-style="a29" class="a-icon " role="img" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+<path d="M5.252 7.078a.478.478 0 0 0-.174.67c.166.272-.374.252 6.93.252 6.487 0 6.614-.002 6.74-.078a.485.485 0 0 0 0-.844C18.622 7.002 18.495 7 12 7s-6.622.002-6.748.078m0 4a.478.478 0 0 0-.174.67c.166.272-.374.252 6.93.252 6.487 0 6.614-.002 6.74-.078a.485.485 0 0 0 0-.844C18.622 11.002 18.495 11 12 11s-6.622.002-6.748.078m0 4a.478.478 0 0 0-.174.67c.166.272-.374.252 6.93.252 6.487 0 6.614-.002 6.74-.078a.485.485 0 0 0 0-.844C18.622 15.002 18.495 15 12 15s-6.622.002-6.748.078"/>
+</svg>
+<span class="o-main-header__menu-name">Menu</span>
+</button>
+<nav aria-label="Main navigation" id="id_menu" class="o-main-header-menu__dropdown-content o-main-header__dropdown-menu__main-content o-main-header__main-menu">
+<div class="o-main-header-menu__dropdown-content__wrapper">
+<div class="m-main-header-menu__wrapper">
+<div data-style="m15" class="m-main-header-menu" data-main-header-menu="true">
+<div class="m-main-header-menu__col-1">
+<div data-style="m108" class="m-navigation m-navigation--collapsible m-main-header-menu__navigation">
+<strong class="m-navigation__category">
+Disciplines
+<button class="m-navigation__toggle" aria-label="Disciplines">
+<span class="m-navigation__toggle-icons">
+<span class="m-navigation__icon-down">
+<svg data-style="a29" role="img" viewBox="0 0 24 24" width="24" height="24" class="a-icon " role="img" aria-hidden="true">
+<path d="M12 13.5858L15.2929 10.2929C15.6834 9.90237 16.3166 9.90237 16.7071 10.2929C17.0976 10.6834 17.0976 11.3166 16.7071 11.7071L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L7.29289 11.7071C6.90237 11.3166 6.90237 10.6834 7.29289 10.2929C7.68342 9.90237 8.31658 9.90237 8.70711 10.2929L12 13.5858Z"/>
+</svg>
+</span>
+<span class="m-navigation__icon-up">
+<svg data-style="a29" class="a-icon " role="img" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+<path d="M12 10.4142L15.2929 13.7071C15.6834 14.0976 16.3166 14.0976 16.7071 13.7071C17.0976 13.3166 17.0976 12.6834 16.7071 12.2929L12.7071 8.29289C12.3166 7.90237 11.6834 7.90237 11.2929 8.29289L7.29289 12.2929C6.90237 12.6834 6.90237 13.3166 7.29289 13.7071C7.68342 14.0976 8.31658 14.0976 8.70711 13.7071L12 10.4142Z"/>
+</svg>
+</span>
+</span>
+</button>
+</strong>
+<ul class="m-navigation__list">
+<li class="m-navigation__list-item">
+<a href="/en/automotive/10895872" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Automotive</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/business-it-informatics/23797454" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Business IT + Informatics</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/construction-real-estate/23797768" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Construction + Real Estate</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/electrical-engineering-electronics/23797336" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Electrical Engineering + Electronics</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/energy--sustainability/23798160" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Energy + Sustainability</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/insurance--risk/23798170" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Insurance + Risk</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/finance-banking/23789512" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Finance + Banking</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/management-leadership/23406646" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Management + Leadership</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/marketing-sales/23797752" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Marketing + Sales</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/mechanical-engineering-materials/23793486" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Mechanical Engineering + Materials</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/surfaces-materials-technology/51702104" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Surfaces + Materials Technology</span>
+</a>
+</li>
+</ul>
+</div>
+<ul data-style="m109" class="m-version-switch ">
+<li class="m-version-switch__option">
+<a href="/understanding-the-pushbutton-revisited-from-on-and-off-to-input-/25594764" class="m-version-switch__link">
+DE
+<span class="m-version-switch__hint">
+German website
+</span>
+</a>
+</li>
+<li class="m-version-switch__option">
+<span class="m-version-switch__selected" aria-current="page">
+EN
+</span>
+<span class="m-version-switch__hint">
+English website
+</span>
+</li>
+</ul>
+</div>
+<div class="m-main-header-menu__col-2">
+<div data-style="m108" class="m-navigation m-main-header-menu__navigation">
+<strong class="m-navigation__category">
+<a href="/en/books/10653746" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text ">Books</span>
+</a>
+</strong>
+</div><div data-style="m108" class="m-navigation m-main-header-menu__navigation">
+<strong class="m-navigation__category">
+<a href="/en/journals/10699760" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text ">Journals</span>
+</a>
+</strong>
+</div><div data-style="m108" class="m-navigation m-main-header-menu__navigation">
+<strong class="m-navigation__category">
+<a href="/en/events/10820428" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text ">Events</span>
+</a>
+</strong>
+</div><div data-style="m108" class="m-navigation m-navigation--collapsible m-main-header-menu__navigation">
+<strong class="m-navigation__category">
+Topic Page
+<button class="m-navigation__toggle" aria-label="Topic Page">
+<span class="m-navigation__toggle-icons">
+<span class="m-navigation__icon-down">
+<svg data-style="a29" role="img" viewBox="0 0 24 24" width="24" height="24" class="a-icon " role="img" aria-hidden="true">
+<path d="M12 13.5858L15.2929 10.2929C15.6834 9.90237 16.3166 9.90237 16.7071 10.2929C17.0976 10.6834 17.0976 11.3166 16.7071 11.7071L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L7.29289 11.7071C6.90237 11.3166 6.90237 10.6834 7.29289 10.2929C7.68342 9.90237 8.31658 9.90237 8.70711 10.2929L12 13.5858Z"/>
+</svg>
+</span>
+<span class="m-navigation__icon-up">
+<svg data-style="a29" class="a-icon " role="img" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+<path d="M12 10.4142L15.2929 13.7071C15.6834 14.0976 16.3166 14.0976 16.7071 13.7071C17.0976 13.3166 17.0976 12.6834 16.7071 12.2929L12.7071 8.29289C12.3166 7.90237 11.6834 7.90237 11.2929 8.29289L7.29289 12.2929C6.90237 12.6834 6.90237 13.3166 7.29289 13.7071C7.68342 14.0976 8.31658 14.0976 8.70711 13.7071L12 10.4142Z"/>
+</svg>
+</span>
+</span>
+</button>
+</strong>
+<ul class="m-navigation__list">
+<li class="m-navigation__list-item">
+<a href="/en/marketing/26660848" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Marketing</span>
+</a>
+</li>
+</ul>
+</div>
+</div>
+<div class="m-main-header-menu__col-3 m-main-header-menu__col-3__subgrid ">
+<div class="m-main-header-menu__subgrid-1">
+<div data-style="m108" class="m-navigation m-main-header-menu__navigation">
+<strong class="m-navigation__category">
+<a href="https://www.springerprofessional.de/en/login?returnUrl=/en?utm_source%3DSP.en&amp;utm_medium=TopNavi_en" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text ">Log in</span>
+</a>
+</strong>
+</div><div data-style="m108" class="m-navigation m-main-header-menu__navigation">
+<strong class="m-navigation__category">
+<a href="/en/productinformation/18523532" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text ">Learn more about individual access</span>
+</a>
+</strong>
+</div><div data-style="m108" class="m-navigation m-main-header-menu__navigation">
+<strong class="m-navigation__category">
+<a href="/en/company-access/15559382" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text ">Request company access</span>
+</a>
+</strong>
+</div>
+</div>
+<div class="m-main-header-menu__subgrid-2">
+<div data-style="m108" class="m-navigation m-main-header-menu__navigation">
+<strong class="m-navigation__category">
+<a href="https://www.atzlive.de/en/events/chassistech-plus/" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text ">chassis.tech plus | 23–24 June 2026</span>
+</a>
+</strong>
+</div>
+<div class="m-main-header-menu__adv-content">
+<div class="m-main-header-menu__adv-image">
+<div class="m-media m-media--scaled m-media--crop-center" data-style="m30">
+<div data-style="a10 " class="">
+<div data-src="https://media.springernature.com/w292h164/springer-cms-alt/rest/v1/img/50367750/v22/16by9?as=jpg"
+data-alt="Bild Veranstaltung"
+data-lazy-load-image="true"></div>
+<noscript>
+<img src="https://media.springernature.com/w292h164/springer-cms-alt/rest/v1/img/50367750/v22/16by9?as=jpg" alt="Bild Veranstaltung">
+</noscript>
+</div>
+</div>
+</div>
+<div class="m-main-header-menu__comm-box">
+<div class="m-main-header-menu__comm-box__text">
+<p>Find out at the <a href="https://www.atzlive.de/en/events/chassistech-plus/" class="is-external"><span class="underline">17th International Munich Chassis Symposium</span></a>&nbsp;about key technology and market trends that set the course for future chassis systems in the fields of chassis, steering, brakes, and tires/wheels.<br/><a href="https://www.atzlive.de/en/events/chassistech-plus/booking/" class="is-external"><span class="underline">Book here!</span></a></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</nav>
+</div>
+<div class="o-main-header__logos o-main-header__item">
+<div class="o-main-header__logo">
+<div data-style="a22" class="a-brand ">
+<a href="/en" target="_self">
+<picture>
+<source srcset="https://nemo-assets-live.public.springernature.app/resource/img/headerlogos/svg/header-logo-springerprofessional-desktop.svg" media="(min-width: 630px)">
+<img src="https://nemo-assets-live.public.springernature.app/resource/img/headerlogos/svg/header-logo-springerprofessional-mobile.svg" alt="springerprofessional"/>
+</picture>
+</a>
+</div>
+</div>
+</div>
+<div class="o-main-header__meta">
+<div class='o-main-header__search o-main-header__dropdown-menu o-main-header__dropdown-menu__search-menu-wrapper'>
+<button type="button" aria-expanded="false" aria-controls="id_search" class="o-main-header__dropdown-menu__button o-main-header__search-menu-button">
+<svg data-style="a29" class="a-icon " role="img" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+<path d="M19.4804 18.4546C19.7633 18.7374 19.7704 19.2038 19.4871 19.4871C19.2121 19.7621 18.7415 19.7674 18.4546 19.4804L15.4103 16.4362C14.2066 17.414 12.6717 18 11 18C7.13401 18 4 14.866 4 11C4 7.13401 7.13401 4 11 4C14.866 4 18 7.13401 18 11C18 12.6717 17.414 14.2066 16.4362 15.4103L19.4804 18.4546ZM11 17C14.3137 17 17 14.3137 17 11C17 7.68629 14.3137 5 11 5C7.68629 5 5 7.68629 5 11C5 14.3137 7.68629 17 11 17Z"/>
+</svg>
+<span class="o-main-header__menu-name">Search</span>
+</button>
+<div id="id_search" class='o-main-header-menu__dropdown-content o-main-header__search-content o-main-header__search-menu'>
+<div class="o-main-header-menu__dropdown-content__wrapper">
+<div class="o-main-header__search-container">
+<header data-style="a20 o44" class="o-search-header a-theme__brand-main-dark" data-advanced-search="true">
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section a-layout-row--no-spacing">
+<div data-tabs="true">
+<div data-script="m15" role="tablist" class="o-search-header__navigation-list">
+<button role="tab" id="button-default-search" aria-controls="default-search" class="o-search-header__navigation-button"
+aria-selected="true">
+Search
+</button>
+<button role="tab" id="button-advanced-search" aria-controls="advanced-search" class="o-search-header__navigation-button" data-search-view="advancedSearchForm"
+aria-selected="false" tabindex="-1">
+Advanced Search
+</button>
+<button role="tab" id="button-semantic-search" aria-controls="semantic-search" class="o-search-header__navigation-button" aria-selected="false" tabindex="-1">
+AI-assisted search
+</button>
+</div>
+<div data-script="a1" role="tabpanel" aria-labelledby="button-default-search" id="default-search" class="o-search-header__search-type ">
+<section data-style="a14" class="a-search-box">
+<form action="/en/search" method="POST" class="a-search-box__form" rel="search" autocomplete="off">
+<label for="StandardSearchType" class="a-search-box__label">Enter your search terms</label>
+<span class="a-search-box__icon">
+<svg data-style="a29" class="a-icon " role="img" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+<path d="M19.4804 18.4546C19.7633 18.7374 19.7704 19.2038 19.4871 19.4871C19.2121 19.7621 18.7415 19.7674 18.4546 19.4804L15.4103 16.4362C14.2066 17.414 12.6717 18 11 18C7.13401 18 4 14.866 4 11C4 7.13401 7.13401 4 11 4C14.866 4 18 7.13401 18 11C18 12.6717 17.414 14.2066 16.4362 15.4103L19.4804 18.4546ZM11 17C14.3137 17 17 14.3137 17 11C17 7.68629 14.3137 5 11 5C7.68629 5 5 7.68629 5 11C5 14.3137 7.68629 17 11 17Z"/>
+</svg></span>
+<input type="search" id="StandardSearchType" name="query" value="" class="a-search-box__content" placeholder="Enter your search terms" maxlength="1024"/>
+<input type="hidden" name="csrfToken" value="089795ea1eb12a720f03fafabcf70f20206e4095-1781186077577-43035e88bc9bd5d831f8e33c"/>
+<input type="hidden" name="searchType" value="StandardSearchType">
+<button class="a-search-box__submit" type="submit" value="search">Search</button>
+</form>
+<div class="autocomplete-wrapper"></div>
+</section>
+</div>
+<div role="tabpanel" aria-labelledby="button-advanced-search" id="advanced-search" class="o-search-header__search-type tabpanel-hidden ">
+<div data-style="o45" class="o-advanced-search ">
+<div data-style="a17" class="a-layout-content ">
+<h2 class="o-advanced-search__title">Advanced Search</h2>
+<div class="o-advanced-search__form">
+<form action="/en/search/advancedSearchForm" method="POST" class="advancedSearchForm">
+<input type="hidden" name="csrfToken" value="089795ea1eb12a720f03fafabcf70f20206e4095-1781186077577-43035e88bc9bd5d831f8e33c"/>
+<input type="hidden" name="searchType" value="StandardSearchType">
+<input type="hidden" name="currentLanguage" value="en">
+<div data-style="m41" class="m-form-container ">
+<div data-style="a30" class="a-form-row ">
+<div data-style="m117" data-script="a3" class="m-form-element m-text-field ">
+<label class="m-form-element__label " for="fulltextSearch">
+Search in full text and title (with search operators)
+</label>
+<div class="m-form-element__form-field ">
+<input
+data-script="a3"
+class="m-text-field__input calculate-number-of-hits"
+id="fulltextSearch"
+type="text"
+name="query"
+placeholder="Enter search term(s)"
+autocomplete="off"
+value = ""
+maxlength="1000"
+data-js-form-element-validation="true"
+/>
+</div>
+</div>
+</div>
+<div data-style="a30" class="a-form-row ">
+<div data-style="m117" data-script="a3" class="m-form-element m-text-field ">
+<label class="m-form-element__label " for="titleOnlySearch">
+Search in title (with search operators)
+</label>
+<div class="m-form-element__form-field ">
+<input
+data-script="a3"
+class="m-text-field__input calculate-number-of-hits"
+id="titleOnlySearch"
+type="text"
+name="titleOnlyQuery"
+placeholder="Enter search term(s)"
+autocomplete="off"
+value = ""
+maxlength="200"
+data-js-form-element-validation="true"
+/>
+</div>
+</div>
+</div>
+<div data-style="a30" class="a-form-row ">
+<div data-style="m117" data-script="a3" class="m-form-element m-text-field ">
+<label class="m-form-element__label " for="excludeSearch">
+Keywords to be excluded
+</label>
+<div class="m-form-element__form-field ">
+<input
+data-script="a3"
+class="m-text-field__input calculate-number-of-hits"
+id="excludeSearch"
+type="text"
+name="excludeQuery"
+placeholder="Enter search term(s)"
+autocomplete="off"
+value = ""
+maxlength="200"
+data-js-form-element-validation="true"
+/>
+</div>
+</div>
+</div>
+<div data-style="a30" class="a-form-row ">
+<div data-style="m117" data-script="a3" class="m-form-element m-text-field ">
+<label class="m-form-element__label " for="authorSearch">
+Author(s)
+</label>
+<div class="m-form-element__form-field ">
+<input
+data-script="a3"
+class="m-text-field__input calculate-number-of-hits"
+id="authorSearch"
+type="text"
+name="authorQuery"
+placeholder="Enter search term(s)"
+autocomplete="off"
+value = ""
+maxlength="200"
+data-js-form-element-validation="true"
+/>
+</div>
+</div>
+</div>
+<div data-style="a30" class="a-form-row a-form-row--column-6 a-form-row--align-center">
+<p>Projected result for your current search:
+<strong class="numberOfHitsResult">0</strong>
+</p>
+</div>
+<div data-style="a30" class="a-form-row a-form-row--column-6 a-form-row--justify-right">
+<button data-style="a25" type="submit" class="a-submit-button">
+Search
+</button>
+</div>
+</div>
+</form>
+</div>
+<div class="o-advanced-search__operators">
+<div data-script="m21" data-style="m90" class="m-search-operators ">
+<h3 class="m-search-operators__title">Search Operators:</h3>
+<div class="m-search-operators__text">
+You can use operators in your search query to narrow down your results even more. Click on the search operator to see an explanation of how it works.
+</div>
+<dl class="m-search-operators__list" data-search-operators-toggle="true">
+<dt class="m-search-operators__term">
+<a class="m-search-operators__button" data-search-operator-toggle-button="" aria-label="Quotation marks" aria-controls="definition-0" href="#definition-0" aria-expanded="false">„ ... ... &quot;</a>
+</dt>
+<dd class="m-search-operators__description" id="definition-0">Finds documents with exactly this word group, in exactly this word order and spelling (e.g. &quot;employer branding&quot;).</dd>
+<dt class="m-search-operators__term">
+<a class="m-search-operators__button" data-search-operator-toggle-button="" aria-label="AND" aria-controls="definition-1" href="#definition-1" aria-expanded="false">AND</a>
+</dt>
+<dd class="m-search-operators__description" id="definition-1">Finds documents with both search terms (e.g. sales AND bonus).</dd>
+<dt class="m-search-operators__term">
+<a class="m-search-operators__button" data-search-operator-toggle-button="" aria-label="OR" aria-controls="definition-2" href="#definition-2" aria-expanded="false">OR</a>
+</dt>
+<dd class="m-search-operators__description" id="definition-2">Finds documents with one or the other search term (e.g. porsche OR volkswagen).</dd>
+<dt class="m-search-operators__term">
+<a class="m-search-operators__button" data-search-operator-toggle-button="" aria-label="Blank Space" aria-controls="definition-3" href="#definition-3" aria-expanded="false">Blank Space</a>
+</dt>
+<dd class="m-search-operators__description" id="definition-3">Finds documents with all search terms. Blank space is understood as AND (e.g. man robot production).</dd>
+<dt class="m-search-operators__term">
+<a class="m-search-operators__button" data-search-operator-toggle-button="" aria-label="NOT" aria-controls="definition-4" href="#definition-4" aria-expanded="false">NOT</a>
+</dt>
+<dd class="m-search-operators__description" id="definition-4">Finds documents with no appearance of the word behind NOT (e.g. ford NOT &quot;harrison ford&quot;).</dd>
+<dt class="m-search-operators__term">
+<a class="m-search-operators__button" data-search-operator-toggle-button="" aria-label="COUNT(...)&gt;n" aria-controls="definition-5" href="#definition-5" aria-expanded="false">COUNT(...)&gt;n</a>
+</dt>
+<dd class="m-search-operators__description" id="definition-5">Finds documents where the search term is mentioned at least &quot;n&quot; times.&quot;n&quot; may be any number (e.g. COUNT(gear)&gt;8).</dd>
+<dt class="m-search-operators__term">
+<a class="m-search-operators__button" data-search-operator-toggle-button="" aria-label="NEAR(..., ..., )" aria-controls="definition-6" href="#definition-6" aria-expanded="false">NEAR(..., ..., )</a>
+</dt>
+<dd class="m-search-operators__description" id="definition-6">Finds documents with both search terms in any word order, permitting &quot;n&quot; words as a maximum distance between them. Best choose between 15 and 30 (e.g. NEAR(recruit, professionals, 20)).</dd>
+<dt class="m-search-operators__term">
+<a class="m-search-operators__button" data-search-operator-toggle-button="" aria-label="star or asterisk" aria-controls="definition-7" href="#definition-7" aria-expanded="false">*</a>
+</dt>
+<dd class="m-search-operators__description" id="definition-7">Finds documents with the search term in word versions or composites. The asterisk * marks whether you wish them BEFORE, BEHIND, or BEFORE and BEHIND the search term (e.g. lightweight*, *lightweight, *lightweight*).</dd>
+<dt class="m-search-operators__term">
+<a class="m-search-operators__button" data-search-operator-toggle-button="" aria-label="Question mark" aria-controls="definition-8" href="#definition-8" aria-expanded="false">?</a>
+</dt>
+<dd class="m-search-operators__description" id="definition-8">Finds documents with the search term in different spellings. &quot;?&quot; allows only one character (e.g. organi?ation).</dd>
+<dt class="m-search-operators__term">
+<a class="m-search-operators__button" data-search-operator-toggle-button="" aria-label="Ampersand, plus, and minus" aria-controls="definition-9" href="#definition-9" aria-expanded="false">&amp; + -</a>
+</dt>
+<dd class="m-search-operators__description" id="definition-9">Special characters are understood as AND (e.g. Miller Bros. &amp; Sons).</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div role="tabpanel" aria-labelledby="button-semantic-search" id="semantic-search" class="o-search-header__search-type tabpanel-hidden ">
+<div class="m-semantic-search-form semantic-search" data-style="a20 m89">
+<h2 class="m-semantic-search-form__title"> Semantic Search </h2>
+<form data-script="o4" data-semantic-search-form="true">
+<div data-style="m41" class="m-form-container ">
+<div data-style="a30" class="a-form-row ">
+<div data-style="m117" data-script="a3" class="m-form-element m-textarea">
+<label class="m-form-element__label " for="semanticSearchQuery">
+Enter at least four keywords or a text passage relevant to your topic here to execute AI-assisted search.
+</label>
+<div class="m-form-element__form-field ">
+<textarea
+data-style="m36"
+class="m-textarea__input"
+name="semanticSearchQuery"
+id="semanticSearchQuery"
+rows="10"
+placeholder="Enter at least four keywords or a section of text here, appropriate to your topic."
+></textarea>
+</div>
+</div>
+</div>
+<div data-style="a30" class="a-form-row a-form-row--column-6 a-form-row--align-center">
+<span data-style="a1" class="a-operator a-operator">powered by
+<a href=https://www.intergator.de/en/ai-search-in-specialized-libraries-of-springer-professional target="_blank" rel="noopener" class="a-operator__link">
+<span class="a-operator__link-help">
+(Link opens in a new window)
+</span>
+<svg data-style="a29" class="a-operator__logo" role="img" viewBox="0 0 89 12" xmlns="http://www.w3.org/2000/svg">
+<title>Intergator</title>
+<g fill="#DD2536" fill-rule="nonzero">
+<path d="M1 1.173h2.122v9.143H1zM13.68 1.173v9.16h-1.743L7.383 4.778v5.555H5.278v-9.16h1.76l4.537 5.555V1.173zM17.734 2.898h-2.916V1.173h7.97v1.725h-2.932v7.435h-2.122zM38.522 10.333l-1.76-2.553h-1.949v2.553h-2.122V1.19h3.968c.81 0 1.518.138 2.105.397.603.276 1.052.655 1.38 1.155.327.5.483 1.087.483 1.76s-.156 1.26-.483 1.76c-.328.5-.794.862-1.398 1.138l2.053 2.933h-2.277Zm-.552-7.021c-.328-.276-.81-.414-1.45-.414h-1.724v3.191h1.725c.638 0 1.121-.138 1.449-.414.328-.276.5-.673.5-1.173 0-.517-.155-.914-.5-1.19M48.476 5.606h1.932v3.71c-.5.379-1.07.655-1.725.862a6.474 6.474 0 0 1-1.966.293c-.95 0-1.812-.207-2.554-.604a4.414 4.414 0 0 1-1.777-1.69c-.43-.725-.638-1.536-.638-2.433 0-.914.207-1.725.638-2.432.432-.725 1.035-1.277 1.795-1.69.759-.398 1.621-.605 2.587-.605.794 0 1.536.138 2.174.397.656.276 1.208.656 1.639 1.173l-1.363 1.26c-.656-.69-1.45-1.036-2.363-1.036-.587 0-1.105.121-1.553.363-.449.241-.81.586-1.052 1.035-.26.448-.38.949-.38 1.535 0 .57.12 1.07.38 1.518a2.64 2.64 0 0 0 1.052 1.035c.448.242.966.38 1.535.38.604 0 1.156-.138 1.64-.397V5.606ZM58.396 8.366h-4.244l-.828 1.967H51.15l4.072-9.143h2.087l4.089 9.143h-2.226l-.776-1.967Zm-.673-1.604-1.45-3.502-1.448 3.502h2.898ZM63.813 2.898H60.88V1.173h7.97v1.725h-2.915v7.435h-2.122zM71.731 9.867c-.759-.414-1.363-.966-1.794-1.69-.431-.725-.638-1.519-.638-2.433 0-.897.224-1.708.638-2.432.431-.725 1.035-1.277 1.794-1.69.76-.415 1.622-.622 2.57-.622.95 0 1.812.207 2.554.621.759.414 1.363.966 1.794 1.69.431.725.656 1.536.656 2.433 0 .897-.225 1.708-.656 2.433-.431.724-1.035 1.276-1.794 1.69-.76.414-1.604.621-2.553.621-.966 0-1.812-.207-2.57-.62m4.019-1.553a2.557 2.557 0 0 0 1.018-1.035c.241-.449.38-.95.38-1.519s-.122-1.07-.38-1.518a2.557 2.557 0 0 0-1.018-1.035 2.992 2.992 0 0 0-1.467-.38c-.534 0-1.035.121-1.466.38A2.557 2.557 0 0 0 71.8 4.243c-.241.449-.38.95-.38 1.518 0 .57.121 1.07.38 1.519.242.448.587.793 1.018 1.035.431.241.932.38 1.466.38.553-.018 1.036-.139 1.467-.38M86.723 10.333l-1.76-2.553h-1.949v2.553h-2.122V1.19h3.968c.81 0 1.518.138 2.104.397.604.276 1.053.655 1.38 1.155.328.5.483 1.087.483 1.76s-.155 1.26-.483 1.76c-.327.5-.793.862-1.397 1.138L89 10.333h-2.277Zm-.535-7.021c-.328-.276-.81-.414-1.45-.414h-1.724v3.191h1.725c.638 0 1.121-.138 1.449-.414.328-.276.5-.673.5-1.173-.017-.517-.172-.914-.5-1.19M23.91 1.173H31v1.691h-7.09zM23.91 4.83h5.244v1.691H23.91zM23.91 8.608H31v1.691h-7.09z"/>
+</g>
+</svg>
+</a>
+</span>
+</div>
+<div data-style="a30" class="a-form-row a-form-row--column-6 a-form-row--justify-right">
+<button data-style="a25" type="submit" class="a-submit-button submit">
+Start semantic search
+</button>
+</div>
+</div>
+<input type="hidden" name="currentLanguage" value="en">
+</form>
+</div>
+<div data-style="m51" class="remodal m-overlay "
+aria-live="polite"
+data-remodal-id="modal-semantic-search-result">
+<div data-style="m4" class="m-loading atoms-a-intergator" data-loading-pattern="semantic-search">
+<svg data-style="a29 a39" class="a-loading m-loading__icon" role="img" viewBox="0 0 50 50">
+<title>loading …</title>
+<circle class="a-loading__circle" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+</svg>
+</div>
+</div>
+</div>
+</div>
+</div>
+</header>
+</div>
+</div>
+</div>
+</div>
+<div class="divider"></div>
+<div class='o-main-header__dropdown-menu o-main-header__dropdown-menu__profile-menu-wrapper'>
+<a data-style="a13" href="/en/login?returnUrl=%2Fen%2Funderstanding-the-pushbutton-revisited-from-on-and-off-to-input-%2F25594764" title="Log in" class="a-link ">
+<span class="a-link__content-wrapper">
+<span class="a-link__icon">
+<div data-style="a7" class="a-sn-icon a-sn-icon-user"></div>
+</span>
+<span class="a-link__text o-main-header__menu-name">Log in</span>
+</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+</header>
+<section data-style="a17 a18 " class="a-layout-row a-layout-row__no-margin">
+<div class="a-layout-content-block">
+<div class="sky-ad-container">
+<div class="advertisement-place--sky">
+<div id="Ads_BA_SKY" style="z-index:1;">
+<script type='text/javascript' class='consent-feature-advertisement-js'>
+                    (function () {
+                        if (typeof Ads_BA_AD === 'function') {
+                            Ads_BA_AD('SKY');
+                        }
+                    })();
+                </script>
+</div>
+</div>
+</div>
+</div>
+</section>
+<div data-style="a21" class="js-patent-fit-container a-layout">
+<section data-style="a17 a18 " class="a-layout-row a-layout-row__no-margin">
+<div class="a-layout-content-block">
+<div class="hidden print-display--block">
+<div class="print-brand--text"><h3>Springer Professional</h3></div>
+</div>
+<noscript>
+<aside data-style="m56" data-script="m27" class="m-message m-message--warning " data-message-removable aria-atomic="true" role="status">
+<span class="m-message__icon">
+<svg data-style="a29" class="a-icon " role="img" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M15.726 3H8.274L3 8.274V15.726L8.274 21H15.726L21 15.726V8.274L15.726 3ZM10.1234 7.11043C10.0576 6.51807 10.5213 6 11.1173 6H12.8828C13.4788 6 13.9425 6.51807 13.8767 7.11043L13.0989 14.1104C13.0426 14.6169 12.6145 15 12.105 15H11.8951C11.3855 15 10.9575 14.6169 10.9012 14.1104L10.1234 7.11043ZM13 17C13 16.4477 12.5523 16 12 16C11.4478 16 11 16.4477 11 17C11 17.5523 11.4478 18 12 18C12.5523 18 13 17.5523 13 17Z"/>
+</svg>
+</span>
+<div class="m-message__body">
+<strong class="m-message__heading">Javascript needed</strong>
+<div class="m-message__text">
+Please enable JavaScript on your browser, so that you can use all features of this website.
+</div>
+</div>
+<button class="m-message__close" aria-label="Close message" data-message-close-button>
+<span class="a-icon"><svg data-style="a29" class="a-icon " role="img" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+<path d="M6.2968 16.2772C5.90021 16.6738 5.90241 17.3101 6.29617 17.7038C6.69269 18.1003 7.32864 18.0973 7.72275 17.7032L12 13.426L16.2772 17.7032C16.6738 18.0998 17.3101 18.0976 17.7038 17.7038C18.1003 17.3073 18.0973 16.6714 17.7032 16.2772L13.426 12L17.7032 7.72275C18.0998 7.32616 18.0976 6.68994 17.7038 6.29617C17.3073 5.89966 16.6714 5.90269 16.2772 6.2968L12 10.574L7.72275 6.2968C7.32616 5.90021 6.68994 5.90241 6.29617 6.29617C5.89966 6.69269 5.90269 7.32864 6.2968 7.72275L10.574 12L6.2968 16.2772Z"/>
+</svg>
+</span>
+</button>
+</aside>
+</noscript>
+<div data-script="m9" class="js-ie-support-banner is-hidden">
+<aside data-style="m56" data-script="m27" class="m-message m-message--warning " data-message-removable aria-atomic="true" role="status">
+<span class="m-message__icon">
+<svg data-style="a29" class="a-icon " role="img" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M15.726 3H8.274L3 8.274V15.726L8.274 21H15.726L21 15.726V8.274L15.726 3ZM10.1234 7.11043C10.0576 6.51807 10.5213 6 11.1173 6H12.8828C13.4788 6 13.9425 6.51807 13.8767 7.11043L13.0989 14.1104C13.0426 14.6169 12.6145 15 12.105 15H11.8951C11.3855 15 10.9575 14.6169 10.9012 14.1104L10.1234 7.11043ZM13 17C13 16.4477 12.5523 16 12 16C11.4478 16 11 16.4477 11 17C11 17.5523 11.4478 18 12 18C12.5523 18 13 17.5523 13 17Z"/>
+</svg>
+</span>
+<div class="m-message__body">
+<strong class="m-message__heading">Internet Explorer is no longer supported</strong>
+<div class="m-message__text">
+Your version of Internet Explorer is no longer supported by this system. Please install one of the following browsers: Microsoft Edge, Safari, Chrome or Firefox
+</div>
+</div>
+<button class="m-message__close" aria-label="Close message" data-message-close-button>
+<span class="a-icon"><svg data-style="a29" class="a-icon " role="img" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+<path d="M6.2968 16.2772C5.90021 16.6738 5.90241 17.3101 6.29617 17.7038C6.69269 18.1003 7.32864 18.0973 7.72275 17.7032L12 13.426L16.2772 17.7032C16.6738 18.0998 17.3101 18.0976 17.7038 17.7038C18.1003 17.3073 18.0973 16.6714 17.7032 16.2772L13.426 12L17.7032 7.72275C18.0998 7.32616 18.0976 6.68994 17.7038 6.29617C17.3073 5.89966 16.6714 5.90269 16.2772 6.2968L12 10.574L7.72275 6.2968C7.32616 5.90021 6.68994 5.90241 6.29617 6.29617C5.89966 6.69269 5.90269 7.32864 6.2968 7.72275L10.574 12L6.2968 16.2772Z"/>
+</svg>
+</span>
+</button>
+</aside>
+</div>
+</div>
+</section>
+<main data-style="a10 a20" class="a-main-page a-main-page--with-advertisement" id="main">
+<section data-style="a17 a18 " class="a-layout-row a-layout-row__no-margin">
+<div class="a-layout-content-block">
+<div class="back-to-top-container">
+<div class="back-to-top-rectangle">
+<div class="icon-back-to-top back-to-top-icon"> </div>
+<div class="back-to-top-text-area">
+<a>Top</a>
+</div>
+</div>
+</div>
+<div class="advertisement-place--bs">
+<div id="Ads_BA_BS" style="z-index:1;">
+<script type='text/javascript' class='consent-feature-advertisement-js'>
+                    (function () {
+                        if (typeof Ads_BA_AD === 'function') {
+                            Ads_BA_AD('BS');
+                        }
+                    })();
+                </script>
+</div>
+</div>
+<div class="advertisement-place--flb">
+<div id="Ads_BA_FLB" style="z-index:1;">
+<script type='text/javascript' class='consent-feature-advertisement-js'>
+                    (function () {
+                        if (typeof Ads_BA_AD === 'function') {
+                            Ads_BA_AD('FLB');
+                        }
+                    })();
+                </script>
+</div>
+</div>
+</div>
+</section>
+<article data-content-type="chapter">
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section ">
+<header data-style="o52" class="o-content-header ">
+<div class="o-content-header__title">
+<h1 data-style="a20 a24" class="a-page-title o-content-header__page-title ">
+Understanding the Pushbutton Revisited: From on and off to Input and Output
+</h1>
+<ul data-style="m25" class="m-tag-line o-content-header__tag-line">
+<li class="m-tag-line__item ">2023</li>
+<li class="m-tag-line__item">
+OriginalPaper
+</li>
+<li class="m-tag-line__item">
+Chapter
+</li>
+</ul>
+</div>
+<div class="o-content-header__cover-image">
+<span class="o-content-header__cover-image-title">
+Published in:
+</span>
+<a href="/en/hci-international-2023-posters/25594722" class="o-content-header__cover-link">
+<div data-style="a10 a40" class="a-cover-image ">
+<div data-src="https://media.springernature.com/lw{width}/springer-static/cover-hires/book/978-3-031-35989-7?as=jpg"
+data-alt="Link to Book HCI International 2023 Posters"
+data-lazy-load-image="true"></div>
+<noscript>
+<img src="https://media.springernature.com/lw400/springer-static/cover-hires/book/978-3-031-35989-7?as=jpg" alt="Link to Book HCI International 2023 Posters">
+</noscript>
+</div>
+</a>
+</div>
+<div class="o-content-header__meta-data">
+<dl data-style="m77" class="m-meta-data ">
+<div class="m-meta-data__item">
+<dt class="m-meta-data__label">Authors</dt>
+<dd class="m-meta-data__value">Heidi Bråthen</dd>
+<dd class="m-meta-data__value">Jo Herstad</dd>
+</div>
+<div class="m-meta-data__item">
+<dt class="m-meta-data__label">Published in</dt>
+<dd class="m-meta-data__value m-meta-data__value--truncate">
+<a href="/en/hci-international-2023-posters/25594722" class="m-meta-data__link">HCI International 2023 Posters</a>
+</dd>
+</div>
+<div class="m-meta-data__item">
+<dt class="m-meta-data__label">Publisher</dt>
+<dd class="m-meta-data__value m-meta-data__value--truncate">
+Springer Nature Switzerland
+</dd>
+</div>
+</dl>
+</div>
+<div class="o-content-header__login">
+<a data-style="a9" class="a-button a-button--primary o-content-header__button"
+href="#pay-wall">
+Get Access
+</a>
+</div>
+</header>
+</div>
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section ">
+<aside data-style="m56" data-script="m27" class="m-message m-message--info m-article-search-config__promotion-banner" role="status">
+<span class="m-message__icon">
+<svg data-style="a29" class="a-icon " role="img" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21C16.9706 21 21 16.9706 21 12ZM12 9C12.5523 9 13 8.55228 13 8C13 7.44772 12.5523 7 12 7C11.4477 7 11 7.44772 11 8C11 8.55228 11.4477 9 12 9ZM11 11C11 10.4477 11.4477 10 12 10C12.5523 10 13 10.4477 13 11V16C13 16.5523 12.5523 17 12 17C11.4477 17 11 16.5523 11 16V11Z"/>
+</svg>
+</span>
+<div class="m-message__body">
+<strong class="m-message__heading">Introducing the latest innovation: AI-assisted Search!</strong>
+<div class="m-message__text">
+Highlight text sections to discover more relevant content with AI-assisted Search.
+</div>
+</div>
+<span data-style="a1" class="a-operator m-message__operator a-operator--small">powered by
+<a href=https://www.intergator.de/en/ai-search-in-specialized-libraries-of-springer-professional target="_blank" rel="noopener" class="a-operator__link">
+<span class="a-operator__link-help">
+(Link opens in a new window)
+</span>
+<svg data-style="a29" class="a-operator__logo" role="img" viewBox="0 0 89 12" xmlns="http://www.w3.org/2000/svg">
+<title>Intergator</title>
+<g fill="#DD2536" fill-rule="nonzero">
+<path d="M1 1.173h2.122v9.143H1zM13.68 1.173v9.16h-1.743L7.383 4.778v5.555H5.278v-9.16h1.76l4.537 5.555V1.173zM17.734 2.898h-2.916V1.173h7.97v1.725h-2.932v7.435h-2.122zM38.522 10.333l-1.76-2.553h-1.949v2.553h-2.122V1.19h3.968c.81 0 1.518.138 2.105.397.603.276 1.052.655 1.38 1.155.327.5.483 1.087.483 1.76s-.156 1.26-.483 1.76c-.328.5-.794.862-1.398 1.138l2.053 2.933h-2.277Zm-.552-7.021c-.328-.276-.81-.414-1.45-.414h-1.724v3.191h1.725c.638 0 1.121-.138 1.449-.414.328-.276.5-.673.5-1.173 0-.517-.155-.914-.5-1.19M48.476 5.606h1.932v3.71c-.5.379-1.07.655-1.725.862a6.474 6.474 0 0 1-1.966.293c-.95 0-1.812-.207-2.554-.604a4.414 4.414 0 0 1-1.777-1.69c-.43-.725-.638-1.536-.638-2.433 0-.914.207-1.725.638-2.432.432-.725 1.035-1.277 1.795-1.69.759-.398 1.621-.605 2.587-.605.794 0 1.536.138 2.174.397.656.276 1.208.656 1.639 1.173l-1.363 1.26c-.656-.69-1.45-1.036-2.363-1.036-.587 0-1.105.121-1.553.363-.449.241-.81.586-1.052 1.035-.26.448-.38.949-.38 1.535 0 .57.12 1.07.38 1.518a2.64 2.64 0 0 0 1.052 1.035c.448.242.966.38 1.535.38.604 0 1.156-.138 1.64-.397V5.606ZM58.396 8.366h-4.244l-.828 1.967H51.15l4.072-9.143h2.087l4.089 9.143h-2.226l-.776-1.967Zm-.673-1.604-1.45-3.502-1.448 3.502h2.898ZM63.813 2.898H60.88V1.173h7.97v1.725h-2.915v7.435h-2.122zM71.731 9.867c-.759-.414-1.363-.966-1.794-1.69-.431-.725-.638-1.519-.638-2.433 0-.897.224-1.708.638-2.432.431-.725 1.035-1.277 1.794-1.69.76-.415 1.622-.622 2.57-.622.95 0 1.812.207 2.554.621.759.414 1.363.966 1.794 1.69.431.725.656 1.536.656 2.433 0 .897-.225 1.708-.656 2.433-.431.724-1.035 1.276-1.794 1.69-.76.414-1.604.621-2.553.621-.966 0-1.812-.207-2.57-.62m4.019-1.553a2.557 2.557 0 0 0 1.018-1.035c.241-.449.38-.95.38-1.519s-.122-1.07-.38-1.518a2.557 2.557 0 0 0-1.018-1.035 2.992 2.992 0 0 0-1.467-.38c-.534 0-1.035.121-1.466.38A2.557 2.557 0 0 0 71.8 4.243c-.241.449-.38.95-.38 1.518 0 .57.121 1.07.38 1.519.242.448.587.793 1.018 1.035.431.241.932.38 1.466.38.553-.018 1.036-.139 1.467-.38M86.723 10.333l-1.76-2.553h-1.949v2.553h-2.122V1.19h3.968c.81 0 1.518.138 2.104.397.604.276 1.053.655 1.38 1.155.328.5.483 1.087.483 1.76s-.155 1.26-.483 1.76c-.327.5-.793.862-1.397 1.138L89 10.333h-2.277Zm-.535-7.021c-.328-.276-.81-.414-1.45-.414h-1.724v3.191h1.725c.638 0 1.121-.138 1.449-.414.328-.276.5-.673.5-1.173-.017-.517-.172-.914-.5-1.19M23.91 1.173H31v1.691h-7.09zM23.91 4.83h5.244v1.691H23.91zM23.91 8.608H31v1.691h-7.09z"/>
+</g>
+</svg>
+</a>
+</span>
+</aside>
+<div data-style="a9 m50 o33" data-script="m10 o3 a4" class="m-article-search-config" data-article-search-config>
+<div class="m-article-search-config__description" id="article-search-description">
+<p data-controls-id="off" class="m-article-search-config__description--active-search">
+Activate our intelligent search to find suitable subject content or patents.
+</p>
+<p data-controls-id="patent-search" class="m-article-search-config__description--active-search" hidden="true">
+Select sections of text to find matching patents with Artificial Intelligence.
+<span class="m-article-search-config__poweredby">
+<span data-style="a1" class="a-operator a-operator--small">powered by
+<svg data-style="a29" class="a-operator__logo" role="img" height="12" viewBox="0 0 54 10" xmlns="http://www.w3.org/2000/svg">
+<title>Octimine</title>
+<g fill="#0F2C35" fill-rule="nonzero">
+<path d="M5.508 1.012H2.72a1.797 1.797 0 0 0-1.214.448A1.434 1.434 0 0 0 1 2.558v4.805c.003.417.187.812.506 1.082.331.3.766.461 1.214.448h2.788c.447.01.881-.15 1.214-.448a1.41 1.41 0 0 0 .491-1.082V2.557a1.418 1.418 0 0 0-.491-1.098 1.823 1.823 0 0 0-1.214-.447Zm.665 6.135a.747.747 0 0 1-.26.578.92.92 0 0 1-.649.231H2.967a.932.932 0 0 1-.665-.231.747.747 0 0 1-.26-.578V2.788a.757.757 0 0 1 .26-.592c.186-.155.421-.238.663-.233.81-.014 1.575-.014 2.297 0a.991.991 0 0 1 .65.231c.17.15.265.366.259.593l.002 4.36ZM9.365 3.549a1.434 1.434 0 0 0-.506 1.098v2.716c.003.417.187.812.506 1.082.331.3.766.461 1.214.448h3.467a.058.058 0 0 0 .065-.06V8.01a.052.052 0 0 0-.056-.053h-3.244a.92.92 0 0 1-.649-.232.747.747 0 0 1-.26-.578V4.878a.708.708 0 0 1 .26-.578.932.932 0 0 1 .649-.245h2.855a.06.06 0 0 0 .064-.061v-.832s.008-.061-.067-.061h-3.081a1.797 1.797 0 0 0-1.217.448ZM16.2 1a.55.55 0 0 0-.52.534v5.83c.003.416.188.811.506 1.08.332.301.767.462 1.214.449h1.909a.068.068 0 0 0 .07-.07v-.8a.05.05 0 0 0-.055-.053h-1.78a.762.762 0 0 1-.577-.246.842.842 0 0 1-.246-.592V4.077a.024.024 0 0 1 .027-.022h2.946a.061.061 0 0 0 .07-.064V3.15s.001-.048-.056-.048h-2.973a.014.014 0 0 1-.015-.016V1.527A.548.548 0 0 0 16.2 1ZM21.45 8.895h1.305a.052.052 0 0 0 .055-.052v-.869a.017.017 0 0 0-.019-.018h-.35s-.014.002-.014-.015V3.156a.054.054 0 0 0-.058-.055h-.928a.052.052 0 0 0-.055.052V8.83a.063.063 0 0 0 .064.066ZM32.424 3.1h-1.849c-.26.005-.514.08-.735.217a1.006 1.006 0 0 0-.5.522c0 .004-.009.004-.01 0a1.008 1.008 0 0 0-.488-.537 1.572 1.572 0 0 0-.735-.203h-1.849a1.73 1.73 0 0 0-1.2.465 1.38 1.38 0 0 0-.505 1.084V8.82a.066.066 0 0 0 .063.075h.916s.06.013.06-.075V4.878a.735.735 0 0 1 .26-.592.92.92 0 0 1 .65-.231h1.4a.982.982 0 0 1 .649.216c.17.137.265.345.26.562V8.83a.058.058 0 0 0 .063.064h.926c.057 0 .05-.064.05-.064V4.833a.672.672 0 0 1 .276-.562.98.98 0 0 1 .648-.216h1.401a.863.863 0 0 1 .636.23c.173.147.27.366.26.593v3.971c0 .046.062.046.062.046h1.32s.056.006.056-.061v-.857c0-.02-.03-.02-.03-.02h-.327s-.027.003-.027-.023V4.646a1.425 1.425 0 0 0-.501-1.082 1.73 1.73 0 0 0-1.2-.463ZM43.506 3.1h-2.384a1.742 1.742 0 0 0-1.214.463 1.412 1.412 0 0 0-.49 1.084V8.85c0 .043.05.043.05.043h.952s.039.003.039-.049V4.878a.735.735 0 0 1 .26-.592.92.92 0 0 1 .648-.231h1.892c.238-.01.47.073.65.23.172.147.268.366.259.593v3.96a.052.052 0 0 0 .051.057h1.334a.055.055 0 0 0 .053-.063V7.99c0-.036-.043-.035-.043-.035h-.302a.031.031 0 0 1-.034-.031v-3.28a1.428 1.428 0 0 0-.506-1.083 1.741 1.741 0 0 0-1.215-.461ZM53.1 6.475v-1.83a1.41 1.41 0 0 0-.492-1.083 1.73 1.73 0 0 0-1.211-.448h-2.47a1.73 1.73 0 0 0-1.215.448 1.412 1.412 0 0 0-.491 1.084v3.077c0 .327.149.636.405.838.277.224.626.342.982.333h3.933v-.895h-3.76a.645.645 0 0 1-.375-.115.327.327 0 0 1-.16-.275V6.582a.036.036 0 0 1 .04-.043h4.746a.061.061 0 0 0 .068-.064Zm-4.854-1.597a.725.725 0 0 1 .274-.592.921.921 0 0 1 .649-.231h1.98c.238-.01.47.073.648.23.171.15.266.367.26.593v.672c0 .065-.073.065-.073.065h-3.687s-.054.004-.054-.065l.003-.672ZM36.317 8.895h1.304a.052.052 0 0 0 .056-.052v-.866a.018.018 0 0 0-.019-.02h-.35s-.015.003-.015-.015V3.156a.054.054 0 0 0-.058-.054h-.929a.052.052 0 0 0-.055.052V8.83a.063.063 0 0 0 .066.065Z"/>
+</g>
+</svg>
+</span>
+</span>
+</p>
+<p data-controls-id="semantic-search" class="m-article-search-config__description--active-search" hidden="true">
+Select sections of text to find additional relevant content using AI-assisted search.
+<span class="m-article-search-config__poweredby">
+<span data-style="a1" class="a-operator a-operator--small">powered by
+<a href=https://www.intergator.de/en/ai-search-in-specialized-libraries-of-springer-professional target="_blank" rel="noopener" class="a-operator__link">
+<span class="a-operator__link-help">
+(Link opens in a new window)
+</span>
+<svg data-style="a29" class="a-operator__logo" role="img" viewBox="0 0 89 12" xmlns="http://www.w3.org/2000/svg">
+<title>Intergator</title>
+<g fill="#DD2536" fill-rule="nonzero">
+<path d="M1 1.173h2.122v9.143H1zM13.68 1.173v9.16h-1.743L7.383 4.778v5.555H5.278v-9.16h1.76l4.537 5.555V1.173zM17.734 2.898h-2.916V1.173h7.97v1.725h-2.932v7.435h-2.122zM38.522 10.333l-1.76-2.553h-1.949v2.553h-2.122V1.19h3.968c.81 0 1.518.138 2.105.397.603.276 1.052.655 1.38 1.155.327.5.483 1.087.483 1.76s-.156 1.26-.483 1.76c-.328.5-.794.862-1.398 1.138l2.053 2.933h-2.277Zm-.552-7.021c-.328-.276-.81-.414-1.45-.414h-1.724v3.191h1.725c.638 0 1.121-.138 1.449-.414.328-.276.5-.673.5-1.173 0-.517-.155-.914-.5-1.19M48.476 5.606h1.932v3.71c-.5.379-1.07.655-1.725.862a6.474 6.474 0 0 1-1.966.293c-.95 0-1.812-.207-2.554-.604a4.414 4.414 0 0 1-1.777-1.69c-.43-.725-.638-1.536-.638-2.433 0-.914.207-1.725.638-2.432.432-.725 1.035-1.277 1.795-1.69.759-.398 1.621-.605 2.587-.605.794 0 1.536.138 2.174.397.656.276 1.208.656 1.639 1.173l-1.363 1.26c-.656-.69-1.45-1.036-2.363-1.036-.587 0-1.105.121-1.553.363-.449.241-.81.586-1.052 1.035-.26.448-.38.949-.38 1.535 0 .57.12 1.07.38 1.518a2.64 2.64 0 0 0 1.052 1.035c.448.242.966.38 1.535.38.604 0 1.156-.138 1.64-.397V5.606ZM58.396 8.366h-4.244l-.828 1.967H51.15l4.072-9.143h2.087l4.089 9.143h-2.226l-.776-1.967Zm-.673-1.604-1.45-3.502-1.448 3.502h2.898ZM63.813 2.898H60.88V1.173h7.97v1.725h-2.915v7.435h-2.122zM71.731 9.867c-.759-.414-1.363-.966-1.794-1.69-.431-.725-.638-1.519-.638-2.433 0-.897.224-1.708.638-2.432.431-.725 1.035-1.277 1.794-1.69.76-.415 1.622-.622 2.57-.622.95 0 1.812.207 2.554.621.759.414 1.363.966 1.794 1.69.431.725.656 1.536.656 2.433 0 .897-.225 1.708-.656 2.433-.431.724-1.035 1.276-1.794 1.69-.76.414-1.604.621-2.553.621-.966 0-1.812-.207-2.57-.62m4.019-1.553a2.557 2.557 0 0 0 1.018-1.035c.241-.449.38-.95.38-1.519s-.122-1.07-.38-1.518a2.557 2.557 0 0 0-1.018-1.035 2.992 2.992 0 0 0-1.467-.38c-.534 0-1.035.121-1.466.38A2.557 2.557 0 0 0 71.8 4.243c-.241.449-.38.95-.38 1.518 0 .57.121 1.07.38 1.519.242.448.587.793 1.018 1.035.431.241.932.38 1.466.38.553-.018 1.036-.139 1.467-.38M86.723 10.333l-1.76-2.553h-1.949v2.553h-2.122V1.19h3.968c.81 0 1.518.138 2.104.397.604.276 1.053.655 1.38 1.155.328.5.483 1.087.483 1.76s-.155 1.26-.483 1.76c-.327.5-.793.862-1.397 1.138L89 10.333h-2.277Zm-.535-7.021c-.328-.276-.81-.414-1.45-.414h-1.724v3.191h1.725c.638 0 1.121-.138 1.449-.414.328-.276.5-.673.5-1.173-.017-.517-.172-.914-.5-1.19M23.91 1.173H31v1.691h-7.09zM23.91 4.83h5.244v1.691H23.91zM23.91 8.608H31v1.691h-7.09z"/>
+</g>
+</svg>
+</a>
+</span>
+</span>
+</p>
+</div>
+<div data-style="a36" class="a-segmented-controls m-article-search-config__controls" data-segmented-controls>
+<fieldset class="a-segmented-controls__fieldset">
+<legend class="a-segmented-controls__legend">
+<span>search-config</span>
+</legend>
+<div class="a-segmented-controls__radio">
+<input class="a-segmented-controls__input" type="radio" name="search-config" value="semantic-search" id="search-config-semantic-search">
+<span class="a-segmented-controls__label">
+<label for="search-config-semantic-search">AI-assisted search</label>
+</span>
+</div>
+<div class="a-segmented-controls__radio">
+<input class="a-segmented-controls__input" type="radio" name="search-config" value="off" id="search-config-off" checked="true">
+<span class="a-segmented-controls__label">
+<label for="search-config-off">Off</label>
+</span>
+</div>
+</fieldset>
+</div>
+</div>
+</div>
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section ">
+<div data-style="m51" class="remodal m-overlay "
+aria-live="polite"
+data-remodal-id="modal-semantic-search-result">
+<div data-style="m4" class="m-loading atoms-a-intergator" data-loading-pattern="semantic-search">
+<svg data-style="a29 a39" class="a-loading m-loading__icon" role="img" viewBox="0 0 50 50">
+<title>loading …</title>
+<circle class="a-loading__circle" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+</svg>
+</div>
+</div>
+</div>
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section ">
+<div data-style="o46" class="o-abstract">
+<div data-style="m95" data-script="m23" class="m-translation-container "
+data-translation-container="true">
+<div lang="en" data-translation="alternative">
+<div data-style="a19" class="a-richtext">
+<article class="o-abstract__content">
+<h2 class="o-abstract__heading">Abstract </h2>
+<div data-style="m87" data-script="m22" class="m-expandable-box o-abstract__expandable-box"
+data-expandable-box-container="true"
+style="--collapsed-lines: 3;"
+data-collapsed-title="Show more"
+data-expanded-title="Show less">
+<div data-expandable-box="true" class="m-expandable-box__container">
+<div data-style="a19" class="a-richtext">This chapter delves into the transformation of pushbuttons from mechanical to digital, highlighting the shift from simple on/off states to complex input signals. It examines how users understand and interact with these buttons, drawing on historical debates and philosophical concepts of familiarity. The chapter also presents a case study of programmable light switches in an office building, illustrating the challenges and opportunities that digital buttons introduce. By exploring the implications of these changes, the chapter offers insights into the design and use of new and emergent technologies.</div>
+</div>
+</div>
+</article>
+</div>
+<div class="m-translation-container__metadata">
+<details data-style="m96" class="m-toggletip m-translation-container__ai-info m-toggletip--sticky m-toggletip--dark-blue " role="note">
+<summary class="m-toggletip__label">AI Generated</summary>
+<div class="m-toggletip__bubble">
+<p>This summary of the content was generated with the help of AI. </p>
+</div>
+</details>
+<button data-translation-toggle="original" class="m-translation-container__toggle">Show original text</button>
+</div>
+</div>
+<div lang="en" hidden aria-hidden="true" data-translation="original">
+<div data-style="a19" class="a-richtext m-translation-container__text">
+<article class="o-abstract__content">
+<h2 class="o-abstract__heading">Abstract </h2>
+<div data-style="m87" data-script="m22" class="m-expandable-box o-abstract__expandable-box"
+data-expandable-box-container="true"
+style="--collapsed-lines: 3;"
+data-collapsed-title="Show more"
+data-expanded-title="Show less">
+<div data-expandable-box="true" class="m-expandable-box__container">
+<div data-style="a19" class="a-richtext"><div class="Para">The button is a familiar technology that is used to control and regulate things and machines in our everyday lives. With the digitalization of the button, many possibilities for novel and innovative functions have been invented and implemented. The use of digital buttons comes with some challenges that are explored in this paper. We describe the transition between the mechanical switch to the digital switch, and specifically use the concept of familiarity to find out more about the use of digital switches in a case study of indoor lighting. The contribution of the paper is to open for the transition between mechanical buttons and digital buttons and point to some challenges that arise in everyday use.</div></div>
+</div>
+</div>
+</article>
+</div>
+<div class="m-translation-container__metadata">
+<button data-translation-toggle="alternative" class="m-translation-container__toggle">Show AI generated summary</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section ">
+</div>
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section ">
+<div data-style="p5" data-script="o5" class="p-detail-page detail-content">
+<div class="p-detail-page__wrapper">
+<div class="p-detail-page__article">
+<div class="is-centered">
+<div class="advertisement-place--cad">
+<div id="Ads_BA_CAD_Anzeige">
+<div class="advertisement-place__label">Advertisement</div>
+</div>
+<div id="Ads_BA_CAD" style="z-index:1;">
+<script type='text/javascript' class='consent-feature-advertisement-js'>
+                    (function () {
+                        if (typeof Ads_BA_AD === 'function') {
+                            Ads_BA_AD('CAD');
+                        }
+                    })();
+                </script>
+</div>
+</div>
+</div>
+<aside class="mytopic-info">
+<a href="https://myalert.springerprofessional.de/en/individual-alerts" target="_blank"><h3 class="mytopic__title"><strong>MyTopic Alert</strong></h3></a>
+<p class="mytopic__text">Login for updating and creating your alerts.</p>
+<div class="mytopic-personalisation">
+</div>
+<div id="MyTopic" class="mytopic__list"
+data-message-prefix="Add topic „"
+data-message-suffix="“ to one of your existing alerts."
+data-message-add-prefix="Create new alert for „"
+data-message-add-suffix="“"
+data-message-first-prefix="Create your first Alert for topic „"
+data-message-first-suffix="“."
+data-message-load-error="Could not load MyTopic Alerts."
+data-message-add-error="Could not create MyTopic Alert."
+data-message-update-error="Topic could not be added to Alert."
+data-message-login="Login for updating and creating your alerts."
+data-is-book="false"
+data-is-logout="true"
+data-doi="10.1007/978-3-031-35989-7_26">
+</div>
+</aside>
+</div>
+</div>
+</div>
+</div>
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section ">
+<div id="pay-wall">
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section ">
+<div data-style="a20 m12" class="m-info-banner a-theme__brand-main-light" data-themes-available="marketing">
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section ">
+<div class="m-info-banner__wrapper">
+<div class="m-info-banner__content">
+<div class="m-info-banner__media">
+<div class="m-info-banner__icon">
+<svg data-style="a29" class="a-icon " role="img" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+<path stroke="none" fill-rule="evenodd" clip-rule="evenodd" d="M14.586 1.821 C 13.734 2.139,13.481 3.221,14.111 3.861 C 14.480 4.236,14.342 4.217,16.940 4.240 C 18.994 4.258,19.232 4.267,19.345 4.329 C 19.500 4.413,19.670 4.611,19.710 4.753 C 19.749 4.893,19.749 19.107,19.710 19.247 C 19.670 19.389,19.500 19.587,19.345 19.671 C 19.232 19.733,18.994 19.742,16.940 19.760 L 14.660 19.780 14.471 19.873 C 13.883 20.163,13.612 20.843,13.841 21.454 C 13.951 21.746,14.256 22.050,14.551 22.161 C 14.767 22.242,14.827 22.243,17.196 22.232 L 19.620 22.220 20.000 22.088 C 20.535 21.902,20.883 21.684,21.284 21.284 C 21.684 20.883,21.902 20.535,22.088 20.000 L 22.220 19.620 22.220 12.000 L 22.220 4.380 22.088 4.000 C 21.919 3.513,21.699 3.144,21.371 2.796 C 20.947 2.347,20.531 2.087,19.900 1.875 L 19.620 1.782 17.180 1.773 C 15.143 1.765,14.715 1.773,14.586 1.821 M9.586 5.820 C 8.919 6.073,8.596 6.793,8.846 7.468 C 8.925 7.683,9.042 7.811,10.453 9.230 L 11.975 10.759 7.317 10.770 L 2.660 10.780 2.471 10.873 C 1.883 11.163,1.612 11.843,1.841 12.454 C 1.950 12.744,2.256 13.050,2.546 13.159 C 2.759 13.239,2.839 13.240,7.369 13.240 L 11.976 13.240 10.454 14.770 C 9.042 16.189,8.925 16.317,8.846 16.532 C 8.665 17.020,8.769 17.517,9.126 17.874 C 9.482 18.231,9.979 18.335,10.468 18.155 C 10.688 18.075,10.840 17.931,13.368 15.405 C 16.360 12.417,16.239 12.560,16.239 12.000 C 16.239 11.440,16.358 11.581,13.388 8.616 C 11.281 6.511,10.699 5.952,10.540 5.876 C 10.293 5.759,9.821 5.731,9.586 5.820 "/>
+</svg>
+</div>
+</div>
+<section class="m-info-banner__text">
+<h2 data-style="m2" class="m-teaser-headline m-info-banner__headline ">
+<a href="/en/login?returnUrl=%2Fen%2Funderstanding-the-pushbutton-revisited-from-on-and-off-to-input-%2F25594764" class="m-teaser-headline__link" title="Already a customer? Then log in here to gain access.">
+Already a customer? Then log in here to gain access.
+</a>
+</h2>
+</section>
+</div>
+<div class="m-info-banner__cta">
+<a data-style="a9" class="a-button a-button--primary m-info-banner__button"
+href="/en/login?returnUrl=%2Fen%2Funderstanding-the-pushbutton-revisited-from-on-and-off-to-input-%2F25594764">
+Customer login
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div data-style="a20 o30" class="o-two-col-coloured-teaser-collection a-theme__brand-main-light ">
+<section data-style="a17 a18 " class="a-layout-row ">
+<div class="a-layout-content-block">
+<header data-style="m13" class="m-collection-title ">
+<h2 data-style="m27" class="m-headline m-collection-title__headline">
+Not a customer yet? Then find out more about our access models now:
+</h2>
+</header>
+<div data-style="a17" class="a-layout-content a-layout-content2 ">
+<div data-style="m57" class="m-default-teaser
+m-default-teaser--vertical
+m-default-teaser--with-theme
+o-two-col-coloured-teaser-collection__teaser">
+<div class="m-media m-default-teaser__media" data-style="m30">
+<div data-style="a10 " class="">
+<div data-src="https://media.springernature.com/w752h300/springer-cms-alt/rest/v1/img/51965090/v1/16by9?as=jpg"
+data-alt="MiniLizenz_EN-1"
+data-lazy-load-image="true"></div>
+<noscript>
+<img src="https://media.springernature.com/w752h300/springer-cms-alt/rest/v1/img/51965090/v1/16by9?as=jpg" alt="MiniLizenz_EN-1">
+</noscript>
+</div>
+</div>
+<div class="m-default-teaser__content">
+<h2 data-style="m2" class="m-teaser-headline m-default-teaser__title ">
+<a href="/en/produktinformation/10516302" class="m-teaser-headline__link" title="Individual Access" target="_self">
+Individual Access
+</a>
+</h2>
+<div data-style="a19" class="a-richtext a-richtext--teaser m-default-teaser__text"><p>Start your personal individual access now. Get instant access to more than 164,000 books and 540 journals – including PDF downloads and new releases.</p>
+<p><strong>Starting from 54,00 € per month! &nbsp; &nbsp;</strong></p></div>
+<a data-style="a9" class="a-button m-default-teaser__button"
+href="/en/produktinformation/10516302" target="_self">
+Get access
+</a>
+</div>
+</div>
+<div data-style="m57" class="m-default-teaser
+m-default-teaser--vertical
+m-default-teaser--with-theme
+o-two-col-coloured-teaser-collection__teaser">
+<div class="m-media m-default-teaser__media" data-style="m30">
+<div data-style="a10 " class="">
+<div data-src="https://media.springernature.com/w752h300/springer-cms-alt/rest/v1/img/51965088/v1/16by9?as=jpg"
+data-alt="MiniLizenz_EN"
+data-lazy-load-image="true"></div>
+<noscript>
+<img src="https://media.springernature.com/w752h300/springer-cms-alt/rest/v1/img/51965088/v1/16by9?as=jpg" alt="MiniLizenz_EN">
+</noscript>
+</div>
+</div>
+<div class="m-default-teaser__content">
+<h2 data-style="m2" class="m-teaser-headline m-default-teaser__title ">
+<a href="/en/unternehmenszugang/17058396" class="m-teaser-headline__link" title="Access for Businesses" target="_self">
+Access for Businesses
+</a>
+</h2>
+<div data-style="a19" class="a-richtext a-richtext--teaser m-default-teaser__text"><p>Utilise Springer Professional in your company and provide your employees with sound specialist knowledge. Request information about corporate access now.</p>
+<p><strong>Find out how Springer Professional can uplift your work!</strong></p></div>
+<a data-style="a9" class="a-button m-default-teaser__button"
+href="/en/unternehmenszugang/17058396" target="_self">
+Contact us now
+</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section ">
+<div data-style="a20 m12" class="m-info-banner a-theme__brand-main-light" data-themes-available="marketing">
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section ">
+<div class="m-info-banner__wrapper">
+<div class="m-info-banner__content">
+<div class="m-info-banner__media">
+<div class="m-info-banner__icon">
+<svg data-style="a29" class="a-icon " role="img" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+<path stroke="none" fill-rule="evenodd" clip-rule="evenodd" d="M14.586 1.821 C 13.734 2.139,13.481 3.221,14.111 3.861 C 14.480 4.236,14.342 4.217,16.940 4.240 C 18.994 4.258,19.232 4.267,19.345 4.329 C 19.500 4.413,19.670 4.611,19.710 4.753 C 19.749 4.893,19.749 19.107,19.710 19.247 C 19.670 19.389,19.500 19.587,19.345 19.671 C 19.232 19.733,18.994 19.742,16.940 19.760 L 14.660 19.780 14.471 19.873 C 13.883 20.163,13.612 20.843,13.841 21.454 C 13.951 21.746,14.256 22.050,14.551 22.161 C 14.767 22.242,14.827 22.243,17.196 22.232 L 19.620 22.220 20.000 22.088 C 20.535 21.902,20.883 21.684,21.284 21.284 C 21.684 20.883,21.902 20.535,22.088 20.000 L 22.220 19.620 22.220 12.000 L 22.220 4.380 22.088 4.000 C 21.919 3.513,21.699 3.144,21.371 2.796 C 20.947 2.347,20.531 2.087,19.900 1.875 L 19.620 1.782 17.180 1.773 C 15.143 1.765,14.715 1.773,14.586 1.821 M9.586 5.820 C 8.919 6.073,8.596 6.793,8.846 7.468 C 8.925 7.683,9.042 7.811,10.453 9.230 L 11.975 10.759 7.317 10.770 L 2.660 10.780 2.471 10.873 C 1.883 11.163,1.612 11.843,1.841 12.454 C 1.950 12.744,2.256 13.050,2.546 13.159 C 2.759 13.239,2.839 13.240,7.369 13.240 L 11.976 13.240 10.454 14.770 C 9.042 16.189,8.925 16.317,8.846 16.532 C 8.665 17.020,8.769 17.517,9.126 17.874 C 9.482 18.231,9.979 18.335,10.468 18.155 C 10.688 18.075,10.840 17.931,13.368 15.405 C 16.360 12.417,16.239 12.560,16.239 12.000 C 16.239 11.440,16.358 11.581,13.388 8.616 C 11.281 6.511,10.699 5.952,10.540 5.876 C 10.293 5.759,9.821 5.731,9.586 5.820 "/>
+</svg>
+</div>
+</div>
+<section class="m-info-banner__text">
+<h2 data-style="m2" class="m-teaser-headline m-info-banner__headline ">
+<a href="/en/register?returnUrlAfterConfirmation=%2Fen%2Funderstanding-the-pushbutton-revisited-from-on-and-off-to-input-%2F25594764" class="m-teaser-headline__link" title="For explorers: Get to know our platforms better with a free registration.">
+For explorers: Get to know our platforms better with a free registration.
+</a>
+</h2>
+</section>
+</div>
+<div class="m-info-banner__cta">
+<a data-style="a9" class="a-button a-button--secondary m-info-banner__button"
+href="/en/register?returnUrlAfterConfirmation=%2Fen%2Funderstanding-the-pushbutton-revisited-from-on-and-off-to-input-%2F25594764">
+Register for free
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section ">
+<div class="cf">
+<div class="nav-button-container is-left">
+<a id="prev-page-link" href="/en/the-co-design-process-for-interactive-tools-for-predicting-polyg/25594760">
+<span class="nav-button is-left">
+<span class="icon-arrow_prev is-left"></span>
+</span>
+<span class="mlm nav-button__label">
+previous chapter
+</span>
+<span class="nav-button__text-title mtm">
+The Co-design Process for Interactive Tools for Predicting Polygenic Risk Scores
+</span>
+</a>
+</div>
+<div class="nav-button-container is-right">
+<a id="next-page-link" href="/en/pressure-tactile-feedback-pin-pad-module-application-reduce-shou/25594766">
+<span class="nav-button is-right">
+<span class="icon-arrow_next is-right"></span>
+</span>
+<span class="mrm is-right nav-button__label">
+next chapter
+</span>
+<span class="nav-button__text-title mtm is-right is-text-right">
+Pressure Tactile Feedback Pin Pad Module Application: Reduce Shoulder Surfing Success Rate
+</span>
+</a>
+</div>
+</div>
+</div>
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section ">
+<div data-style="o54" data-script="o14" class="o-sectionbar " data-sectionbar="true">
+<ul class="o-sectionbar__tabs" data-sectionbar-tablist="true">
+<li class="o-sectionbar__tab">
+<a href="#sectionbar-panel-bottom-bar-0" class="o-sectionbar__link" data-sectionbar-tab-link="true">
+<span class="o-sectionbar__title">Metadata</span>
+<svg data-style="a29" role="img" viewBox="0 0 24 24" width="24" height="24" class="a-icon o-sectionbar__icon " role="img" aria-hidden="true">
+<path d="M12 13.5858L15.2929 10.2929C15.6834 9.90237 16.3166 9.90237 16.7071 10.2929C17.0976 10.6834 17.0976 11.3166 16.7071 11.7071L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L7.29289 11.7071C6.90237 11.3166 6.90237 10.6834 7.29289 10.2929C7.68342 9.90237 8.31658 9.90237 8.70711 10.2929L12 13.5858Z"/>
+</svg>
+</a>
+</li>
+<li class="o-sectionbar__tab">
+<a href="#sectionbar-panel-bottom-bar-4" class="o-sectionbar__link" data-sectionbar-tab-link="true">
+<span class="o-sectionbar__title">Literature</span>
+<svg data-style="a29" role="img" viewBox="0 0 24 24" width="24" height="24" class="a-icon o-sectionbar__icon " role="img" aria-hidden="true">
+<path d="M12 13.5858L15.2929 10.2929C15.6834 9.90237 16.3166 9.90237 16.7071 10.2929C17.0976 10.6834 17.0976 11.3166 16.7071 11.7071L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L7.29289 11.7071C6.90237 11.3166 6.90237 10.6834 7.29289 10.2929C7.68342 9.90237 8.31658 9.90237 8.70711 10.2929L12 13.5858Z"/>
+</svg>
+</a>
+</li>
+</ul>
+<div id="sectionbar-panel-bottom-bar-0" class="o-sectionbar__content" data-sectionbar-panel="true">
+<div data-style="a19" class="a-richtext a-richtext--meta"><dl class="column-display cf">
+<div>
+<div>
+<dt>Title</dt>
+<dd>Understanding the Pushbutton Revisited: From on and off to Input and Output</dd>
+</div>
+<div>
+<dt>Authors</dt>
+<dd class="rich-text">
+Heidi Bråthen
+<br>
+Jo Herstad
+<br>
+</dd>
+</div>
+<div>
+<dt>Copyright Year</dt>
+<dd>2023</dd>
+</div>
+</div>
+<div>
+<div>
+<dt>Publisher</dt>
+<dd>
+<a href="http://www.springer.com" target="_blank">Springer Nature Switzerland</a>
+</dd>
+</div>
+<div class="detail-content__meta-data">
+<dt>Book</dt>
+<dd>
+<a href="/en/hci-international-2023-posters/25594722"> HCI International 2023 Posters </a>
+<p>Print ISBN: 978-3-031-35988-0</p>
+<p>Electronic ISBN: 978-3-031-35989-7</p>
+<p>Copyright Year: 2023</p>
+</dd>
+</div>
+<div>
+<dt>DOI</dt>
+<dd>
+<span>https://doi.org/10.1007/978-3-031-35989-7_26</span>
+</dd>
+</div>
+</div>
+</dl></div>
+</div>
+<div id="sectionbar-panel-bottom-bar-4" class="o-sectionbar__content" data-sectionbar-panel="true">
+<div data-style="a19" class="a-richtext a-richtext--meta"><div class="DefinitionList">This content is only visible if you are logged in and have the appropriate permissions.</div></div>
+</div>
+</div>
+</div>
+</article>
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section ">
+<section data-style="a17 a18 " class="a-layout-row ">
+<div class="a-layout-content-block">
+<script type="text/javascript">
+       $(document).ready(function(){
+           var jsonData = {
+                web: "sp",
+                company: "1",
+                content: "2",
+                searchKeyword: "",
+                subjectTag: "",
+                disciplineTag:"Elektrotechnik + Elektronik,Business IT + Informatik",
+                lang:"en"
+           };
+           branchenIndexAd('/content/branchenIndex/ad?isPlaceHolderAdvertisement=true', jsonData);
+        });
+</script>
+<ol id="adPlaceHolder" class="list--is-unstyled cf js-search-paginator"></ol>
+</div>
+</section>
+</div>
+</main>
+<section data-style="a17 a18 " class="a-layout-row a-layout-row__no-margin">
+<div class="a-layout-content-block">
+<div class="advertisement-place--foot">
+<div id="Ads_BA_FOOT" style="z-index:1;">
+<script type='text/javascript' class='consent-feature-advertisement-js'>
+                    (function () {
+                        if (typeof Ads_BA_AD === 'function') {
+                            Ads_BA_AD('FOOT');
+                        }
+                    })();
+                </script>
+</div>
+</div>
+</div>
+</section>
+</div>
+<noscript>
+<div id="menu" class="main-navigation__menu-no-js">
+<div class="footer__row cf">
+<div>
+<ul>
+<li class="mb30 has-sub-navigation">
+<span class="no-link-menu-item">Disciplines</span>
+<ul class="list--is-unstyled cf">
+<li>
+<a href="/en/automotive/10895872" title="Automotive">
+<span>Automotive</span>
+</a>
+</li>
+<li>
+<a href="/en/business-it-informatics/23797454" title="Business IT + Informatics">
+<span>Business IT + Informatics</span>
+</a>
+</li>
+<li>
+<a href="/en/construction-real-estate/23797768" title="Construction + Real Estate">
+<span>Construction + Real Estate</span>
+</a>
+</li>
+<li>
+<a href="/en/electrical-engineering-electronics/23797336" title="Electrical Engineering + Electronics">
+<span>Electrical Engineering + Electronics</span>
+</a>
+</li>
+<li>
+<a href="/en/energy--sustainability/23798160" title="Energy + Sustainability">
+<span>Energy + Sustainability</span>
+</a>
+</li>
+<li>
+<a href="/en/insurance--risk/23798170" title="Insurance + Risk">
+<span>Insurance + Risk</span>
+</a>
+</li>
+<li>
+<a href="/en/finance-banking/23789512" title="Finance + Banking">
+<span>Finance + Banking</span>
+</a>
+</li>
+<li>
+<a href="/en/management-leadership/23406646" title="Management + Leadership">
+<span>Management + Leadership</span>
+</a>
+</li>
+<li>
+<a href="/en/marketing-sales/23797752" title="Marketing + Sales">
+<span>Marketing + Sales</span>
+</a>
+</li>
+<li>
+<a href="/en/mechanical-engineering-materials/23793486" title="Mechanical Engineering + Materials">
+<span>Mechanical Engineering + Materials</span>
+</a>
+</li>
+<li>
+<a href="/en/surfaces-materials-technology/51702104" title="Surfaces + Materials Technology">
+<span>Surfaces + Materials Technology</span>
+</a>
+</li>
+</ul>
+</li>
+<li class="mb30 ">
+<a href="/en/books/10653746" title="Books"
+>
+<span>Books</span>
+</a>
+</li>
+<li class="mb30 ">
+<a href="/en/journals/10699760" title="Journals"
+>
+<span>Journals</span>
+</a>
+</li>
+<li class="mb30 ">
+<a href="/en/events/10820428" title="Events"
+>
+<span>Events</span>
+</a>
+</li>
+<li class="mb30 has-sub-navigation">
+<span class="no-link-menu-item">Topic Page</span>
+<ul class="list--is-unstyled cf">
+<li>
+<a href="/en/marketing/26660848" title="Marketing">
+<span>Marketing</span>
+</a>
+</li>
+</ul>
+</li>
+<li>
+<a href="https://www.springerprofessional.de/en/login?returnUrl=/en?utm_source=SP.en&amp;utm_medium=TopNavi_en" target="_blank" title="Log in">
+<span>Log in</span>
+</a>
+</li>
+<li class="mb30 ">
+<a href="/en/productinformation/18523532" title="Learn more about individual access"
+>
+<span>Learn more about individual access</span>
+</a>
+</li>
+<li class="mb30 ">
+<a href="/en/company-access/15559382" title="Request company access"
+>
+<span>Request company access</span>
+</a>
+</li>
+<li>
+<a href="https://www.atzlive.de/en/events/chassistech-plus/" target="_blank" title="chassis.tech plus | 23–24 June 2026">
+<span>chassis.tech plus | 23–24 June 2026</span>
+</a>
+</li>
+<li>
+<a href="https://www.atzlive.de/en/events/chassistech-plus/" target="_blank" title="">
+<span></span>
+</a>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</noscript>
+<footer data-style="o10" class="o-footer ">
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section o-footer__part">
+<div class="a-layout-row__content-grid">
+<div data-style="m108" class="m-navigation o-footer__content">
+<strong class="m-navigation__category">
+About us:
+</strong>
+<ul class="m-navigation__list">
+<li class="m-navigation__list-item">
+<a href="/en/who-we-are/833898" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Who we are</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/help/10507206" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Help</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/contact-us/7067922" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Contact us</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/zahlungsarten/23979072" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Payment Methods</span>
+</a>
+</li>
+</ul>
+</div>
+<div data-style="m108" class="m-navigation o-footer__content">
+<strong class="m-navigation__category">
+Our products:
+</strong>
+<ul class="m-navigation__list">
+<li class="m-navigation__list-item">
+<a href="/en/productinformation/18523532" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Individual access</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/mehrplatzlizenzen/13300730?itemUrl=/en/understanding-the-pushbutton-revisited-from-on-and-off-to-input-/25594764" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Access for companies</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/patentfit/18817146" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">PatentFit </span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/professional-book-archive/13300752" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Professional Book Archive</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/carl-hanser-buecher/27067742" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Carl Hanser Publishing House - Books</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="https://myalert.springerprofessional.de/en/productinfo?refdpm=sp-f1" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Personalised services</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="https://myalert.springerprofessional.de/en/newsletters?lang=en&amp;option=nl&amp;refdpm=sp-f1" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Newsletter</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/sp-intergator/27137300" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">AI-assisted search</span>
+</a>
+</li>
+</ul>
+</div>
+<div data-style="m108" class="m-navigation o-footer__content">
+<strong class="m-navigation__category">
+Legal Information:
+</strong>
+<ul class="m-navigation__list">
+<li class="m-navigation__list-item">
+<a href="/en/imprint/833894" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Imprint</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/terms-conditions/833884" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Terms &amp; Conditions</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/springerprofessional-privacy-policy/6947314" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Privacy Policy</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/privacy-cookies/6636394" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Cookies</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="javascript:void(-1);" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text optanon-toggle-display">Manage cookies/Do not sell my data</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/california-consumer-privacy-statement/18299540" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">California Consumer Privacy Statement</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/accessibility-statement/51450862" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Accessibility Statement</span>
+</a>
+</li>
+</ul>
+</div>
+<div data-style="m108" class="m-navigation o-footer__content">
+<strong class="m-navigation__category">
+Further links:
+</strong>
+<ul class="m-navigation__list">
+<li class="m-navigation__list-item">
+<a href="/en/rss-feeds/12037140" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">RSS-Feeds</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="/en/social-media/23884264" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Social Media</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="https://www.springerfachmedien-wiesbaden.de/en/" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Media data</span>
+</a>
+</li>
+<li class="m-navigation__list-item">
+<a href="https://www.springerfachmedien-wiesbaden.de/en/corporate-solutions" data-style="a37" class="a-navigation-link ">
+<span class="a-navigation-link__text a-navigation-link--category">Corporate Solutions</span>
+</a>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div data-style="a17 a18 " class="a-layout-row__container a-layout-row__section o-footer__part">
+<svg data-style="a29" class="a-icon a-icon--logo o-footer__logo" role="img" viewBox="0 0 193 20">
+<title>Springer Nature Logo</title>
+<path d="M103.677 7.835c0-4.132-3.29-5.603-6.368-5.603-1.572 0-3.935 0-5.298.05v17.185h3.986v-5.245h1.212c.242 0 .47-.01.68-.025l.033-.004.019.029c.662 1.134 1.505 2.962 1.775 5.245.874 0 1.554 0 2.126.004H102.971c.38 0 .732 0 1.106-.004-.37-2.628-1.703-5.262-2.475-6.605l-.023-.05.037-.028c1.329-1.136 2.061-2.893 2.061-4.949Zm-4.228.6c0 1.774-.699 2.565-2.265 2.565-.502 0-.832 0-1.136-.027l-.05-.003V5.488l.052-.004c.353-.027.813-.027 1.183-.027 1.846 0 2.216 1.14 2.216 2.978ZM89.08 19.467v-3.36h-5.72v-3.778h5.167V9.004H83.36V5.612h5.645V2.26h-9.459V16.42c0 .016-.023 1.36.81 2.282.518.58 1.259.874 2.2.878 2.9.019 6.077-.095 6.524-.114ZM71.212 20c1.549 0 3.879-.429 5.615-1.388v-8.556H71.57v2.936h1.66v3.513l-.037.015c-.4.155-1.356.236-1.754.236-2.106 0-2.926-1.671-2.926-5.952 0-3.764 1.212-5.592 3.703-5.592.833 0 2.048.398 3.342 1.095l1.08-2.868C75.19 2.462 73.307 1.88 71.59 1.88c-2.416 0-4.158.727-5.326 2.224-1.159 1.488-1.72 3.696-1.72 6.75 0 6.667 1.808 9.145 6.668 9.145Zm-13.439-.533h4.202V2.26h-3.528v11.258L53.673 2.26h-4.36v17.208h3.51V8.611l4.95 10.856Zm-15.944 0h3.982V2.285h-3.982v17.182Zm-4.997-6.605-.027-.05.039-.028c1.33-1.136 2.061-2.894 2.061-4.949 0-4.132-3.288-5.603-6.368-5.603-1.572 0-3.935 0-5.297.05v17.185h3.985v-5.245h1.212c.242 0 .47-.01.681-.025l.033-.004.018.029c.662 1.134 1.505 2.962 1.775 5.245.875 0 1.554 0 2.126.004h1.128c.382 0 .735 0 1.108-.004-.37-2.628-1.707-5.262-2.474-6.605Zm-2.155-4.427c0 1.774-.699 2.565-2.265 2.565-.5 0-.832 0-1.134-.027l-.053-.003V5.488l.053-.004c.353-.027.813-.027 1.183-.027 1.846 0 2.216 1.14 2.216 2.978Zm-9.439-.66c0-3.575-2.107-5.543-5.935-5.543-1.571 0-3.934 0-5.297.05v17.185h3.986v-5.245h1.211c1.814 0 6.035-.627 6.035-6.447Zm-3.794.66c0 1.774-.7 2.565-2.265 2.565-.502 0-.833 0-1.136-.027l-.051-.005v-5.48l.052-.004c.353-.027.813-.027 1.184-.027 1.845 0 2.216 1.141 2.216 2.978ZM4.59 5.55c0-.963.582-1.936 1.88-1.936.94 0 2.057.337 3.51 1.056l1.448-3.105C9.749.512 8.024 0 6.163 0 2.549 0 .392 2.085.392 5.575s2.523 4.838 4.55 5.92c1.472.785 2.741 1.465 2.741 2.744 0 1.102-.914 1.846-2.275 1.846-1.09 0-2.421-.432-3.958-1.282L0 18.133c1.944 1.18 3.717 1.708 5.745 1.708 3.754 0 5.996-2.234 5.996-5.976 0-3.54-2.521-4.81-4.547-5.83C5.798 7.333 4.59 6.725 4.59 5.55Zm181.847 10.637V12.35h5.156V8.97h-5.156V5.525h5.633V2.116h-9.44v14.392c0 .015-.021 1.381.808 2.318.518.589 1.257.888 2.195.894 2.894.017 6.064-.098 6.509-.117v-3.416h-5.705Zm-8.6-3.296-.024-.048.039-.03c1.326-1.156 2.057-2.943 2.057-5.03 0-4.199-3.282-5.693-6.355-5.693-1.568 0-3.926 0-5.288.05v17.463h3.98v-5.33h1.208c.242 0 .47-.01.68-.026l.03-.004.019.03c.66 1.153 1.503 3.01 1.773 5.33.873 0 1.55 0 2.122.004h1.123c.382 0 .738 0 1.107-.004-.37-2.671-1.701-5.348-2.47-6.712Zm-2.147-4.496c0 1.8-.7 2.604-2.26 2.604-.5 0-.83 0-1.132-.027l-.053-.004v-5.57l.053-.004c.352-.027.811-.027 1.18-.027 1.842 0 2.212 1.159 2.212 3.028Zm-10.364 4.947V2.116h-4.117V13.76c0 1.79-.095 2.886-1.926 2.886-1.755 0-2.05-.898-2.05-2.913V2.116h-4.117V13.97c0 4.172 1.847 6.031 5.992 6.031 4.244 0 6.218-2.115 6.218-6.658Zm-17.66-7.66h3.057V2.116h-10.785v3.566h3.587v13.92h4.14V5.683Zm-12.152 13.92h4.277l-3.837-17.486h-6.202l-3.888 17.487h4.056l.573-2.777h4.449l.572 2.777Zm-1.04-6.078h-3.515l1.656-7.604h.164l.011.046 1.684 7.558Zm-15.603 6.079h4.703V0h-3.825l.158 13.676L114.058 0h-4.643v19.603h3.683l-.032-13.528.107.244 5.7 13.284Z" fill-rule="evenodd"/>
+</svg>
+<div>
+<div class="o-footer__copyright"><p>© Springer Fachmedien Wiesbaden GmbH</p></div>
+<div class="o-footer__version">Version: 0.4969.0</div>
+</div>
+</div>
+</footer>
+</div>
+<link rel="stylesheet" href="https://nemo-assets-live.public.springernature.app/resource/css/print.css" media="print">
+<script>
+(function(global) {
+    global.springer = global.springer || {};
+
+    springer.language = springer.language || {};
+    springer.language.iso = 'en';
+
+    springer.language.redirect = '/en/link/';
+
+    springer.bookmarks = springer.bookmarks || {};
+    springer.bookmarks.deleteBookmarkRoute = '/en/mybookmarks/';
+    springer.bookmarks.addFolderRoute = '/en/mybookmarks/folder';
+    springer.bookmarks.editFolderRoute = '/en/mybookmarks/folder/';
+    springer.bookmarks.deleteFolderRoute = '/en/mybookmarks/folder/';
+    springer.bookmarks.moveBookmarksRoute = '/en/mybookmarks/folder//';
+    springer.bookmarks.deleteCourseBookmark = '/en/mycoursebookmarks/';
+
+    springer.datepicker = springer.datepicker || {};
+    springer.datepicker.event = 'Event Dates';
+
+    springer.epedia = springer.epedia || {};
+    springer.epedia.journalArticlesRoute = '/epedia/journalArticles';
+    springer.epedia.journalArticlesLoadMoreRows = '5';
+    springer.epedia.toggleAll = 'all';
+
+    springer.epedia.sitemap = springer.epedia.sitemap || {};
+    springer.epedia.sitemap.collapseAffiliations = 'Hide affiliations';
+    springer.epedia.sitemap.expandAffiliations = 'Show affiliations';
+
+    springer.registration = springer.registration || {};
+    springer.registration.VALUE_MISSING = 'This field is required and cannot be empty.';
+
+    springer.imageservice = springer.imageservice || {};
+    springer.imageservice.url = 'https://nemo-responsive-image.live.cf.public.springer.com/v2/resize/';
+
+    springer.assets = springer.assets || {};
+    springer.assets.url = 'https://nemo-assets-live.public.springernature.app/resource/';
+
+    springer.picture = springer.picture || {};
+    springer.picture.showText = 'Click to display image';
+    springer.picture.hideText = 'Click to hide image';
+
+    springer.search = springer.search || {};
+    springer.search.loadLabel = 'Load more';
+    springer.search.days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    springer.search.months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    springer.search.today = 'Today';
+    springer.search.clearDate='Clear date';
+    springer.search.invalidDate = 'Please enter a valid date.';
+    springer.search.advancedSuggest = true;
+    springer.article = springer.article || {};
+    springer.article.navigationHeadline = 'Within this article';
+
+    springer.error = springer.error || {};
+    springer.error.required = 'This field is required';
+
+    springer.richTextFadeOut = springer.richTextFadeOut || {};
+    springer.richTextFadeOut.fadeOutLabel = 'Show more';
+    springer.richTextFadeOut.fadeInLabel = 'Show less';
+
+    
+    springer.search.autosuggestfacet = {};
+    springer.search.autosuggestfacet.label = {};
+    springer.search.autosuggestfacet.label.journalTitle = 'Journal';
+    springer.search.autosuggestfacet.label.bookTitle = 'Book';
+    
+
+    
+        springer.patentSearch = springer.patentSearch || {};
+        springer.patentSearch.url = 'https://octimine.springerprofessional.de' || {};
+        
+            springer.patentSearch.contentType = 'Chapter';
+        
+        springer.patentSearch.searchButton='Search for Patents';
+    
+
+    springer.pagination = {};
+    springer.pagination.next = 'Next';
+    springer.pagination.previous = 'Previous';
+
+    
+
+    springer.consent = springer.consent || {};
+    springer.consent.enabled = true;
+
+    
+        springer.semanticSearch = springer.semanticSearch || {};
+        springer.semanticSearch.hoverText = 'Select text section for AI-assisted search.';
+        springer.semanticSearch.removeSelection = 'Undo selection';
+        springer.semanticSearch.submitSearch = 'Start semantic search';
+    
+
+    
+        
+            springer.extendedSearch = springer.extendedSearch || {};
+            springer.extendedSearch.contentLang = 'en';
+        
+    
+    
+    springer.csrfHeader = '089795ea1eb12a720f03fafabcf70f20206e4095-1781186077577-43035e88bc9bd5d831f8e33c';
+})(window);
+</script>
+<script>
+        var loadMathJax  = function() {
+            if ((window.unsafeWindow == null ? window : unsafeWindow).MathJax == null) {
+                var textBody = document.getElementsByTagName("body")[0].innerText;
+                var regex = /\\./g;
+                var hasEquationInText = $('.EquationMathjax,.InlineEquation').length > 0 || regex.test(textBody);
+
+                if (hasEquationInText) {
+                    var scripts = [
+                        'https://nemo-assets-live.public.springernature.app/resource/MathJax/libs/math-jax-config.js',
+                        'https://nemo-assets-live.public.springernature.app/resource/MathJax/es5/tex-mml-chtml.js'
+                    ];
+
+                    var addScriptsRecursively = function() {
+                        if (scripts.length > 0) {
+                            var nextScript = scripts.shift();
+                            var scriptTag = document.createElement('script');
+                            scriptTag.src = nextScript;
+
+                            scriptTag.onload = function() {
+                                addScriptsRecursively();
+                            };
+
+                            document.body.appendChild(scriptTag);
+                        }
+                        else return;
+                    };
+
+                    addScriptsRecursively();
+                }
+            }
+        }
+        loadMathJax();
+</script>
+<script src="https://nemo-assets-live.public.springernature.app/resource/js/springerprofessional-extra.js"></script>
+<script data-ot-ignore data-script-link type="text/javascript" src="https://nemo-assets-live.public.springernature.app/resource/dynamic/base-a1-a3-a4-m10-m15-m18-m21-m22-m23-m27-m9-o1-o14-o3-o4-o5.js"></script>
+<div data-consent-feature-name="googleAnalytics" data-consent-feature-context="body"></div>
+<div data-consent-feature-name="pingdom" data-consent-feature-context="body"></div>
+<script>
+                                var ivwCode = "A02B01C01D02E01F02G02Ha09"
+                            </script>
+<script type="text/javascript">
+
+function ConsentInfoOnline() {}
+ConsentInfoOnline.retryCounter = 0;
+ConsentInfoOnline.maxCount = 20;
+ConsentInfoOnline.prototype.init = function () {
+    if (window.iom) {
+        
+            IOMm('configure', { st: 'spriprof', dn: 'data-588cbce106.springerprofessional.de', mh:5, cn:'de' });
+        
+        IOMm('pageview', { cp: ivwCode, co: 'kommentar'}); 
+        
+        
+        var managerScript = document.createElement('script');
+        managerScript.type = 'text/javascript';
+        managerScript.src = 'https://data-588cbce106.springerprofessional.de/iomm/latest/manager/base/es6/bundle.js';
+        var f = document.getElementsByTagName('script')[0];
+        f.parentNode.insertBefore(managerScript, f.nextSibling);
+    } else if (ConsentInfoOnline.retryCounter++ > ConsentInfoOnline.maxCount) {
+        if (console) { console.log('InfoOnline window.iom is not defined.'); }
+    } else {
+        setTimeout(this.init.bind(this), 500);
+    }
+}
+new ConsentInfoOnline().init();
+</script>
+<script>
+                        var isVideoSource = function isVideoSource(frameSrc) {
+                            const srcList = 'https://e.video-cdn.net'.split(',');
+                            return srcList.some(pattern => frameSrc.includes(pattern));
+                        }
+                    </script>
+<script type="text/javascript">
+
+
+
+for (const iframe of document.getElementsByTagName('iframe')) {
+    if (isVideoSource(iframe.src)) {
+        iframe.addEventListener("load", (event) => {
+            iframe.contentWindow.postMessage('CONSENT_DECLINED', '*');
+        });
+    }
+}
+</script>
+<div data-consent-feature-name="movingImageFrameTracker" data-consent-feature-context="dynamic"></div>
+<script type="module">
+import { Player } from 'https://e.video-cdn.net/mi-player-sdk/mi-player-sdk.js';
+Player.setCustomDomains([/^https:\/\/e\.video-cdn\.net\/video/i, /^https:\/\/e\.video-cdn\.net\/watch/i]);
+const players = Player.allPlayers();
+Promise.all(
+    players.map((player) => player.setAnalytics('minimal'))
+).catch((error) => {
+    console.error('Error setting minimal analytics', error);
+});
+</script>
+<div data-consent-feature-name="movingImageFrameTracker" data-consent-feature-context="dynamicModule"></div>
+<script src="https://nemo-assets-live.public.springernature.app/resource/js/linkerParam.js"></script>
+<script type="text/javascript" src="https://nemo-assets-live.public.springernature.app/resource/js/libs/advertisement/advertisement.js"></script>
+</body>
+</html>

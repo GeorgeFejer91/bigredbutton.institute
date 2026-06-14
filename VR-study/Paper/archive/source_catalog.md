@@ -7,11 +7,12 @@ This catalog records the materials used to assemble the current paper package in
 | Source | Role in manuscript | Archive status |
 | --- | --- | --- |
 | `index.html` | Theme map, study-demo framing, six research divisions, and complexity-analysis language | already in repo |
-| `VR-study/Paper/bigredbutton_placement.tex` | Ergonomic and salience rationale for button placement in VR | already in repo |
-| `VR-study/Paper/bigredbutton_placement.bib` | Legacy placement-only bibliography | already in repo |
+| `VR-study/Paper/archive/bigredbutton_placement.tex` | Ergonomic and salience rationale for button placement in VR | already in repo |
+| `VR-study/Paper/archive/bigredbutton_placement.bib` | Legacy placement-only bibliography | already in repo |
 | `studies/first-big-red-button-study/audio-assets/README.md` | Confirms study media organization and available deliverables | already in repo |
 | `studies/first-big-red-button-study/audio-assets/final/*.mp3` | Instruction-track deliverables referenced by methods | already in repo |
 | `studies/first-big-red-button-study/audio-assets/final/*.mp4` | Demo media confirming prototype existence and two-condition framing | already in repo |
+| `anvix9/basis_research_agents` README and `core/consensus_mcp.py` | External research-pipeline reference used as an evidence-discipline model: argument tree, claim traceability, and Consensus-as-source architecture | inspected through GitHub, not vendored |
 
 ## External literature corpus
 
@@ -54,9 +55,18 @@ This catalog records the materials used to assemble the current paper package in
 | `Gaver1991` | affordances in HCI | DOI |
 | `Norman1999` | affordances, conventions, and design | DOI |
 | `McCarthyWright2004` | experience-centered HCI framing | DOI |
+| `McLuhan1964UnderstandingMedia` | media as extensions of human faculties | publisher metadata |
+| `Belk1988ExtendedSelf` | possessions and the extended self | DOI |
+| `Belk2013ExtendedSelfDigital` | extended self in digital environments | DOI |
+| `Minsky1980Jokes` | cognitive account of jokes and troublesome thought patterns | DOI |
+| `Shifman2013Memes` | internet memes as repeatable participatory cultural units | MIT Press metadata |
+| `Milner2016WorldMadeMeme` | memetic media and participatory public conversation | DOI |
+| `DailyStruggleKnowYourMeme` | source-linked cultural record for the Daily Struggle / Two Buttons template | web page |
+| `StanleyParableOfficial2026` | official source for The Stanley Parable as a game about choice, contradiction, and agency | official website |
+| `AccountingPlusOfficial2017` | official source for Accounting+ as VR absurdist comedy | official website |
 
 ## Archive status for external PDFs
 
-- No external article PDFs were found in the repository at the time of this run.
-- The current archive therefore consists of a verified source catalog plus repository-native media and manuscript assets.
+- Several external article PDFs and extracted text files are now cached under `VR-study/Paper/archive/button-history-sources/`.
+- New June 2026 additions for McLuhan, Belk, Minsky, meme theory, and game influences are currently represented as verified metadata and web references rather than local PDFs.
 - If collaborators add PDFs later, place them under `VR-study/Paper/archive/` and extend this catalog with local filenames.

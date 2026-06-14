@@ -1,0 +1,289 @@
+       Understanding the Pushbutton Revisited: From
+              on and off to Input and Output
+
+                              Heidi Bråthen(B) and Jo Herstad
+
+                               University of Oslo, Oslo, Norway
+                                   heibr@ifi.uio.no
+
+
+
+       Abstract. The button is a familiar technology that is used to control and regulate
+       things and machines in our everyday lives. With the digitalization of the button,
+       many possibilities for novel and innovative functions have been invented and
+       implemented. The use of digital buttons comes with some challenges that are
+       explored in this paper. We describe the transition between the mechanical switch
+       to the digital switch, and specifically use the concept of familiarity to find out
+       more about the use of digital switches in a case study of indoor lighting. The
+       contribution of the paper is to open for the transition between mechanical buttons
+       and digital buttons and point to some challenges that arise in everyday use.
+
+       Keywords: Interface · Understanding · Pushbuttons
+
+
+
+1 Introduction
+
+The concept of the button is familiar to users of technology. Over the last decades,
+however, the button has developed from mechanical buttons to digital buttons, adding
+complex programmable possibilities to their application and use. We therefore ask how
+users make sense of the familiar buttons featuring new possibilities for interaction.
+    Rachel Plotnick [1] shows that the understanding of pushbuttons was already a sub-
+ject to societal concern at its introduction in the late 19th century. Advertisers, producers,
+journalists, and educators participated in a debate encompassing many different perspec-
+tives on how users, or consumers, could best understand the pushbutton in the time from
+1880 to 1915. Perspectives ranged from those who believed that creative interrogations
+of pushbuttons should serve as an introduction to a broader electrical education, to those
+who argued for the ability of the pushbutton to make use effortless [1]. From 1915, how-
+ever, the consumers familiarity with the pushbutton led to the interface design to stabilize
+and the pushbutton became “black boxes”, resulting in less need for understanding the
+workings of the pushbutton [1].
+    While users’ familiarity with the button was established more than a century ago,
+the added possibilities offered by programming of buttons now make electrical and
+digital buttons more complex to both use and understand [2]. We therefore revisit the
+discussion on how users understand buttons in the context of interaction design and HCI.
+
+
+© The Author(s), under exclusive license to Springer Nature Switzerland AG 2023
+C. Stephanidis et al. (Eds.): HCII 2023, CCIS 1832, pp. 209–215, 2023.
+https://doi.org/10.1007/978-3-031-35989-7_26
+210        H. Bråthen and J. Herstad
+
+To illuminate changes and new challenges in designing for interactions with new and
+emergent technologies such as autonomous technologies.
+The Guiding Question. That we address in this paper is comprised of two parts. First,
+we ask what the transition between the mechanical button to the digital button entail?
+What exactly is it that have changed as the mechanical pushbutton has developed to
+digital buttons? Secondly, we ask what challenges that evolve with the transition and
+how this affects users understanding of buttons.
+Layout and Objectives. The rest of the poster is organized in the following way. We
+first describe the development of the pushbutton to examine the transition from the
+mechanical to the digital button. We apply a model to illustrate an important new feature
+of the digital button as input to a system. Then we describe the concept of familiarity
+to discuss the implications of emerging challenges. After this, we examine a case of
+the basic operations of switching lights on and off with digital buttons to explore the
+challenges and opportunities that buttons introduce in use situations. Finally, we discuss
+our findings and conclude by identify implications and areas of concern for further
+research into the understanding of technology in design and use.
+
+
+2 The Development of the Pushbutton
+
+The pushbutton as a switch for electricity was developed in the last twenty years of the
+nineteenth century. They were increasingly built into household items like lamps and
+doorbells from the beginning of the 20th century and developed to represent instanta-
+neous control of electrical devices [1]. We will name these early electrical buttons as
+“mechanical” buttons, in that they are mechanical devises that works by breaking or
+closing an electrical circuit [2]. They usually represent their own state by their position,
+for example by latching in a lowered position and then released, or a knob turning to a
+horizontal or vertical position [2]. The possible states of mechanical buttons are thereby
+limited, and their states are observable by human users. The button typically offers two
+states, that is “on” and “off”.
+    A century later buttons still come in many different sorts and shapes, as examined
+elegantly by [2]. Where mechanical buttons worked by closing or breaking an electrical
+circuit, new digital buttons can be in the form of physical buttons or graphic buttons
+on screens and work by submitting a signal as input to a computer for processing. Still,
+they often utilize the same feedback mechanisms which are inherent consequences of
+the construction of the mechanical button, such as clicks and latched positions [2].
+A Model of Input and Output. To illustrate the new functionality of digital buttons, we
+apply a model of interactive artefacts that has been applied in robotics, electronics DIY
+communities [3], and in interaction design materiality studies [4]. This model describes
+the structure or anatomy of a digital artefact as consisting of three main components:
+sensors, processing unit and actuators (Fig. 1). Sensors are components that take in
+information about its surroundings, or “read” the environment. The button is such a
+sensor that senses the push from its environment, for example embedded in the mouse
+and keyboard of a PC. The signals are processed and transformed by a processing unit,
+                                          Understanding the Pushbutton Revisited        211
+
+like the processor of a PC. Actuators are components that actuate the signals from the
+processing unit, they can “act” or “write” on its surroundings, like computer screens and
+light bulbs.
+
+
+
+
+                          Fig. 1. The model of Interactive Things
+
+
+
+
+3 Familiarity – A Way to Understand the Use of Buttons
+
+What does it mean to understand buttons, use or technology? We will approach under-
+standing as a part of the concept of familiarity, a concept that has previously been applied
+within HCI. Phil Turner makes references to philosophy, and especially the early Hei-
+degger to explore the phenomenon familiarity [5, 6]. Heidegger claims that the basis
+for understanding our being-in-the-world lies in the everyday lives that we all live [7,
+8]. He discusses three underlying concepts that are based upon our familiarity with the
+world. First, the idea of involvement or engagement, which Heidegger simply expresses
+as “being-in-the-world”. Second, we relate to our world based upon understanding. This
+understanding is based or embedded in our activities and this understanding shows up
+in the activities we are engaged in. Understanding is essentially a skill, or a capacity to
+do something, according to Heidegger. Third, self and world are not primordially two
+distinct entities, like a subject relating with an object, but a unity of person-world. This
+unity is based upon the involvement and understanding in the world, as described for
+example in [8].
+    Within HCI, there are also various other lines of thoughts and analytic concepts
+that have evolved from our understanding of the everyday world. Norman [9] has been
+advocating using our everyday world, doorknobs, and light switches for example, as
+inspiration and sources for guiding how interaction and interfaces to computers can be
+designed. Ehn [10], referring Wittgenstein, introduced family resemblance, to promote
+the involvement of the user in the design of interfaces for new typesetting systems. This
+concept has been further developed by Mørch [11], in the context of tailorable systems
+and adaptive evolutionary systems. From the perspective of Tangible and embodied
+Interaction, Dourish points out that while familiarity is subjective, outcomes of interac-
+tion, such as i.e., easiness, success, or performance can be understood observable signs
+of familiarity [12].
+212        H. Bråthen and J. Herstad
+
+4 A Case of Programmable Light Switches
+Method. Our case is a system providing automated lights, blinds, and heating in a
+10 000 m2 office building that is ten years old. We have conducted two in-depth interviews
+with employees working in the building about their relationship with the lights switches
+in their offices. The recordings of the interviews were auto transcribed the with the
+Whisper software from OpenAI. Their answers have been analyzed in the perspective of
+familiarity. We present two vignettes based on the interviews to show how the buttons
+can be perceived of daily users.
+In the Office – Disabling the Manual Light Button. It is pitch dark outside with
+temperatures of minus 5C this December morning at 0730. Harold is entering his office,
+and the light there is switched on as he opens the office door and move to his desk. A
+passive infrared motion sensor (PIR) that is mounted in the ceiling detect the movement
+in the room, and signals to the system that the light is to be switched on.
+
+
+
+
+Fig. 2. Left: Motion sensor mounted in the ceiling of the offices. Right: Button disabled with
+gaffe tape.
+
+
+    During an ordinary office day, many people pop into Harold’s office to get advice,
+and to pick up parcels. He noticed that some colleagues pressed the button at the door
+when they went out from his office, especially when he was not there. Harold have noted
+that when the light is switched off manually, information from the PIR sensor is disabled
+for 30 min (Fig. 2). Since this was frustrating, he decided to disable the button at the
+door. This he did by a strip of gaffe tape that simply locked the button to one position
+(Fig. 2). By this, he can always enjoy a fully lit office.
+In the Office – Disabling the PIR Motion Sensor. Hanna likes indirect lighting in her
+office. She has two light sources that lights up the desk, and the shelves in the office. She
+works better when the light sources are this way as compared to a fully lit office from
+the standard ceiling light. When moving into the office, Hanna used to turn the light off
+manually by pressing the button at the side of the door. However, the ceiling light turned
+on after approximately 45 min in the room because of her movements. She then had to
+                                         Understanding the Pushbutton Revisited      213
+
+walk over to the button to press the button again. After a few weeks with this routine,
+she decided to cover the PIR sensor in the ceiling by attaching an A4 sheet of paper in
+the ceiling with two pushpins. This worked fine for Hanna, as the sensor was disabled
+and did not register any movement in the room.
+
+
+5 Results and Discussion
+
+Our findings from the case highlight some of the changes of the button from its intro-
+duction in the 1890’s. The light switches in the building have kept their two-state form,
+while they are performing more complex temporal light control and dimming.
+    In each office, the button has become distributed and now consist of minimum two
+entry points; the light switch in its traditional form in the form of a two-state switch,
+and an added PIR sensor mounted in the ceiling that measures movement in the lighted
+area. The introduction of emerging interaction mechanisms like movement control is
+also introduced in addition to physical button control may challenge the understanding
+of the user interface. Further, the temporal programming that controls lights overrides
+the input that the user has given to the system in form of pressing buttons. This may
+pose challenges to the user’s understanding of the system. It may also indicate that the
+end user is not the intended user. The owner of the building and the environment may
+benefit from timing lights and making sure someone is present to enjoy the light. This
+points to a new and emerging challenge raised by programmable, autonomous systems
+like in our case study.
+    Hanna and Harold demonstrate that they have become familiar with the workings
+of these buttons and their added points of input in their offices and understands how
+they function by countering and partly disabling them through applying appropriations.
+Other people visiting Harold, however, demonstrate unfamiliarity with the button. They
+may assume that the light switch button is an analogue button and make sure to turn the
+light off as they leave. But it has a programmed delay of 45 min programmed into it that
+is unfamiliar to the visitor, an invisible and temporal feature. This can be understood
+as an example of the familiar acting in unfamiliar ways. When the digital button looks
+and feels like an analogue button, users expect it to work as an analogue button. We use
+our familiarity with the old to understand the new. When the feedback to the user from
+digital buttons is different from that of analogue buttons, challenges with understanding
+feedback may arise.
+    Even if Hanna and Harold demonstrate familiarity and understanding of the buttons,
+they can’t control and adapt the mechanisms to their needs. We found that both have
+created appropriations to their light switches. While originally being introduced as a
+means of instant control over electrical devices, the functionality of the light switch
+button is outside of their control and partly inaccessible due to the added motion sensor
+that will detect movement regardless of their need for light, and the programmed timer.
+The effect is that they have effectively broken their relationship with the buttons by
+disabling them.
+214        H. Bråthen and J. Herstad
+
+6 Conclusion and Future Work
+
+This study contributes by unpacking some issues with the use of digital buttons today.
+From our examination of the transition from the mechanical to the digital button, we
+understand the main difference to be that whereas the mechanical button is giving a
+causal, direct impact of the thing that is switched on or off, a digital button is an input to
+a computer system. The signals that are sent into the computer can be used to do countless
+different things, challenging the users understanding of the interaction on several levels.
+Our preliminary findings indicate that areas of concern include insufficient control for
+end users, challenges to users understanding of the interface and of the wider system
+because of the complexity introduced by the programming of digital buttons.
+Implications for Further Research. We round off this poster by identifying a few
+implications and areas of concern for our further research into the understanding of
+technology in design and use of new and emerging technologies.
+Understanding as a Skill. Approaching understanding as an ability that builds on exist-
+ing competence points to the importance of drawing on designers and users existing
+competence. However, in many use cases, the familiarity many users have with mechan-
+ical buttons cannot be successfully invoked with digital buttons. The button therefore
+lends itself as a good example technology for further experiments to illuminate some
+of the challenges with understanding design and use of new and emerging technologies
+through building on the familiar.
+From Off and On to Input and Output. Users who are familiar with mechanical buttons
+are used to see the status of the system by observing the button. This however is not
+always the case with digital buttons and might be challenging users understanding of
+the interface and the consequences of their actions in the system. However, our case
+suggests that challenges to understanding are not confined to the surface of the interface
+but concern the understanding of systems as well. Inspired by the long tradition of
+creative interrogations of the pushbutton as educational for understanding electrical
+devices, conceptualizing the digital pushbutton as input in the digital artefact model
+could serve as foundation for engaging users with digital pushbuttons to provide insights
+on autonomous systems through the interactive things model.
+From Single Point of Control to Distributed Control. When digital buttons are used in
+concert with sensors in the environment of the users, user control are challenged. We
+would like to investigate how users can regain the control in such distributed systems.
+Local and Remote. When digital switches can be programmed and reprogrammed with-
+out changes to the hardware, control and overview are removed from the end user, who
+is not necessarily the intended user.
+
+Acknowledgement. We thank the enthusiastic participants in this study and our colleagues at the
+Design group for helpful feedback on our project.
+                                              Understanding the Pushbutton Revisited             215
+
+References
+ 1. Plotnick, R.: At the interface: the case of the electric push button, 1880–1923. Technol. Cult.
+    53(4), 815–845 (2012)
+ 2. Janlert, L.-E.: The ubiquitous button. Interactions 21(3), 26–33 (2014). https://doi.org/10.
+    1145/2592234
+ 3. Severance, C.: Massimo Banzi: building Arduino. Computer 47(1), 11–12 (2014). https://doi.
+    org/10.1109/MC.2014.19
+ 4. Wiberg, M.: The Materiality of Interaction: Notes on the Materials of Interaction Design. The
+    MIT Press, Cambridge, Massachusetts (2017)
+ 5. Turner, P.: Being-with: a study of familiarity. Interact. Comput. 20(4–5), 447–454 (2008).
+    https://doi.org/10.1016/j.intcom.2008.04.002
+ 6. Turner, P., Van de Walle, G.: Familiarity as a basis for universal design. J. Gerontechnol. 5(3),
+    150–159 (2006). https://doi.org/10.4017/gt.2006.05.03.004.00
+ 7. Heidegger, M.: The Basic Problems of Phenomenology, Rev. edn. Indiana University Press,
+    Bloomington (1982)
+ 8. Stambaugh, J., Schmidt, D.J.: Being and Time: A Revised Edition of the Stambaugh
+    Translation. State University of New York Press, Albany (2010)
+ 9. Norman, D.A.: The Design of Everyday Things, Revised and Expanded edn. Basic Books,
+    New York (2013)
+10. Ehn, P.: Work-oriented design of computer artifacts (1988). http://urn.kb.se/resolve?urn=urn:
+    nbn:se:umu:diva-62913. Accessed 17 Mar 2023
+11. Morch, A.I.: Evolutionary Growth and Control in User Tailorable Systems. Adaptive
+    Evolutionary Information Systems (2003). https://www.igi-global.com/chapter/adaptive-evo
+    lutionary-information-systems/www.igi-global.com/chapter/adaptive-evolutionary-inform
+    ation-systems/4213. Accessed 17 Mar 2023
+12. Dourish, P.: Where the Action Is: The Foundations of Embodied Interaction. MIT Press,
+    Cambridge, Mass (2001)
+

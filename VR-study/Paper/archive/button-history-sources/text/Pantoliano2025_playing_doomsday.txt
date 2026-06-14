@@ -1,0 +1,1282 @@
+                                                                                           Review of International Studies (2025), 51: 4, 686–706
+                                                                                           doi:10.1017/S0260210525000087
+
+
+                                                                                           RESEARCH ARTICLE
+
+
+                                                                                           Playing doomsday: Video games and the politics of
+                                                                                           nuclear weapons
+                                                                                           Carolina Pantoliano
+                                                                                           School of Social & Political Sciences, College of Social Sciences, University of Glasgow, Glasgow, UK
+                                                                                           Email: carolina.pantolianopanico@glasgow.ac.uk
+
+                                                                                           (Received 4 April 2024; revised 14 November 2024; accepted 26 January 2025)
+
+
+                                                                                              Abstract
+                                                                                              This article examines how nuclear weapons are depicted in video games. While the literature has explored
+                                                                                              the social and symbolic meanings of nuclear weapons and how they have been represented in popular cul-
+                                                                                              ture, existing accounts have not thoroughly engaged with video games. Examining the bestselling game Call
+                                                                                              of Duty, I show how gameplay narratives contribute to normalising dominant knowledge about nuclear
+                                                                                              weapons. The overarching argument advanced in this article is that representations of nuclear weapons
+                                                                                              in video games contribute to legitimising the ongoing possession and modernisation of nuclear weapons.
+                                                                                              Drawing on feminist post-structuralist theory, I show how nuclear weapons are programmed to be an
+                                                                                              exclusive item that only the most skilled players can obtain, reinforcing the exclusionary power dynam-
+                                                                                              ics sustaining the nuclear status quo. Moreover, I show how game dynamics produce nuclear weapons
+                                                                                              as a win-condition, and thus a symbol of power and success that reinforces dominant understandings of
+                                                                                              their military value while masking the horror of killing. Deconstructing the playing dimension of video
+                                                                                              games, I situate the ludic aspect as a meaning-making system, working synergically with gameplay stories
+                                                                                              to reinforce dominant knowledge about nuclear weapons. Ultimately, the article draws attention to everyday
+                                                                                              discursive mechanisms that render a nuclear world possible.
+
+
+                                                                                           Keywords: nuclear disarmament; nuclear weapons; popular culture; post-structuralism; the politics of play; video games
+
+
+
+                                                                                           Introduction
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           The inspiration to write this article came from an interesting conversation with my neighbour’s five-
+                                                                                           year-old daughter. The little girl and other kids from nearby houses were playing outside when I
+                                                                                           overheard her say, ‘Careful, I have a nuke!’ during what appeared to be a classic game of tag. As a
+                                                                                           scholar interested in the politics of nuclear weapons, I was intrigued by the fact that a five-year-old
+                                                                                           used the word ‘nuke’ to deter others from approaching her. I noticed that the other kids reacted
+                                                                                           with a mix of excitement and confusion; some expressed fear and ran away, and others said they
+                                                                                           had secret weapons too. Later that day, I went to my neighbour’s house and asked if I could talk to
+                                                                                           the girl to understand her knowledge and expectations about nuclear weapons. When I asked her
+                                                                                           what a nuke was, she told me it was ‘the most powerful bomb’ and that those with it ‘win the game’.
+                                                                                           Subsequently, I asked where she had heard the word nuke and how she knew it was a bomb. The
+                                                                                           little girl told me it was part of a game called Call of Duty that her brother played with friends online.
+                                                                                           ‘If you are good enough in the game, you get a nuke, and once you drop the nuke, you win’, she
+                                                                                           told me. Inspired by this episode, I decided to research how nuclear weapons are depicted in video
+                                                                                           games. I am particularly interested in exploring the narratives conveyed through this medium and
+                                                                                           examining how they shape expectations and reinforce specific realities about nuclear weapons.
+
+                                                                                           © The Author(s), 2025. Published by Cambridge University Press on behalf of The British International Studies Association. This is an Open
+                                                                                           Access article, distributed under the terms of the Creative Commons Attribution licence (http://creativecommons.org/licenses/by/4.0), which
+                                                                                           permits unrestricted re-use, distribution and reproduction, provided the original article is properly cited.
+                                                                                                                                                                            Review of International Studies             687
+
+
+                                                                                               Popular culture has gained considerable prominence in the discipline of International Relations
+                                                                                           (IR), with many scholars recognising its relevance to make sense of global politics.1 Scholars have
+                                                                                           drawn attention to how TV shows, films, books, music, and magazines are products as well as
+                                                                                           productive of expectations in the social domain, functioning as discursive referent points of a par-
+                                                                                           ticular reality.2 Others have examined how popular culture is vital to understanding how ‘power,
+                                                                                           ideology, and identity’ are constituted.3 Those examining the discursive role of video games in
+                                                                                           perpetuating and normalising expectations in social practice focus on how this cultural artefact
+                                                                                           offers a singular vehicle for producing, reiterating, and challenging knowledge.4 The reconfigura-
+                                                                                           bility of play, along with the incentives and prizes, can create a range of possibilities in which the
+                                                                                           player actively engages in debates and experiences.5 While the literature on video games and global
+                                                                                           politics has examined representations that make visible as well as underscore assumptions about
+                                                                                           how international politics operates,6 existing approaches have not paid sufficient attention to how
+                                                                                           nuclear weapons are depicted and how such representations impact nuclear politics. Moreover,
+                                                                                           the literature has been less attentive to the dimension of play as a distinct feature associated with
+                                                                                           this medium that, together with what is being represented, has an impact on the production of
+                                                                                           knowledge about nuclear weapons.
+                                                                                               Building on feminist post-structuralist literature as well as the body of work examining the
+                                                                                           importance of popular culture to make sense of global politics, I examine how gameplay narratives
+                                                                                           contribute to normalising dominant knowledge about nuclear weapons. Focusing my interroga-
+                                                                                           tions on the Call of Duty franchise, I argue that representations contribute to legitimising the
+                                                                                           ongoing possession and modernisation of nuclear weapons. I show how nuclear weapons are
+                                                                                           represented as an exclusive item that only the most skilled players can obtain, reinforcing the exclu-
+                                                                                           sionary power relations sustaining the nuclear status quo. Moreover, I show how game dynamics
+                                                                                           produce nuclear weapons as a win-condition, and thus a symbol of power and success that rein-
+                                                                                           forces dominant understandings of their military value while masking the horror of killing. As I
+                                                                                           delve into the workings of each of these narratives, I show how representations reproduce colonial
+                                                                                           and gendered logics that make nuclear possession possible. Deconstructing the playing dimension
+
+                                                                                             1
+                                                                                                Roland Bleiker, ‘The aesthetic turn in international political theory’, Millennium: Journal of International Studies,
+                                                                                           30:3 (2011), pp. 509–33; William Clapton and Laura J. Shepherd, ‘Lessons from Westeros: Gender and power
+                                                                                           in Game of Thrones’, Politics, 37:1 (2017), pp. 5–18; Rhys Crilley, Unparalleled Catastrophe: Life and Death in
+                                                                                           the Third Nuclear Age (Manchester: Manchester University Press, 2023); Emily E. Faux, ‘Navigating nuclear narra-
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           tives in contemporary television: The BBC’s Vigil’, Review of International Studies, 50:6 (2024), pp. 987–1003, avail-
+                                                                                           able at: {https://doi.org/10.1017/S026021052300075X}; Kyle Grayson, Matt Davies, and Simon Philpott, ‘Pop goes IR?
+                                                                                           Researching the popular culture world politics’, Continuum Politics, 29:3 (2009), pp. 155–63; Jutta Weldes, ‘Going
+                                                                                           cultural: Star Trek, state action, and popular culture’, Millennium: Journal of International Studies, 28:1 (1999),
+                                                                                           pp. 117–34.
+                                                                                              2
+                                                                                                Tim Aistrope and Stefanie Fishel, ‘Horror, apocalypse and world politics’, International Affairs, 96:3 (2020), pp. 631–48;
+                                                                                           Crilley, Unparalleled Catastrophe; Faux, ‘Navigating nuclear narratives in contemporary television’; Abigail E. Ruane and
+                                                                                           Patrick P. James, ‘The International Relations of Middle-Earth: Learning from “The Lord of the Rings”’, International Studies
+                                                                                           Perspectives, 9:4 (2008), pp. 377–94; Laura J. Shepherd, Gender, Violence and Popular Culture: Telling Stories (London:
+                                                                                           Routledge, 2013); Hebatalla Taha, ‘Atomic aesthetics: Gender, visualization and popular culture in Egypt’, International Affairs,
+                                                                                           98:4 (2022), pp. 1169–87; Weldes, ‘Going cultural’, p. 117.
+                                                                                              3
+                                                                                                Grayson, Davies, and Philpott, ‘Pop goes IR?’, p. 155.
+                                                                                              4
+                                                                                                Ian Bogost, ‘Comparative video game criticism’, Games and Culture, 1:1 (2006), pp. 44–6; Nicolas de Zamaróczy, ‘Are we
+                                                                                           what we play? Global politics in historical strategy computer games’, International Studies Perspectives, 18:2 (2017), pp. 155–74;
+                                                                                           Nick Robinson, ‘Videogames, persuasion and the War on Terror: Escaping or embedding the military entertainment complex?’,
+                                                                                           Political Studies, 60:3 (2012), pp. 504–22; Nick Robinson, ‘Have you won the War on Terror? Military videogames and the state
+                                                                                           of American exceptionalism’, Millennium: Journal of International Studies, 43:2 (2015), pp. 450–70.
+                                                                                              5
+                                                                                                Craig Hayden, ‘The procedural rhetorics of Mass Effect: Video games as argumentation in International Relations’,
+                                                                                           International Studies Perspectives, 18:2 (2017), pp. 175–93; Aggie Hirst, ‘Wargames resurgent: The hyperrealities of military
+                                                                                           gaming from recruitment to rehabilitation’, International Studies Quarterly, 66:3 (2022), pp. 1–14.
+                                                                                              6
+                                                                                                Felix Ciută, ‘Call of Duty: Playing video games with IR’, Millennium: Journal of International Studies, 44:2 (2016),
+                                                                                           pp. 197–215; de Zamaróczy, ‘Are we what we play?’; Hayden, ‘The procedural rhetorics of Mass Effect’; Robinson, ‘Videogames,
+                                                                                           persuasion and the War on Terror’, p. 175.
+                                                                                           688       Carolina Pantoliano
+
+
+                                                                                           of video games, I situate the ludic aspect as a system of meaning production, working synergically
+                                                                                           with gameplay stories to reinforce dominant knowledge about nuclear weapons.
+                                                                                               To do so, I examine Call of Duty games released between 2007 and 2023. Call of Duty is
+                                                                                           a bestselling first-person shooter video game franchise published by Activision and developed
+                                                                                           by Infinity Ward, Treyarch, Sledgehammer Games, and Raven Software. In its 20 years of exis-
+                                                                                           tence, the series has sold over 425 million copies worldwide, making the franchise the fourth
+                                                                                           bestselling game in history after Mario, Tetris, and Pokémon. Call of Duty: Modern Warfare II,
+                                                                                           released in October 2022, made 1 billion dollars in 10 days.7 The first game was released in
+                                                                                           2003 and focused on World War II, while subsequent titles were set in the Cold War, futur-
+                                                                                           istic worlds, and modern-day conflict scenarios. Nuclear weapons have been part of the mul-
+                                                                                           tiplayer game experience in Call of Duty since 2009 and continue to be a highly anticipated
+                                                                                           feature.
+                                                                                               Unlike most analyses published to date, my interrogations will focus on the multiplayer mode,
+                                                                                           also known as battle royale. The choice to engage with the multiplayer mode is due to its popu-
+                                                                                           larity among players, and therefore the opportunities this mode offers for reiterating knowledge.
+                                                                                           It is also important to note that stories about nuclear weapons have mainly been told through this
+                                                                                           mode of the game. Nonetheless, where nuclear weapons are depicted in the campaign mode, I
+                                                                                           offer an analysis of how depictions reinforce and/or challenge some of the representations seen in
+                                                                                           the multiplayer experience. The study draws upon 100 hours of multiplayer gameplay engagement
+                                                                                           through acclaimed YouTube and Twitch channels, such as the accounts managed by Seth Abner
+                                                                                           (known as Scump) and Damon Barlow (known as Karma).8 Both Abner and Barlow are profes-
+                                                                                           sional players who stream their Call of Duty matches to millions of viewers worldwide. The choice
+                                                                                           to engage with streaming material enabled me to access parts of the game that would have been
+                                                                                           impossible to do by simply playing it myself. As I explain in more detail in the following sections of
+                                                                                           this article, acquiring a nuclear weapon in Call of Duty is an exceptional accomplishment and, thus,
+                                                                                           something that requires great skill and gaming abilities. While many non-professional players can
+                                                                                           acquire nuclear weapons, engaging with the material streamed by Abner and Barlow ensures the
+                                                                                           veracity and quality of data. It is important to note that my analysis focuses on what is represented
+                                                                                           rather than players’ opinions on nuclear weapons. As such, I used streaming material to understand
+                                                                                           how nuclear weapons are situated in the gameplay as well as the incentives and requirements for
+                                                                                           acquiring and detonating the bomb.9 The analysis of campaign stories is conducted by using data
+                                                                                           revealed by developers and information offered by specialist websites such as IGN walkthroughs
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           and data published on Call of Duty’s official blog.
+                                                                                               To examine this data, I use a theoretical apparatus that builds upon feminist post-structuralist
+                                                                                           theory, particularly the work of Laura Shepherd10 and Judith Butler.11 My theoretical apparatus
+                                                                                           is centred on the assumption that discourse, broadly conceived, is productive of knowledge and,
+                                                                                           therefore, constitutive of what we know about the world and its possible futures. I conduct decon-
+                                                                                           structive discourse analysis to find the knowledge possibilities made intelligible upon representing
+                                                                                           nuclear weapons as a win-condition, an exclusive item, and something one can play with. Through
+
+                                                                                             7
+                                                                                                Mike Hume, ‘The future of Call of Duty and Warzone’, The Washington Post, 8 June 2022, available at: {https://www.
+                                                                                           washingtonpost.com/video-games/2022/06/08/call-duty-future-modern-warfare-2-warzone-2/}; Gene Park, ‘20 years in, Call
+                                                                                           of Duty is a cultural and financial titan’, The Washington Post, 28 October 2023, available at: {https://www.washingtonpost.com/
+                                                                                           entertainment/video-games/2023/10/28/call-of-duty-20-years/}.
+                                                                                              8
+                                                                                                Upon watching the videos, I compiled detailed notes about the requirements to acquire a weapon and the consequences
+                                                                                           of detonating the nuclear weapon. I concluded that there were two central stories being told in Call of Duty games. One is
+                                                                                           centred on reward, and the other on success. These will be further examined in the following sections.
+                                                                                              9
+                                                                                                This research uses publicly available material and follows the ethical guidelines by the Association of Internet Researchers
+                                                                                           (available at: {https://aoir.org/ethics/}).
+                                                                                              10
+                                                                                                 Laura J. Shepherd, Gender, Violence and Security: Discourse as Practice (London: Bloomsbury Academic, 2008); Laura J.
+                                                                                           Shepherd, Narrating the Women, Peace and Security Agenda: Logics of Global Governance (Oxford: Oxford University Press,
+                                                                                           2021).
+                                                                                              11
+                                                                                                 Judith Butler, Gender Trouble: Feminism and the Subversion of Identity (London: Routledge, 2006).
+                                                                                                                                                                            Review of International Studies             689
+
+
+                                                                                           the ‘excavation’ of discourse, I seek to uncover the logics creating stability and authority of a par-
+                                                                                           ticular form of knowledge about nuclear weapons. I then theorise how these narratives have an
+                                                                                           impact on what passes as normal in nuclear politics, inquiring into what the continuity of dominant
+                                                                                           discourses makes possible politically.
+                                                                                               Understanding how nuclear weapons are represented is integral to grasping and seizing pos-
+                                                                                           sibilities for policy innovation and change. As a state-centric issue, nuclear weapons tend to be
+                                                                                           examined as a problem that originates and terminates with the willingness of states to possess
+                                                                                           and subsequently disarm. In other words, the IR literature examining the variants contributing
+                                                                                           to the ongoing existence of nuclear weapons has primarily focused on how nuclear weapons
+                                                                                           are ‘valued’ within state discursive acts.12 While this analysis is undoubtedly critical to under-
+                                                                                           standing how the weapon ‘acquires’ its strategic and ideational value, more attention must be
+                                                                                           given to other forms of cultural intelligibility in which the weapon is made imaginable. This
+                                                                                           article advances an important contribution to nuclear weapons scholarship. It complements the
+                                                                                           literature that calls for a more holistic approach to understanding the structures of power and
+                                                                                           knowledge that make a nuclear world possible and places particular focus on the role of every-
+                                                                                           day practice and discourse in sustaining the nuclear status quo.13 While popular culture alone
+                                                                                           does not do the work of perpetuating the nuclear status quo, a holistic examination that includes
+                                                                                           both state-centric and broader forms of cultural intelligibility is essential to make sense of the
+                                                                                           nuclear issue while theorising the way forward. As such, this article seeks to draw attention to
+                                                                                           the subtle processes of meaning production that construct and validate knowledge about nuclear
+                                                                                           weapons.
+                                                                                               Beyond the context of nuclear politics, this article can be helpful in providing a framework for
+                                                                                           understanding structures of power and knowledge that make other pressing global issues possible.
+                                                                                           Its engagement with video games as a cultural artefact opens the possibility for thinking about other
+                                                                                           stories represented through this medium, particularly when it comes to new emerging technolo-
+                                                                                           gies. Additionally, since many recreational video games are primarily played by young people14
+                                                                                           – often with younger siblings nearby who pick up on the content – this article raises significant
+                                                                                           questions about the kind of knowledge being passed on to the next generation, whom we hope will
+                                                                                           make a positive impact on the world.
+                                                                                               The article proceeds in three parts. First, I introduce the literature on popular culture and IR,
+                                                                                           explaining how this literature will support the analysis of video games as sites of knowledge produc-
+                                                                                           tion. Then, I develop the central argument examining how nuclear weapons are depicted in Call of
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           Duty games. In this section, I examine two narratives, namely the nuclear reward and the nuclear
+
+
+                                                                                             12
+                                                                                                 Shampa Biswas, Nuclear Desire: Power and the Postcolonial Nuclear Order (Minneapolis: University of Minnesota Press,
+                                                                                           2014); Carol Cohn, ‘Sex and death in the rational world of defense intellectuals’, Signs, 12:4 (1987), pp. 687–718; Kjølv Egeland,
+                                                                                           ‘The ideology of nuclear order’, New Political Science, 43:2 (2021), pp. 208–30; Anne Harrington, ‘Nuclear weapons as the
+                                                                                           currency of power’, The Nonproliferation Review, 16:3 (2009), pp. 325–45; Carolina Panico, ‘Making nuclear possession possible:
+                                                                                           The NPT disarmament principle and the production of less violent and more responsible nuclear states’, Contemporary Security
+                                                                                           Policy, 43:4 (2022), pp. 651–80; Nick Ritchie, ‘Valuing and devaluing nuclear weapons’, Contemporary Security Policy, 34:1
+                                                                                           (2013), pp. 146–73; Scott D. Sagan, ‘Why do states build nuclear weapons? Three models in search of a bomb’, International
+                                                                                           Security, 21:3 (1996), pp. 54–86.
+                                                                                              13
+                                                                                                 Laura Considine, ‘Narrative and nuclear weapons politics: The entelechial force of the nuclear origin myth’, International
+                                                                                           Theory, 14:3 (2022), pp. 551–70; Laura Considine, ‘Rethinking the beginning of the “nuclear age” through telling feminist
+                                                                                           nuclear stories’, Zeitschrift für Friedens- und Konfliktforschung, 12 (2022), pp. 185–193, available at: {https://doi.org/10.1007/
+                                                                                           s42597-022-00082-8}; Crilley, Unparalleled Catastrophe, p. 74; Faux, ‘Navigating nuclear narratives in contemporary television’;
+                                                                                           Rebecca H. Hogue and Anaïs Maurer, ‘Pacific women’s anti-nuclear poetry: Centring Indigenous knowledges’, International
+                                                                                           Affairs, 98:4 (2022), pp. 1267–88; Benoît Pelopidas, ‘The birth of nuclear eternity’, in Sandra Kemp, and Jenny Andersson (eds),
+                                                                                           Futures (Oxford University Press, 2021), pp. 484–500, available at: {https://doi.org/10.1093/oxfordhb/9780198806820.013.28}.
+                                                                                              14
+                                                                                                 In a survey conducted by the University of Massachusetts Lowell and published by the Washington Post in 2018, almost
+                                                                                           three-quarters of Americans ages 14–21 ‘either played or watched multiplayer online games or competitions’ in 2017; see Emily
+                                                                                           Guskin, ‘Teenagers are fuelling a competitive gaming tidal wave’, The Washington Post, 9 March 2018, available at: {https://www.
+                                                                                           washingtonpost.com/news/sports/wp/2018/03/09/teenagers-are-fueling-an-e-gaming-tidal-wave/}.
+                                                                                           690        Carolina Pantoliano
+
+
+                                                                                           success, and interrogate the play dimension of video games. The article concludes by advancing
+                                                                                           suggestions for future research.
+
+
+                                                                                           Popular culture and knowledge production
+                                                                                           Popular culture is not simply telling us a story; the story it tells has profound constitutive effects
+                                                                                           on the world. This is the central premise driving the analysis advanced in this article. To this end,
+                                                                                           the works of Roland Bleiker,15 Laura Shepherd,16 and Jutta Weldes17 advance important theoreti-
+                                                                                           cal tools to help us make sense of why popular culture matters and how it perpetuates particular
+                                                                                           realities, truths, and possibilities. Central to my argument is the idea that discourse is a productive
+                                                                                           apparatus that makes some realities intelligible while silencing others.18 Of course, films, media,
+                                                                                           video games, and television are not the only artefacts propagating knowledge and, therefore, reit-
+                                                                                           erating dominant forms of knowing the world. Nonetheless, these constitute forms of cultural
+                                                                                           intelligibility that are informed by expectations of what is accepted as normal and logical while
+                                                                                           also actively reproducing such realities. Following the post-structuralist concept of normalisation,
+                                                                                           the continuity of discourse, and thus the repeated representation of certain knowledge, is central to
+                                                                                           rendering what we know about the world pass as normal. As Butler explains in relation to gender
+                                                                                           norms, ‘the norm only persists as a norm to the extent that it is acted out in social practice and
+                                                                                           re-idealised and reinstituted in and through the daily social rituals’.19 Popular culture serves as a
+                                                                                           vehicle for propagating and normalising knowledge through its representational and performative
+                                                                                           qualities, which allow for the continuous repetition and reinforcement of discourse. Paying care-
+                                                                                           ful attention to popular culture is essential to gain a more holistic understanding of the politics
+                                                                                           of nuclear weapons, particularly the mechanisms beyond state elites’ discursive acts that render
+                                                                                           nuclear weapons a persistent feature of global politics.
+                                                                                               Through my interrogations of how nuclear weapons are depicted in video games, I seek to draw
+                                                                                           attention to the importance of reflecting on, as Shepherd20 put it, ‘how the “conceptual apparatus”
+                                                                                           regulating knowledge is produced and reproduced’. In doing so, I am able to see video games and
+                                                                                           their features less as trivial, simply playful, or unreal and more as active apparatuses for knowl-
+                                                                                           edge (re)production. Shepherd’s work reminds us that knowledge is always unstable, plural, and
+                                                                                           multiple, and it is crucial to remain attentive to how and under what circumstances the dominant
+                                                                                           categories informing what is expected, valid, and acceptable are reinforced.21 Like Shepherd, I see
+                                                                                           our engagement with popular culture as ‘co-constitutive with the world and our place in it’, and so,
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           it is essential to acknowledge that ‘no cultural artefact lends itself to a singular authoritative read-
+                                                                                           ing’.22 As I work to understand games and what is represented in them, I also pay careful attention
+                                                                                           to how dominant understandings of the masculine and the feminine are reiterated in such sto-
+                                                                                           ries, which remains central to understanding the world and its possible futures. As such, I seek to
+                                                                                           reaffirm the importance of a feminist curiosity as an analytical tool to identify and interrogate dom-
+                                                                                           inant discursive practices, inquiring into the potentialities made intelligible by the repetition and
+                                                                                           reiteration of gendered values and expectations.23 Moreover, I also remain attentive to the legacies
+
+                                                                                             15
+                                                                                                 Bleiker, ‘The aesthetic turn in international political theory’.
+                                                                                             16
+                                                                                                 Shepherd, Gender, Violence and Popular Culture.
+                                                                                              17
+                                                                                                 Weldes, ‘Going cultural’.
+                                                                                              18
+                                                                                                 Butler, Gender Trouble; Shepherd, Gender, Violence and Security.
+                                                                                              19
+                                                                                                 Judith Butler, Undoing Gender (London: Routledge, 2004), p. 48.
+                                                                                              20
+                                                                                                 Shepherd, Gender, Violence and Popular Culture, p. 3.
+                                                                                              21
+                                                                                                 Shepherd, Gender, Violence and Popular Culture.
+                                                                                              22
+                                                                                                 Shepherd, Gender, Violence and Popular Culture, pp. 4–5.
+                                                                                              23
+                                                                                                 Cynthia Enloe, Bananas, Beaches and Bases: Making Feminist Sense of International Politics (Berkeley: University
+                                                                                           of California Press, 2014); Kimberly Hutchings, ‘Feminist ethics and political violence’, International Politics, 44 (2007),
+                                                                                           pp. 90–106; Laura Sjoberg and Caron E. Gentry, Mothers, Monsters, Whores: Women’s Violence in Global Politics (London:
+                                                                                           Zed Books, 2007); Iris Marion Young, ‘The logic of masculinist protection: Reflections on the current security state’, Signs, 29:1
+                                                                                           (2003), pp. 1–25.
+                                                                                                                                                                          Review of International Studies             691
+
+
+                                                                                           of colonialism and how such logics are implicated in legitimising nuclear possession and the power
+                                                                                           relations sustaining the nuclear status quo.24
+                                                                                               Jutta Weldes’s work titled ‘Going cultural: Star Trek, state action, and popular culture’ marks
+                                                                                           an important methodological turn in the discipline of IR.25 Through an engaging analysis of the
+                                                                                           discursive universe of Star Trek, Weldes directs the attention of IR scholars to the importance of
+                                                                                           popular culture and its role in the production of ‘common sense’ about international politics. We
+                                                                                           can think of culture as ‘the context within which people give meaning to their actions and experi-
+                                                                                           ences and make sense of their lives’.26 Understood in this way, ‘culture encompasses the multiplicity
+                                                                                           of discourses or “codes of intelligibility” through which meanings are constructed, and practices
+                                                                                           are produced’.27 Rather than simply a product of the discursive practices of political elites, Weldes
+                                                                                           argues, state policy has a ‘pervasive cultural basis’,28 and state action is naturalised through popu-
+                                                                                           lar culture. For example, the analysis of the TV show Star Trek reveals how this cultural artefact
+                                                                                           reproduces militarism while reiterating benevolent and liberal traits which form the basis of the
+                                                                                           United States foreign policy. With this, Star Trek ‘parallels and reproduces elements of the common
+                                                                                           sense of the United States foreign policy discourse’, and this further entrenches such expectations
+                                                                                           in the social domain.29 Likewise, other works, such as Abigail E. Ruane and Patrick James’s analysis
+                                                                                           of the Lord of the Rings novels30 and William Clapton and Laura Shepherd’s examination of Game
+                                                                                           of Thrones,31 demonstrate how popular culture not only teaches us about the world and interna-
+                                                                                           tional politics but also influences critical engagement with portrayed realities. As such, even though
+                                                                                           Westeros, Middle-Earth, and Star Trek’s regions of space are ‘unreal’ worlds, they reproduce the
+                                                                                           politics of the world informing their creation and imagination. My analysis in this article relies on
+                                                                                           the theoretical foundations of this body of work. Revisiting the assumingly unreal scenarios of Call
+                                                                                           of Duty, I identify and map gameplay narratives while theorising how dominant knowledge about
+                                                                                           nuclear weapons, nuclear possessors, and the future is produced and validated.
+                                                                                               In the context of nuclear politics, a burgeoning body of work continues to draw attention to the
+                                                                                           importance of interrogating the ‘everydayness’ of nuclear weapons,32 with interventions emphasis-
+                                                                                           ing how popular culture is informed by and reproduces the pervasive politics of nuclear weapons.
+                                                                                           Originally published in 1985, The Bomb’s Early Light: American Thought and Culture at the Dawn
+                                                                                           of the Atomic Age, written by Paul Boyer, offers an excellent analysis of the early atomic age, show-
+                                                                                           ing how the nuclear weapon gained a prominent space in American popular culture soon after the
+                                                                                           atomic explosions of 1945.33 Hollywood launched several productions based on nuclear related
+                                                                                           themes, such as The Beginning or the End (1947), On the Beach (1959), and The Day After (1983).
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           These early examples show how rather than a contemporary occurrence, nuclear weapons have a
+                                                                                           long history of representation within popular culture. More recently, studies have interrogated rep-
+                                                                                           resentations of nuclear related themes in TV shows, such as Manhattan34 and Vigil,35 and the films
+
+
+                                                                                             24
+                                                                                                 Biswas, Nuclear Desire; Ritu Mathur, ‘Sly civility and the paradox of equality/inequality in the nuclear order: A post–
+                                                                                           colonial critique’, Critical Studies on Security, 4:1 (2016), pp. 57–72; Ritu Mathur, “‘The West and the Rest”: A civilizational
+                                                                                           mantra in arms control and disarmament?’, Contemporary Security Policy, 35:3 (2014), pp. 332–55.
+                                                                                              25
+                                                                                                 Weldes, ‘Going cultural’.
+                                                                                              26
+                                                                                                 John Tomlinson, Cultural Imperialism (Baltimore: Johns Hopkins University Press, 1991), p. 7.
+                                                                                              27
+                                                                                                 Weldes, ‘Going cultural’, p. 118.
+                                                                                              28
+                                                                                                 Weldes, ‘Going cultural’, p. 118.
+                                                                                              29
+                                                                                                 Weldes, ‘Going cultural’, p. 133.
+                                                                                              30
+                                                                                                 Ruane and James, ‘The International Relations of Middle-Earth’.
+                                                                                              31
+                                                                                                 Clapton and Shepherd, ‘Lessons from Westeros’.
+                                                                                              32
+                                                                                                 Considine, ‘Rethinking the beginning of the “nuclear age”’; Crilley, Unparalleled Catastrophe; Faux, ‘Navigating nuclear
+                                                                                           narratives in contemporary television’; Taha, ‘Atomic aesthetics’.
+                                                                                              33
+                                                                                                 Paul Boyer, By the Bomb’s Early Light: American Thought and Culture at the Dawn of the Atomic Age (Chapel Hill: University
+                                                                                           of North Carolina Press, 2005).
+                                                                                              34
+                                                                                                 Considine, ‘Narrative and nuclear weapons politics’, p. 552.
+                                                                                              35
+                                                                                                 Faux, ‘Navigating nuclear narratives in contemporary television’.
+                                                                                           692        Carolina Pantoliano
+
+
+                                                                                           Oppenheimer and Barbie.36 Rhys Crilley offers a fascinating analysis of how popular culture shapes
+                                                                                           the Third Nuclear Age, which includes a discussion of, for example, Sam Fender’s award-winning
+                                                                                           record ‘Hypersonic Missiles’, which chronicles his felt insecurities regarding what is happening in
+                                                                                           the world.37 As Christopher Nolan’s new film continues to receive numerous awards, including
+                                                                                           seven Oscars, for its portrayal of Oppenheimer’s journey towards becoming the ‘destroyer of the
+                                                                                           worlds’, it is important to pause to reflect on why some stories are (re)told and not others, and what
+                                                                                           the (re)telling of these stories do politically.
+
+                                                                                           Video games and the continuity of nuclear exceptionalism
+                                                                                           Video games have been sidelined in IR debates, often treated as ‘unserious’, ‘apolitical’, and less
+                                                                                           important than literature, film, or music when it comes to theorising global politics.38 Nonetheless,
+                                                                                           a small but growing community of scholars continues to lead efforts to integrate video games into
+                                                                                           conversations about international politics.39 What is unique about video games when compared
+                                                                                           to other forms of popular culture representation is that actors engaging with it are ‘active partic-
+                                                                                           ipants’ in the narrative rather than simply ‘passive receptors’.40 As Hayden explains, ‘videogames
+                                                                                           incorporate the representative power of other cultural texts (e.g. film, television, literature) with
+                                                                                           the engaging dimension of play, which carries its own particular persuasive capacity to convey,
+                                                                                           normalise, and embed the value formations and tacit doxa of statecraft’.41 Through these unique
+                                                                                           dynamics, IR scholars have drawn attention to games’ capacity to normalise violence and mil-
+                                                                                           itary force, help interrogate and reflect upon the rules and incentives driving global political
+                                                                                           relations, create emancipatory and contestatory possibilities, and provide military rehabilitation
+                                                                                           and recruitment opportunities.42
+                                                                                              Beyond IR, video games have been widely studied regarding their influence on individuals’ opin-
+                                                                                           ions and behavioural choices, which includes conversations regarding games’ capacity to cause
+                                                                                           and increase violence in the gamer.43 While this is certainly an important discussion, this article
+                                                                                           does not engage with questions of subjectification (what games do to players).44 Rather, I focus my
+                                                                                           interrogations on how video games offer opportunities for fixing and reiterating meanings, in line
+                                                                                           with the theoretical framework presented above. Nonetheless, I would like to acknowledge that
+                                                                                           ethnographic-based analyses could offer valuable research opportunities, including examining the
+                                                                                           individuals playing and watching streamed material.45 My argument in this article is not that video
+                                                                                           games influence individuals’ opinions about nuclear weapons, but rather that they create opportu-
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           nities for the repetition and reinforcement of well-established knowledge about nuclear weapons.
+                                                                                              36
+                                                                                                 Emily Faux, ‘Deserted myths and nuclear realities: Revisiting the symbolism of nuclear weapons in contemporary pop-
+                                                                                           ular culture through Oppenheimer’, Media, War & Conflict, 17:3 (2023), pp. 354–72; Emily Faux, ‘What Barbie can teach us
+                                                                                           about nuclear weapons’, The Bulletin of the Atomic Scientists, 3 August 2023, available at: {https://thebulletin.org/2023/08/what-
+                                                                                           barbie-can-teach-us-about-nuclear-weapons/}.
+                                                                                              37
+                                                                                                 Crilley, Unparalleled Catastrophe, pp. 74–5.
+                                                                                              38
+                                                                                                 Hirst, ‘Wargames resurgent’, p. 2.
+                                                                                              39
+                                                                                                 Helen Berents and Brendan Keogh, ‘Dominant, damaged, disappeared: Imagining war through videogame bodies’,
+                                                                                           Australian Journal of Political Science, 54:4 (2019), pp. 515–30; Ciută, ‘Call of Duty’; de Zamaróczy, ‘Are we what we play?’;
+                                                                                           Hayden, ‘The procedural rhetorics of Mass Effect’; Robinson, ‘Videogames, persuasion and the War on Terror’; Aggie Hirst,
+                                                                                           “‘Videogames saved my life”: Everyday resistance and ludic recovery among US military veterans’, International Political
+                                                                                           Sociology, 15:4 (2021), pp. 482–503; Mark B. Salter, ‘The geographical imaginations of video games: Diplomacy, civilization,
+                                                                                           America’s army and Grand Theft Auto IV’, Geopolitics, 16:2 (2011), pp. 359–88.
+                                                                                              40
+                                                                                                 de Zamaróczy, ‘Are we what we play?’, p. 168.
+                                                                                              41
+                                                                                                 Hayden, ‘The procedural rhetorics of Mass Effect’, p. 179.
+                                                                                              42
+                                                                                                 Berents and Keogh, ‘Dominant, damaged, disappeared’; Hayden, ‘The procedural rhetorics of Mass Effect’; Robinson,
+                                                                                           ‘Videogames, persuasion and the War on Terror’; Hirst, ‘Videogames saved my life’.
+                                                                                              43
+                                                                                                 Craig A. Anderson, Douglas A. Gentile, and Katherine E. Buckley, Violent Video Game Effects on Children and Adolescents:
+                                                                                           Theory, Research, and Public Policy (Oxford: Oxford Academic, 2007).
+                                                                                              44
+                                                                                                 Aggie Hirst, ‘Play in(g) international theory’, Review of International Studies, 45:5 (2019), pp. 891–914.
+                                                                                              45
+                                                                                                 Daniel Bos, ‘Answering the Call of Duty: Everyday encounters with the popular geopolitics of military-themed
+                                                                                           videogames’, Political Geography, 63 (2018), pp. 54–64.
+                                                                                                                                                                          Review of International Studies            693
+
+
+                                                                                           With this, my concern about the little girl using the language of nuclearism in the game of tag is
+                                                                                           that this knowledge, which originated from video games, is being performed in social practice.
+                                                                                               Moreover, the fact that players actively engage in this cultural medium, including exchanges
+                                                                                           inside and outside of the game platform, creates performative opportunities that are unique to this
+                                                                                           type of cultural artefact. For example, in March 2024, Activision announced Season 3 of Warzone,46
+                                                                                           which added additional maps and features to the current game. One of the new features was the
+                                                                                           addition of special contracts, where players, after achieving certain requirements, could access an
+                                                                                           exclusive part of the game and collect nuclear material, assemble the nuclear weapon, and det-
+                                                                                           onate it. The announcement prompted players to share their expectations and enthusiasm about
+                                                                                           nuclear weapons online,47 while several specialist websites reported on the announcement, with
+                                                                                           some publishing walkthroughs on how to activate the special mission.48 It is important to note that
+                                                                                           Warzone is a free-to-play game with a huge audience worldwide. As such, in addition to playing the
+                                                                                           game, this kind of engagement generates representational opportunities where nuclear knowledge
+                                                                                           is reproduced. The repeated reinforcement across various sites of knowledge production, including
+                                                                                           video games, will have an impact on how people think about it. In other words, this is a two-step
+                                                                                           process where video games generate knowledge reiteration opportunities, and the continuity of
+                                                                                           discourse helps legitimise what is represented.
+                                                                                               With this, further clarification is needed regarding who is responsible for reiterating such knowl-
+                                                                                           edge, and what publics are influenced by such representations. While it is possible to study different
+                                                                                           audiences, for example, state elites, ordinary people, and youth, among others, and investigate
+                                                                                           how these people think about nuclear weapons, my approach is that doing so precludes impor-
+                                                                                           tant aspects of a broader and more preliminary process of meaning production operating in the
+                                                                                           social realm. This is not to say that the literature on public opinion about nuclear weapons is unim-
+                                                                                           portant.49 It is to say that it is also crucial to pay careful attention to how knowledge is reiterated and
+                                                                                           ‘performed’, and this complements public-opinion-centred interventions.50 The theoretical appa-
+                                                                                           ratus introduced earlier, where repetition and reiteration are central to the continuity of dominant
+                                                                                           forms of knowing the world, enables me to focus on how knowledge about nuclear weapons is
+                                                                                           (re)constructed through performative and representational mechanisms that will then have an
+                                                                                           impact on an individual’s perspectives and opinions.
+                                                                                               Nuclear politics has a cultural basis, and video games are part of the knowledge-production
+                                                                                           apparatus that assigns political value to the bomb. Disarmament, as Nick Ritchie importantly
+                                                                                           argues, is contingent upon ‘peeling away the layers of value to the point where it becomes politically,
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           strategically, and socially acceptable to permanently relinquish a nuclear capability’.51 As such, this
+                                                                                           article makes an important contribution to the scholarship that seeks to understand ‘valuing’ mech-
+                                                                                           anisms and invites reflection on the subtle discursive dynamics that continue to validate nuclear
+                                                                                           weapons’ strategic capabilities and prioritise violent and exclusionary forms of understanding the
+                                                                                           nuclear world. Nuclear disarmament depends on disrupting discourses that continue to reinforce
+                                                                                           structures of power and knowledge that make a nuclear world possible. Focusing on the everyday
+                                                                                             46
+                                                                                                 David Hodgson, ‘Complete intel: Call of Duty: Modern Warfare III, Call of Duty: Warzone, and Call of Duty: Warzone:
+                                                                                           Mobile Season 3: Everything you need to know’, Call of Duty blog, 27 March 2024, available at: {https://www.callofduty.com/
+                                                                                           blog/2024/03/call-of-duty-modern-warfare-iii-warzone-wzm-season-3-maps-modes-zombies-announcement#Quest}.
+                                                                                              47
+                                                                                                 See, for example, this post from Dexerto, a video game and entertainment news website operated by Dexerto Limited, 3
+                                                                                           April 2024, available at: {https://x.com/charlieINTEL/status/1775572855893148051}.
+                                                                                              48
+                                                                                                 S. E. Doster ‘CoD: Warzone – How to do Rebirth Island’s Champion’s Quest Nuke Challenge’, Gamespot, 28 March 2024,
+                                                                                           available at: {https://www.gamespot.com/articles/cod-warzone-how-to-do-rebirth-islands-champions-quest-nuke-challenge/
+                                                                                           1100-6522448/}.
+                                                                                              49
+                                                                                                 Some excellent works in this area include Joshua A. Schwartz, ‘When foreign countries push the button’, International
+                                                                                           Security, 48:4 (2024), pp. 47–86; Lauren Sukin, ‘Credible nuclear security commitments can backfire: Explaining domestic sup-
+                                                                                           port for nuclear weapons acquisition in South Korea’, Journal of Conflict Resolution, 64:6 (2020), pp. 1011–42. Michal Smetana,
+                                                                                           Marek Vranka, and Ondrej    ̌ Rosendorf, ‘Public support for arms control in the Third Nuclear Age: Cross-national study in
+                                                                                           NATO countries’, 10 July 2024, available at: {http://dx.doi.org/10.2139/ssrn.4881267}.
+                                                                                              50
+                                                                                                 For a database on people’s opinions on nuclear use, see {https://www.prcprague.cz/nuclear-taboo-database}.
+                                                                                              51
+                                                                                                 Ritchie, ‘Valuing and devaluing nuclear weapons’, p. 146.
+                                                                                           694       Carolina Pantoliano
+
+
+                                                                                           politics of nuclear weapons can help us uncover discursive practices that often remain invisible
+                                                                                           beneath the well-established assumptions surrounding the state-centric nature of nuclear politics.
+
+                                                                                           Call of Duty and its worst-kept secret
+                                                                                           While the nuclear weapon in Call of Duty has been tweaked and revamped over the years, in the
+                                                                                           multiplayer mode, it remains one of the most advantageous ways to gain match victories. Activision
+                                                                                           likes to refer to nuclear weapons as a ‘worst-kept secret’, as there is certain exclusivity, secrecy, and
+                                                                                           privilege surrounding the acquisition of these bombs. Ultimately, they are not primarily advertised
+                                                                                           as part of the game experience. The nuclear weapon is ‘a hidden killstreak’; it becomes available only
+                                                                                           when players achieve an extraordinary score or milestone in the game. In campaign stories, while
+                                                                                           the dangerous nature of these weapons is depicted in some titles, representations also reinforce the
+                                                                                           extraordinary power and exceptionalist dynamics seen in multiplayer games. Table 1 shows a list
+                                                                                           of titles examined for this study and summarises key findings.
+                                                                                              In the sections below, I focus on two specific game narratives: (i) the nuclear reward and (ii)
+                                                                                           the nuclear success. Deconstructing each of these stories in relation to the rules, incentives, and
+                                                                                           narratives shaping the gameplay experience, I show how Call of Duty reproduces well-established
+                                                                                           understandings about nuclear weapons, their possessors, and the future. I begin with an analysis
+                                                                                           of the requirements to acquire the weapon and then examine what happens when one is deto-
+                                                                                           nated. Where nuclear weapons are depicted in single-player campaign modes, I examined how
+                                                                                           representations reinforce and/or challenge multiplayer game dynamics.
+                                                                                              The overarching argument I want to make is that, as a popular culture artefact, Call of Duty
+                                                                                           contributes to constructing knowledge about nuclear weapons in subtle but significant ways to
+                                                                                           very large audiences of people across the globe. Crucially, this work seeks to draw attention to the
+                                                                                           importance of interrogating, as Weldes put it, ‘the everyday cultural conditions’ that make a nuclear
+                                                                                           world possible.52 These stories, and all stories we engage, tell, write, and play matter as representa-
+                                                                                           tions and ‘are never merely descriptive, but always normative and as such, exclusionary’.53 There is
+                                                                                           something unique about video games that allows developers to insert certain conditionalities and
+                                                                                           create storylines that seem unattainable. However, at the same time, such stories represent imagin-
+                                                                                           able worlds. The ambivalence and somewhat-extraordinary experience provided by video games,
+                                                                                           where one is granted permission to engage with the unthinkable and unspeakable, is in itself a story
+                                                                                           of nuclear politics.
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           The nuclear reward
+                                                                                           In Call of Duty, to earn a nuclear weapon, players are required to achieve the highest scores or mile-
+                                                                                           stones at standards that are incredibly difficult to maintain. As the developers of Warzone recently
+                                                                                           revealed in an official blog post, ‘[the game] is hard, extremely intense, and the pacing is high’, and
+                                                                                           ‘if you hesitate or make a mistake, you’ll probably fail’. Developers have designed game dynamics
+                                                                                           ‘asking for perfection from players’.54 In this context, nuclear weapons are portrayed as exclusive
+                                                                                           assets, secret weapons that only a select few can benefit from possessing. The rationale of all nuclear
+                                                                                           rewards in Call of Duty, except for the Warzone nuclear contracts, is that players must eliminate
+                                                                                           several enemies without dying. The number may vary depending on the game, but the logic remains
+                                                                                           the same. For example, in Modern Warfare III, a player must achieve 30 consecutive kills, a score
+                                                                                           that is statistically rare as it requires expertise, skill, and practice. In Warzone, developers intro-
+                                                                                           duced nuclear weapons as a special mission, where players need to achieve an impressive score
+                                                                                           before being granted access to this exclusive part of the game. The requirements are that players
+                                                                                           should win 5 consecutive matches or 30 matches in total in a single season. The Champions Quest,
+                                                                                             52
+                                                                                                 Weldes, ‘Going cultural’, p. 133.
+                                                                                             53
+                                                                                                 Butler, Gender Trouble, p. 166.
+                                                                                              54
+                                                                                                 Valerie Lee, ‘Intel drop: Behind-the-Scenes with the Beenox Team’, Call of Duty official blog, 29 March 2024, available at:
+                                                                                           {https://www.callofduty.com/blog/2024/03/call-of-duty-warzone-rebirth-island-return-beenox-interview#Resurgence}.
+                                                                                                                                                                             Review of International Studies            695
+
+                                                                                           Table 1. Call of duty games by year.
+                                                                                             Title                         Year    Multiplayer depictions                       Campaign depictions
+                                                                                             Call of Duty 4: Modern        2007    Not featured.                                A nuclear weapon is detonated and
+                                                                                             Warfare                                                                            kills Sergeant Paul Jackson and
+                                                                                                                                                                                several troops.
+                                                                                             Call of Duty: Modern          2009    25 kills to earn the nuke; detonat-          Previous detonation (CoD4) is
+                                                                                             Warfare 2                             ing it ends the game and grants              briefly mentioned in the story;
+                                                                                                                                   immediate victory.                           another nuclear detonation destroys
+                                                                                                                                                                                International Space Station.
+                                                                                             Call of Duty: Black Ops       2010    Not featured.                                Due to tensions between the US and
+                                                                                                                                                                                USSR, the US plans a pre-emptive
+                                                                                                                                                                                nuclear strike.
+                                                                                             Call of Duty: Modern          2011    25 kills to earn the M.O.A.B. (mother        A terrorist organisation seeks a code
+                                                                                             Warfare 3                             of all bombs); detonating it does            to activate a nuclear device.
+                                                                                                                                   not end the game but grants
+                                                                                                                                   advantages.
+                                                                                             Call of Duty: Black Ops II    2012    Not featured.                                Not featured.
+                                                                                             Call of Duty: Ghosts          2013    25 kills to earn the K.E.M. (Kinetic         The game is set in a scenario that
+                                                                                                                                   Energy Missile) Strike; detonating it        follows the nuclear destruction of
+                                                                                                                                   does not end the game but grants             the Middle East.
+                                                                                                                                   advantages.
+                                                                                             Call of Duty: Advanced        2014    30 kills to earn a DNA bomb; deto-           The story’s plot features a terror-
+                                                                                             Warfare                               nating it does not end the game but          ist group launching simultaneous
+                                                                                                                                   grants advantages.                           attacks against nuclear power plants
+                                                                                                                                                                                worldwide, irradiating numerous
+                                                                                                                                                                                cities, and killing 50,000 people.
+                                                                                             Call of Duty: Black Ops III   2015    Not featured.                                Not featured.
+                                                                                             Call of Duty: Infinite        2016    25 kills with specific weapons to            Not featured.
+                                                                                             Warfare                               earn De-Atomizer Strike; detonat-
+                                                                                                                                   ing it ends the game and grants
+                                                                                                                                   immediate victory.
+                                                                                             Call of Duty: WWII            2017    Pre-requisites (earn prestige in every       Not featured.
+                                                                                                                                   division at least one time), 25 kills
+                                                                                                                                   to earn V2 Rocket; detonating it
+                                                                                                                                   does not end the game but grants
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                                                                   advantages.
+                                                                                             Call of Duty: Black Ops 4     2018    Not featured.                                No single player campaign mode.
+                                                                                             Call of Duty: Modern          2019    30 kills to earn a tactical nuke; deto-      Not featured.
+                                                                                             Warfare                               nating it ends the game and grants
+                                                                                                                                   immediate victory.
+                                                                                             Call of Duty: Black Ops       2020    30 kills to earn a nuke; detonat-            The campaign story revolves around
+                                                                                             Cold War                              ing it ends the game and grants              preventing a nuclear conflict during
+                                                                                                                                   immediate victory.                           the Cold War.
+                                                                                             Call of Duty: Vanguard        2021    30 kills to earn V2 Rocket; detonat-         Not featured.
+                                                                                                                                   ing it ends the game and grants
+                                                                                                                                   immediate victory.
+                                                                                             Call of Duty: Modern          2022    30 kills to earn a nuke; detonat-            In Mission 17 the player must stop a
+                                                                                             Warfare II                            ing it ends the game and grants              missile headed to Washington, DC.
+                                                                                                                                   immediate victory.
+                                                                                             Call of Duty: Warzone         2020/   Win 5 consecutive matches or 30 in           No single-player campaign mode.
+                                                                                                                           2022    total within a single season to access
+                                                                                                                                   the nuke contract; detonating it ends
+                                                                                                                                   the game and grants immediate
+                                                                                                                                   victory and special rewards.
+                                                                                             Call of Duty: Modern          2023    30 kills to earn a nuke; detonat-            Players must prevent the antagonist
+                                                                                             Warfare III                           ing it ends the game and grants              from securing nuclear material left
+                                                                                                                                   immediate victory.                           behind in an abandoned nuclear
+                                                                                                                                                                                power plant.
+                                                                                           696        Carolina Pantoliano
+
+
+                                                                                           or nuke contract, as it is usually referred to, requires collecting nuclear materials, assembling a
+                                                                                           nuclear bomb, and detonating it.55 To date, developers released several unique missions on differ-
+                                                                                           ent scenarios, such as the iconic Al Mazrah, Urzikstan,56 and, more recently, Rebirth Island, where
+                                                                                           players must complete tasks within a specific time to complete the mission.
+                                                                                               The nuclear reward enables players to decide and control the match’s outcome, which is the
+                                                                                           most privileged position in the game. Detonating the nuclear weapon will grant immediate victory
+                                                                                           to the player and their team, as well as rewarding them with selected items. Interestingly, some
+                                                                                           titles, like Modern Warfare 3 and Ghosts, feature other special weapons that are difficult to obtain
+                                                                                           and yield extra points. However, using these weapons does not end the game. The representations
+                                                                                           found in campaign stories are less explicit about the reward narrative and focus on the danger
+                                                                                           of having these technologies in the hands of irresponsible actors, such as terrorist organisations.
+                                                                                           To interrogate what is represented in the game and examine the realities informing depictions as
+                                                                                           well as how representations reiterate and/or challenge knowledge about nuclear weapons, I now
+                                                                                           turn my attention to critical nuclear weapons scholarship. This body of work explores how power
+                                                                                           inequalities, gendered understandings, and colonial logics perpetuate the nuclear status quo as well
+                                                                                           as how such inequalities are validated and sustained.
+                                                                                               In Nuclear Desire: Power and the Postcolonial Nuclear Order, Shampa Biswas57 draws attention to
+                                                                                           the exclusionary dynamics that sustain the nuclear status quo and how the often-acclaimed Non-
+                                                                                           Proliferation Treaty (NPT) institutionalises the norms that make inequalities possible. Questioning
+                                                                                           ‘Whose order?’, Biswas critiques the liberal ‘triumphalist narrative’ of the NPT and presents the
+                                                                                           treaty as an instrument of hierarchy ordering and a way to freeze the nuclear status quo, where only
+                                                                                           some states have access to what others are denied. The analysis captures the relations of power insti-
+                                                                                           tuted by the rules of the NPT, where five states were acknowledged as nuclear-armed states while
+                                                                                           others committed to exercising nuclear restraint.58 While the agreement rests upon the disarma-
+                                                                                           ment condition, progress has been minimal, with some scholars suggesting that the disarmament
+                                                                                           principle perpetuates possession rather than the elimination of nuclear weapons.59 With this, the
+                                                                                           NPT is central to establishing and perpetuating inequalities in global politics and sets the standards
+                                                                                           and norms that can be used to justify political choices, including ongoing possession and mod-
+                                                                                           ernisation, in nuclear politics.60 As Biswas put it, non-nuclear states remain in the ‘waiting room
+                                                                                           of history, never quite ready to handle the nuclear weapons that existing NWS [nuclear weapons
+                                                                                           states] deem necessary for their own security yet unavailable to NNWS [non-nuclear weapons
+                                                                                           states] regardless of their actual felt insecurities’.61
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                               Critical scholars have drawn attention to a myriad of discursive mechanisms rendering nuclear
+                                                                                           possession acceptable.62 Feminist contributions show how culturally embedded gendered under-
+                                                                                           standings pervade global politics/nuclear politics and help legitimise nuclear hierarchies and
+                                                                                           possession.63 I have shown elsewhere that gendered understandings about war are reproduced
+                                                                                           in nuclear discourse, and this helps nuclear possessors and their weapons to pass as normal.
+                                                                                              55
+                                                                                                  Doster, ‘CoD: Warzone’.
+                                                                                              56
+                                                                                                  Doster, ‘Call Of Duty: Warzone’.
+                                                                                               57
+                                                                                                  Biswas, Nuclear Desire.
+                                                                                               58
+                                                                                                  NPT, Treaty on the Non-Proliferation of Nuclear Weapons (NPT), UNODA, available at: {https://www.un.org/
+                                                                                           disarmament/wmd/nuclear/npt/text/}.
+                                                                                               59
+                                                                                                  Egeland, ‘The ideology of nuclear order’; Panico, ‘Making nuclear possession possible’.
+                                                                                               60
+                                                                                                  Joelien Pretorius and Tom Sauer, ‘Is it time to ditch the NPT?’, Bulletin of the Atomic Scientists, 6 September 2019, available
+                                                                                           at: {https://thebulletin.org/2019/09/is-it-time-to-ditch-the-npt/}.
+                                                                                               61
+                                                                                                  Biswas, Nuclear Desire, p. 97.
+                                                                                               62
+                                                                                                  See, for example, Laura Rose Brown and Laura Considine, ‘Examining “gender-sensitive” approaches to nuclear weapons
+                                                                                           policy: A study of the Non-Proliferation Treaty’, International Affairs, 98:4 (2022), pp. 1249–66; Cohn, ‘Sex and death in the
+                                                                                           rational world of defense intellectuals’, Claire Duncanson and Catherine Eschle, ‘Gender and the nuclear weapons state: A
+                                                                                           feminist critique of the UK government’s white paper on Trident’, New Political Science, 30:4 (2008), pp. 545–63; Pelopidas,
+                                                                                           ‘The birth of nuclear eternity’.
+                                                                                               63
+                                                                                                  Panico, ‘Challenging war traditions’; Duncanson and Eschle, ‘Gender and the nuclear weapons state’; Shine Choi and
+                                                                                           Catherine Eschle, ‘Rethinking global nuclear politics, rethinking feminism’, International Affairs, 98:4 (2022), pp. 1129–47.
+                                                                                                                                                                             Review of International Studies              697
+
+
+                                                                                           The legitimacy and power of nuclear-armed states are contingent upon the intelligibility of non-
+                                                                                           nuclear actors’ vulnerabilities and, thus, the very existence of such power relations.64 Along similar
+                                                                                           lines, the concept of ‘nuclear orientalism’ advanced by Hugh Gusterson65 sheds light on how the
+                                                                                           Western public discourse about nuclear weapons situates the bomb as a guarantor of security, a
+                                                                                           good weapon. In contrast, the weapons of others are portrayed as dangerous and evil, which also
+                                                                                           functions as a justificatory narrative. As a result, power inequalities as well as gendered and orien-
+                                                                                           talist ideas shape the nuclear order and help constitute knowledge that upholds the legitimacy of
+                                                                                           the nuclear status quo.66
+                                                                                               Moreover, colonial logics sit at the heart of the global nuclear order.67 This is reflected not only
+                                                                                           in the institutional arrangements created to supposedly regulate nuclear technology but also in
+                                                                                           how these weapons are (or were) made, tested, and deployed. Arundhati Roy’s analysis of nuclear
+                                                                                           weapons as ‘the ultimate coloniser’68 calls attention to how nuclear weapons are deeply entrenched,
+                                                                                           sometimes quite subtly, in mechanisms that seek to prioritise the purported security of some over
+                                                                                           the expense of the lives of others. To this end, the work of Teresia Teaiwa on how the bikini bathing
+                                                                                           suit manifests ‘celebration and forgetting’ of the nuclear power that ‘strategically and materially
+                                                                                           marginalises and erases the living history of Pacific Islanders’69 illustrates some of these violent
+                                                                                           mechanisms. Racialised perspectives shaped decisions about nuclear testing programmes, where
+                                                                                           colonial ideas depicted Indigenous peoples as expendable and their ‘distant lands’ as worthless.
+                                                                                           Using similar analytical tools, Gabrielle Hecht shows how the West relies on African uranium
+                                                                                           mining, drawing attention to the exploitation of the Global South to maintain the capabilities of
+                                                                                           nuclear-armed states.70
+                                                                                               What is crucial for the argument advanced in this section is that relations of power are not
+                                                                                           merely exclusionary but also constitutive of the knowledge structures that make a nuclear world
+                                                                                           possible. While Call of Duty represents a seemingly simple narrative that rests upon the idea of
+                                                                                           rewarding deserving players, it reproduces, I argue, the exclusionary arrangements that sustain the
+                                                                                           nuclear status quo where only a few ‘deserving’ states are allowed to possess nuclear weapons. It
+                                                                                           celebrates the nuclear power that rewarded a few selected states with the capability to seemingly
+                                                                                           secure and protect while effectively endangering and harming those deemed less civilised, respon-
+                                                                                           sible, and skilled. Notably, the reward narrative – where players can decide the outcome of the
+                                                                                           match in their favour – represents the privileged and powerful position of nuclear-armed states
+                                                                                           in the global politics. In Modern Warfare II, for example, the image of the player pressing a but-
+                                                                                           ton to deploy the bomb precisely reflects the perceived advantages and power of possessing nuclear
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           weapons (Figure 1). This image reproduces the idea that the future hinges on the nuclear possessor’s
+                                                                                           judgement, command, and control.
+                                                                                               Power relations are also replicated through the ‘Champions Quest’ language used to identify the
+                                                                                           special nuclear contracts of Warzone. The words ‘Champions’ and ‘Quest’ reinforce the weapon’s
+                                                                                           prestige and the exceptionalism that informs structures of knowledge legitimising its existence. It
+                                                                                           is something that only the most formidable players, the champions, will be able to experience. In
+                                                                                           video games, quests are generally associated with understandings of pleasure, great value, or signif-
+                                                                                           icance which will lead to rewards and story progression. These meanings contribute to validating
+                                                                                           the exceptional value of nuclear weapons and situate the bomb as beneficial, helpful, and worth
+                                                                                           pursuing.
+                                                                                             64
+                                                                                                 Panico, ‘Challenging war traditions’.
+                                                                                             65
+                                                                                                 Hugh Gusterson, Nuclear Rites: A Weapons Laboratory at the End of the Cold War (Berkeley: University of California Press,
+                                                                                           1996).
+                                                                                              66
+                                                                                                 Crilley, Unparalleled Catastrophe; Pelopidas, ‘The birth of nuclear eternity’; Teresia K. Teaiwa, ‘bikinis and other s/pacific
+                                                                                           n/oceans’, The Contemporary Pacific, 6:1 (1994), pp. 87–109.
+                                                                                              67
+                                                                                                 Karly D. Burch, ‘The consequences of nuclear imperialism and colonialism’, Newsroom, 23 November 2022, available at:
+                                                                                           {http://newsroom.co.nz/2022/11/23/the-consequences-of-nuclear-imperialism-and-colonialism/}.
+                                                                                              68
+                                                                                                 Arundhati Roy, The End of Imagination (Chicago: Haymarket Books, 2016), p. 59.
+                                                                                              69
+                                                                                                 Teaiwa, ‘bikinis and other s/pacific n/oceans’, p. 87.
+                                                                                              70
+                                                                                                 Gabrielle Hecht, ‘Nuclear ontologies’, Constellations, 13:3 (2006), pp. 320–31.
+                                                                                           698       Carolina Pantoliano
+
+
+
+
+                                                                                           Figure 1. Deploying a nuclear weapon. Copyright © 2023 Activision Publishing, Inc., reproduced in accordance with fair use.
+
+
+                                                                                               Campaign depictions of US-based protagonists fighting against irresponsible actors reinforce
+                                                                                           the logic of protection identified by feminist scholars. The game portrays characters racing against
+                                                                                           time to stop ballistic missile launches71 and prevent attacks on nuclear power plants.72 Many
+                                                                                           nuclear-armed states proudly present themselves as responsible stewards and protectors of world
+                                                                                           order,73 which remains central, feminist scholars argue, to the legitimacy of configurations of power
+                                                                                           and the ongoing possession and modernisation of nuclear weapons. Thus, Call of Duty provides
+                                                                                           an opportunity to reinforce the knowledge structures, grounded in power relations, that make
+                                                                                           nuclear weapons a persistent feature of global politics. The narratives about nuclear weapons serve
+                                                                                           as important sites of knowledge production, making power hierarchies understandable while sus-
+                                                                                           taining a discourse of responsibility that favours nuclear possession and perpetuates a violent status
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           quo.74
+
+                                                                                           Nuclear success
+                                                                                           Detonating the bomb in Call of Duty triggers a countdown, followed by a screen displaying the
+                                                                                           words ‘nuke’ and ‘victory’ against the backdrop of a massive explosion (Figures 2, 3, and 4). Once it
+                                                                                           explodes and all players are, as many specialised websites describe, obliterated, victory is awarded
+                                                                                           to the player who deployed the weapon and their team, regardless of the match’s score. Nuclear
+                                                                                           weapons are thus programmed as a win-condition, rewarding players for their skill and excellent
+                                                                                           performance. Nuclear detonations are less prominent in campaign stories, with only a few games
+                                                                                           incorporating nuclear explosions and ballistic missile launches in their storylines. Nonetheless,
+                                                                                           it is important to note that, differently from multiplayer games, campaign stories have not always
+                                                                                           portrayed nuclear weapons as beneficial and advantageous. In the famous ‘Shock and Awe’ mission
+                                                                                           in Call of Duty 4, a nuclear detonation in the Middle East kills a large number of troops, including
+                                                                                             71
+                                                                                                Modern Warfare 2, Modern Warfare II, and Modern Warfare III.
+                                                                                             72
+                                                                                                Modern Warfare III.
+                                                                                             73
+                                                                                                See Panico, ‘Challenging war traditions’; Duncanson and Eschle, ‘Gender and the nuclear weapons state’.
+                                                                                             74
+                                                                                                Laura Considine and James Souter, ‘State responsibilities and international nuclear politics’, in Hannes Hansen-
+                                                                                           Magnusson and Antje Vetterlein (eds), The Routledge Handbook on Responsibility in International Relations (London:
+                                                                                           Routledge, 2021), pp. 164–176.
+                                                                                                                                                                        Review of International Studies          699
+
+
+
+
+                                                                                           Figure 2. Call of Duty: Modern Warfare III (2023). Follow-up screen after using a nuclear weapon. Copyright © 2023
+                                                                                           Activision Publishing, Inc., reproduced in accordance with fair use.
+
+
+
+
+                                                                                           Figure 3. Call of Duty: Modern Warfare 2 (2009). Follow-up screen after using a nuclear weapon. Copyright © 2023 Activision
+                                                                                           Publishing, Inc., reproduced in accordance with fair use .
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           Figure 4. Call of Duty: Modern Warfare (2019). Follow-up screen after using a nuclear weapon. Copyright © 2023 Activision
+                                                                                           Publishing, Inc., reproduced in accordance with fair use.
+
+
+                                                                                           the player’s character, Sergeant Paul Jackson. Conversely, in Modern Warfare 2, a nuclear explo-
+                                                                                           sion creates an Electro Magnetic Pulse that disables electronic devices across the eastern United
+                                                                                           States and helps reduce some of the intense fighting around Washington, DC. Here, while the game
+                                                                                           shows images of a burning city and situates the nuclear weapon as responsible for destroying the
+                                                                                           International Space Station (ISS), the bomb is still featured in terms of its beneficial outcomes.
+                                                                                              As I develop my analysis, I consider the win-condition in terms of achieving successful out-
+                                                                                           comes such as power, security, and stability. While nuclear weapons are detonated in the game,
+                                                                                           700       Carolina Pantoliano
+
+
+                                                                                           these weapons are depicted as a valuable asset that grants a path to a favourable outcome, which
+                                                                                           is a prominent logic informing deterrence-oriented thinking about nuclear weapons.75 In these
+                                                                                           terms, nuclear weapons are widely regarded as a security feature that can help maintain peace and
+                                                                                           stability (successful outcomes). In any case, portraying nuclear weapons as symbols of success is
+                                                                                           problematic; it still reinforces the strategic logic and perceived military value of these weapons.
+                                                                                               The utility of nuclear weapons remains contested in the discipline of IR and in policymaking
+                                                                                           spaces, with many scholars and practitioners challenging its purported benefits.76 Nonetheless,
+                                                                                           scholars have theorised how nuclear weapons may serve to balance power, deter aggression, and
+                                                                                           guarantee security.77 As Hugh Gusterson shows in his anthropological study of nuclear weapons
+                                                                                           laboratories, the driving principle in these spaces was that ‘nuclear weapons exist to save lives and
+                                                                                           prevent war’.78 Beyond material capabilities, nuclear weapons have been socially constructed as
+                                                                                           ‘the currency of power’,79 valued as ‘a symbol of modernity’,80 and may also be associated with
+                                                                                           ‘great power responsibility’.81 Jacques E. C. Hymans’s analysis of nuclear weapons utilising the
+                                                                                           ‘bomb as God’ metaphor captures how nuclear weapons are perceived as sublime, mysterious,
+                                                                                           and yet exceptionally powerful, and this shapes the political choices around non-proliferation
+                                                                                           and disarmament.82 For instance, Robert Jay Lifton and Greg Mitchell argued in the 1990s that
+                                                                                           ‘Oppenheimer was actually ambivalent toward the hydrogen bomb, but what he subverted in such a
+                                                                                           statement was precisely what nuclearism, from Truman onward, sought always to conceal: that they
+                                                                                           had surrendered to and at the same time identified with the weapon’s promise of godlike power’.83
+                                                                                           Ultimately, for many states, particularly those that possess nuclear weapons, the bomb, like the
+                                                                                           representations in Call of Duty, is a life-changing tool to reverse the course of events regardless of
+                                                                                           the situation.
+                                                                                               The exceptional nature of nuclear weapons and their capability to bring incontestable success is
+                                                                                           often invoked in state discourse. Nuclear-armed states speak of their nuclear arsenals as an asset
+                                                                                           to deter aggression and protect partners and allies while preserving global peace and stability. For
+                                                                                           example, in its Integrated Review of 2021, the United Kingdom refers to nuclear weapons as crucial
+                                                                                           ‘to deter the most extreme threats to national security and way of life, helping guarantee security
+                                                                                           and that of allies’.84 Similar ideas are laid out in the Integrated Review Refresh of 2023.85 Likewise,
+                                                                                           NATO claims that ‘it [the nuclear weapon] has the capabilities and the resolve to impose costs on
+                                                                                           the adversary that would be unacceptable and far outweigh the benefits that any adversary could
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                              75
+                                                                                                 Thomas C. Schelling, Arms and Influence (New Haven, CT: Yale University Press, 2020); Kenneth N. Waltz, ‘The spread
+                                                                                           of nuclear weapons: More may be better. Introduction’, The Adelphi Papers, 21:171 (1981), p. 1.
+                                                                                              76
+                                                                                                 Ray Acheson, Banning the Bomb, Smashing the Patriarchy (Lanham, MD: Rowman & Littlefield, 2021); Marianne Hanson,
+                                                                                           Challenging Nuclearism: A Humanitarian Approach to Reshape the Global Nuclear Order (Manchester: Manchester University
+                                                                                           Press, 2022); Alexander Kmentt, The Treaty Prohibiting Nuclear Weapons: How It Was Achieved and Why It Matters (London:
+                                                                                           Routledge, 2021).
+                                                                                              77
+                                                                                                 Waltz, ‘The spread of nuclear weapons’, p. 1; Bernard Brodie, ‘The anatomy of deterrence’, World Politics, 11:2 (1959), pp.
+                                                                                           173–91; Schelling, Arms and Influence.
+                                                                                              78
+                                                                                                 Gusterson, Nuclear Rites, p. 57.
+                                                                                              79
+                                                                                                 Harrington, ‘Nuclear weapons as the currency of power’.
+                                                                                              80
+                                                                                                 Sagan, ‘Why do states build nuclear weapons?’.
+                                                                                              81
+                                                                                                 Michael Quinlan, Thinking about Nuclear Weapons: Principles, Problems, Prospects (Oxford: Oxford University Press,
+                                                                                           2009).
+                                                                                              82
+                                                                                                 Jacques E. C. Hymans, ‘The Bomb as God: A metaphor that impedes nuclear disarmament’, Security Studies, 33:1 (2023),
+                                                                                           pp. 1–29, available at: {https://doi.org/10.1080/09636412.2023.2256655}.
+                                                                                              83
+                                                                                                 Robert J. Lifton and Greg Mitchell, Hiroshima in America: A Half Century of Denial (New York: Harper Perennial, 1996),
+                                                                                           p. 334.
+                                                                                              84
+                                                                                                 United Kingdom, ‘Global Britain in a Competitive Age: The Integrated Review of Security, Defence, Development and
+                                                                                           Foreign Policy’, March 2021, available at: {https://assets.publishing.service.gov.uk/government/uploads/system/uploads/
+                                                                                           attachment_data/file/975077/Global_Britain_in_a_Competitive_Age-_the_Integrated_Review_of_Security__Defence__
+                                                                                           Development_and_Foreign_Policy.pdf}.
+                                                                                              85
+                                                                                                 United Kingdom, ‘Integrated Review Refresh 2023’, 1 March 2023, available at: {https://assets.publishing.service.gov.uk/
+                                                                                           media/641d72f45155a2000c6ad5d5/11857435_NS_IR_Refresh_2023_Supply_AllPages_Revision_7_WEB_PDF.pdf}.
+                                                                                                                                                                          Review of International Studies             701
+
+
+                                                                                           hope to achieve’.86 What is noteworthy in these examples when compared to what is being repre-
+                                                                                           sented in Call of Duty is that nuclear weapons are portrayed as decisive and precise responses that
+                                                                                           will generate the expected and favourable outcome no matter the obstacle. As the United Kingdom
+                                                                                           puts it, nuclear weapons ensure that other states ‘can never use their nuclear weapons to threaten
+                                                                                           and constrain [their] decision making’.87 In Call of Duty, nuclear capabilities are portrayed as a path
+                                                                                           to successful results, where players can control and secure the match, concepts linked to claims
+                                                                                           of strategic stability in global politics. Crucially, the overarching narrative in Call of Duty is that
+                                                                                           nuclear weapons are a guarantor of success, which replicates well-established ideas around these
+                                                                                           weapons’ capability to guarantee security.
+                                                                                              This perceived success in protecting, securing, and deterring has been addressed in several stud-
+                                                                                           ies as knowledge that reiterates dominant understandings that make a nuclear world possible.88
+                                                                                           For example, Carol Cohn critiques the sense of control afforded by mastering the technostrate-
+                                                                                           gic language, including ideas about deterrence, and draws attention to how it is carefully crafted
+                                                                                           to produce a sense of calculated, successful, and rational choices.89 However, this language, Cohn
+                                                                                           argues, ‘does not allow certain questions to be asked or certain values to be expressed’.90 This is
+                                                                                           important because, as in Call of Duty, the strategic discourse forecloses important ideas around
+                                                                                           the inhumanity of nuclear weapons. Likewise, Benoît Pelopidas critiques the overconfidence in the
+                                                                                           controllability of nuclear technology and draws attention to how states like France ‘stand out for
+                                                                                           their public display of confidence in the perfect safety record of their nuclear arsenal’.91 These ideas
+                                                                                           promote a view of nuclear weapons that overlooks alternatives to nuclear deterrence, such as the
+                                                                                           role of luck in preventing nuclear catastrophe, and downplays the urgent need to pursue nuclear
+                                                                                           disarmament. As such, the nuclear success narrative represented in Call of Duty is part of a cultural
+                                                                                           apparatus that continues to glorify nuclear weapons while silencing other mechanisms through
+                                                                                           which the weapon impacts the world, including neglecting the colonial, racialised, and gendered
+                                                                                           logics underpinning nuclear weapons’ existence. As Cohn concludes, ‘the dominant voice of mili-
+                                                                                           tarised masculinity and decontextualized rationality speaks so loudly in our culture, it will remain
+                                                                                           difficult for any other voices to be heard until that voice loses some of its power’.92
+                                                                                              What is crucial for the argument is that even though nuclear weapons have not been used since
+                                                                                           1945 and have not been widely tested since the end of the Cold War, the understandings that
+                                                                                           informed these decisions and legitimised such actions still pervade the global nuclear order.93 The
+                                                                                           success of nuclear-armed states in accumulating power and securing strategic advantages rests on
+                                                                                           supressing the humanitarian and environmental impacts of nuclear weapons. After the destruc-
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           tion of Hiroshima and Nagasaki, which by the end of 1945 had killed an estimated 214,000 people,
+                                                                                           nuclear-armed states conducted more than 2,000 nuclear detonations. These so-called tests not
+                                                                                           only displaced and harmed thousands of people but also still cause severe health problems in
+                                                                                           affected communities. The environment at testing sites has been dramatically affected, with many
+                                                                                           arguing that the worst is yet to come, as climate change will accelerate the degradation of structures
+
+                                                                                              86
+                                                                                                 NATO, ‘NATO’s nuclear deterrence policy and forces’, 30 November 2023, available at: {https://www.nato.int/cps/en/
+                                                                                           natohq/topics_50068.htm}, accessed 28 March 2024.
+                                                                                              87
+                                                                                                 United Kingdom ‘The UK’s nuclear deterrent: What you need to know’, 28 March 2024, available at: {https://www.
+                                                                                           gov.uk/government/publications/uk-nuclear-deterrence-factsheet/uk-nuclear-deterrence-what-you-need-to-know}, acessed
+                                                                                           30 March 2024.
+                                                                                              88
+                                                                                                 Biswas, Nuclear Desire; Cohn, ‘Sex and death in the rational world of defense intellectuals’; Crilley, Unparalleled
+                                                                                           Catastrophe; Panico, ‘Challenging war traditions’; Benoît Pelopidas, ‘The unbearable lightness of luck: Three sources of
+                                                                                           overconfidence in the manageability of nuclear crises’, European Journal of International Security, 2:2 (2017), pp. 240–62.
+                                                                                              89
+                                                                                                 Cohn, ‘Sex and death in the rational world of defense intellectuals’.
+                                                                                              90
+                                                                                                 Cohn, ‘Sex and death in the rational world of defense intellectuals’, p. 708.
+                                                                                              91
+                                                                                                 Pelopidas, ‘The unbearable lightness of luck’, p. 242.
+                                                                                              92
+                                                                                                 Cohn, ‘Sex and death in the rational world of defense intellectuals’, p. 717.
+                                                                                              93
+                                                                                                 It is crucial to remain attentive to how the language of ‘testing’ can obscure the real impacts of what in reality was the
+                                                                                           actual use of nuclear weapons. See Ruoyu Li, ‘Testing as the blindspot of nuclear nonuse’, Security Studies, 33:3 (2024), pp.
+                                                                                           348–71.
+                                                                                           702       Carolina Pantoliano
+
+
+
+
+                                                                                           Figure 5. Call of Duty: Warzone (2022). Follow-up screen after using a nuclear weapon. Copyright © 2023 Activision
+                                                                                           Publishing, Inc., reproduced in accordance with fair use.
+
+
+
+
+                                                                                           Figure 6. Call of Duty: Warzone (2022). Follow-up screen after using a nuclear weapon. Copyright © 2023 Activision
+                                                                                           Publishing, Inc., reproduced in accordance with fair use.
+
+
+                                                                                           built to supposedly ‘control’ the spread of radioactive material.94 Like the stories supressed to sup-
+                                                                                           port the ongoing possession and modernisation of nuclear weapons, Call of Duty’s nuclear success
+                                                                                           narrative subdues the humanitarian and environmental impacts of nuclear weapons detonations.
+                                                                                               Gameplay visuals are primarily focused on glorifying the magnificent mushroom cloud and
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           its acclaimed features, e.g. bright red colours and mushroom-shaped cloud, which rapidly leads
+                                                                                           to an ending scene displaying the scores and granting victory to the nuclear possessor and their
+                                                                                           team (Figures 5 and 6). As a result, the use of nuclear weapons rewards those who possess them,
+                                                                                           just as nuclear use and testing have supposedly done, while simultaneously obscuring the ongoing
+                                                                                           devastation caused by nuclear detonations. The legitimacy of nuclear weapons is upheld not only by
+                                                                                           discourses celebrating their success but also by the silenced stories of nuclear harm and injustice. To
+                                                                                           this end, it is imperative to theorise the complex cultural mechanisms (re-)entrenching possibilities
+                                                                                           in which the weapon is a path to fortune rather than a catastrophe in global politics. Identifying
+                                                                                           and understanding these mechanisms is of utter importance for realising a world free of nuclear
+                                                                                           weapons.
+
+                                                                                           The nuke pleasure and the politics of play
+                                                                                           So far, I have examined the narratives represented in Call of Duty and focused on how these stories
+                                                                                           reinforce dominant knowledge about nuclear weapons and the nuclear status quo. As I have shown,
+                                                                                             94
+                                                                                                Patricia A. O’Brien, ‘75 years after nuclear testing in the Pacific began, the fallout continues to wreak havoc’, The
+                                                                                           Conversation, 5 April 2021, available at: {http://theconversation.com/75-years-after-nuclear-testing-in-the-pacific-began-the-
+                                                                                           fallout-continues-to-wreak-havoc-158208}; Lucy Sherriff, ‘Endless fallout: The Pacific idyll still facing nuclear blight 77 years
+                                                                                           on’, The Guardian, 25 April 2023, available at: {https://www.theguardian.com/environment/2023/aug/25/endless-fallout-
+                                                                                           marshall-islands-pacific-idyll-still-facing-nuclear-blight-77-years-on}.
+                                                                                                                                                                           Review of International Studies             703
+
+
+                                                                                           while video games, as cultural texts, offer numerous possibilities for analysis, in this article, I have
+                                                                                           followed Ian Bogost’s call to focus on what games do.95 More specifically, rather than focusing
+                                                                                           on how games work, what social interactions they promote, or their psychological and cognitive
+                                                                                           implications, I am concerned about what video games make possible politically. To this end, in this
+                                                                                           section, I turn my attention to the ‘playing’ dimension of video games and what the representation
+                                                                                           of play, as discourse, enables and constrains.
+                                                                                               Like many social sciences and humanities concepts, play has no set definition. Nonetheless,
+                                                                                           theorists tend to emphasise play’s pleasurable and symbolic characteristics. While some forms of
+                                                                                           play might involve tension and unpleasant experiences, scholars have shown how people engage
+                                                                                           in play because of the joy it affords. In other words, play is often associated with positive feelings,
+                                                                                           happiness, excitement, and out-of-the-ordinary experiences in society and culture. Johan Huizinga
+                                                                                           defines play as ‘a free activity standing quite consciously outside “ordinary” life as being “not seri-
+                                                                                           ous”, but at the same time absorbing the player intensely and utterly. It is an activity connected with
+                                                                                           no material interest, and no profit can be gained. It proceeds within its own proper boundaries of
+                                                                                           time and space according to fixed rules and in an orderly manner’.96 Jean Piaget refers to play as a
+                                                                                           ‘happy display of known actions’,97 while Brian Sutton Smith argues that play ‘is a pleasure for its
+                                                                                           own sake, but its genetic gift is perhaps the sense that life, temporarily at least, is worth living’.98 Lev
+                                                                                           Vygotsky importantly adds an empowering layer to play. His theory suggests that ‘a child always
+                                                                                           behaves beyond his average age, above his daily behaviour; in play it is as though he were a head
+                                                                                           taller than himself ’.99 While providing different visions of play, these definitions can help us see
+                                                                                           important normative expectations revolving around play as a social phenomenon. Crucially, play
+                                                                                           is expected to be fun, joyful, happy, empowering, and extraordinary, and this, I argue, is constitutive
+                                                                                           of the contexts in which play is enacted.
+                                                                                               While a small but growing number of IR scholars have been studying and engaging with the
+                                                                                           phenomenon of play and its politics, play is still very much neglected in the discipline.100 Like
+                                                                                           these scholars, I aim to draw attention to the importance of taking play seriously, and I hope my
+                                                                                           analysis here can open possibilities for further engagement with the dimension of play and its
+                                                                                           productive aspects. Play, I argue, works as a system of knowledge production, thus subtly adding
+                                                                                           a layer of meaning to what is being represented in the gameplay. It works as a discursive layer
+                                                                                           that is constitutive of a particular reality that, like the narratives I have shown earlier, reiterates
+                                                                                           dominant forms of knowing the nuclear world. While the game represents undefeatable, power-
+                                                                                           ful, and exceptional weapons, it downplays the seriousness of these features, and in turn, of nuclear
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           weapons themselves, through ‘playing’ them. This is not to say that the representation of play inval-
+                                                                                           idates the productive nature of video games as a cultural medium. Rather, I situate this ludic aspect
+                                                                                           of video games as a meaning-making system, working synergically with gameplay stories to rein-
+                                                                                           force knowledge about nuclear weapons. The rationale behind this is that the representation of
+                                                                                           play, as a social practice that is often associated with pleasure, joy, symbolism, and extraordinar-
+                                                                                           iness, obscures the gravity of nuclear weapons as a global challenge. It enables the production of
+                                                                                           less dangerous and less violent bombs, something with which one can actually play and ultimately
+                                                                                           experience joy while bombing others.
+                                                                                               The characteristics of nuclear weapons make it impossible to visualise or engage with the sub-
+                                                                                           ject matter without using metaphors and abstractions. The very existence of nuclear weapons is
+
+
+                                                                                             95
+                                                                                                 Bogost, ‘Comparative video game criticism’.
+                                                                                             96
+                                                                                                 Johan Huizinga, Homo Ludens (London: Taylor & Francis, 1998), p. 13.
+                                                                                              97
+                                                                                                 Jean Piaget, Play, Dreams and Imitation in Childhood (London: Psychology Press, 1999), p. 93.
+                                                                                              98
+                                                                                                 Brian Sutton-Smith, ‘Play theory: A personal journey and new thoughts’, American Journal of Play, 1:1 (2008), pp. 80–123
+                                                                                           (p. 122).
+                                                                                              99
+                                                                                                 Lev S. Vygotsky, ‘Play and its role in the mental development of the child’, Soviet Psychology, 5:3 (1967), pp. 6–18.
+                                                                                              100
+                                                                                                  Hirst, ‘Play in(g) international theory’; Maria Mälksoo, ‘The challenge of liminality for International Relations theory’,
+                                                                                           Review of International Studies, 38:2 (2012), pp. 481–94.
+                                                                                           704       Carolina Pantoliano
+
+
+                                                                                           marked by the ‘out of the ordinary’ discourse, metaphors, and abstract symbols.101 As Emily Faux
+                                                                                           explains, many features such as radioactivity and subatomic processes are portrayed as ‘beyond
+                                                                                           human senses’, and thus ‘we can speak of them, and think of them only through metaphor’.102
+                                                                                           Considering this, I argue that the dimension of play in video games helps reproduce this sense of
+                                                                                           abstraction that sustains the intelligibility of nuclear weapons. As Huizinga put it, ‘play is superflu-
+                                                                                           ous … play can be deferred or suspended at any time … play is not ordinary or real life. It is instead
+                                                                                           a stepping out of real life into a temporary sphere of activity with a disposition all of its own. Every
+                                                                                           child knows that he is “only pretending” or that it “was only for fun”.103 The nuclear sublime,104
+                                                                                           for example, which is often represented in images of nuclear explosions, nurtures understandings
+                                                                                           about the extraordinary and exceptional nature of the bomb, something that is ‘fundamentally dif-
+                                                                                           ferent from any other human creation’.105 Notably, not only do video games provide a space for
+                                                                                           representing nuclear knowledge, but the very nature of this cultural artefact, as playful, reiterates
+                                                                                           modes of abstraction that perpetuate dominant understandings about the nuclear world.
+                                                                                               It is important to note that my analysis here, as I explained earlier, focuses on what is under-
+                                                                                           stood as playing practice and how these understandings impact on what is represented in Call of
+                                                                                           Duty. However, I would like to acknowledge that an analysis of players’ reactions, emotions, and
+                                                                                           opinions, in the context of play, as well as a detailed analysis of the reactions of those watching
+                                                                                           matches online, would constitute an important contribution. As I conducted my data collection,
+                                                                                           I noticed that players commemorate acquiring the nuclear weapon on various occasions, appear-
+                                                                                           ing pleasantly content with their achievements,106 while millions of followers praise the ‘glorious’
+                                                                                           undertaking. As Daniel Bos shows, studying the geopolitics of virtual war and examining players’
+                                                                                           imaginaries and fantasies concerning the ways in which war and militaries operate offer important
+                                                                                           insights into how individuals make sense of the world.107 Bos calls attention to how, for example,
+                                                                                           play spaces, that is, online communities, are often ‘gendered, heteronormative, and promote and
+                                                                                           reinforce national identities’.108 Moreover, Bos’s work invites more engagement with audiences and
+                                                                                           explains how studying interactions in these play spaces can reveal important dynamics through
+                                                                                           which geopolitical meaning is produced and validated. These encounters, Bos argues, form a com-
+                                                                                           plex web of representational practices, which, like Butler’s normalisation mechanism, contribute
+                                                                                           to the (dis)continuity of what passes as true, valid, and normal in the social domain. While my
+                                                                                           approach in this article focused on representation and deconstruction, rather than ethnography, I
+                                                                                           do share Bos’s concerns regarding practice and the ‘performative’ nature of play. What is certainly
+                                                                                           intriguing about the complexity of play is that nuclear weapons are being referenced or symbolised
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           outside of video game settings, such as in games of tag.
+                                                                                               To conclude, as a ludic setting, playing video games allows the dominant discourse about
+                                                                                           nuclear weapons to operate behind the veil of joyful and extraordinary moments. Huizinga explains
+                                                                                           that ‘play may rise to heights of beauty and sublimity that leave seriousness far beneath’.109 With
+                                                                                           this, the dimension of play, I argue, has profound constitutive effects on the realities represented,
+
+                                                                                              101
+                                                                                                  Cohn, ‘Sex and death in the rational world of defense intellectuals’; Laura Considine, ‘The standardization of catastro-
+                                                                                           phe: Nuclear disarmament, the Humanitarian Initiative and the politics of the unthinkable’, European Journal of International
+                                                                                           Relations, 23:3 (2017), pp. 681–702.
+                                                                                              102
+                                                                                                  Faux, ‘Navigating nuclear narratives in contemporary television’, p. 5.
+                                                                                              103
+                                                                                                  Huizinga, Homo Ludens, p. 8.
+                                                                                              104
+                                                                                                  The nuclear sublime is a reference to nuclear detonations and how they are perceived as extraordinary, and ‘out of this
+                                                                                           world’ experiences.
+                                                                                              105
+                                                                                                  Hecht, ‘Nuclear ontologies’, p. 321.
+                                                                                              106
+                                                                                                  See for example Karma, ‘MY BEST TWITCH CLIPS | OPTIC KARMA’, 3 July 2021, available at {https://www.youtube.
+                                                                                           com/watch?v=DCsneQmUpWw}; Karma, ‘WORLDS FIRST MODERN WARFARE NUCLEAR!! MY FIRST GAME ON THE
+                                                                                           BETA! (COD: MW)’, 12 September 2019, available at: {https://www.youtube.com/watch?v=d3Iqyf9omXA}; Scump, ‘Scump
+                                                                                           drops the fastest nuke on Vanguard’, 20 November 2021, available at: {https://www.youtube.com/watch?v=AzhXEhhHr-8}.
+                                                                                              107
+                                                                                                  Bos, ‘Answering Call of Duty’, p. 55.
+                                                                                              108
+                                                                                                  Bos, ‘Answering Call of Duty’, p. 62.
+                                                                                              109
+                                                                                                  Huizinga, Homo Ludens, p. 8.
+                                                                                                                                                                            Review of International Studies              705
+
+
+                                                                                           reducing the seriousness of nuclear weapons as a global challenge and reinforcing their perceived
+                                                                                           extraordinary traits, all within the context of nuclear pleasure.
+
+                                                                                           Conclusion
+                                                                                           Video games are an important popular culture artefact that is constitutive of the nuclear weapons
+                                                                                           world and its possible futures. Using a feminist post-structuralist methodology, I interrogated how
+                                                                                           nuclear weapons are depicted in Call of Duty games. I identified two important narratives that
+                                                                                           reiterate structures of power and knowledge that legitimise nuclear weapons. The nuclear reward
+                                                                                           narrative reproduces exclusionary relations of power that sustain the dominant status quo, includ-
+                                                                                           ing colonial and gendered understandings that enable nuclear possessors to present themselves as
+                                                                                           responsible protectors. The nuclear success narrative reiterates knowledge about the military value
+                                                                                           of nuclear weapons and conceals the humanitarian and environmental impacts of nuclear deto-
+                                                                                           nations. Along with these stories, the dimension of play contributes to the ongoing dominance of
+                                                                                           certain ways of understanding the nuclear world, as it downplays the seriousness of what is being
+                                                                                           represented, while still serving as a powerful discursive tool that reinforces the extraordinary nature
+                                                                                           of nuclear weapons.
+                                                                                               With this, this article sought to contribute to understanding the mechanisms that make nuclear
+                                                                                           weapons a persistent feature of global politics while inviting reflection on alternative frames that
+                                                                                           can generate discontinuity of dominant discourses. There is a growing body of work that evaluates
+                                                                                           the treatment of civilians in first-person shooters, and, as Neil Renic and Sebastian Kaempf sug-
+                                                                                           gest, integrating a more nuanced understanding of the laws of war into this medium would help
+                                                                                           challenge the idea that such rules cannot apply to the battlefield.110 Similarly, I would suggest that
+                                                                                           the inclusion of alternative frames that explain and represent the humanitarian impact of nuclear
+                                                                                           weapons111 would help challenge ideas that help legitimise nuclear possession. As Nick Robinson’s
+                                                                                           work shows, while video games play an important part in militarism, they offer a potential space
+                                                                                           for interrogating and challenging these understandings.112
+                                                                                               Along with a burgeoning body of critical nuclear scholarship, this analysis calls for serious
+                                                                                           engagement with everyday sites of knowledge production which remain crucial for making sense of
+                                                                                           global politics as well as realising possibilities for policy innovation and change. While the nuclear
+                                                                                           issue is closely associated with imperfect global governance institutions, exclusionary treaties,
+                                                                                           (ir)responsible state actors, wars, and many other complicated processes and procedures, the more
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           obtuse forms of validating nuclear knowledge require our immediate attention. As such, I wonder
+                                                                                           where else nuclear weapons are used in play and how many other children are playing the ‘nuke’
+                                                                                           tag game.
+                                                                                           Video abstract. To view the online video abstract, please visit: https://doi.org/10.1017/S0260210525000087.
+
+                                                                                           Acknowledgements. I am grateful to the anonymous reviewers for their thoughtful comments and suggestions. I also sin-
+                                                                                           cerely appreciate the support and encouragement of Thomas Gregory, Treasa Dunworth, Nicole Wegner, and Rhys Crilley
+                                                                                           throughout the writing process. Additionally, I thank Benoît Pelopidas, Sterre Van Buuren, Hebatalla Taha, Laura Considine,
+                                                                                           Jana Wattenberg, Catherine Eschle, Thomas Fraise, Shampa Biswas, and Jorge Hersschens for their insightful feedback on ear-
+                                                                                           lier drafts. Finally, I am grateful to the participants of the Alva Myrdal Conference (2024) and the workshop on Theorizing
+                                                                                           the Nuclear Age in International Relations, hosted by the Danish Institute for International Studies (2023), for their valuable
+                                                                                           discussions. The materials used to produce the analysis are available at locations cited in the references section of this article.
+
+                                                                                           Funding. Research for this article was supported by the ICAN Critical Nuclear Weapons Projects 2023–2024 and the UKRI
+                                                                                           FLF Project ‘Atomic Anxiety in the New Nuclear Age’ (MR/X034690/1).
+                                                                                              110
+                                                                                                  Neil C. Renic and Sebastian Kaempf, ‘Modern lawfare: Exploring the relationship between military first-person shooter
+                                                                                           video games and the “war is hell” myth’, Global Studies Quarterly, 2:1 (2022), pp. 1–11.
+                                                                                              111
+                                                                                                  The game ‘Spec Ops: The Line’, for example, depicts war from a critical perspective and has been designed to question
+                                                                                           dominant assumptions about war and violence.
+                                                                                              112
+                                                                                                  Nick Robinson, ‘Militarism and opposition in the living room: The case of military videogames’, Critical Studies on
+                                                                                           Security, 4:3 (2016), pp. 255–75.
+                                                                                           706       Carolina Pantoliano
+
+
+                                                                                           Dr Carolina Pantoliano is a research associate in Nuclear Arms Control and Disarmament at the University of Glasgow. Before
+                                                                                           starting at Glasgow in 2024, Carolina was a teaching fellow at the University of Auckland. Carolina holds a PhD in Politics and
+                                                                                           International Relations from the University of Auckland. Her research interests include feminist, post-structuralist, and post-
+                                                                                           colonial approaches to global politics, particularly international security, global governance, and norm dynamics. Carolina’s
+                                                                                           work has appeared in leading academic journals such as International Affairs and Contemporary Security Policy. As a member
+                                                                                           of the Atomic Anxiety in the New Nuclear Age team, Carolina works to deliver innovative research and impact on nuclear
+                                                                                           politics and international security.
+https://doi.org/10.1017/S0260210525000087 Published online by Cambridge University Press
+
+
+
+
+                                                                                           Cite this article: Carolina Pantoliano, ‘Playing doomsday: Video games and the politics of nuclear weapons’, Review of
+                                                                                           International Studies, 51 (2025), pp. 686–706. https://doi.org/10.1017/S0260210525000087
+
