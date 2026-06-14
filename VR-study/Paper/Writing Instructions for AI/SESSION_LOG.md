@@ -16,6 +16,23 @@ Note: entries before 2026-06-11 describe the legacy numbered `sections/` structu
 - Next steps:
 - Pushed commit:
 
+## 2026-06-14 Title Update
+
+- Date: 2026-06-14
+- Collaborator: Codex
+- Branch: `main`
+- Focus: Updated the manuscript title to the user-specified title.
+- Files changed:
+  - `VR-study/Paper/main.tex`
+  - `VR-study/Paper/Writing Instructions for AI/SESSION_LOG.md`
+- Outputs produced:
+  - Set the title to `Big Red Button: A Pressing Matter!`.
+- Blockers:
+  - None.
+- Next steps:
+  1. Continue content revisions under the updated title.
+- Pushed commit: see the final `main`-branch commit created for this session
+
 ## 2026-06-14 Expanded Introduction and PDF Compile
 
 - Date: 2026-06-14
