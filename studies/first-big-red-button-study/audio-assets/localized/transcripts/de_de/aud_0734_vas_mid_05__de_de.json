@@ -1,0 +1,39 @@
+{
+  "text": " wieder danach noch stopp vom großen roten Knopf.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 4.4,
+      "text": " wieder danach noch stopp vom großen roten Knopf.",
+      "tokens": [
+        50364,
+        6216,
+        37784,
+        3514,
+        1590,
+        79,
+        10135,
+        23076,
+        4297,
+        268,
+        10519,
+        21828,
+        13,
+        50584
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.6962750752766927,
+      "compression_ratio": 0.9074074074074074,
+      "no_speech_prob": 0.007068684324622154
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0734",
+  "clipKey": "vas_mid_05",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0734_vas_mid_05__de_de.mp3"
+}

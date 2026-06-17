@@ -12,6 +12,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+. (Join-Path $PSScriptRoot 'export-session-layout.ps1')
 if ([string]::IsNullOrWhiteSpace($AdbPath) -or $AdbPath -eq 'adb') {
     $localAdb = Join-Path $projectRoot 'artifacts\toolchain\android-platform-tools\platform-tools\adb.exe'
     if (Test-Path -LiteralPath $localAdb) {
@@ -39,9 +40,9 @@ $logRunId = $runId -replace '[^A-Za-z0-9_]', '_'
 $outDir = Join-Path $projectRoot "artifacts\qdk\$runId"
 $deviceExportDir = "/sdcard/Android/data/$package/files/BigRedButtonFirstStudyExports"
 $deviceResultsDir = "/sdcard/Android/data/$package/files/ExperimentResults"
-$pullDir = Join-Path $outDir 'pulled'
-$primaryPullDir = Join-Path $pullDir 'BigRedButtonFirstStudyExports'
-$resultsPullDir = Join-Path $pullDir 'ExperimentResults'
+$pullDir = Join-Path $outDir 'p'
+$primaryPullDir = Join-Path $pullDir 'b'
+$resultsPullDir = Join-Path $pullDir 'e'
 $remoteScreenshot = '/sdcard/Download/brb_demographics_directional_keyboard.png'
 
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
@@ -288,7 +289,7 @@ function Get-ShortExportFileName {
 function Pull-DeviceFolder {
     param([string]$DeviceDir, [string]$LocalDir)
     New-Item -ItemType Directory -Force -Path $LocalDir | Out-Null
-    $filesRaw = Invoke-Adb shell ls -1 $DeviceDir
+    $filesRaw = Invoke-Adb shell find $DeviceDir -type f
     if ($LASTEXITCODE -ne 0) {
         throw "Could not list $DeviceDir"
     }
@@ -301,22 +302,37 @@ function Pull-DeviceFolder {
         throw "No files found at $DeviceDir"
     }
     $manifestRows = New-Object System.Collections.Generic.List[object]
-    foreach ($file in $files) {
-        $localName = Get-ShortExportFileName $file
-        $localPath = Join-Path $LocalDir $localName
+    $pathMap = @{}
+    foreach ($remoteFile in $files) {
+        $relative = "$remoteFile"
+        if ($relative.StartsWith($DeviceDir, [StringComparison]::Ordinal)) {
+            $relative = $relative.Substring($DeviceDir.Length).TrimStart('/')
+        } else {
+            $relative = Split-Path -Leaf $relative
+        }
+        $relativeParts = @($relative -split '/')
+        $localRelative =
+            if ($relativeParts.Count -gt 1) {
+                (($relativeParts[0..($relativeParts.Count - 2)] + (Get-BrbShortExportFileName -FileName $relativeParts[-1] -Prefix 'brb_first_study_qdk')) -join '/')
+            } else {
+                Get-BrbShortExportFileName -FileName $relativeParts[-1] -Prefix 'brb_first_study_qdk'
+            }
+        $pathMap[$relative] = $localRelative
+        $localPath = Join-Path $LocalDir ($localRelative -replace '/', '\')
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $localPath) | Out-Null
         $tempPath = Join-Path ([IO.Path]::GetTempPath()) ("brb-qdk-" + [IO.Path]::GetRandomFileName())
         try {
-            Invoke-Adb pull "$DeviceDir/$file" $tempPath |
+            Invoke-Adb pull "$remoteFile" $tempPath |
                 Tee-Object -Append -FilePath (Join-Path $outDir 'pull.txt') |
                 Out-Host
             if ($LASTEXITCODE -ne 0) {
-                throw "Failed to pull $DeviceDir/$file"
+                throw "Failed to pull $remoteFile"
             }
             Move-Item -LiteralPath $tempPath -Destination $localPath -Force
             $manifestRows.Add([pscustomobject]@{
                 deviceDir = $DeviceDir
-                deviceName = $file
-                localName = $localName
+                deviceName = $remoteFile
+                localName = $localRelative
             }) | Out-Null
         } finally {
             if (Test-Path -LiteralPath $tempPath) {
@@ -324,25 +340,27 @@ function Pull-DeviceFolder {
             }
         }
     }
+    Update-BrbPulledExportMetadata -LocalDir $LocalDir -PathMap $pathMap
     $manifestName = 'pull-manifest-' + (Split-Path -Leaf $LocalDir) + '.csv'
     $manifestRows | Export-Csv -NoTypeInformation -LiteralPath (Join-Path $outDir $manifestName)
 }
 
 function Compare-ExportMirror {
     param([string]$PrimaryDir, [string]$MirrorDir, [string]$OutPath)
-    $primaryFiles = @(Get-ChildItem -LiteralPath $PrimaryDir -File | Sort-Object Name)
-    $mirrorFiles = @(Get-ChildItem -LiteralPath $MirrorDir -File | Sort-Object Name)
+    $primaryFiles = @(Get-BrbRecursiveFileRows -RootDir $PrimaryDir)
+    $mirrorFiles = @(Get-BrbRecursiveFileRows -RootDir $MirrorDir)
     $mirrorByName = @{}
-    foreach ($file in $mirrorFiles) {
-        $mirrorByName[$file.Name] = $file
+    foreach ($row in $mirrorFiles) {
+        $mirrorByName[$row.RelativePath] = $row.File
     }
     $rows = New-Object System.Collections.Generic.List[object]
-    foreach ($primary in $primaryFiles) {
-        $mirror = $mirrorByName[$primary.Name]
+    foreach ($primaryRow in $primaryFiles) {
+        $primary = $primaryRow.File
+        $mirror = $mirrorByName[$primaryRow.RelativePath]
         $primaryHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $primary.FullName).Hash
         $mirrorHash = if ($null -ne $mirror) { (Get-FileHash -Algorithm SHA256 -LiteralPath $mirror.FullName).Hash } else { '' }
         $rows.Add([pscustomobject]@{
-            fileName = $primary.Name
+            fileName = $primaryRow.RelativePath
             primarySizeBytes = $primary.Length
             mirrorSizeBytes = if ($null -ne $mirror) { $mirror.Length } else { $null }
             primarySha256 = $primaryHash
@@ -417,9 +435,18 @@ try {
     Wait-LogPattern 'BRB_DEMOGRAPHICS_AGE_SLIDER_VALUE source=activity_key_event value=34 .*platformControl=ComposeSlider' 'Age set to 34 with D-pad'
     Send-Direction 'enter'
     Wait-LogPattern 'BRB_DEMOGRAPHICS_AGE_SLIDER_DONE source=activity_key_event value=34' 'Age confirmed with Enter'
+    Wait-LogPattern 'BRB_SPONTANEOUS_REMARK_CUE kind=age scale=demographics_age value=34 bucket=age .*audioId=aud_0700 .*noOverlap=true' 'soft age privacy spontaneous remark cue'
     Save-Screenshot 'demographics-directional-keyboard-after-age.png'
     $nameEntryLogPath = Save-FilteredLog 'name-entry'
     $nameEntryLogText = Get-Content -Raw -LiteralPath $nameEntryLogPath
+
+    Invoke-DemographicsValidationCommand 'select_handedness_right'
+    Wait-LogPattern 'BRB_DEMOGRAPHICS_HANDEDNESS_SELECTED accepted=true value=right .*blocking=true' 'handedness selection accepted through runtime path'
+    Wait-LogPattern 'BRB_HANDEDNESS_NARRATION_CUE cue=handedness_controller_selection audioId=aud_0190 asset=localized/(en_us|ja_jp)/aud_0190_handedness_controller_selection__.*\.mp3 .*blocking=true' 'handedness narration cue started'
+    Wait-LogPattern 'BRB_SFX_PLAY cue=handedness_controller_selection audioId=aud_0190 .*durationMs=[0-9]+' 'handedness narration MediaPlayer started'
+    Wait-LogPattern 'BRB_HANDEDNESS_NARRATION_GATE state=clear .*reason=complete' 'handedness narration gate cleared after playback' 110
+    $handednessLogPath = Save-FilteredLog 'handedness-narration'
+    $handednessLogText = Get-Content -Raw -LiteralPath $handednessLogPath
 
     Invoke-DemographicsValidationCommand 'submit_current_demographics'
     Wait-LogPattern 'BRB_DEMOGRAPHICS_VALIDATION_SUBMIT_CURRENT accepted=true .*preservesKeyboardDraft=true' 'current keyboard drafts submitted'
@@ -441,12 +468,10 @@ try {
         throw "ExperimentResults export schema validation failed with exit code $LASTEXITCODE"
     }
 
-    $jsonFile = Get-ChildItem -LiteralPath $resultsPullDir -Filter 'brb_first_study_*.json' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-    $summaryFile = Get-ChildItem -LiteralPath $resultsPullDir -Filter '*_summary.csv' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
+    $resultsSession = Resolve-BrbExportSession -ExportDir $resultsPullDir
+    $resultsSessionDir = $resultsSession.SessionDir
+    $jsonFile = Get-BrbExportSessionFile -SessionDir $resultsSessionDir -Filter 'brb_first_study_*.json'
+    $summaryFile = Get-BrbExportSessionFile -SessionDir $resultsSessionDir -Filter '*_summary.csv'
     $exportJson = Get-Content -Raw -LiteralPath $jsonFile.FullName | ConvertFrom-Json
     $summaryRow = @(Import-Csv -LiteralPath $summaryFile.FullName)[0]
 
@@ -454,9 +479,12 @@ try {
     Add-Comparison 'left-side pop-out keyboard panel appeared before directional entry' $true ($nameFocusLogText -match 'BRB_NAME_APP_KEYBOARD_PANEL_LAYOUT .*placement=left_of_questionnaire_near_user .*radialReference=headset_center .*orientation=faces_headset .*keyboardPanel=keyboard_panel .*nonObstructing=true .*fovVisible=true .*presentation=pop_out_spatial_panel .*integratedInQuestionnaire=false .*appearsOnTextFieldFocus=true') $nameFocusLogPath
     Add-Comparison 'directional keyboard produced final Name before export' $true ($nameEntryLogText -match 'BRB_DEMOGRAPHICS_TEXT_VALUE field=name keyboardMode=text value=george_fejer length=12 .*source=hardware_key_event') $nameEntryLogPath
     Add-Comparison 'Age 34 produced before export' $true ($nameEntryLogText -match 'BRB_DEMOGRAPHICS_AGE_SLIDER_VALUE source=activity_key_event value=34') $nameEntryLogPath
+    Add-Comparison 'soft age privacy remark cue observed' $true ($nameEntryLogText -match 'BRB_SPONTANEOUS_REMARK_CUE kind=age scale=demographics_age value=34 bucket=age .*audioId=aud_0700 .*noOverlap=true') $nameEntryLogPath
+    Add-Comparison 'handedness narration cue started and blocked input' $true ($handednessLogText -match 'BRB_HANDEDNESS_NARRATION_CUE .*audioId=aud_0190 .*blocking=true' -and $handednessLogText -match 'BRB_SFX_PLAY cue=handedness_controller_selection audioId=aud_0190 .*durationMs=[0-9]+') $handednessLogPath
+    Add-Comparison 'handedness narration gate cleared before export' $true ($handednessLogText -match 'BRB_HANDEDNESS_NARRATION_GATE state=clear .*reason=complete') $handednessLogPath
     Add-Comparison 'JSON saved directional Name' 'George Fejer' $exportJson.demographics.name $jsonFile.FullName
     Add-Comparison 'JSON saved directional Age' '34' $exportJson.demographics.age $jsonFile.FullName
-    Add-Comparison 'JSON participant ID marks directional validation' 'DIRECTIONAL_KEYBOARD_' ($exportJson.demographics.participantId.Substring(0, [Math]::Min(21, $exportJson.demographics.participantId.Length))) $jsonFile.FullName
+    Add-Comparison 'JSON participant ID marks directional validation' 'QDK_' ($exportJson.demographics.participantId.Substring(0, [Math]::Min(4, $exportJson.demographics.participantId.Length))) $jsonFile.FullName
     Add-Comparison 'summary CSV saved directional Name' 'George Fejer' $summaryRow.name $summaryFile.FullName
     Add-Comparison 'summary CSV saved directional Age' '34' $summaryRow.age $summaryFile.FullName
     Add-Comparison 'export mirror matched' 'pass' $mirrorComparison.status $mirrorComparisonPath
@@ -488,7 +516,7 @@ try {
         typedAge = '34'
         inputTransport = 'dpad_up_down_left_right_enter_only_for_name_keyboard_and_age_slider'
         comparisons = $comparisons
-        note = 'Full-loop headset validation: uses only D-pad Up/Down/Left/Right plus Enter to navigate the visible app-owned pop-out Name keyboard and Age slider, submits those current draft values, lets the APK write local headset exports, pulls ExperimentResults, and verifies JSON/CSV values.'
+        note = 'Full-loop headset validation: uses only D-pad Up/Down/Left/Right plus Enter to navigate the visible app-owned pop-out Name keyboard and Age slider, observes the one-shot soft age privacy remark, submits those current draft values, lets the APK write local headset exports, pulls ExperimentResults, and verifies JSON/CSV values.'
     }
     $summaryPath = Join-Path $outDir 'quest-demographics-directional-keyboard-export-validation-summary.json'
     $summary | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $summaryPath -Encoding UTF8

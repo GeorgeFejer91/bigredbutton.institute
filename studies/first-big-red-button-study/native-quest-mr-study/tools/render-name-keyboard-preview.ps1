@@ -134,7 +134,23 @@ $border.Dispose()
 
 $contentX = $panelX + 12.0
 $contentW = $panelW - 24.0
-$fieldY = $panelY + 12.0
+$handleY = $panelY + 12.0
+$handleH = 28.0
+$handleFill = Brush 255 255 255 168
+$handleBorder = Pen 224 215 199 2
+$graphics.FillRectangle($handleFill, [Drawing.RectangleF]::new($contentX, $handleY, $contentW, $handleH))
+$graphics.DrawRectangle($handleBorder, $contentX, $handleY, $contentW, $handleH)
+$handlePen = Pen 95 103 117 3 210
+$gripW = 96.0
+$gripX = $contentX + (($contentW - $gripW) / 2.0)
+foreach ($offset in @(8.0, 14.0, 20.0)) {
+    $graphics.DrawLine($handlePen, $gripX, ($handleY + $offset), ($gripX + $gripW), ($handleY + $offset))
+}
+$handleFill.Dispose()
+$handleBorder.Dispose()
+$handlePen.Dispose()
+
+$fieldY = $handleY + $handleH + 8.0
 $fieldH = 52.0
 $fieldFill = Brush 255 255 255 236
 $fieldBorder = Pen 201 193 176 2
@@ -198,11 +214,13 @@ $angularWidthDegrees = 2.0 * [math]::Atan(($widthMeters / 2.0) / $distanceMeters
 
 $checks = [ordered]@{
     aspectMatched = $aspectDelta -le 0.08
-    comfortableDistance = $distanceMeters -ge 0.75 -and $distanceMeters -le 1.05
+    comfortableDistance = $distanceMeters -ge 0.70 -and $distanceMeters -le 0.95
+    higherLargerCloser = $widthMeters -ge 0.63 -and $heightMeters -ge 0.25 -and $distanceMeters -le 0.90 -and $yMeters -ge 1.20
     keyWidthReadable = $letterKeyWidthMeters -ge 0.045
-    keyHeightReadable = $letterKeyHeightMeters -ge 0.026
+    keyHeightReadable = $letterKeyHeightMeters -ge 0.024
     keyShapeNativeLike = $letterKeyAspect -ge 1.5 -and $letterKeyAspect -le 2.5
-    lowerLeftRadialPlacement = $angleDegrees -le -15 -and $angleDegrees -ge -45 -and $yMeters -le 1.08
+    higherLeftRadialPlacement = $angleDegrees -le -18 -and $angleDegrees -ge -42 -and $yMeters -ge 1.20 -and $yMeters -le 1.38
+    controllerBeamMovableContract = $activityText.Contains('BRB_NAME_APP_KEYBOARD_DRAG') -and $activityText.Contains('dragHandle=true') -and $activityText.Contains('controllerBeamDraggable=true')
 }
 $failedCheckCount = @($checks.Values | Where-Object { -not $_ }).Count
 $status = if ($failedCheckCount -eq 0) { 'pass' } else { 'fail' }

@@ -1,0 +1,45 @@
+{
+  "text": " Genau in der verdächtigen Mitte, aus Gabel großer roter Knopf.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 5.2,
+      "text": " Genau in der verdächtigen Mitte, aus Gabel großer roter Knopf.",
+      "tokens": [
+        50364,
+        22340,
+        294,
+        1163,
+        6387,
+        737,
+        4701,
+        3213,
+        41526,
+        11,
+        3437,
+        11995,
+        338,
+        46220,
+        4297,
+        260,
+        10519,
+        21828,
+        13,
+        50624
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.5961474464053199,
+      "compression_ratio": 0.9142857142857143,
+      "no_speech_prob": 0.02070499025285244
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0730",
+  "clipKey": "vas_mid_01",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0730_vas_mid_01__de_de.mp3"
+}

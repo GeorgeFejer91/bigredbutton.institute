@@ -1,0 +1,40 @@
+{
+  "text": " Eine starke Knopfantwort ist ins Labor eingetreten.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 4.64,
+      "text": " Eine starke Knopfantwort ist ins Labor eingetreten.",
+      "tokens": [
+        50364,
+        17664,
+        3543,
+        330,
+        10519,
+        21828,
+        21655,
+        1418,
+        1028,
+        17250,
+        17002,
+        302,
+        35383,
+        13,
+        50596
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.38758283853530884,
+      "compression_ratio": 0.8947368421052632,
+      "no_speech_prob": 0.0017300979234278202
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0753",
+  "clipKey": "vas_high_04",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0753_vas_high_04__de_de.mp3"
+}

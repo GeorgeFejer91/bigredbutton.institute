@@ -47,6 +47,53 @@ function Save-Evidence {
     Invoke-Adb shell rm $remoteScreenshot | Out-Null
 }
 
+function Measure-ScreenshotContent {
+    param([string]$Path)
+    try {
+        Add-Type -AssemblyName System.Drawing -ErrorAction Stop
+        $bitmap = [System.Drawing.Bitmap]::new($Path)
+        try {
+            $nonBlack = 0
+            $samples = 0
+            $stepX = [Math]::Max(1, [int]($bitmap.Width / 180))
+            $stepY = [Math]::Max(1, [int]($bitmap.Height / 120))
+            for ($x = 0; $x -lt $bitmap.Width; $x += $stepX) {
+                for ($y = 0; $y -lt $bitmap.Height; $y += $stepY) {
+                    $color = $bitmap.GetPixel($x, $y)
+                    $samples += 1
+                    if (($color.R + $color.G + $color.B) -gt 15) {
+                        $nonBlack += 1
+                    }
+                }
+            }
+            $percent = if ($samples -gt 0) { [Math]::Round((100.0 * $nonBlack / $samples), 3) } else { 0.0 }
+            return [pscustomobject]@{
+                checked = $true
+                width = $bitmap.Width
+                height = $bitmap.Height
+                samples = $samples
+                nonBlackSamples = $nonBlack
+                nonBlackPercent = $percent
+                usableVisualEvidence = $percent -ge 1.0
+                note = if ($percent -ge 1.0) { 'screenshot contains nonblack compositor pixels' } else { 'screenshot is black or compositor-limited; use runtime layout markers, not this image, as evidence' }
+            }
+        } finally {
+            $bitmap.Dispose()
+        }
+    } catch {
+        return [pscustomobject]@{
+            checked = $false
+            width = 0
+            height = 0
+            samples = 0
+            nonBlackSamples = 0
+            nonBlackPercent = 0.0
+            usableVisualEvidence = $false
+            note = "screenshot pixel check failed: $($_.Exception.Message)"
+        }
+    }
+}
+
 function Get-ForegroundDump {
     return (Invoke-Adb shell dumpsys activity activities) -join "`n"
 }
@@ -164,6 +211,8 @@ try {
 
     Start-Sleep -Seconds 3
     Save-Evidence
+    $screenshotPath = Join-Path $outDir 'button-condition-screenshot.png'
+    $screenshotStats = Measure-ScreenshotContent -Path $screenshotPath
 
     $logPath = Join-Path $outDir 'logcat-filtered.txt'
     $logText = Get-Content -Raw -LiteralPath $logPath
@@ -213,7 +262,11 @@ try {
         facingParticipant = $facingParticipant
         downwardAngleDeg = $downwardAngleDeg
         angularDiameterDeg = $angularDiameterDeg
-        screenshot = Join-Path $outDir 'button-condition-screenshot.png'
+        screenshot = $screenshotPath
+        screenshotChecked = $screenshotStats.checked
+        screenshotNonBlackPercent = $screenshotStats.nonBlackPercent
+        screenshotUsableVisualEvidence = $screenshotStats.usableVisualEvidence
+        screenshotNote = $screenshotStats.note
         note = 'Short visual-layout smoke only. It validates the in-condition 3D button view and spatial marker, then force-stops before full audio completion.'
     }
     $summaryPath = Join-Path $outDir 'quest-visual-layout-smoke-summary.json'

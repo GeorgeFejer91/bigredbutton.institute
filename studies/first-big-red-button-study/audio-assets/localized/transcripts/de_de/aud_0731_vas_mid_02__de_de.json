@@ -1,0 +1,39 @@
+{
+  "text": " Wunderbar und verbindlich knopfmäßig.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 3.84,
+      "text": " Wunderbar und verbindlich knopfmäßig.",
+      "tokens": [
+        50364,
+        343,
+        6617,
+        5356,
+        674,
+        9595,
+        471,
+        1739,
+        444,
+        404,
+        69,
+        43132,
+        13,
+        50556
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.4449755350748698,
+      "compression_ratio": 0.8666666666666667,
+      "no_speech_prob": 0.0027066865004599094
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0731",
+  "clipKey": "vas_mid_02",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0731_vas_mid_02__de_de.mp3"
+}

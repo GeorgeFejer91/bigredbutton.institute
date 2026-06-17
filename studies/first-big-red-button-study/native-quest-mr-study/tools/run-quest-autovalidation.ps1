@@ -4,7 +4,7 @@ param(
     [string]$Serial,
     [string]$AdbPath = 'adb',
     [string]$ApkPath = '',
-    [ValidateSet('', 'en-US', 'ja-JP')]
+    [ValidateSet('', 'en-US', 'ja-JP', 'de-DE')]
     [string]$Language = '',
     [int]$WaitSeconds = 760,
     [switch]$SkipInstall
@@ -14,6 +14,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+. (Join-Path $PSScriptRoot 'export-session-layout.ps1')
 if ([string]::IsNullOrWhiteSpace($ApkPath)) {
     $ApkPath = Join-Path $projectRoot 'app\build\outputs\apk\debug\app-debug.apk'
 }
@@ -96,7 +97,7 @@ if (-not $completed) {
 
 New-Item -ItemType Directory -Force -Path $pulledExportRoot | Out-Null
 $exportPullLog = Join-Path $outDir 'export-pull.txt'
-$deviceFilesRaw = Invoke-Adb shell ls -1 $deviceExportDir
+$deviceFilesRaw = Invoke-Adb shell find $deviceExportDir -type f
 if ($LASTEXITCODE -ne 0) {
     throw "adb export listing failed with exit code $LASTEXITCODE"
 }
@@ -114,19 +115,35 @@ if (Test-Path $shortPullRoot) {
     Remove-Item -Recurse -Force -LiteralPath $shortPullRoot
 }
 New-Item -ItemType Directory -Force -Path $shortPullRoot | Out-Null
+$pathMap = @{}
 try {
     $fileIndex = 0
-    foreach ($deviceFile in $deviceFiles) {
+    foreach ($remoteFile in $deviceFiles) {
         $fileIndex += 1
-        $remoteFile = "$deviceExportDir/$deviceFile"
         $shortLocalFile = Join-Path $shortPullRoot ("export-$fileIndex.tmp")
-        $localFile = Join-Path $pulledExportRoot $deviceFile
+        $relative = "$remoteFile"
+        if ($relative.StartsWith($deviceExportDir, [StringComparison]::Ordinal)) {
+            $relative = $relative.Substring($deviceExportDir.Length).TrimStart('/')
+        } else {
+            $relative = Split-Path -Leaf $relative
+        }
+        $relativeParts = @($relative -split '/')
+        $localRelative =
+            if ($relativeParts.Count -gt 1) {
+                (($relativeParts[0..($relativeParts.Count - 2)] + (Get-BrbShortExportFileName -FileName $relativeParts[-1] -Prefix 'brb_first_study_autorun')) -join '/')
+            } else {
+                Get-BrbShortExportFileName -FileName $relativeParts[-1] -Prefix 'brb_first_study_autorun'
+            }
+        $pathMap[$relative] = $localRelative
+        $localFile = Join-Path $pulledExportRoot ($localRelative -replace '/', '\')
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $localFile) | Out-Null
         Invoke-Adb pull $remoteFile $shortLocalFile | Tee-Object -Append -FilePath $exportPullLog | Out-Host
         if ($LASTEXITCODE -ne 0) {
             throw "adb export pull failed for $remoteFile with exit code $LASTEXITCODE"
         }
         Move-Item -LiteralPath $shortLocalFile -Destination $localFile -Force
     }
+    Update-BrbPulledExportMetadata -LocalDir $pulledExportRoot -PathMap $pathMap
 } finally {
     if (Test-Path $shortPullRoot) {
         Remove-Item -Recurse -Force -LiteralPath $shortPullRoot
@@ -137,7 +154,8 @@ if ($LASTEXITCODE -ne 0) {
     throw "export schema validation failed with exit code $LASTEXITCODE"
 }
 
-$jsonFile = Get-ChildItem -LiteralPath $pulledExportRoot -Filter 'brb_first_study_*.json' | Where-Object { $_.Name -notlike '*summary*' -and $_.Name -notlike '*press_events*' } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$exportSession = Resolve-BrbExportSession -ExportDir $pulledExportRoot
+$jsonFile = Get-BrbExportSessionFile -SessionDir $exportSession.SessionDir -Filter 'brb_first_study_*.json'
 $exportJson = Get-Content -Raw -LiteralPath $jsonFile.FullName | ConvertFrom-Json
 $conditions = @($exportJson.conditions)
 $condition1 = $conditions | Where-Object { $_.conditionNumber -eq 1 } | Select-Object -First 1

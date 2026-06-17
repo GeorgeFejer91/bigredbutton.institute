@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.MediaPlayer
+import android.media.SoundPool
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -115,6 +116,7 @@ import com.meta.spatial.runtime.SceneObject
 import com.meta.spatial.runtime.SceneTexture
 import com.meta.spatial.toolkit.AppSystemActivity
 import com.meta.spatial.toolkit.Animated
+import com.meta.spatial.toolkit.AvatarSystem
 import com.meta.spatial.toolkit.DpDisplayOptions
 import com.meta.spatial.toolkit.Hittable
 import com.meta.spatial.toolkit.InteractivityInput
@@ -127,6 +129,7 @@ import com.meta.spatial.toolkit.PlaybackState
 import com.meta.spatial.toolkit.PlaybackType
 import com.meta.spatial.toolkit.QuadShapeOptions
 import com.meta.spatial.toolkit.Scale
+import com.meta.spatial.toolkit.ScenePlane
 import com.meta.spatial.toolkit.SceneObjectSystem
 import com.meta.spatial.toolkit.SpatialActivityManager
 import com.meta.spatial.toolkit.Transform
@@ -148,6 +151,8 @@ import kotlin.math.exp
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.math.sin
+import kotlin.math.sqrt
+import kotlin.random.Random
 import kotlinx.coroutines.delay
 import org.json.JSONArray
 import org.json.JSONObject
@@ -177,9 +182,10 @@ private const val PICTOGRAPHIC_VAS_THUMB_RADIUS_DP = 20
 private const val PICTOGRAPHIC_SELF_BUTTON_TRAVEL_UNITS =
     PICTOGRAPHIC_VAS_AXIS_WIDTH_DP - (PICTOGRAPHIC_VAS_THUMB_RADIUS_DP * 2)
 
-enum class StudyLanguage(val code: String, val label: String) {
-  English("en-US", "English"),
-  Japanese("ja-JP", "日本語"),
+enum class StudyLanguage(val code: String, val label: String, val assetLocale: String) {
+  English("en-US", "English", "en_us"),
+  German("de-DE", "Deutsch", "de_de"),
+  Japanese("ja-JP", "日本語", "ja_jp"),
 }
 
 enum class StudyStage {
@@ -225,6 +231,7 @@ data class PressEvent(
     val validationAutomation: Boolean,
     val feedbackSource: String,
     val physiologySource: String,
+    val pressMechanics: ButtonPressMechanics = ButtonPressMechanics(),
 )
 
 data class FinalExtraPressEvent(
@@ -292,6 +299,19 @@ private data class RednessConversionCue(
     val transcriptPlan: String,
     val microEvents: List<RednessConversionMicroEvent>,
 )
+
+private data class QuestionnaireSpontaneousRemark(
+    val audioId: String,
+    val clipKey: String,
+    val bucket: String,
+) {
+  fun cueName(): String = "spontaneous_$clipKey"
+
+  fun assetPath(language: StudyLanguage): String {
+    val locale = language.assetLocale
+    return "localized/$locale/${audioId}_${clipKey}__$locale.mp3"
+  }
+}
 
 data class PresenceItem(
     val id: String,
@@ -406,16 +426,57 @@ private data class PressEcgAlignment(
 private data class ButtonContactTargetSpec(
     val name: String,
     val offsetX: Float,
+    val offsetY: Float = 0f,
     val offsetZ: Float,
     val width: Float,
     val height: Float,
     val depth: Float,
     val surfaceRole: String = "shared_physical_cap",
+    val acceptsControllerContact: Boolean = true,
+    val acceptsHandContact: Boolean = true,
 )
 
 private data class ButtonContactTarget(
     val entity: Entity,
     val spec: ButtonContactTargetSpec,
+)
+
+private data class ButtonFallbackVisualTarget(
+    val entity: Entity,
+    val yOffsetFromSupportSurfaceMeters: Float,
+)
+
+private data class ButtonPlacement(
+    val x: Float,
+    val z: Float,
+    val supportSurfaceY: Float,
+    val modelOriginY: Float,
+    val panelY: Float,
+    val contactCenterY: Float,
+    val baseY: Float,
+    val bevelY: Float,
+    val domeY: Float,
+    val source: String,
+    val surfaceName: String,
+    val surfaceType: String,
+    val surfaceEntityId: Long,
+    val surfaceExtentsM: Vector3,
+    val detectedSurfaceCount: Int,
+    val supportCandidateCount: Int,
+)
+
+private data class ButtonSupportSurfaceCandidate(
+    val supportSurfaceY: Float,
+    val surfaceName: String,
+    val surfaceType: String,
+    val surfaceEntityId: Long,
+    val surfaceExtentsM: Vector3,
+    val score: Float,
+)
+
+private data class ButtonSupportSurfaceSearch(
+    val candidates: List<ButtonSupportSurfaceCandidate>,
+    val detectedSurfaceCount: Int,
 )
 
 private data class HeartbeatPulseResult(
@@ -670,6 +731,140 @@ private val DEMOGRAPHICS_NAME_KEYBOARD_ROWS =
 private const val DEMOGRAPHICS_NAME_KEYBOARD_DEFAULT_ROW = 3
 private const val DEMOGRAPHICS_NAME_KEYBOARD_DEFAULT_COLUMN = 3
 
+private val GERMAN_LOCALIZED_TEXT =
+    mapOf(
+        "language_title" to "Bitte wählen Sie deine Experiment-Sprache",
+        "language_body" to
+            "Diese Auswahl steuert deine sichtbaren Texte und Ihre gesprochenen Audios. Der Ablauf und die Datenexporte bleiben, höflich gesagt, dieselben.",
+        "language_english" to "English",
+        "language_japanese" to "日本語",
+        "language_continue" to "Fortfahren",
+        "intake_kicker" to "Big Red Button Institute | Aufnahme",
+        "intake_title" to "Teilnehmerdaten und Ihre Einwilligung",
+        "intake_body" to
+            "Geben Sie unten deine Teilnehmerdaten ein. Antworten und Knopfdrücke werden lokal auf diesem Headset gespeichert, wie es sich für eine sehr ernste Knopfstudie gehört.",
+        "participant_details" to "Teilnehmerdaten",
+        "name" to "Name",
+        "age" to "Alter",
+        "gender" to "Geschlecht",
+        "male" to "Männlich",
+        "female" to "Weiblich",
+        "other" to "Anderes",
+        "prefer_not_to_say" to "Möchte ich nicht sagen",
+        "handedness" to "Händigkeit",
+        "left" to "Links",
+        "right" to "Rechts",
+        "ambidextrous" to "Beidhändig",
+        "consent" to
+            "Ich willige in die Teilnahme ein und verstehe, dass deine Studiendaten lokal auf diesem Headset gespeichert werden.",
+        "start_experiment" to "Experiment starten",
+        "yes" to "Ja",
+        "no" to "Nein",
+        "consent_signature" to "Einwilligungsunterschrift",
+        "signature_instruction" to "Halten Sie den Trigger gedrückt und zeichne deine Unterschrift in das Feld unten.",
+        "sign_here" to "Hier unterschreiben",
+        "clear" to "Löschen",
+        "polar_ready" to "Polar H10 ECG bereit",
+        "polar_waiting_samples" to "Polar H10 ECG wartet auf deine Proben",
+        "polar_start_requested" to "Polar H10 ECG Start angefordert",
+        "polar_settings_received" to "Polar H10 ECG Einstellungen empfangen",
+        "polar_pmd_subscribed" to "Polar H10 PMD abonniert",
+        "polar_pmd_control_ready" to "Polar H10 PMD Steuerung bereit",
+        "polar_pmd_data_ready" to "Polar H10 PMD Daten bereit",
+        "polar_pmd_ready" to "Polar H10 PMD ist bereit; Sie starten jetzt ECG",
+        "polar_hr_waiting_ecg" to "Polar H10 HR/RR erkannt; warte bitte auf ECG",
+        "polar_connected" to "Polar H10 verbunden; deine Streams werden erwartet",
+        "polar_detected" to "Polar H10 erkannt; Sie verbinden sich",
+        "polar_permissions" to "Polar H10 Berechtigungen werden benötigt",
+        "polar_not_ready" to "Polar H10 ist noch nicht bereit",
+        "polar_start_warning" to
+            "Polar H10 ist nicht verbunden. Sie können trotzdem weitermachen, aber deine Physiologiedaten könnten fehlen.",
+        "polar_scanning" to "Suche nach Polar H10",
+        "polar_keep_strap" to "Befeuchten Sie den Gurt, tragen Sie ihn, halt ihn wach und in Headset-Nähe.",
+        "pictographic_kicker" to "Bedingung %d | Antwortaufgabe",
+        "pictographic_title" to "Wie groß und wie rot war diese Knopf-Erfahrung?",
+        "pictographic_body" to
+            "Bitte bewerten Sie, wie nah sich der Knopf für dich anfühlte und wie groß seine subjektive Anwesenheit im Vergleich zu deinem Selbstgefühl am Ende war.",
+        "closeness_label" to "Wie nah fühlte sich der Knopf an?",
+        "very_close" to "sehr nah",
+        "very_distant" to "sehr fern",
+        "presence_label" to "Wie groß war die gefühlte Anwesenheit des Knopfes?",
+        "small_presence" to "kleine Anwesenheit",
+        "large_presence" to "große Anwesenheit",
+        "redness_label" to "Wie rot fühlte sich der Knopf an?",
+        "slightly_red" to "leicht rot",
+        "very_red" to "sehr rot",
+        "extremely_red" to "extrem rot",
+        "save_response" to "Antwort speichern",
+        "ratings_kicker" to "Bedingung %d | Bewertungen",
+        "ratings_title" to "Bewertung des Sitzungserlebens",
+        "ratings_body" to
+            "Bitte beantworten Sie jede Aussage auf Grundlage von Bedingung %d. Wähle pro Zeile eine Zahl: 0 bedeutet gar nicht, 6 bedeutet sehr stark.",
+        "items_answered" to "%d von %d Items beantwortet",
+        "save_ratings" to "Bewertungen speichern",
+        "lost_kicker" to "Bedingung %d | Bewertung",
+        "lost_title" to "Bewertung zusätzlicher Zeit",
+        "lost_body" to
+            "Wenn Sie doppelt so viel Zeit mit dem Knopf gehabt hättest, wie wahrscheinlich ist es, dass du den Knopf doppelt so oft gedrückt hätten?",
+        "condition_rating" to "Bewertung Bedingung %d",
+        "not_at_all_likely" to "0 - überhaupt nicht wahrscheinlich",
+        "extremely_likely" to "100 - äußerst wahrscheinlich",
+        "save_rating" to "Bewertung speichern",
+        "final_scale_left" to "1 - nicht sicher",
+        "final_scale_right" to "10 - völlig sicher",
+        "complete_kicker" to "Lokaler Export",
+        "complete_title" to "Experiment abgeschlossen",
+        "complete_body" to "Die lokalen JSON- und CSV-Exporte wurden auf diesem Headset gespeichert. Sie dürfen deiner Datenexistenz kurz zunicken.",
+        "audio_condition" to "Audiobedingung",
+        "condition_running" to "Bedingung läuft",
+        "presses_out_of_1000" to "DRÜCKE VON 1.000",
+        "redness_micro_one_moment" to "Einen Moment bitte...",
+        "redness_micro_updating" to "Item wird aktualisiert...",
+        "redness_micro_adjust" to "Du können die neue Antwort anpassen.",
+    )
+
+private val GERMAN_REDNESS_MICRO_CAPTIONS =
+    mapOf(
+        "nervous_entry" to "Einen Moment bitte...",
+        "supervisor_ping" to "Wir fragen die Aufsicht. Sie kennt dein Kästchenproblem.",
+        "item_targeted" to "Nur dieses Item wird jetzt sehr professionell angestarrt.",
+        "swap_requested" to "Eine andere Antwortform nähert sich Ihnen.",
+        "seven_boxes_assemble" to "Sieben Kästchen stellen sich für dich auf.",
+        "awkward_pause" to "Eine kurze, dienstliche Stille.",
+        "answer_already_given" to "Deine Antwort bleibt erhalten. Wir sind nicht barbarisch.",
+        "change_anyway" to "Die neue Form passt ungefähr exakt genug.",
+        "result_settle" to "Nach dem Clip können Sie deine neue Antwort anpassen.",
+        "nervous_return" to "Noch eine kleine Korrektur...",
+        "professional_warning" to "Eine Warnung unterbricht das Item mit angemessener Würde.",
+        "mid_experiment_freeze" to "Die Zeile friert mitten im Experiment ein.",
+        "restore_requested" to "Die visuelle Spur kehrt zu Ihnen zurück.",
+        "boxes_erased" to "Die Kästchen werden entfernt. Diskret.",
+        "pretend_never_happened" to "Die Spur baut sich unter deiner Antwort wieder auf.",
+        "data_importance" to "Der gespeicherte Wert wird übernommen.",
+        "wrong_way_settle" to "Nach einem letzten Wackeln ist die Bedienung wieder da.",
+    )
+
+private val GERMAN_PRESENCE_ITEM_TEXT =
+    mapOf(
+        "ipq_g1" to "In der vorherigen Knopf-Sitzung hatte ich das Gefühl, der große rote Knopf sei wirklich mit mir dort gewesen.",
+        "ipq_sp1" to "Ich hatte das Gefühl, dass der große rote Knopf den Raum vor mir einnahm.",
+        "ipq_sp2" to "Ich hatte das Gefühl, eher nur ein Bild oder eine Darstellung des Knopfes zu sehen.",
+        "ipq_sp3" to "Ich hatte nicht das Gefühl, zusammen mit dem großen roten Knopf anwesend zu sein.",
+        "ipq_sp4" to "Ich hatte eher das Gefühl, um den Knopf herum zu handeln, als ihn nur von außen zu bedienen.",
+        "ipq_sp5" to "Ich hatte das Gefühl, zusammen mit dem großen roten Knopf dort zu sein.",
+        "ipq_inv1" to "Während ich mich mit dem großen roten Knopf beschäftigte, war mir die reale Umgebung im Raum ziemlich bewusst.",
+        "ipq_inv2" to "Ich war mir anderer Dinge als des großen roten Knopfes kaum bewusst.",
+        "ipq_inv3" to "Ich achtete auch auf Dinge in meiner realen Umgebung.",
+        "ipq_inv4" to "Ich war vollständig in die Situation mit dem großen roten Knopf hineingezogen.",
+        "ipq_real1" to "Der große rote Knopf erschien mir wie ein tatsächlich vorhandener Gegenstand.",
+        "ipq_real2" to "Die Anwesenheit des Knopfes wirkte für mich konsistent mit etwas, das im Raum sein könnte.",
+        "ipq_real3" to "Der große rote Knopf erschien mir künstlich oder wenig realistisch.",
+        "ipq_real4" to "In diesem Moment hatte ich das Gefühl, dass der Knopf mein Handeln beeinflussen konnte.",
+    )
+
+private val GERMAN_REDNESS_LIKERT_DESCRIPTORS =
+    listOf("leicht rot", "etwas rot", "mäßig rot", "ziemlich rot", "sehr rot", "intensiv rot", "extrem rot")
+
 class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.Listener {
   val stageState: MutableState<StudyStage> = mutableStateOf(StudyStage.LanguageSelection)
   val selectedLanguageState: MutableState<StudyLanguage> = mutableStateOf(StudyLanguage.English)
@@ -702,10 +897,12 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   val demographicsFocusRequestSourceState = mutableStateOf("")
   val demographicsFocusRequestTokenState = mutableIntStateOf(0)
   val demographicsNameKeyboardVisibleState = mutableStateOf(false)
+  val demographicsNameKeyboardDraggingState = mutableStateOf(false)
   val demographicsNameKeyboardCursorRowState = mutableIntStateOf(DEMOGRAPHICS_NAME_KEYBOARD_DEFAULT_ROW)
   val demographicsNameKeyboardCursorColumnState = mutableIntStateOf(DEMOGRAPHICS_NAME_KEYBOARD_DEFAULT_COLUMN)
   val demographicsDraftGenderState = mutableStateOf("")
   val demographicsDraftHandednessState = mutableStateOf("")
+  val demographicsHandednessNarrationBlockingState = mutableStateOf(false)
   val demographicsDraftSignatureState = mutableStateOf("")
   val demographicsDraftConsentState = mutableStateOf(false)
   val priorBigRedButtonExperienceAnswerState = mutableStateOf("")
@@ -727,16 +924,28 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   val buttonHeartbeatPulseIntensityState = mutableFloatStateOf(0f)
 
   private val sessionId = "brb-" + UUID.randomUUID().toString()
+  private val studyFlowController = StudyFlowController()
+  private val fastConditionShortcutGate = DelayedCallbackGate()
+  private val postConditionReplayGate = DelayedCallbackGate()
+  private val finalEndFinishGate = DelayedCallbackGate()
   private val mainHandler = Handler(Looper.getMainLooper())
   private val conditionRuns = mutableListOf<ConditionRun>()
   private var activeRun: ConditionRun? = null
   private var mediaPlayer: MediaPlayer? = null
   private var panelChimePlayer: MediaPlayer? = null
+  private var spontaneousRemarkPlayer: MediaPlayer? = null
+  private var spontaneousRemarkActiveAudioId = ""
+  private var spontaneousRemarkAppliesVasCooldown = false
   private val cuePlayers = mutableSetOf<MediaPlayer>()
   private var localizationManifestSha256 = ""
+  private var sessionStartInstantUtc: Instant? = null
   private var polarClient: PolarH10HeartRateClient? = null
   private val conditionFeedbackSources = mutableMapOf<Int, String>()
   private var ecgAssignmentOrder = ""
+  private var ecgAssignmentRandomizedWhenTied = false
+  private var ecgAssignmentRandomTieChoiceRealFirst = false
+  private var ecgAssignmentPriorRealThenSimulatedCount = 0
+  private var ecgAssignmentPriorSimulatedThenRealCount = 0
   private var simulatedRrIntervalsMs: List<Double> = emptyList()
   private var simulatedRrIndex = 0
   private var simulatedEcgToken = 0
@@ -749,17 +958,35 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   private val buttonGlowModelEntities = mutableListOf<Entity>()
   private val buttonGlowLights = mutableListOf<SceneLight>()
   private val buttonVisualEntities = mutableListOf<Entity>()
+  private val buttonFallbackVisualTargets = mutableListOf<ButtonFallbackVisualTarget>()
   private val buttonSceneObjects = mutableListOf<SceneObject>()
+  private var currentButtonPlacement: ButtonPlacement = defaultButtonPlacementForConstants()
   private var questionnaireEntity: Entity? = null
   private var nameKeyboardEntity: Entity? = null
+  private var nameKeyboardPanelAngleDegrees = NAME_KEYBOARD_PANEL_RADIAL_ANGLE_DEGREES
+  private var nameKeyboardPanelDistanceMeters = NAME_KEYBOARD_PANEL_RADIAL_DISTANCE_METERS
+  private var nameKeyboardPanelYMeters = NAME_KEYBOARD_PANEL_Y_METERS
+  private var nameKeyboardPanelMovedByControllerBeam = false
   private var isdkSystem: IsdkSystem? = null
   private var isdkPointerObserverRegistered = false
   private var conditionPressArmedRealtimeMs = 0L
   private var nextAllowedPressRealtimeMs = 0L
+  private val buttonPressPhysicsModel = ButtonPressPhysicsModel()
+  private val buttonHandMotionSamples = ArrayDeque<ButtonPressPhysicsSample>()
   private var buttonPressMotionSequence = 0
   private var lastButtonPressMotionStartRealtimeMs = Long.MIN_VALUE
+  private var handPreloadActive = false
+  private var lastHandPreloadVisualRealtimeMs = Long.MIN_VALUE
+  private var lastHandPreloadPausedMs = 0L
+  private var buttonHandPreloadReleaseSequence = 0
+  private var buttonPressSoundPool: SoundPool? = null
+  private var buttonPressSoundId = 0
+  private var buttonPressSoundLoaded = false
   private var lastControllerInputRealtimeMs = Long.MIN_VALUE
   private var lastHandInputRealtimeMs = Long.MIN_VALUE
+  private var handVisualsSuppressedForController = false
+  private var handVisualPolicyApplied = false
+  private var handVisualRestoreGeneration = 0
   private var autoValidationEnabled = false
   private var physicalPressValidationEnabled = false
   private var panelSmokeEnabled = false
@@ -767,6 +994,10 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   private var keyeventValidationEnabled = false
   private var demographicsKeyboardValidationEnabled = false
   private var demographicsKeyboardValidationSessionId = ""
+  private var demographicsHandednessNarrationToken = 0
+  private var nextAllowedVasSpontaneousRemarkRealtimeMs = 0L
+  private var lastVasSpontaneousRemarkAudioId = ""
+  private var demographicsAgeSoftPrivacyRemarkPlayed = false
   private var audioRigStressEnabled = false
   private var visualGlowValidationMode = ""
   private var autoValidationStarted = false
@@ -808,6 +1039,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
           detectorName = ECG_R_PEAK_DETECTOR_NAME,
       )
   private lateinit var locomotionSystem: LocomotionSystem
+  private var avatarSystem: AvatarSystem? = null
   private val buttonContactPointerObserver: (PointerEvent) -> Unit = { event ->
     handleButtonContactPointerEvent(event)
   }
@@ -832,6 +1064,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     locomotionSystem = systemManager.findSystem<LocomotionSystem>()
+    avatarSystem = systemManager.tryFindSystem<AvatarSystem>()
     isdkSystem = systemManager.tryFindSystem<IsdkSystem>()
     autoValidationEnabled = intent?.getBooleanExtra(AUTO_VALIDATION_EXTRA, false) == true
     physicalPressValidationEnabled =
@@ -848,8 +1081,10 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     if (startsWithoutParticipantLanguageChoice() || launchLanguage != null) {
       selectedLanguageState.value = launchLanguage ?: StudyLanguage.English
       stageState.value = StudyStage.ConsentDemographics
+      observeStudyFlow(StudyFlowEvent.LanguageSelected)
     }
     localizationManifestSha256 = assetSha256OrEmpty(LOCALIZED_AUDIO_MANIFEST_ASSET)
+    preloadButtonPressSoundPool()
     isolateAudioRigStressValidationModes("on_create")
     requestScenePermissionIfNeeded()
     initializeEcgProtocol()
@@ -888,12 +1123,14 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
 
   fun selectStudyLanguage(language: StudyLanguage, source: String = "participant") {
     selectedLanguageState.value = language
-    languageSelectionFocusIndexState.intValue = if (language == StudyLanguage.Japanese) 1 else 0
+    languageSelectionFocusIndexState.intValue =
+        StudyLanguage.values().indexOf(language).coerceAtLeast(0)
     Log.i(
         TAG,
         "BRB_LANGUAGE_SELECTED code=${language.code} label=${language.label} source=$source localizedAudioManifestSha256=${localizationManifestSha256.ifBlank { "missing" }}",
     )
     if (stageState.value == StudyStage.LanguageSelection) {
+      observeStudyFlow(StudyFlowEvent.LanguageSelected)
       logQuestionnaireStageComplete("language_selection", 0, "consent_demographics")
       stageState.value = StudyStage.ConsentDemographics
       logQuestionnaireStageOpen("consent_demographics", 0, "language_selected")
@@ -904,6 +1141,12 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     super.onSceneReady()
     scene.setReferenceSpace(ReferenceSpace.LOCAL_FLOOR)
     scene.enablePassthrough(true)
+    try {
+      scene.enableMrPlaneTracker(true)
+      Log.i(TAG, "BRB_BUTTON_SURFACE_TRACKING enabled=true source=meta_spatial_scene_planes")
+    } catch (exception: Exception) {
+      Log.w(TAG, "BRB_BUTTON_SURFACE_TRACKING enabled=false error=${exception.message}")
+    }
     scene.setViewOrigin(0f, 0f, 0f, 0f)
     locomotionSystem.enableLocomotion(false)
     scene.setLightingEnvironment(
@@ -912,16 +1155,18 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         sunDirection = -Vector3(0.8f, 2.5f, -1.2f),
     )
 
+    val initialButtonPlacement = currentButtonPlacement
     buttonEntity =
         Entity.create(
             Panel(R.id.button_panel),
-            Transform(Pose(Vector3(0f, BUTTON_PANEL_Y_METERS, BUTTON_DISTANCE_FROM_HEAD_METERS))),
+            Transform(Pose(Vector3(initialButtonPlacement.x, initialButtonPlacement.panelY, initialButtonPlacement.z))),
             Visible(false),
     )
     createButtonModelEntity()
     createButtonGlowModelEntities()
     createButtonContactColliderEntity()
     createProceduralButtonFallbackObjects()
+    updateButtonPlacement("scene_ready")
     questionnaireEntity =
         Entity.create(
             Panel(R.id.questionnaire_panel),
@@ -937,13 +1182,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     nameKeyboardEntity =
         Entity.create(
             Panel(R.id.keyboard_panel),
-            Transform(
-                headsetRadialPanelPose(
-                    NAME_KEYBOARD_PANEL_RADIAL_ANGLE_DEGREES,
-                    NAME_KEYBOARD_PANEL_Y_METERS,
-                    NAME_KEYBOARD_PANEL_RADIAL_DISTANCE_METERS,
-                ),
-            ),
+            Transform(currentNameKeyboardPanelPose()),
             Visible(false),
         )
     Log.i(
@@ -1027,6 +1266,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
       consent: Boolean,
       participantIdOverride: String? = null,
   ) {
+    val sessionStart = sessionStartInstantUtc ?: Instant.now()
+    sessionStartInstantUtc = sessionStart
     val assignedParticipantId =
         participantIdOverride?.trim()?.takeIf { it.isNotBlank() }
             ?: "participant-" + System.currentTimeMillis()
@@ -1039,7 +1280,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             handedness = handedness.trim(),
             signature = signature.trim(),
             consent = consent,
-            consentTimestampIso = nowIso(),
+            consentTimestampIso = sessionStart.toString(),
         )
     Log.i(
         TAG,
@@ -1050,6 +1291,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         0,
         "prior_big_red_button_experience",
     )
+    observeStudyFlow(StudyFlowEvent.DemographicsSubmitted)
     transitionQuestionnaireOutThenShowPreButtonExperienceQuestion()
   }
 
@@ -1138,6 +1380,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         TAG,
         "BRB_PRIOR_BUTTON_EXPERIENCE_SAVED answer=$answer timestamp=${priorBigRedButtonExperienceTimestampState.value} shownBeforeCondition=1",
     )
+    observeStudyFlow(StudyFlowEvent.PriorBigRedButtonExperienceSubmitted)
     logQuestionnaireStageComplete(
         "prior_big_red_button_experience",
         1,
@@ -1171,9 +1414,12 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         status.ecgSampleRateHz == ECG_SAMPLE_RATE_HZ
   }
 
-  fun recordButtonPress(inputSource: String = PRESS_SOURCE_UNSPECIFIED) {
+  fun recordButtonPress(
+      inputSource: String = PRESS_SOURCE_UNSPECIFIED,
+      pressMechanics: ButtonPressMechanics = ButtonPressMechanics(),
+  ) {
     if (stageState.value == StudyStage.FinalExtraPresses) {
-      recordFinalExtraButtonPress(inputSource)
+      recordFinalExtraButtonPress(inputSource, pressMechanics)
       return
     }
     val run = activeRun ?: return
@@ -1217,6 +1463,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
                     inputSource == PRESS_SOURCE_AUDIO_RIG_STRESS,
             feedbackSource = run.feedbackSource,
             physiologySource = run.physiologySource,
+            pressMechanics = pressMechanics,
         )
     run.pressEvents.add(event)
     buttonPressCountState.intValue = run.pressEvents.size
@@ -1224,12 +1471,19 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         TAG,
         "BRB_BUTTON_PRESS condition=${run.conditionNumber} index=${event.pressIndex} source=${event.inputSource} validationAutomation=${event.validationAutomation} elapsedMs=${event.elapsedMs} elapsedNs=${event.elapsedNs} feedbackSource=${event.feedbackSource} physiologySource=${event.physiologySource}",
     )
-    playButtonPressedAnimation()
+    Log.i(
+        TAG,
+        "BRB_BUTTON_PRESS_MECHANICS condition=${run.conditionNumber} index=${event.pressIndex} source=${event.inputSource} ${pressMechanicsLogFields(event.pressMechanics)}",
+    )
+    playButtonPressedAnimation(event.pressMechanics)
     playButtonPressCue()
     nextAllowedPressRealtimeMs = nowRealtimeMs + BUTTON_PRESS_COOLDOWN_MS
   }
 
-  private fun recordFinalExtraButtonPress(inputSource: String = PRESS_SOURCE_UNSPECIFIED) {
+  private fun recordFinalExtraButtonPress(
+      inputSource: String = PRESS_SOURCE_UNSPECIFIED,
+      pressMechanics: ButtonPressMechanics = ButtonPressMechanics(),
+  ) {
     if (stageState.value != StudyStage.FinalExtraPresses) {
       return
     }
@@ -1277,7 +1531,11 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         TAG,
         "BRB_FINAL_EXTRA_BUTTON_PRESS index=${event.pressIndex} requirement=$FINAL_EXTRA_BUTTON_PRESS_REQUIREMENT source=${event.inputSource} validationAutomation=${event.validationAutomation} elapsedMs=${event.elapsedMs}",
     )
-    playButtonPressedAnimation()
+    Log.i(
+        TAG,
+        "BRB_FINAL_EXTRA_BUTTON_PRESS_MECHANICS index=${event.pressIndex} source=${event.inputSource} ${pressMechanicsLogFields(pressMechanics)}",
+    )
+    playButtonPressedAnimation(pressMechanics)
     playButtonPressCue()
     nextAllowedPressRealtimeMs = nowRealtimeMs + BUTTON_PRESS_COOLDOWN_MS
 
@@ -1288,6 +1546,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
           TAG,
           "BRB_FINAL_EXTRA_BUTTON_PRESS_COMPLETE count=${finalExtraPressEvents.size} requirement=$FINAL_EXTRA_BUTTON_PRESS_REQUIREMENT",
       )
+      observeStudyFlow(StudyFlowEvent.FinalExtraPressesCompleted)
       logQuestionnaireStageComplete("final_extra_presses_optional", 0, "complete_export_summary")
       finishExperiment()
     }
@@ -1579,6 +1838,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             rednessFinalMatchesCarriedForward = rednessMatchesCarried,
             timestampIso = nowIso(),
         )
+    observeStudyFlow(StudyFlowEvent.PictographicSubmitted(run.conditionNumber))
     ipqAnswersState.clear()
     stageState.value = StudyStage.PresenceQuestionnaire
     logQuestionnaireStageComplete(
@@ -1628,6 +1888,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             totalMean0To6 = scored.values.average(),
             timestampIso = nowIso(),
         )
+    observeStudyFlow(StudyFlowEvent.PresenceQuestionnaireSubmitted(run.conditionNumber))
     lostOpportunityState.floatValue = 50f
     stageState.value = StudyStage.LostOpportunity
     logQuestionnaireStageComplete(
@@ -1658,6 +1919,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         TAG,
         "BRB_LOST_OPPORTUNITY_SAVED condition=${run.conditionNumber} score=${run.lostOpportunity?.score0To100}",
     )
+    observeStudyFlow(StudyFlowEvent.LostOpportunitySubmitted(run.conditionNumber))
 
     if (run.conditionNumber == 1) {
       logQuestionnaireStageComplete(
@@ -1754,6 +2016,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         TAG,
         "BRB_FINAL_END_CONFIRMATION_SAVED rating=$rating immediateEnd=$immediateEnd source=$source extraPressRequirement=${if (immediateEnd) 0 else FINAL_EXTRA_BUTTON_PRESS_REQUIREMENT}",
     )
+    observeStudyFlow(StudyFlowEvent.FinalEndConfirmationSubmitted(rating))
     logQuestionnaireStageComplete(
         "final_end_confirmation",
         0,
@@ -1765,9 +2028,12 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         Log.i(TAG, "BRB_FINAL_END_CONFIRMATION_FINISH_SUPPRESSED reason=audio_rig_stress")
       } else {
         val holdMs = localizedCueHoldMs(AUDIO_ID_FINAL_END_10_FEEDBACK, FINAL_END_CONFIRMATION_FEEDBACK_HOLD_MS)
+        val finishToken = finalEndFinishGate.nextToken()
         mainHandler.postDelayed(
             {
-              if (stageState.value == StudyStage.FinalEndQuestionnaire && finalEndLikertState.intValue == 10) {
+              if (finalEndFinishGate.isCurrent(finishToken) &&
+                  stageState.value == StudyStage.FinalEndQuestionnaire &&
+                  finalEndLikertState.intValue == 10) {
                 finishExperiment()
               }
             },
@@ -1791,6 +2057,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
 
   private fun beginFinalExtraPressChallenge() {
     releasePlayer()
+    finalEndFinishGate.invalidate()
     val promptToken = ++finalExtraPromptToken
     finalExtraPressEvents.clear()
     finalExtraPressCountState.intValue = 0
@@ -1837,6 +2104,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     finalExtraPressStartedElapsedMs = nowRealtimeMs
     finalExtraPressArmedRealtimeMs = nowRealtimeMs + STARTUP_CONTACT_SUPPRESSION_MS
     nextAllowedPressRealtimeMs = finalExtraPressArmedRealtimeMs
+    updateButtonPlacement("final_extra_prompt_complete")
     setButtonVisible(true)
     logButtonSpatialLayout()
     val holdMs = localizedCueHoldMs(AUDIO_ID_FINAL_EXTRA_PRESSES, FINAL_EXTRA_PRESSES_PROMPT_HOLD_MS)
@@ -1873,6 +2141,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     buttonHeartbeatFlashState.value = false
     buttonHeartbeatFlashFrameState.intValue = 0
     setButtonGlowPulse(0f)
+    updateButtonPlacement("condition_${conditionNumber}_start")
     setButtonVisible(true)
     setQuestionnaireVisible(false)
     logButtonSpatialLayout()
@@ -1920,6 +2189,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     if (stageState.value != StudyStage.ConditionRunning) {
       return
     }
+    fastConditionShortcutGate.invalidate()
 
     val conditionEndNs = SystemClock.elapsedRealtimeNanos()
     run.endedIso = nowIso()
@@ -1931,6 +2201,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     releasePlayer()
     setButtonVisible(false)
     resetPictographicDefaults()
+    observeStudyFlow(StudyFlowEvent.ConditionEnded(run.conditionNumber))
     stageState.value = StudyStage.Pictographic
     showQuestionnairePanel("post_condition_${run.conditionNumber}")
     logQuestionnaireStageComplete(
@@ -1970,11 +2241,15 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
 
   private fun finishExperiment() {
     releasePlayer()
+    finalEndFinishGate.invalidate()
+    fastConditionShortcutGate.invalidate()
+    postConditionReplayGate.invalidate()
     setButtonVisible(false)
     stageState.value = StudyStage.Complete
     logQuestionnaireStageOpen("complete_export_summary", 0, PANEL_TRANSITION_COMPLETE)
     showQuestionnairePanel(PANEL_TRANSITION_COMPLETE)
     val exports = exportSession()
+    observeStudyFlow(StudyFlowEvent.ExportCompleted)
     exportStatusState.value = exports.joinToString(separator = "\n") { it.absolutePath }
     Log.i(TAG, "BRB_EXPORT_COMPLETE files=${exports.size} sessionId=$sessionId")
     if (autoValidationEnabled) {
@@ -2168,7 +2443,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
               consent = true,
               participantIdOverride =
                   if (keyeventValidationEnabled) {
-                    "KEYEVENT_VALIDATION_${System.currentTimeMillis()}"
+                    "QKV_${System.currentTimeMillis()}"
                   } else {
                     "FAST_CONTROLLER_FLOW_${System.currentTimeMillis()}"
                   },
@@ -2213,10 +2488,12 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         TAG,
         "BRB_FAST_CONDITION_AUDIO_SHORTCUT condition=${run.conditionNumber} realDurationMs=${run.audioDurationMs} shortcutMs=$shortcutMs visualGlowValidationMode=${visualGlowValidationMode.ifBlank { "none" }}",
     )
+    val shortcutToken = fastConditionShortcutGate.nextToken()
     listOf(650L, 1050L).forEachIndexed { index, offsetMs ->
       mainHandler.postDelayed(
           {
-            if ((fastControllerFlowEnabled || keyeventValidationEnabled) &&
+            if (fastConditionShortcutGate.isCurrent(shortcutToken) &&
+                (fastControllerFlowEnabled || keyeventValidationEnabled) &&
                 activeRun?.conditionNumber == run.conditionNumber &&
                 stageState.value == StudyStage.ConditionRunning) {
               Log.i(
@@ -2231,7 +2508,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     }
     mainHandler.postDelayed(
         {
-            if ((fastControllerFlowEnabled || keyeventValidationEnabled) &&
+          if (fastConditionShortcutGate.isCurrent(shortcutToken) &&
+              (fastControllerFlowEnabled || keyeventValidationEnabled) &&
               activeRun?.conditionNumber == run.conditionNumber &&
               stageState.value == StudyStage.ConditionRunning) {
             endConditionFromAudio()
@@ -2245,31 +2523,33 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     if (!fastControllerFlowEnabled && !keyeventValidationEnabled) {
       return
     }
+    val replayToken = postConditionReplayGate.nextToken()
     mainHandler.postDelayed(
         {
+          if (!postConditionReplayGate.isCurrent(replayToken)) {
+            return@postDelayed
+          }
           val run = activeRun ?: return@postDelayed
           if (run.conditionNumber != conditionNumber || stageState.value != StudyStage.Pictographic) {
             return@postDelayed
           }
-          val pictographicDirections =
-              if (conditionNumber == 1) {
-                listOf("left", "up", "right", "down")
-              } else {
-                listOf("right", "right", "up", "up")
+          val replayPlan = ValidationReplayPlan.postCondition(conditionNumber)
+          replayPlan.pictographicDirections.forEach { direction ->
+            replayControllerDirection("pictographic", conditionNumber, direction)
           }
-          pictographicDirections.forEach { direction -> replayControllerDirection("pictographic", conditionNumber, direction) }
-          if (conditionNumber == 1) {
-            pictographicRednessVasState.floatValue = 60f
-            convertRednessVasToLikert("fast_controller_replay")
-          } else {
-            pictographicRednessLikertState.intValue = 5
-            convertRednessLikertToVas("fast_controller_replay")
+          replayPlan.rednessReplay.startVas0To100?.let { value ->
+            pictographicRednessVasState.floatValue = value
+            convertRednessVasToLikert(replayPlan.rednessReplay.conversionReason)
+          }
+          replayPlan.rednessReplay.startLikert1To7?.let { value ->
+            pictographicRednessLikertState.intValue = value
+            convertRednessLikertToVas(replayPlan.rednessReplay.conversionReason)
           }
           replayControllerSubmit("pictographic", conditionNumber)
 
           IPQ_ITEMS.forEachIndexed { index, item ->
             ipqCursorIndexState.intValue = index
-            val direction = if (conditionNumber == 1) "right" else "left"
+            val direction = replayPlan.presenceDirection
             replayControllerDirection("presence_questionnaire", conditionNumber, direction)
             Log.i(
                 TAG,
@@ -2285,13 +2565,9 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
           }
           replayControllerSubmit("presence_questionnaire", conditionNumber)
 
-          val lostDirections =
-              if (conditionNumber == 1) {
-                listOf("right", "right", "down")
-              } else {
-                listOf("left", "up", "right")
-              }
-          lostDirections.forEach { direction -> replayControllerDirection("lost_opportunity", conditionNumber, direction) }
+          replayPlan.lostOpportunityDirections.forEach { direction ->
+            replayControllerDirection("lost_opportunity", conditionNumber, direction)
+          }
           replayControllerSubmit("lost_opportunity", conditionNumber)
 
           if (conditionNumber == 2) {
@@ -2358,11 +2634,19 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
 
   fun handleControllerDirection(direction: String): Boolean {
     val normalized = direction.lowercase(Locale.US)
+    if (isDemographicsHandednessNarrationBlocking()) {
+      Log.i(TAG, "BRB_HANDEDNESS_NARRATION_GATE input=controller_direction direction=$normalized consumed=true")
+      return true
+    }
     return when (stageState.value) {
       StudyStage.LanguageSelection -> {
+        val optionCount = StudyLanguage.values().size
+        val currentIndex = languageSelectionFocusIndexState.intValue.coerceIn(0, optionCount - 1)
         when (normalized) {
-          "left", "up" -> languageSelectionFocusIndexState.intValue = 0
-          "right", "down" -> languageSelectionFocusIndexState.intValue = 1
+          "left", "up" ->
+              languageSelectionFocusIndexState.intValue = (currentIndex - 1 + optionCount) % optionCount
+          "right", "down" ->
+              languageSelectionFocusIndexState.intValue = (currentIndex + 1) % optionCount
           else -> return false
         }
         Log.i(
@@ -2417,11 +2701,23 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
           "down" -> pictographicPresenceState.floatValue = (pictographicPresenceState.floatValue - 5f).coerceIn(0f, 100f)
           else -> return false
         }
+        val vasScale =
+            when (normalized) {
+              "left", "right" -> "pictographic_closeness"
+              else -> "pictographic_presence"
+            }
+        val vasValue =
+            when (vasScale) {
+              "pictographic_closeness" -> 100f - pictographicClosenessState.floatValue
+              else -> pictographicPresenceState.floatValue
+            }
         Log.i(
             TAG,
             "BRB_CONTROLLER_DIRECTION stage=pictographic condition=${activeConditionState.intValue} direction=$normalized closeness=${pictographicClosenessState.floatValue.toInt()} presence=${pictographicPresenceState.floatValue.toInt()}",
         )
-        playQuestionnaireNavigationCue()
+        if (!triggerVasSpontaneousRemark(vasScale, vasValue, "controller_direction_$normalized")) {
+          playQuestionnaireNavigationCue()
+        }
         true
       }
       StudyStage.PresenceQuestionnaire -> {
@@ -2459,7 +2755,9 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             TAG,
             "BRB_CONTROLLER_DIRECTION stage=lost_opportunity condition=${activeConditionState.intValue} direction=$normalized score=${lostOpportunityState.floatValue.toInt()}",
         )
-        playQuestionnaireNavigationCue()
+        if (!triggerVasSpontaneousRemark("lost_opportunity", lostOpportunityState.floatValue, "controller_direction_$normalized")) {
+          playQuestionnaireNavigationCue()
+        }
         true
       }
       StudyStage.FinalEndQuestionnaire -> {
@@ -2482,10 +2780,14 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   }
 
   fun submitCurrentControllerStage(): Boolean {
+    if (isDemographicsHandednessNarrationBlocking()) {
+      Log.i(TAG, "BRB_HANDEDNESS_NARRATION_GATE input=controller_submit consumed=true")
+      return true
+    }
     return when (stageState.value) {
       StudyStage.LanguageSelection -> {
-        val language =
-            if (languageSelectionFocusIndexState.intValue == 1) StudyLanguage.Japanese else StudyLanguage.English
+        val options = StudyLanguage.values()
+        val language = options[languageSelectionFocusIndexState.intValue.coerceIn(0, options.lastIndex)]
         playQuestionnaireChoiceCue()
         selectStudyLanguage(language, "controller_submit")
         true
@@ -2534,11 +2836,17 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   private fun initializeEcgProtocol() {
     simulatedRrIntervalsMs = loadSimulatedRrIntervals()
     val orderCounts = priorEcgAssignmentCounts()
+    val tiedPriorCounts = orderCounts.first == orderCounts.second
+    val randomTieChoosesRealFirst = (UUID.randomUUID().leastSignificantBits and 1L) == 0L
+    ecgAssignmentPriorRealThenSimulatedCount = orderCounts.first
+    ecgAssignmentPriorSimulatedThenRealCount = orderCounts.second
+    ecgAssignmentRandomizedWhenTied = tiedPriorCounts
+    ecgAssignmentRandomTieChoiceRealFirst = randomTieChoosesRealFirst
     ecgAssignmentOrder =
         when {
           orderCounts.first < orderCounts.second -> ECG_ORDER_REAL_THEN_SIMULATED
           orderCounts.second < orderCounts.first -> ECG_ORDER_SIMULATED_THEN_REAL
-          (UUID.randomUUID().leastSignificantBits and 1L) == 0L -> ECG_ORDER_REAL_THEN_SIMULATED
+          randomTieChoosesRealFirst -> ECG_ORDER_REAL_THEN_SIMULATED
           else -> ECG_ORDER_SIMULATED_THEN_REAL
         }
     conditionFeedbackSources.clear()
@@ -2551,7 +2859,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     }
     Log.i(
         TAG,
-        "BRB_ECG_ASSIGNMENT order=$ecgAssignmentOrder basis=feedback_source priorRealThenSimulated=${orderCounts.first} priorSimulatedThenReal=${orderCounts.second} c1Feedback=${conditionFeedbackSources[1]} c2Feedback=${conditionFeedbackSources[2]} physiologySource=$ECG_SOURCE_REAL_POLAR simulatedRrCount=${simulatedRrIntervalsMs.size}",
+        "BRB_ECG_ASSIGNMENT order=$ecgAssignmentOrder basis=feedback_source assignmentStrategy=blocked_counterbalance_random_tie_break randomAssignmentWhenTied=$ecgAssignmentRandomizedWhenTied randomizedTieChoiceRealFirst=$ecgAssignmentRandomTieChoiceRealFirst priorRealThenSimulated=$ecgAssignmentPriorRealThenSimulatedCount priorSimulatedThenReal=$ecgAssignmentPriorSimulatedThenRealCount c1Feedback=${conditionFeedbackSources[1]} c2Feedback=${conditionFeedbackSources[2]} physiologySource=$ECG_SOURCE_REAL_POLAR simulatedRrCount=${simulatedRrIntervalsMs.size}",
     )
   }
 
@@ -2665,6 +2973,15 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         TAG,
         "BRB_QUESTIONNAIRE_STAGE_COMPLETE stageId=$stageId condition=$conditionNumber nextStageId=$nextStageId validationMode=${validationModeLabel()} answersLogged=false",
     )
+  }
+
+  private fun observeStudyFlow(event: StudyFlowEvent): StudyFlowTransition {
+    val transition = studyFlowController.handle(event)
+    Log.i(
+        TAG,
+        "BRB_STUDY_FLOW_EVENT event=${event.javaClass.simpleName} command=${transition.command.javaClass.simpleName} stageId=${transition.nextState.stageId} activeCondition=${transition.nextState.activeCondition} priorPromptCount=${transition.nextState.priorBigRedButtonPromptCount}",
+    )
+    return transition
   }
 
   private fun conditionStageId(conditionNumber: Int): String = "condition_$conditionNumber"
@@ -2983,6 +3300,13 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     if (stageState.value != StudyStage.ConditionRunning) {
       return
     }
+    if (source != run.feedbackSource) {
+      Log.i(
+          TAG,
+          "BRB_ECG_BLINK_IGNORED condition=${run.conditionNumber} source=$source assignedFeedbackSource=${run.feedbackSource} reason=non_assigned_feedback_source",
+      )
+      return
+    }
     val nowElapsed = SystemClock.elapsedRealtime()
     val detector = if (source == ECG_SOURCE_REAL_POLAR) ECG_BLINK_DETECTOR_POLAR_RR else ECG_BLINK_DETECTOR_SIMULATED_RR
     val pulse =
@@ -3054,7 +3378,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     keyboardFieldContractLogged = true
     Log.i(
         TAG,
-        "BRB_NAME_APP_KEYBOARD_CONTRACT field=name keyboardMode=text keyboardType=Text implementation=app_owned platformControl=AppOwnedKeyboard inputOwner=appOwnedNameKeyboard keyboardPanel=keyboard_panel presentation=pop_out_spatial_panel integratedInQuestionnaire=false appearsOnTextFieldFocus=true maxChars=$DEMOGRAPHICS_NAME_MAX_CHARS rows=qwerty_with_space_backspace_next nativeLikeRows=true prerenderedPreview=true movablePanel=true closeToParticipant=left_of_questionnaire_near_user questionnaireFieldsReachable=true styledShell=brb_intake multiCharacter=true keyDownCommit=true batchedTextEventFallback=true noAutoAdvanceOnPartialName=true hardwareKeyeventFallback=true directAdbKeyeventValidation=true noSystemImeDependency=true noHiddenEditTextBridge=true sameExportField=demographics.name",
+        "BRB_NAME_APP_KEYBOARD_CONTRACT field=name keyboardMode=text keyboardType=Text implementation=app_owned platformControl=AppOwnedKeyboard inputOwner=appOwnedNameKeyboard keyboardPanel=keyboard_panel presentation=pop_out_spatial_panel integratedInQuestionnaire=false appearsOnTextFieldFocus=true maxChars=$DEMOGRAPHICS_NAME_MAX_CHARS rows=qwerty_with_space_backspace_next nativeLikeRows=true prerenderedPreview=true movablePanel=true dragHandle=true controllerBeamDraggable=true dragDropMovable=true higherLargerCloser=true closeToParticipant=left_of_questionnaire_near_user questionnaireFieldsReachable=true styledShell=brb_intake multiCharacter=true keyDownCommit=true batchedTextEventFallback=true noAutoAdvanceOnPartialName=true hardwareKeyeventFallback=true directAdbKeyeventValidation=true noSystemImeDependency=true noHiddenEditTextBridge=true sameExportField=demographics.name",
     )
     Log.i(
         TAG,
@@ -3396,6 +3720,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         TAG,
         "BRB_DEMOGRAPHICS_AGE_SLIDER_DONE source=${sanitizeKeyboardLogToken(source)} value=${demographicsDraftAgeState.value.ifBlank { "unset" }} min=$DEMOGRAPHICS_AGE_MIN max=$DEMOGRAPHICS_AGE_MAX platformControl=ComposeSlider inputOwner=composeSlider",
     )
+    triggerAgeSoftPrivacyRemark(source)
   }
 
   private fun handleDemographicsHardwareKeyEvent(event: KeyEvent): Boolean {
@@ -3604,6 +3929,9 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
       "age_done" -> {
         logDemographicsAgeSliderConfirmed("validation_intent")
       }
+      "select_handedness_right" -> {
+        selectDemographicsHandedness("right", "validation_intent")
+      }
       "submit_demographics" -> {
         Log.i(
             TAG,
@@ -3644,7 +3972,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             handedness = demographicsDraftHandednessState.value,
             signature = demographicsDraftSignatureState.value,
             consent = demographicsDraftConsentState.value,
-            participantIdOverride = "DIRECTIONAL_KEYBOARD_VALIDATION_${SystemClock.elapsedRealtime()}",
+            participantIdOverride = "QDK_${SystemClock.elapsedRealtime()}",
         )
       }
       else ->
@@ -3890,10 +4218,19 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   private fun exportSession(): List<File> {
     val exportDir = File(getExternalFilesDir(null), EXPORT_DIR_NAME)
     val experimentResultsDir = File(getExternalFilesDir(null), EXPERIMENT_RESULTS_DIR_NAME)
-    exportDir.mkdirs()
-    experimentResultsDir.mkdirs()
-    val baseName = "brb_first_study_${safeFileSegment(demographicsState.value.participantId)}_$sessionId"
-    val jsonText = sessionJson().toString(2)
+    val sessionStart = sessionStartInstantUtc ?: Instant.now().also { sessionStartInstantUtc = it }
+    val exportedAt = Instant.now()
+    val layout =
+        SessionExportLayout.create(
+            participantId = demographicsState.value.participantId,
+            sessionId = sessionId,
+            sessionStartUtc = sessionStart,
+            exportedUtc = exportedAt,
+            primaryRootName = EXPORT_DIR_NAME,
+            mirrorRootName = EXPERIMENT_RESULTS_DIR_NAME,
+        )
+    val exportLayoutJson = exportLayoutJson(layout)
+    val jsonText = sessionJson(exportLayoutJson, layout.exportedIso).toString(2)
     val summaryText = summaryCsvText()
     val pressText = pressEventsCsvText()
     val finalExtraPressText = finalExtraPressEventsCsvText()
@@ -3902,107 +4239,108 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     val ecgTimeSeriesText = ecgTimeSeriesCsvText()
     val ecgDetectorText = ecgDetectorEventsCsvText()
     val externalSignalText = externalSignalSamplesCsvText()
+    val sessionFiles =
+        listOf(
+            SessionExportTextFile(layout.jsonFilename, jsonText),
+            SessionExportTextFile(layout.summaryCsvFilename, summaryText),
+            SessionExportTextFile(layout.pressEventsCsvFilename, pressText),
+            SessionExportTextFile(layout.finalExtraButtonPressesCsvFilename, finalExtraPressText),
+            SessionExportTextFile(layout.ecgBlinkEventsCsvFilename, ecgBlinkText),
+            SessionExportTextFile(layout.polarRrEventsCsvFilename, polarRrText),
+            SessionExportTextFile(layout.ecgTimeSeriesCsvFilename, ecgTimeSeriesText),
+            SessionExportTextFile(layout.ecgDetectorEventsCsvFilename, ecgDetectorText),
+            SessionExportTextFile(layout.externalSignalSamplesCsvFilename, externalSignalText),
+        )
+    val manifestText = sessionManifestJson(layout, sessionFiles).toString(2)
     val indexLine =
         JSONObject()
+            .put("schema", "bigredbutton.session_index.v1")
             .put("sessionId", sessionId)
             .put("participantId", demographicsState.value.participantId)
+            .put("safeParticipantId", layout.safeParticipantId)
             .put("languageCode", selectedLanguageState.value.code)
             .put("languageLabel", selectedLanguageState.value.label)
             .put("localizedAudioManifestSha256", localizationManifestSha256)
-            .put("timestampIso", nowIso())
-            .put("json", "$baseName.json")
-            .put("summaryCsv", "${baseName}_summary.csv")
-            .put("pressEventsCsv", "${baseName}_press_events.csv")
-            .put("finalExtraButtonPressesCsv", "${baseName}_final_extra_button_presses.csv")
-            .put("ecgBlinkEventsCsv", "${baseName}_ecg_blink_events.csv")
-            .put("polarRrEventsCsv", "${baseName}_polar_rr_events.csv")
-            .put("ecgTimeSeriesCsv", "${baseName}_ecg_timeseries.csv")
-            .put("ecgDetectorEventsCsv", "${baseName}_ecg_detector_events.csv")
-            .put("externalSignalSamplesCsv", "${baseName}_external_signal_samples.csv")
+            .put("sessionStartIso", layout.sessionStartIso)
+            .put("exportedIso", layout.exportedIso)
+            .put("timestampIso", layout.exportedIso)
+            .put("sessionFolder", layout.sessionFolderName)
+            .put("manifest", layout.relativePath(layout.manifestFilename))
+            .put("json", layout.relativePath(layout.jsonFilename))
+            .put("summaryCsv", layout.relativePath(layout.summaryCsvFilename))
+            .put("pressEventsCsv", layout.relativePath(layout.pressEventsCsvFilename))
+            .put("finalExtraButtonPressesCsv", layout.relativePath(layout.finalExtraButtonPressesCsvFilename))
+            .put("ecgBlinkEventsCsv", layout.relativePath(layout.ecgBlinkEventsCsvFilename))
+            .put("polarRrEventsCsv", layout.relativePath(layout.polarRrEventsCsvFilename))
+            .put("ecgTimeSeriesCsv", layout.relativePath(layout.ecgTimeSeriesCsvFilename))
+            .put("ecgDetectorEventsCsv", layout.relativePath(layout.ecgDetectorEventsCsvFilename))
+            .put("externalSignalSamplesCsv", layout.relativePath(layout.externalSignalSamplesCsvFilename))
             .toString() + "\n"
     val primaryFiles =
         writeExportBundle(
             exportDir,
-            baseName,
-            jsonText,
-            summaryText,
-            pressText,
-            finalExtraPressText,
-            ecgBlinkText,
-            polarRrText,
-            ecgTimeSeriesText,
-            ecgDetectorText,
-            externalSignalText,
+            layout,
+            sessionFiles,
+            manifestText,
             indexLine,
         )
     val sidequestFiles =
         writeExportBundle(
             experimentResultsDir,
-            baseName,
-            jsonText,
-            summaryText,
-            pressText,
-            finalExtraPressText,
-            ecgBlinkText,
-            polarRrText,
-            ecgTimeSeriesText,
-            ecgDetectorText,
-            externalSignalText,
+            layout,
+            sessionFiles,
+            manifestText,
             indexLine,
         )
-    Log.i(TAG, "BRB_EXPERIMENT_RESULTS_FOLDER path=${experimentResultsDir.absolutePath}")
+    Log.i(
+        TAG,
+        "BRB_EXPERIMENT_RESULTS_FOLDER path=${experimentResultsDir.absolutePath} sessionFolder=${layout.sessionFolderName} manifest=${layout.manifestFilename}",
+    )
     return primaryFiles + sidequestFiles
   }
 
   private fun writeExportBundle(
       exportDir: File,
-      baseName: String,
-      jsonText: String,
-      summaryText: String,
-      pressText: String,
-      finalExtraPressText: String,
-      ecgBlinkText: String,
-      polarRrText: String,
-      ecgTimeSeriesText: String,
-      ecgDetectorText: String,
-      externalSignalText: String,
+      layout: SessionExportLayout,
+      sessionFiles: List<SessionExportTextFile>,
+      manifestText: String,
       indexLine: String,
   ): List<File> {
-    val jsonFile = File(exportDir, "$baseName.json")
-    val summaryCsv = File(exportDir, "${baseName}_summary.csv")
-    val pressCsv = File(exportDir, "${baseName}_press_events.csv")
-    val finalExtraPressCsv = File(exportDir, "${baseName}_final_extra_button_presses.csv")
-    val ecgBlinkCsv = File(exportDir, "${baseName}_ecg_blink_events.csv")
-    val polarRrCsv = File(exportDir, "${baseName}_polar_rr_events.csv")
-    val ecgTimeSeriesCsv = File(exportDir, "${baseName}_ecg_timeseries.csv")
-    val ecgDetectorCsv = File(exportDir, "${baseName}_ecg_detector_events.csv")
-    val externalSignalCsv = File(exportDir, "${baseName}_external_signal_samples.csv")
-    val indexFile = File(exportDir, "session-index.jsonl")
-    jsonFile.writeText(jsonText)
-    summaryCsv.writeText(summaryText)
-    pressCsv.writeText(pressText)
-    finalExtraPressCsv.writeText(finalExtraPressText)
-    ecgBlinkCsv.writeText(ecgBlinkText)
-    polarRrCsv.writeText(polarRrText)
-    ecgTimeSeriesCsv.writeText(ecgTimeSeriesText)
-    ecgDetectorCsv.writeText(ecgDetectorText)
-    externalSignalCsv.writeText(externalSignalText)
-    indexFile.appendText(indexLine)
-    return listOf(
-        jsonFile,
-        summaryCsv,
-        pressCsv,
-        finalExtraPressCsv,
-        ecgBlinkCsv,
-        polarRrCsv,
-        ecgTimeSeriesCsv,
-        ecgDetectorCsv,
-        externalSignalCsv,
-        indexFile,
-    )
+    return SessionExportWriter.writeBundle(exportDir, layout, sessionFiles, manifestText, indexLine)
   }
 
-  private fun sessionJson(): JSONObject {
+  private fun exportLayoutJson(layout: SessionExportLayout): JSONObject {
+    return JSONObject()
+        .put("schema", SessionExportLayout.SCHEMA)
+        .put("sessionFolderName", layout.sessionFolderName)
+        .put("primaryRootName", layout.primaryRootName)
+        .put("mirrorRootName", layout.mirrorRootName)
+        .put("sessionStartIso", layout.sessionStartIso)
+        .put("exportedIso", layout.exportedIso)
+        .put("manifestFilename", layout.manifestFilename)
+        .put("jsonFilename", layout.jsonFilename)
+        .put("summaryCsvFilename", layout.summaryCsvFilename)
+  }
+
+  private fun sessionManifestJson(
+      layout: SessionExportLayout,
+      sessionFiles: List<SessionExportTextFile>,
+  ): JSONObject {
+    return JSONObject()
+        .put("schema", "bigredbutton.session_manifest.v1")
+        .put("sessionId", layout.sessionId)
+        .put("participantId", layout.participantId)
+        .put("safeParticipantId", layout.safeParticipantId)
+        .put("sessionFolder", layout.sessionFolderName)
+        .put("sessionStartIso", layout.sessionStartIso)
+        .put("exportedIso", layout.exportedIso)
+        .put("primaryRootName", layout.primaryRootName)
+        .put("mirrorRootName", layout.mirrorRootName)
+        .put("manifestFilename", layout.manifestFilename)
+        .put("files", JSONArray(sessionFiles.map { it.filename } + layout.manifestFilename))
+  }
+
+  private fun sessionJson(exportLayout: JSONObject, exportedAtIso: String): JSONObject {
     val root = JSONObject()
     root.put("schema", "bigredbutton.first_study.v1")
     root.put("appPackage", packageName)
@@ -4011,7 +4349,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     root.put("validationMode", validationModeLabel())
     root.put("localization", localizationJson())
     root.put("participantPhysiologyEvidenceRequired", participantPhysiologyEvidenceExpected())
-    root.put("exportedAtIso", nowIso())
+    root.put("exportedAtIso", exportedAtIso)
+    root.put("exportLayout", exportLayout)
     root.put("agentIntegrationProtocol", agentIntegrationProtocolJson())
     root.put("questionnaireProtocol", questionnaireProtocolJson())
     root.put("externalSignalProtocol", externalSignalProtocolJson())
@@ -4058,14 +4397,19 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             .orEmpty()
     return when (normalized) {
       "en", "en-us", "english" -> StudyLanguage.English
+      "de", "de-de", "german", "deutsch" -> StudyLanguage.German
       "ja", "ja-jp", "jp", "japanese" -> StudyLanguage.Japanese
       else -> null
     }
   }
 
   private fun isJapaneseSelected(): Boolean = selectedLanguageState.value == StudyLanguage.Japanese
+  private fun isGermanSelected(): Boolean = selectedLanguageState.value == StudyLanguage.German
 
   fun t(key: String): String {
+    if (isGermanSelected()) {
+      GERMAN_LOCALIZED_TEXT[key]?.let { return it }
+    }
     val japanese = isJapaneseSelected()
     return when (key) {
       "language_title" -> if (japanese) "実験の言語を選んでください" else "Choose experiment language"
@@ -4186,6 +4530,9 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   fun tf(key: String, vararg args: Any): String = String.format(Locale.US, t(key), *args)
 
   fun localizedRednessMicroCaption(code: String, fallback: String): String {
+    if (isGermanSelected()) {
+      return GERMAN_REDNESS_MICRO_CAPTIONS[code] ?: fallback
+    }
     if (!isJapaneseSelected()) {
       return fallback
     }
@@ -4212,47 +4559,66 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   }
 
   fun priorButtonExperienceQuestionText(): String =
-      if (isJapaneseSelected()) {
-        "あ、待ってください。最後にもう一つだけ質問があります。大きな赤いボタンを押した経験はありますか？"
-      } else {
-        PRIOR_BUTTON_EXPERIENCE_QUESTION
+      when (selectedLanguageState.value) {
+        StudyLanguage.German ->
+            "Oh, warten Sie. Wir haben noch genau eine Frage für dich: Hast du Erfahrung damit, große rote Knöpfe zu drücken?"
+        StudyLanguage.Japanese ->
+            "あ、待ってください。最後にもう一つだけ質問があります。大きな赤いボタンを押した経験はありますか？"
+        StudyLanguage.English -> PRIOR_BUTTON_EXPERIENCE_QUESTION
       }
 
   fun priorButtonExperienceFeedbackText(answer: String): String =
-      if (isJapaneseSelected()) {
-        if (answer == "yes") {
-          "経験者ですね。まさに我々が必要としていた参加者です。"
-        } else {
-          "ない？それなら、かなり楽しいことになりますよ。"
+      when (selectedLanguageState.value) {
+        StudyLanguage.German ->
+            if (answer == "yes") {
+              "Ein erfahrener Nutzer. Genau die Art Teilnehmer, die wir für Ihre kleine Knopfkarriere brauchen."
+            } else {
+              "Nein? Dann erwartet Sie etwas Besonderes. Du bist, wissenschaftlich gesehen, noch ungedrückt."
+            }
+        StudyLanguage.Japanese ->
+            if (answer == "yes") {
+              "経験者ですね。まさに我々が必要としていた参加者です。"
+            } else {
+              "ない？それなら、かなり楽しいことになりますよ。"
+            }
+        StudyLanguage.English ->
+            if (answer == "yes") {
+              PRIOR_BUTTON_EXPERIENCE_YES_FEEDBACK
+            } else {
+              PRIOR_BUTTON_EXPERIENCE_NO_FEEDBACK
+            }
         }
-      } else if (answer == "yes") {
-        PRIOR_BUTTON_EXPERIENCE_YES_FEEDBACK
-      } else {
-        PRIOR_BUTTON_EXPERIENCE_NO_FEEDBACK
-      }
 
   fun finalEndConfirmationQuestionText(): String =
-      if (isJapaneseSelected()) {
-        "実験を終了したい確信度は、1〜10の尺度でどれくらいですか？"
-      } else {
-        FINAL_END_CONFIRMATION_QUESTION
+      when (selectedLanguageState.value) {
+        StudyLanguage.German ->
+            "Wie sicher sind Sie, dass du das Experiment beenden möchtest, auf einer Skala von 1 bis 10?"
+        StudyLanguage.Japanese -> "実験を終了したい確信度は、1〜10の尺度でどれくらいですか？"
+        StudyLanguage.English -> FINAL_END_CONFIRMATION_QUESTION
       }
 
   private fun finalEndConfirmation10FeedbackText(): String =
-      if (isJapaneseSelected()) {
-        "わかりました。それなら、もうボタンを押す気分ではないということで、VRヘッドセットを返してもらって大丈夫そうですね。"
-      } else {
-        FINAL_END_CONFIRMATION_10_FEEDBACK
+      when (selectedLanguageState.value) {
+        StudyLanguage.German ->
+            "Na gut. Dann können Sie das VR-Headset wohl zurückgeben, wenn du wirklich keine weiteren Knopfdrücke in dir spürst."
+        StudyLanguage.Japanese ->
+            "わかりました。それなら、もうボタンを押す気分ではないということで、VRヘッドセットを返してもらって大丈夫そうですね。"
+        StudyLanguage.English -> FINAL_END_CONFIRMATION_10_FEEDBACK
       }
 
   fun finalExtraPressesPromptText(): String =
-      if (isJapaneseSelected()) {
-        "すばらしい！小数ではないその回答は、大きく赤い「はい」と受け取ります！はい、私は大きな赤いボタンを押し続けたい！はい、ボタンは大きい！はい、ボタンは赤い！はい、押し続けたい！科学のために、データ収集のために、知識の探求のために！科学だけのために！永遠に科学。では、あと1000回ボタンを押したら、実験を終了してかまいません。楽しんでください！"
-      } else {
-        FINAL_EXTRA_PRESSES_PROMPT
+      when (selectedLanguageState.value) {
+        StudyLanguage.German ->
+            "Ausgezeichnet! Ihre nicht-dezimale Antwort werte ich als ein großes rotes JA. Ja, du möchtest weiter den großen roten Knopf drücken. Ja, der Knopf ist groß. Ja, der Knopf ist rot. Ja, Sie wollen ihn weiter drücken. Für die Wissenschaft, für die Datensammlung, für die Suche nach Erkenntnis. Nur für Wissenschaft. Für immer Wissenschaft. Also dürfen Sie das Experiment beenden, sobald du den Knopf noch 1000 Mal gedrückt hast. Viel Vergnügen."
+        StudyLanguage.Japanese ->
+            "すばらしい！小数ではないその回答は、大きく赤い「はい」と受け取ります！はい、私は大きな赤いボタンを押し続けたい！はい、ボタンは大きい！はい、ボタンは赤い！はい、押し続けたい！科学のために、データ収集のために、知識の探求のために！科学だけのために！永遠に科学。では、あと1000回ボタンを押したら、実験を終了してかまいません。楽しんでください！"
+        StudyLanguage.English -> FINAL_EXTRA_PRESSES_PROMPT
       }
 
   fun localizedPresenceItemText(item: PresenceItem): String {
+    if (isGermanSelected()) {
+      return GERMAN_PRESENCE_ITEM_TEXT[item.id] ?: item.text
+    }
     if (!isJapaneseSelected()) {
       return item.text
     }
@@ -4276,63 +4642,30 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   }
 
   fun localizedRednessDescriptors(): List<String> =
-      if (isJapaneseSelected()) {
-        listOf("少し赤い", "やや赤い", "ほどほどに赤い", "かなり赤い", "とても赤い", "強烈に赤い", "極端に赤い")
-      } else {
-        REDNESS_LIKERT_DESCRIPTORS
+      when (selectedLanguageState.value) {
+        StudyLanguage.German -> GERMAN_REDNESS_LIKERT_DESCRIPTORS
+        StudyLanguage.Japanese ->
+            listOf("少し赤い", "やや赤い", "ほどほどに赤い", "かなり赤い", "とても赤い", "強烈に赤い", "極端に赤い")
+        StudyLanguage.English -> REDNESS_LIKERT_DESCRIPTORS
       }
 
   private fun localizedAudioAssetPath(
       audioId: String,
       language: StudyLanguage = selectedLanguageState.value,
-  ): String? {
-    return when (audioId) {
-      AUDIO_ID_CONDITION_1 ->
-          if (language == StudyLanguage.Japanese) LOCALIZED_JA_CONDITION_1_AUDIO else LOCALIZED_EN_CONDITION_1_AUDIO
-      AUDIO_ID_CONDITION_2 ->
-          if (language == StudyLanguage.Japanese) LOCALIZED_JA_CONDITION_2_AUDIO else LOCALIZED_EN_CONDITION_2_AUDIO
-      AUDIO_ID_PRIOR_QUESTION ->
-          if (language == StudyLanguage.Japanese) LOCALIZED_JA_PRIOR_QUESTION_AUDIO else LOCALIZED_EN_PRIOR_QUESTION_AUDIO
-      AUDIO_ID_PRIOR_YES ->
-          if (language == StudyLanguage.Japanese) LOCALIZED_JA_PRIOR_YES_AUDIO else LOCALIZED_EN_PRIOR_YES_AUDIO
-      AUDIO_ID_PRIOR_NO ->
-          if (language == StudyLanguage.Japanese) LOCALIZED_JA_PRIOR_NO_AUDIO else LOCALIZED_EN_PRIOR_NO_AUDIO
-      AUDIO_ID_PRE_START ->
-          if (language == StudyLanguage.Japanese) LOCALIZED_JA_PRE_START_AUDIO else LOCALIZED_EN_PRE_START_AUDIO
-      AUDIO_ID_REDNESS_VAS_TO_LIKERT ->
-          if (language == StudyLanguage.Japanese) LOCALIZED_JA_REDNESS_VAS_TO_LIKERT_AUDIO else LOCALIZED_EN_REDNESS_VAS_TO_LIKERT_AUDIO
-      AUDIO_ID_REDNESS_LIKERT_TO_VAS ->
-          if (language == StudyLanguage.Japanese) LOCALIZED_JA_REDNESS_LIKERT_TO_VAS_AUDIO else LOCALIZED_EN_REDNESS_LIKERT_TO_VAS_AUDIO
-      AUDIO_ID_IPQ_HISTORY_PART_1 ->
-          if (language == StudyLanguage.Japanese) LOCALIZED_JA_IPQ_HISTORY_PART_1_AUDIO else LOCALIZED_EN_IPQ_HISTORY_PART_1_AUDIO
-      AUDIO_ID_IPQ_HISTORY_PART_2 ->
-          if (language == StudyLanguage.Japanese) LOCALIZED_JA_IPQ_HISTORY_PART_2_AUDIO else LOCALIZED_EN_IPQ_HISTORY_PART_2_AUDIO
-      AUDIO_ID_FINAL_END_QUESTION ->
-          if (language == StudyLanguage.Japanese) LOCALIZED_JA_FINAL_END_QUESTION_AUDIO else LOCALIZED_EN_FINAL_END_QUESTION_AUDIO
-      AUDIO_ID_FINAL_END_10_FEEDBACK ->
-          if (language == StudyLanguage.Japanese) LOCALIZED_JA_FINAL_END_10_FEEDBACK_AUDIO else LOCALIZED_EN_FINAL_END_10_FEEDBACK_AUDIO
-      AUDIO_ID_FINAL_EXTRA_PRESSES ->
-          if (language == StudyLanguage.Japanese) LOCALIZED_JA_FINAL_EXTRA_PRESSES_AUDIO else LOCALIZED_EN_FINAL_EXTRA_PRESSES_AUDIO
-      else -> null
-    }
-  }
+  ): String? =
+      LOCALIZED_AUDIO_CLIP_KEYS[audioId]?.let { clipKey ->
+        val locale = language.assetLocale
+        "localized/$locale/${audioId}_${clipKey}__$locale.mp3"
+      }
 
   private fun localizedCueDurationMs(audioId: String, englishDurationMs: Long): Long {
-    if (!isJapaneseSelected()) {
-      return englishDurationMs
-    }
-    return when (audioId) {
-      AUDIO_ID_PRIOR_QUESTION -> JA_PRIOR_BUTTON_EXPERIENCE_QUESTION_AUDIO_DURATION_MS
-      AUDIO_ID_PRIOR_YES -> JA_PRIOR_BUTTON_EXPERIENCE_YES_AUDIO_DURATION_MS
-      AUDIO_ID_PRIOR_NO -> JA_PRIOR_BUTTON_EXPERIENCE_NO_AUDIO_DURATION_MS
-      AUDIO_ID_PRE_START -> JA_PRIOR_BUTTON_EXPERIENCE_PRE_START_AUDIO_DURATION_MS
-      AUDIO_ID_REDNESS_VAS_TO_LIKERT -> JA_FIRST_REDNESS_CHANGE_AUDIO_DURATION_MS
-      AUDIO_ID_REDNESS_LIKERT_TO_VAS -> JA_SECOND_REDNESS_CHANGE_AUDIO_DURATION_MS
-      AUDIO_ID_FINAL_END_QUESTION -> JA_FINAL_END_CONFIRMATION_QUESTION_AUDIO_DURATION_MS
-      AUDIO_ID_FINAL_END_10_FEEDBACK -> JA_FINAL_END_CONFIRMATION_10_FEEDBACK_AUDIO_DURATION_MS
-      AUDIO_ID_FINAL_EXTRA_PRESSES -> JA_FINAL_EXTRA_PRESSES_PROMPT_AUDIO_DURATION_MS
-      else -> englishDurationMs
-    }
+    val localizedDurations =
+        when (selectedLanguageState.value) {
+          StudyLanguage.Japanese -> JA_LOCALIZED_CUE_DURATIONS_MS
+          StudyLanguage.German -> DE_LOCALIZED_CUE_DURATIONS_MS
+          StudyLanguage.English -> emptyMap()
+        }
+    return localizedDurations[audioId] ?: englishDurationMs
   }
 
   private fun localizedCueHoldMs(audioId: String, englishHoldMs: Long): Long {
@@ -4395,6 +4728,185 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     playAssetOneShotCue(assetPath, cueName, audioId, onComplete)
   }
 
+  private fun vasSpontaneousRemarkBucket(value0To100: Float): String {
+    val value = value0To100.coerceIn(0f, 100f)
+    return when {
+      value <= 10f -> VAS_REMARK_BUCKET_LOW
+      value <= 34f -> VAS_REMARK_BUCKET_LOW_MID
+      value <= 65f -> VAS_REMARK_BUCKET_MID
+      value <= 84f -> VAS_REMARK_BUCKET_HIGH_MID
+      value <= 94f -> VAS_REMARK_BUCKET_HIGH
+      else -> VAS_REMARK_BUCKET_MAX
+    }
+  }
+
+  private fun armVasSpontaneousRemarkCooldown(audioId: String, reason: String) {
+    val cooldownMs = Random.nextLong(VAS_SPONTANEOUS_REMARK_MIN_PAUSE_MS, VAS_SPONTANEOUS_REMARK_MAX_PAUSE_MS + 1L)
+    nextAllowedVasSpontaneousRemarkRealtimeMs = SystemClock.elapsedRealtime() + cooldownMs
+    Log.i(
+        TAG,
+        "BRB_SPONTANEOUS_REMARK_COOLDOWN kind=vas audioId=${sanitizeKeyboardLogToken(audioId.ifBlank { "unknown" })} cooldownMs=$cooldownMs minMs=$VAS_SPONTANEOUS_REMARK_MIN_PAUSE_MS maxMs=$VAS_SPONTANEOUS_REMARK_MAX_PAUSE_MS reason=${sanitizeKeyboardLogToken(reason)}",
+    )
+  }
+
+  fun triggerVasSpontaneousRemark(
+      scaleId: String,
+      value0To100: Float,
+      source: String,
+  ): Boolean {
+    val nowMs = SystemClock.elapsedRealtime()
+    val safeScale = sanitizeKeyboardLogToken(scaleId)
+    val safeSource = sanitizeKeyboardLogToken(source)
+    if (nowMs < nextAllowedVasSpontaneousRemarkRealtimeMs) {
+      Log.i(
+          TAG,
+          "BRB_SPONTANEOUS_REMARK_SKIPPED kind=vas scale=$safeScale source=$safeSource reason=cooldown remainingMs=${nextAllowedVasSpontaneousRemarkRealtimeMs - nowMs}",
+      )
+      return false
+    }
+    val bucket = vasSpontaneousRemarkBucket(value0To100)
+    val candidates = VAS_SPONTANEOUS_REMARKS_BY_BUCKET[bucket].orEmpty()
+    if (candidates.isEmpty()) {
+      Log.w(TAG, "BRB_SPONTANEOUS_REMARK_SKIPPED kind=vas scale=$safeScale source=$safeSource bucket=$bucket reason=empty_bucket")
+      return false
+    }
+    val eligible = candidates.filter { it.audioId != lastVasSpontaneousRemarkAudioId }.ifEmpty { candidates }
+    val remark = eligible[Random.nextInt(eligible.size)]
+    return playQuestionnaireSpontaneousRemark(
+        remark = remark,
+        kind = "vas",
+        trigger = safeSource,
+        scaleId = safeScale,
+        value0To100 = value0To100.coerceIn(0f, 100f).roundToInt(),
+        bucket = bucket,
+        applyVasCooldown = true,
+    )
+  }
+
+  fun triggerAgeSoftPrivacyRemark(source: String): Boolean {
+    val safeSource = sanitizeKeyboardLogToken(source)
+    if (demographicsAgeSoftPrivacyRemarkPlayed) {
+      Log.i(TAG, "BRB_SPONTANEOUS_REMARK_SKIPPED kind=age trigger=$safeSource reason=already_played")
+      return false
+    }
+    val started =
+        playQuestionnaireSpontaneousRemark(
+            remark = AGE_SOFT_PRIVACY_REMARK,
+            kind = "age",
+            trigger = safeSource,
+            scaleId = "demographics_age",
+            value0To100 = demographicsDraftAgeState.value.toIntOrNull()?.coerceIn(DEMOGRAPHICS_AGE_MIN, DEMOGRAPHICS_AGE_MAX),
+            bucket = AGE_SOFT_PRIVACY_REMARK.bucket,
+            applyVasCooldown = false,
+        )
+    if (started) {
+      demographicsAgeSoftPrivacyRemarkPlayed = true
+    }
+    return started
+  }
+
+  private fun playQuestionnaireSpontaneousRemark(
+      remark: QuestionnaireSpontaneousRemark,
+      kind: String,
+      trigger: String,
+      scaleId: String,
+      value0To100: Int?,
+      bucket: String,
+      applyVasCooldown: Boolean,
+  ): Boolean {
+    var started = false
+    val playback = {
+      val requestedLanguage = selectedLanguageState.value
+      val requestedAssetPath = remark.assetPath(requestedLanguage)
+      val fallbackAssetPath = remark.assetPath(StudyLanguage.English)
+      if (isSpontaneousRemarkPlaying() || isAnyNonSpontaneousAudioPlaying()) {
+        Log.i(
+            TAG,
+            "BRB_SPONTANEOUS_REMARK_SKIPPED kind=$kind scale=$scaleId trigger=$trigger bucket=$bucket audioId=${remark.audioId} reason=audio_active noOverlap=true",
+        )
+      } else {
+        var asset: android.content.res.AssetFileDescriptor? = null
+        try {
+          var assetPath = requestedAssetPath
+          asset =
+              try {
+                assets.openFd(requestedAssetPath)
+              } catch (exception: Exception) {
+                if (requestedAssetPath != fallbackAssetPath) {
+                  Log.w(TAG, "BRB_LOCALIZED_AUDIO_FALLBACK audioId=${remark.audioId} requested=${requestedLanguage.code} asset=$requestedAssetPath fallback=$fallbackAssetPath error=${exception.message}")
+                  assetPath = fallbackAssetPath
+                  assets.openFd(fallbackAssetPath)
+                } else {
+                  throw exception
+                }
+              }
+          val player =
+              MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                )
+                setDataSource(asset!!.fileDescriptor, asset!!.startOffset, asset!!.length)
+                setVolume(1.0f, 1.0f)
+                setOnErrorListener { failed, what, extra ->
+                  Log.w(TAG, "BRB_SPONTANEOUS_REMARK_FAILED kind=$kind scale=$scaleId trigger=$trigger audioId=${remark.audioId} asset=$assetPath what=$what extra=$extra")
+                  if (spontaneousRemarkPlayer === failed) {
+                    spontaneousRemarkPlayer = null
+                    spontaneousRemarkActiveAudioId = ""
+                    spontaneousRemarkAppliesVasCooldown = false
+                  }
+                  failed.release()
+                  true
+                }
+                prepare()
+              }
+          asset?.close()
+          asset = null
+          spontaneousRemarkPlayer = player
+          spontaneousRemarkActiveAudioId = remark.audioId
+          spontaneousRemarkAppliesVasCooldown = applyVasCooldown
+          player.setOnCompletionListener { completed ->
+            val completedAudioId = spontaneousRemarkActiveAudioId.ifBlank { remark.audioId }
+            completed.release()
+            if (spontaneousRemarkPlayer === completed) {
+              spontaneousRemarkPlayer = null
+              spontaneousRemarkActiveAudioId = ""
+              spontaneousRemarkAppliesVasCooldown = false
+            }
+            if (applyVasCooldown) {
+              armVasSpontaneousRemarkCooldown(completedAudioId, "completed")
+            }
+            Log.i(TAG, "BRB_SPONTANEOUS_REMARK_COMPLETE kind=$kind audioId=${remark.audioId} cue=${remark.cueName()} noOverlap=true")
+          }
+          player.start()
+          if (applyVasCooldown) {
+            lastVasSpontaneousRemarkAudioId = remark.audioId
+          }
+          val valueLog = value0To100?.toString() ?: "unset"
+          Log.i(
+              TAG,
+              "BRB_SPONTANEOUS_REMARK_CUE kind=$kind scale=$scaleId value=$valueLog bucket=$bucket trigger=$trigger cue=${remark.cueName()} audioId=${remark.audioId} asset=$assetPath language=${requestedLanguage.code} durationMs=${player.duration} noOverlap=true randomOrder=true cooldownPolicy=random_5_to_10_seconds_after_completion",
+          )
+          started = true
+        } catch (exception: Exception) {
+          Log.w(TAG, "BRB_SPONTANEOUS_REMARK_FAILED kind=$kind scale=$scaleId trigger=$trigger audioId=${remark.audioId} error=${exception.message}")
+        } finally {
+          try {
+            asset?.close()
+          } catch (_: Exception) {}
+        }
+      }
+    }
+    if (Looper.myLooper() == Looper.getMainLooper()) {
+      playback()
+    } else {
+      mainHandler.post { playback() }
+    }
+    return started
+  }
+
   private fun ipqHistoryAudioIdForCondition(conditionNumber: Int): String? =
       when (conditionNumber) {
         1 -> AUDIO_ID_IPQ_HISTORY_PART_1
@@ -4411,6 +4923,78 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
 
   private fun localizedIpqHistoryAssetPath(audioId: String, language: StudyLanguage): String? =
       localizedAudioAssetPath(audioId, language)
+
+  fun selectDemographicsHandedness(value: String, source: String): Boolean {
+    val normalized =
+        when (value) {
+          "left", "right", "ambidextrous" -> value
+          else -> {
+            Log.w(TAG, "BRB_DEMOGRAPHICS_HANDEDNESS_SELECTED accepted=false value=${sanitizeKeyboardLogToken(value)} source=${sanitizeKeyboardLogToken(source)} reason=unsupported_value")
+            return false
+          }
+        }
+    if (demographicsHandednessNarrationBlockingState.value) {
+      Log.i(TAG, "BRB_DEMOGRAPHICS_HANDEDNESS_SELECTED accepted=false value=$normalized source=${sanitizeKeyboardLogToken(source)} reason=narration_blocking")
+      return false
+    }
+    demographicsDraftHandednessState.value = normalized
+    demographicsFocusedFieldState.value = "handedness"
+    setNameKeyboardVisible(false, "handedness_narration_gate")
+    playQuestionnaireChoiceCue()
+    playHandednessNarrationBlocking("handedness_choice_${sanitizeKeyboardLogToken(source)}")
+    Log.i(TAG, "BRB_DEMOGRAPHICS_HANDEDNESS_SELECTED accepted=true value=$normalized source=${sanitizeKeyboardLogToken(source)} blocking=true")
+    return true
+  }
+
+  fun isDemographicsHandednessNarrationBlocking(): Boolean =
+      stageState.value == StudyStage.ConsentDemographics && demographicsHandednessNarrationBlockingState.value
+
+  private fun clearHandednessNarrationBlocking(token: Int, reason: String) {
+    if (token != demographicsHandednessNarrationToken) {
+      return
+    }
+    demographicsHandednessNarrationBlockingState.value = false
+    Log.i(TAG, "BRB_HANDEDNESS_NARRATION_GATE state=clear token=$token reason=$reason")
+  }
+
+  private fun playHandednessNarrationBlocking(trigger: String) {
+    val audioId = AUDIO_ID_HANDEDNESS_CONTROLLER_SELECTION
+    val cueName = "handedness_controller_selection"
+    val requestedLanguage = selectedLanguageState.value
+    val requestedAssetPath = localizedAudioAssetPath(audioId, requestedLanguage)
+    val fallbackAssetPath = localizedAudioAssetPath(audioId, StudyLanguage.English)
+    val token = ++demographicsHandednessNarrationToken
+    demographicsHandednessNarrationBlockingState.value = true
+    if (requestedAssetPath == null || fallbackAssetPath == null) {
+      Log.w(TAG, "BRB_HANDEDNESS_NARRATION_CUE_FAILED trigger=$trigger audioId=$audioId language=${requestedLanguage.code} reason=missing_asset_mapping blocking=false")
+      clearHandednessNarrationBlocking(token, "missing_asset_mapping")
+      return
+    }
+    Log.i(
+        TAG,
+        "BRB_HANDEDNESS_NARRATION_CUE cue=$cueName audioId=$audioId asset=$requestedAssetPath language=${requestedLanguage.code} trigger=$trigger blocking=true",
+    )
+    playAssetOneShotCue(
+        assetPath = requestedAssetPath,
+        cueName = cueName,
+        audioId = audioId,
+        onComplete = { clearHandednessNarrationBlocking(token, "complete") },
+        onFailure = { error ->
+          if (requestedAssetPath != fallbackAssetPath) {
+            Log.w(TAG, "BRB_LOCALIZED_AUDIO_FALLBACK audioId=$audioId requested=${requestedLanguage.code} asset=$requestedAssetPath fallback=$fallbackAssetPath error=$error")
+            playAssetOneShotCue(
+                assetPath = fallbackAssetPath,
+                cueName = cueName,
+                audioId = audioId,
+                onComplete = { clearHandednessNarrationBlocking(token, "fallback_complete") },
+                onFailure = { fallbackError -> clearHandednessNarrationBlocking(token, "fallback_failed_${sanitizeKeyboardLogToken(fallbackError)}") },
+            )
+          } else {
+            clearHandednessNarrationBlocking(token, "failed_${sanitizeKeyboardLogToken(error)}")
+          }
+        },
+    )
+  }
 
   private fun playIpqHistoryNarration(conditionNumber: Int, trigger: String) {
     val audioId = ipqHistoryAudioIdForCondition(conditionNumber)
@@ -4661,6 +5245,11 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         .put("schema", "bigredbutton.ecg_counterbalanced.v1")
         .put("assignmentOrder", ecgAssignmentOrder)
         .put("assignmentBasis", "feedback_source")
+        .put("assignmentStrategy", "blocked_counterbalance_random_tie_break")
+        .put("randomAssignmentWhenTied", ecgAssignmentRandomizedWhenTied)
+        .put("randomizedTieChoiceRealFirst", ecgAssignmentRandomTieChoiceRealFirst)
+        .put("priorRealThenSimulatedCount", ecgAssignmentPriorRealThenSimulatedCount)
+        .put("priorSimulatedThenRealCount", ecgAssignmentPriorSimulatedThenRealCount)
         .put("condition1Source", conditionFeedbackSources[1] ?: "")
         .put("condition2Source", conditionFeedbackSources[2] ?: "")
         .put("condition1FeedbackSource", conditionFeedbackSources[1] ?: "")
@@ -4771,9 +5360,41 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         .put("validationAutomation", event.validationAutomation)
         .put("feedbackSource", event.feedbackSource)
         .put("physiologySource", event.physiologySource)
+        .put("pressMechanics", pressMechanicsJson(event.pressMechanics))
         .put("nearestEcgSampleIndex", alignment?.sampleIndex ?: JSONObject.NULL)
         .put("nearestEcgElapsedNs", alignment?.elapsedNs ?: JSONObject.NULL)
         .put("nearestEcgDeltaNs", alignment?.deltaNs ?: JSONObject.NULL)
+  }
+
+  private fun pressMechanicsJson(mechanics: ButtonPressMechanics): JSONObject {
+    return JSONObject()
+        .put("predictionMode", mechanics.predictionMode)
+        .put("phase", mechanics.phase.name.lowercase(Locale.US))
+        .put("impactVelocityMetersPerSecond", mechanics.impactVelocityMetersPerSecond.toDouble())
+        .put("predictedTimeToImpactMs", mechanics.predictedTimeToImpactMs)
+        .put("preloadLeadMs", mechanics.preloadLeadMs)
+        .put("confidence01", mechanics.confidence01.toDouble())
+        .put("lateralVelocityMetersPerSecond", mechanics.lateralVelocityMetersPerSecond.toDouble())
+        .put("predictedLateralAtImpactMeters", mechanics.predictedLateralAtImpactMeters.toDouble())
+        .put("trajectoryFit01", mechanics.trajectoryFit01.toDouble())
+        .put("approachAngleDegrees", mechanics.approachAngleDegrees.toDouble())
+        .put("approachAlignment01", mechanics.approachAlignment01.toDouble())
+        .put("impactEnergyJoules", mechanics.impactEnergyJoules.toDouble())
+        .put("springCompressionMeters", mechanics.springCompressionMeters.toDouble())
+        .put("dampingRatio", mechanics.dampingRatio.toDouble())
+        .put("normalImpulseNewtonSeconds", mechanics.normalImpulseNewtonSeconds.toDouble())
+        .put("estimatedPeakForceNewtons", mechanics.estimatedPeakForceNewtons.toDouble())
+        .put("estimatedContactPressureKilopascals", mechanics.estimatedContactPressureKilopascals.toDouble())
+        .put("estimatedContactPatchAreaSquareMeters", mechanics.estimatedContactPatchAreaSquareMeters.toDouble())
+        .put("compressionPeak01", mechanics.compressionPeak01.toDouble())
+        .put("actuationTravel01", mechanics.actuationTravel01.toDouble())
+        .put("actuationDelayMs", mechanics.actuationDelayMs)
+        .put("snapTravel01", mechanics.snapTravel01.toDouble())
+        .put("snapDurationMs", mechanics.snapDurationMs)
+        .put("bottomOutDelayMs", mechanics.bottomOutDelayMs)
+        .put("releaseDurationMs", mechanics.releaseDurationMs)
+        .put("visualStartOffsetMs", mechanics.visualStartOffsetMs)
+        .put("triggerEvidence", mechanics.triggerEvidence)
   }
 
   private fun finalExtraPressEventJson(event: FinalExtraPressEvent): JSONObject {
@@ -4962,6 +5583,11 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             "final_extra_button_press_started_iso",
             "final_extra_button_press_completed_iso",
             "ecg_assignment_order",
+            "ecg_assignment_strategy",
+            "ecg_assignment_random_when_tied",
+            "ecg_assignment_random_tie_choice_real_first",
+            "ecg_assignment_prior_real_then_simulated_count",
+            "ecg_assignment_prior_simulated_then_real_count",
             "polar_h10_state",
             "polar_h10_detected",
             "polar_h10_connected",
@@ -4984,6 +5610,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
               "condition_${condition}_button_press_count",
               "condition_${condition}_controller_contact_press_count",
               "condition_${condition}_hand_contact_press_count",
+              "condition_${condition}_hand_predictive_preload_press_count",
+              "condition_${condition}_hand_contact_mean_impact_velocity_mps",
               "condition_${condition}_interim_panel_press_count",
               "condition_${condition}_scene_object_fallback_press_count",
               "condition_${condition}_validation_automation_press_count",
@@ -5089,6 +5717,14 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     values["final_extra_button_press_completed_iso"] = finalExtraPressCompletedIso
     val polarStatus = polarStatusState.value
     values["ecg_assignment_order"] = ecgAssignmentOrder
+    values["ecg_assignment_strategy"] = "blocked_counterbalance_random_tie_break"
+    values["ecg_assignment_random_when_tied"] = ecgAssignmentRandomizedWhenTied.toString()
+    values["ecg_assignment_random_tie_choice_real_first"] =
+        ecgAssignmentRandomTieChoiceRealFirst.toString()
+    values["ecg_assignment_prior_real_then_simulated_count"] =
+        ecgAssignmentPriorRealThenSimulatedCount.toString()
+    values["ecg_assignment_prior_simulated_then_real_count"] =
+        ecgAssignmentPriorSimulatedThenRealCount.toString()
     values["polar_h10_state"] = polarStatus.state
     values["polar_h10_detected"] = polarStatus.detected.toString()
     values["polar_h10_connected"] = polarStatus.connected.toString()
@@ -5111,6 +5747,20 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
           run.pressEvents.count { it.inputSource == PRESS_SOURCE_CONTROLLER_CONTACT }.toString()
       values["condition_${condition}_hand_contact_press_count"] =
           run.pressEvents.count { it.inputSource == PRESS_SOURCE_HAND_CONTACT }.toString()
+      val predictiveHandPresses =
+          run.pressEvents.filter {
+            it.inputSource == PRESS_SOURCE_HAND_CONTACT &&
+                it.pressMechanics.predictionMode == ButtonPressPhysicsModel.PREDICTION_MODE_VISUAL_PRELOAD
+          }
+      val handContactPresses = run.pressEvents.filter { it.inputSource == PRESS_SOURCE_HAND_CONTACT }
+      values["condition_${condition}_hand_predictive_preload_press_count"] =
+          predictiveHandPresses.size.toString()
+      values["condition_${condition}_hand_contact_mean_impact_velocity_mps"] =
+          if (handContactPresses.isEmpty()) {
+            ""
+          } else {
+            formatDouble(handContactPresses.map { it.pressMechanics.impactVelocityMetersPerSecond }.average())
+          }
       values["condition_${condition}_interim_panel_press_count"] =
           run.pressEvents.count { it.inputSource == PRESS_SOURCE_TRANSPARENT_PANEL_INTERIM }.toString()
       values["condition_${condition}_scene_object_fallback_press_count"] =
@@ -5218,6 +5868,33 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             "validation_automation",
             "feedback_source",
             "physiology_source",
+            "press_mechanics_prediction_mode",
+            "press_mechanics_phase",
+            "press_mechanics_impact_velocity_mps",
+            "press_mechanics_predicted_time_to_impact_ms",
+            "press_mechanics_preload_lead_ms",
+            "press_mechanics_confidence_0_1",
+            "press_mechanics_lateral_velocity_mps",
+            "press_mechanics_predicted_lateral_at_impact_m",
+            "press_mechanics_trajectory_fit_0_1",
+            "press_mechanics_approach_angle_deg",
+            "press_mechanics_approach_alignment_0_1",
+            "press_mechanics_impact_energy_j",
+            "press_mechanics_spring_compression_m",
+            "press_mechanics_damping_ratio",
+            "press_mechanics_normal_impulse_n_s",
+            "press_mechanics_estimated_peak_force_n",
+            "press_mechanics_estimated_contact_pressure_kpa",
+            "press_mechanics_estimated_contact_patch_area_m2",
+            "press_mechanics_compression_peak_0_1",
+            "press_mechanics_actuation_travel_0_1",
+            "press_mechanics_actuation_delay_ms",
+            "press_mechanics_snap_travel_0_1",
+            "press_mechanics_snap_duration_ms",
+            "press_mechanics_bottom_out_delay_ms",
+            "press_mechanics_release_duration_ms",
+            "press_mechanics_visual_start_offset_ms",
+            "press_mechanics_trigger_evidence",
             "nearest_ecg_sample_index",
             "nearest_ecg_elapsed_ns",
             "nearest_ecg_delta_ns",
@@ -5242,6 +5919,33 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
                 event.validationAutomation.toString(),
                 event.feedbackSource,
                 event.physiologySource,
+                event.pressMechanics.predictionMode,
+                event.pressMechanics.phase.name.lowercase(Locale.US),
+                event.pressMechanics.impactVelocityLog(),
+                event.pressMechanics.predictedTimeToImpactMs.toString(),
+                event.pressMechanics.preloadLeadMs.toString(),
+                event.pressMechanics.confidenceLog(),
+                event.pressMechanics.lateralVelocityLog(),
+                event.pressMechanics.predictedLateralAtImpactLog(),
+                event.pressMechanics.trajectoryFitLog(),
+                event.pressMechanics.approachAngleLog(),
+                event.pressMechanics.approachAlignmentLog(),
+                event.pressMechanics.impactEnergyLog(),
+                event.pressMechanics.springCompressionLog(),
+                event.pressMechanics.dampingRatioLog(),
+                event.pressMechanics.normalImpulseLog(),
+                event.pressMechanics.estimatedPeakForceLog(),
+                event.pressMechanics.estimatedContactPressureLog(),
+                event.pressMechanics.estimatedContactPatchAreaLog(),
+                event.pressMechanics.compressionPeakLog(),
+                event.pressMechanics.actuationTravelLog(),
+                event.pressMechanics.actuationDelayMs.toString(),
+                event.pressMechanics.snapTravelLog(),
+                event.pressMechanics.snapDurationMs.toString(),
+                event.pressMechanics.bottomOutDelayMs.toString(),
+                event.pressMechanics.releaseDurationMs.toString(),
+                event.pressMechanics.visualStartOffsetMs.toString(),
+                event.pressMechanics.triggerEvidence,
                 alignment?.sampleIndex?.toString() ?: "",
                 alignment?.elapsedNs?.toString() ?: "",
                 alignment?.deltaNs?.toString() ?: "",
@@ -5550,7 +6254,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   private fun setButtonVisible(visible: Boolean) {
     buttonStimulusVisible = visible
     buttonEntity?.setComponent(Visible(visible))
-    buttonContactTargets.forEach { target -> target.entity.setComponent(InteractivityInput(visible)) }
+    setButtonContactTargetsInteractive(visible, "button_visible_$visible")
     if (!visible) {
       buttonContactLatch.clear()
       resetButtonPressMotionState("button_hidden")
@@ -5561,6 +6265,26 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     val fallbackVisible = visible && USE_PROCEDURAL_BUTTON_FALLBACK
     buttonVisualEntities.forEach { it.setComponent(Visible(fallbackVisible)) }
     buttonSceneObjects.forEach { it.setIsVisible(fallbackVisible) }
+  }
+
+  private fun setButtonContactTargetsInteractive(visible: Boolean, reason: String) {
+    val controllersActive = controllersRecentlyActive()
+    var sharedTargetsVisible = 0
+    var handAssistTargetsVisible = 0
+    buttonContactTargets.forEach { target ->
+      val targetVisible = visible && (target.spec.acceptsControllerContact || !controllersActive)
+      target.entity.setComponent(InteractivityInput(targetVisible))
+      if (targetVisible && target.spec.acceptsControllerContact) {
+        sharedTargetsVisible += 1
+      }
+      if (targetVisible && !target.spec.acceptsControllerContact && target.spec.acceptsHandContact) {
+        handAssistTargetsVisible += 1
+      }
+    }
+    Log.i(
+        TAG,
+        "BRB_BUTTON_CONTACT_INTERACTIVITY reason=${sanitizeKeyboardLogToken(reason)} visible=$visible controllersActive=$controllersActive sharedTargetsVisible=$sharedTargetsVisible handAssistTargetsVisible=$handAssistTargetsVisible controllerProofPreserved=true",
+    )
   }
 
   private fun setFinalExtraPromptPanelVisible(visible: Boolean) {
@@ -5586,6 +6310,11 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   private fun setNameKeyboardVisible(visible: Boolean, reason: String) {
     val safeReason = sanitizeKeyboardLogToken(reason)
     demographicsNameKeyboardVisibleState.value = visible
+    if (visible) {
+      applyNameKeyboardPanelPose("visibility_$safeReason")
+    } else {
+      demographicsNameKeyboardDraggingState.value = false
+    }
     nameKeyboardEntity?.setComponent(Visible(visible))
     Log.i(
         TAG,
@@ -5637,6 +6366,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     stageState.value = StudyStage.PreButtonExperienceQuestion
     logQuestionnaireStageOpen("prior_big_red_button_experience", 1, PANEL_TRANSITION_BEFORE_CONDITION_1)
     scene.setViewOrigin(0f, 0f, 0f, 0f)
+    updateButtonPlacement("prior_button_experience_prompt")
     setPreButtonExperienceQuestionVisible(true)
     Log.i(
         TAG,
@@ -5670,9 +6400,98 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   }
 
   private fun logNameKeyboardPanelLayout(trigger: String) {
+    val position = currentNameKeyboardPanelPosition()
     Log.i(
         TAG,
-        "BRB_NAME_APP_KEYBOARD_PANEL_LAYOUT trigger=$trigger placement=left_of_questionnaire_near_user radialReference=headset_center orientation=faces_headset keyboardPanel=keyboard_panel questionnairePanel=questionnaire_panel viewOriginShared=true angleDeg=$NAME_KEYBOARD_PANEL_RADIAL_ANGLE_DEGREES distanceM=$NAME_KEYBOARD_PANEL_RADIAL_DISTANCE_METERS x=$NAME_KEYBOARD_PANEL_X_METERS y=$NAME_KEYBOARD_PANEL_Y_METERS z=$NAME_KEYBOARD_PANEL_Z_METERS widthM=$NAME_KEYBOARD_PANEL_WIDTH_METERS heightM=$NAME_KEYBOARD_PANEL_HEIGHT_METERS displayWidthDp=$NAME_KEYBOARD_PANEL_DISPLAY_WIDTH_DP displayHeightDp=$NAME_KEYBOARD_PANEL_DISPLAY_HEIGHT_DP aspectMatched=true comfortableDistance=true nativeLikeRows=true prerenderedPreview=true questionnaireAngleDeg=$QUESTIONNAIRE_PANEL_RADIAL_ANGLE_DEGREES questionnaireX=0 questionnaireY=$QUESTIONNAIRE_PANEL_Y_METERS questionnaireZ=$QUESTIONNAIRE_PANEL_Z_METERS questionnaireWidthM=$QUESTIONNAIRE_PANEL_WIDTH_METERS nonObstructing=true fovVisible=true presentation=pop_out_spatial_panel integratedInQuestionnaire=false appearsOnTextFieldFocus=true",
+        "BRB_NAME_APP_KEYBOARD_PANEL_LAYOUT trigger=$trigger placement=left_of_questionnaire_near_user radialReference=headset_center orientation=faces_headset keyboardPanel=keyboard_panel questionnairePanel=questionnaire_panel viewOriginShared=true angleDeg=$nameKeyboardPanelAngleDegrees defaultAngleDeg=$NAME_KEYBOARD_PANEL_RADIAL_ANGLE_DEGREES distanceM=$nameKeyboardPanelDistanceMeters defaultDistanceM=$NAME_KEYBOARD_PANEL_RADIAL_DISTANCE_METERS x=${position.x} defaultX=$NAME_KEYBOARD_PANEL_X_METERS y=$nameKeyboardPanelYMeters defaultY=$NAME_KEYBOARD_PANEL_Y_METERS z=${position.z} defaultZ=$NAME_KEYBOARD_PANEL_Z_METERS widthM=$NAME_KEYBOARD_PANEL_WIDTH_METERS heightM=$NAME_KEYBOARD_PANEL_HEIGHT_METERS displayWidthDp=$NAME_KEYBOARD_PANEL_DISPLAY_WIDTH_DP displayHeightDp=$NAME_KEYBOARD_PANEL_DISPLAY_HEIGHT_DP aspectMatched=true comfortableDistance=true higherLargerCloser=true nativeLikeRows=true prerenderedPreview=true movablePanel=true dragHandle=true controllerBeamDraggable=true dragDropMovable=true movedByControllerBeam=$nameKeyboardPanelMovedByControllerBeam dragPlane=headset_facing_fixed_distance clampAngleDeg=$NAME_KEYBOARD_PANEL_MIN_RADIAL_ANGLE_DEGREES..$NAME_KEYBOARD_PANEL_MAX_RADIAL_ANGLE_DEGREES clampY=$NAME_KEYBOARD_PANEL_MIN_Y_METERS..$NAME_KEYBOARD_PANEL_MAX_Y_METERS questionnaireAngleDeg=$QUESTIONNAIRE_PANEL_RADIAL_ANGLE_DEGREES questionnaireX=0 questionnaireY=$QUESTIONNAIRE_PANEL_Y_METERS questionnaireZ=$QUESTIONNAIRE_PANEL_Z_METERS questionnaireWidthM=$QUESTIONNAIRE_PANEL_WIDTH_METERS nonObstructing=true fovVisible=true presentation=pop_out_spatial_panel integratedInQuestionnaire=false appearsOnTextFieldFocus=true",
+    )
+  }
+
+  private fun currentNameKeyboardPanelPose(): Pose {
+    val position = currentNameKeyboardPanelPosition()
+    return Pose(position, Quaternion.lookRotationAroundY(Vector3(position.x, 0f, position.z)))
+  }
+
+  private fun currentNameKeyboardPanelPosition(): Vector3 {
+    return headsetRadialPanelPosition(
+        nameKeyboardPanelAngleDegrees,
+        nameKeyboardPanelYMeters,
+        nameKeyboardPanelDistanceMeters,
+    )
+  }
+
+  private fun applyNameKeyboardPanelPose(trigger: String) {
+    nameKeyboardEntity?.setComponent(Transform(currentNameKeyboardPanelPose()))
+    Log.i(
+        TAG,
+        "BRB_NAME_APP_KEYBOARD_POSE_APPLIED trigger=${sanitizeKeyboardLogToken(trigger)} angleDeg=$nameKeyboardPanelAngleDegrees distanceM=$nameKeyboardPanelDistanceMeters y=$nameKeyboardPanelYMeters controllerBeamMovable=true",
+    )
+  }
+
+  fun beginNameKeyboardPanelDrag(source: String = "controller_beam_drag") {
+    demographicsNameKeyboardDraggingState.value = true
+    Log.i(
+        TAG,
+        "BRB_NAME_APP_KEYBOARD_DRAG action=start source=${sanitizeKeyboardLogToken(source)} keyboardPanel=keyboard_panel controllerBeam=true dragHandle=true dragPlane=headset_facing_fixed_distance angleDeg=$nameKeyboardPanelAngleDegrees distanceM=$nameKeyboardPanelDistanceMeters y=$nameKeyboardPanelYMeters",
+    )
+  }
+
+  fun dragNameKeyboardPanelByDisplayDp(
+      deltaXDp: Float,
+      deltaYDp: Float,
+      source: String = "controller_beam_drag",
+  ): Boolean {
+    if (!demographicsNameKeyboardVisibleState.value) {
+      Log.i(
+          TAG,
+          "BRB_NAME_APP_KEYBOARD_DRAG action=move accepted=false reason=hidden source=${sanitizeKeyboardLogToken(source)} keyboardPanel=keyboard_panel",
+      )
+      return false
+    }
+    val oldAngle = nameKeyboardPanelAngleDegrees
+    val oldY = nameKeyboardPanelYMeters
+    val deltaXMeters = deltaXDp / NAME_KEYBOARD_PANEL_DISPLAY_WIDTH_DP * NAME_KEYBOARD_PANEL_WIDTH_METERS
+    val deltaYMeters = deltaYDp / NAME_KEYBOARD_PANEL_DISPLAY_HEIGHT_DP * NAME_KEYBOARD_PANEL_HEIGHT_METERS
+    val deltaAngleDegrees =
+        deltaXMeters / nameKeyboardPanelDistanceMeters.coerceAtLeast(0.1f) * 180f / PI.toFloat()
+    nameKeyboardPanelAngleDegrees =
+        (nameKeyboardPanelAngleDegrees + deltaAngleDegrees)
+            .coerceIn(
+                NAME_KEYBOARD_PANEL_MIN_RADIAL_ANGLE_DEGREES,
+                NAME_KEYBOARD_PANEL_MAX_RADIAL_ANGLE_DEGREES,
+            )
+    nameKeyboardPanelYMeters =
+        (nameKeyboardPanelYMeters - deltaYMeters)
+            .coerceIn(NAME_KEYBOARD_PANEL_MIN_Y_METERS, NAME_KEYBOARD_PANEL_MAX_Y_METERS)
+    val moved =
+        abs(nameKeyboardPanelAngleDegrees - oldAngle) > 0.01f ||
+            abs(nameKeyboardPanelYMeters - oldY) > 0.001f
+    if (moved) {
+      nameKeyboardPanelMovedByControllerBeam = true
+      applyNameKeyboardPanelPose("drag_${sanitizeKeyboardLogToken(source)}")
+      val position = currentNameKeyboardPanelPosition()
+      Log.i(
+          TAG,
+          "BRB_NAME_APP_KEYBOARD_DRAG action=move accepted=true source=${sanitizeKeyboardLogToken(source)} keyboardPanel=keyboard_panel deltaXDp=$deltaXDp deltaYDp=$deltaYDp angleDeg=$nameKeyboardPanelAngleDegrees y=$nameKeyboardPanelYMeters distanceM=$nameKeyboardPanelDistanceMeters x=${position.x} z=${position.z} controllerBeam=true clamped=${nameKeyboardPanelAngleDegrees == NAME_KEYBOARD_PANEL_MIN_RADIAL_ANGLE_DEGREES || nameKeyboardPanelAngleDegrees == NAME_KEYBOARD_PANEL_MAX_RADIAL_ANGLE_DEGREES || nameKeyboardPanelYMeters == NAME_KEYBOARD_PANEL_MIN_Y_METERS || nameKeyboardPanelYMeters == NAME_KEYBOARD_PANEL_MAX_Y_METERS}",
+      )
+    }
+    return moved
+  }
+
+  fun endNameKeyboardPanelDrag(source: String = "controller_beam_drag") {
+    demographicsNameKeyboardDraggingState.value = false
+    Log.i(
+        TAG,
+        "BRB_NAME_APP_KEYBOARD_DRAG action=end source=${sanitizeKeyboardLogToken(source)} keyboardPanel=keyboard_panel controllerBeam=true movedByControllerBeam=$nameKeyboardPanelMovedByControllerBeam",
+    )
+    logNameKeyboardPanelLayout("drag_end_${sanitizeKeyboardLogToken(source)}")
+  }
+
+  fun cancelNameKeyboardPanelDrag(source: String = "controller_beam_drag") {
+    demographicsNameKeyboardDraggingState.value = false
+    Log.i(
+        TAG,
+        "BRB_NAME_APP_KEYBOARD_DRAG action=cancel source=${sanitizeKeyboardLogToken(source)} keyboardPanel=keyboard_panel controllerBeam=true",
     )
   }
 
@@ -5720,6 +6539,21 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     panelChimePlayer = null
   }
 
+  private fun releaseSpontaneousRemarkPlayer(reason: String = "release") {
+    val player = spontaneousRemarkPlayer ?: return
+    val activeAudioId = spontaneousRemarkActiveAudioId
+    val applyCooldown = spontaneousRemarkAppliesVasCooldown
+    player.setOnCompletionListener(null)
+    player.release()
+    spontaneousRemarkPlayer = null
+    spontaneousRemarkActiveAudioId = ""
+    spontaneousRemarkAppliesVasCooldown = false
+    if (applyCooldown) {
+      armVasSpontaneousRemarkCooldown(activeAudioId, reason)
+    }
+    Log.i(TAG, "BRB_SPONTANEOUS_REMARK_PLAYER_RELEASE reason=${sanitizeKeyboardLogToken(reason)}")
+  }
+
   private fun releaseCuePlayers() {
     cuePlayers.toList().forEach { player ->
       player.setOnCompletionListener(null)
@@ -5728,11 +6562,46 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     cuePlayers.clear()
   }
 
+  private fun isMediaPlayerActive(player: MediaPlayer?): Boolean =
+      try {
+        player?.isPlaying == true
+      } catch (_: Exception) {
+        false
+      }
+
+  private fun isAnyNonSpontaneousAudioPlaying(): Boolean {
+    val cuePlaying =
+        cuePlayers.any { player ->
+          try {
+            player.isPlaying
+          } catch (_: Exception) {
+            false
+          }
+        }
+    return isMediaPlayerActive(mediaPlayer) || isMediaPlayerActive(panelChimePlayer) || cuePlaying
+  }
+
+  private fun isSpontaneousRemarkPlaying(): Boolean = isMediaPlayerActive(spontaneousRemarkPlayer)
+
+  private fun maybeSkipShortCueForSpontaneousRemark(cueName: String): Boolean {
+    if (!isSpontaneousRemarkPlaying()) {
+      return false
+    }
+    Log.i(TAG, "BRB_SPONTANEOUS_REMARK_NO_OVERLAP cue=$cueName action=skip_short_cue")
+    return true
+  }
+
   fun playQuestionnaireChoiceCue() {
+    if (maybeSkipShortCueForSpontaneousRemark("questionnaire_choice")) {
+      return
+    }
     playSharedAudioCue(SHARED_AUDIO_ID_QUESTIONNAIRE_CHOICE, SHARED_QUESTIONNAIRE_CHOICE_AUDIO, "questionnaire_choice")
   }
 
   fun playQuestionnaireNavigationCue() {
+    if (maybeSkipShortCueForSpontaneousRemark("questionnaire_navigation")) {
+      return
+    }
     playSharedAudioCue(SHARED_AUDIO_ID_QUESTIONNAIRE_NAVIGATION, SHARED_QUESTIONNAIRE_NAVIGATION_AUDIO, "questionnaire_navigation")
   }
 
@@ -6157,7 +7026,78 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   }
 
   private fun playButtonPressCue() {
-    playAssetOneShotCue(BUTTON_PRESS_SFX_ASSET, "button_press", SHARED_AUDIO_ID_BUTTON_PRESS)
+    mainHandler.post {
+      val pool = buttonPressSoundPool
+      if (pool != null && buttonPressSoundLoaded && buttonPressSoundId != 0) {
+        if (isSpontaneousRemarkPlaying()) {
+          releaseSpontaneousRemarkPlayer("preempted_by_button_press")
+        }
+        val streamId = pool.play(buttonPressSoundId, 1.0f, 1.0f, 1, 0, 1.0f)
+        if (streamId != 0) {
+          Log.i(
+              TAG,
+              "BRB_SFX_PLAY cue=button_press audioId=$SHARED_AUDIO_ID_BUTTON_PRESS asset=$BUTTON_PRESS_SFX_ASSET language=${selectedLanguageState.value.code} durationMs=$BUTTON_PRESS_SFX_PLACEHOLDER_DURATION_MS isPlaying=true audioUsage=media contentType=sonification volume=1.0 backend=sound_pool",
+          )
+          return@post
+        }
+        Log.w(
+            TAG,
+            "BRB_SFX_FAILED cue=button_press audioId=$SHARED_AUDIO_ID_BUTTON_PRESS asset=$BUTTON_PRESS_SFX_ASSET backend=sound_pool reason=stream_id_zero fallback=media_player",
+        )
+      }
+      playAssetOneShotCue(BUTTON_PRESS_SFX_ASSET, "button_press", SHARED_AUDIO_ID_BUTTON_PRESS)
+    }
+  }
+
+  private fun preloadButtonPressSoundPool() {
+    mainHandler.post {
+      if (buttonPressSoundPool != null) {
+        return@post
+      }
+      var asset: android.content.res.AssetFileDescriptor? = null
+      try {
+        val pool =
+            SoundPool.Builder()
+                .setMaxStreams(3)
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+                .build()
+        buttonPressSoundPool = pool
+        pool.setOnLoadCompleteListener { _, sampleId, status ->
+          if (sampleId == buttonPressSoundId) {
+            buttonPressSoundLoaded = status == 0
+            Log.i(
+                TAG,
+                "BRB_SFX_PRELOAD cue=button_press audioId=$SHARED_AUDIO_ID_BUTTON_PRESS asset=$BUTTON_PRESS_SFX_ASSET loaded=$buttonPressSoundLoaded status=$status backend=sound_pool durationMs=$BUTTON_PRESS_SFX_PLACEHOLDER_DURATION_MS",
+            )
+          }
+        }
+        asset = assets.openFd(BUTTON_PRESS_SFX_ASSET)
+        buttonPressSoundId = pool.load(asset.fileDescriptor, asset.startOffset, asset.length, 1)
+      } catch (exception: Exception) {
+        Log.w(
+            TAG,
+            "BRB_SFX_PRELOAD cue=button_press audioId=$SHARED_AUDIO_ID_BUTTON_PRESS asset=$BUTTON_PRESS_SFX_ASSET loaded=false backend=sound_pool error=${exception.message}",
+        )
+        releaseButtonPressSoundPool("preload_failed")
+      } finally {
+        try {
+          asset?.close()
+        } catch (_: Exception) {}
+      }
+    }
+  }
+
+  private fun releaseButtonPressSoundPool(reason: String) {
+    buttonPressSoundPool?.release()
+    buttonPressSoundPool = null
+    buttonPressSoundId = 0
+    buttonPressSoundLoaded = false
+    Log.i(TAG, "BRB_SFX_PRELOAD_RELEASE cue=button_press reason=${sanitizeKeyboardLogToken(reason)} backend=sound_pool")
   }
 
   private fun playAssetOneShotCue(
@@ -6170,6 +7110,9 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     mainHandler.post {
       var asset: android.content.res.AssetFileDescriptor? = null
       try {
+        if (isSpontaneousRemarkPlaying()) {
+          releaseSpontaneousRemarkPlayer("preempted_by_$cueName")
+        }
         asset = assets.openFd(assetPath)
         val player =
             MediaPlayer().apply {
@@ -6240,6 +7183,9 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
       fallbackDurationMs: Long,
       onComplete: (() -> Unit)?,
   ) {
+    if (isSpontaneousRemarkPlaying()) {
+      releaseSpontaneousRemarkPlayer("preempted_by_questionnaire_${mode}_cue")
+    }
     releasePanelChimePlayer()
     val token = ++panelGlitchToken
     var audioAsset: android.content.res.AssetFileDescriptor? = null
@@ -6374,7 +7320,172 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     }
   }
 
+  private fun defaultButtonPlacementForConstants(
+      detectedSurfaceCount: Int = 0,
+      supportCandidateCount: Int = 0,
+  ): ButtonPlacement {
+    return buttonPlacementFromSupportSurface(
+        supportSurfaceY = BUTTON_SUPPORT_SURFACE_FALLBACK_Y_METERS,
+        source = "fallback_seated_tabletop",
+        surfaceName = "default_seated_tabletop",
+        surfaceType = "configured_flat_surface",
+        surfaceEntityId = 0L,
+        surfaceExtentsM = Vector3(0f),
+        detectedSurfaceCount = detectedSurfaceCount,
+        supportCandidateCount = supportCandidateCount,
+    )
+  }
+
+  private fun buttonPlacementFromSupportSurface(
+      supportSurfaceY: Float,
+      source: String,
+      surfaceName: String,
+      surfaceType: String,
+      surfaceEntityId: Long,
+      surfaceExtentsM: Vector3,
+      detectedSurfaceCount: Int,
+      supportCandidateCount: Int,
+  ): ButtonPlacement {
+    return ButtonPlacement(
+        x = 0f,
+        z = BUTTON_DISTANCE_FROM_HEAD_METERS,
+        supportSurfaceY = supportSurfaceY,
+        modelOriginY = supportSurfaceY + BUTTON_MODEL_ORIGIN_ABOVE_SURFACE_METERS,
+        panelY = supportSurfaceY + BUTTON_PANEL_ABOVE_SURFACE_METERS,
+        contactCenterY = supportSurfaceY + BUTTON_CONTACT_CENTER_ABOVE_SURFACE_METERS,
+        baseY = supportSurfaceY + BUTTON_BASE_ABOVE_SURFACE_METERS,
+        bevelY = supportSurfaceY + BUTTON_BEVEL_ABOVE_SURFACE_METERS,
+        domeY = supportSurfaceY + BUTTON_DOME_ABOVE_SURFACE_METERS,
+        source = source,
+        surfaceName = surfaceName,
+        surfaceType = surfaceType,
+        surfaceEntityId = surfaceEntityId,
+        surfaceExtentsM = surfaceExtentsM,
+        detectedSurfaceCount = detectedSurfaceCount,
+        supportCandidateCount = supportCandidateCount,
+    )
+  }
+
+  private fun updateButtonPlacement(reason: String) {
+    val search = findButtonSupportSurfaceCandidates()
+    val candidates = search.candidates
+    val selected = candidates.maxByOrNull { it.score }
+    currentButtonPlacement =
+        if (selected == null) {
+          defaultButtonPlacementForConstants(
+              detectedSurfaceCount = search.detectedSurfaceCount,
+              supportCandidateCount = candidates.size,
+          )
+        } else {
+          buttonPlacementFromSupportSurface(
+              supportSurfaceY = selected.supportSurfaceY,
+              source = "scene_plane_tabletop",
+              surfaceName = selected.surfaceName,
+              surfaceType = selected.surfaceType,
+              surfaceEntityId = selected.surfaceEntityId,
+              surfaceExtentsM = selected.surfaceExtentsM,
+              detectedSurfaceCount = search.detectedSurfaceCount,
+              supportCandidateCount = candidates.size,
+          )
+        }
+    applyButtonPlacement(currentButtonPlacement)
+    val placement = currentButtonPlacement
+    Log.i(
+        TAG,
+        "BRB_BUTTON_SURFACE_PLACEMENT reason=${sanitizeKeyboardLogToken(reason)} source=${placement.source} armsLength=true distanceM=${"%.3f".format(Locale.US, placement.z)} x=${"%.3f".format(Locale.US, placement.x)} z=${"%.3f".format(Locale.US, placement.z)} supportSurfaceY=${"%.3f".format(Locale.US, placement.supportSurfaceY)} modelOriginY=${"%.3f".format(Locale.US, placement.modelOriginY)} capCenterY=${"%.3f".format(Locale.US, placement.contactCenterY)} flatSurface=true scenePlaneCount=${placement.detectedSurfaceCount} supportCandidateCount=${placement.supportCandidateCount} sceneSurfaceUsed=${placement.surfaceEntityId != 0L} surfaceEntity=${placement.surfaceEntityId} surfaceName=${sanitizeKeyboardLogToken(placement.surfaceName)} surfaceType=${sanitizeKeyboardLogToken(placement.surfaceType)} surfaceExtents=${formatVector3(placement.surfaceExtentsM)}",
+    )
+  }
+
+  private fun applyButtonPlacement(placement: ButtonPlacement) {
+    buttonEntity?.setComponent(Transform(Pose(Vector3(placement.x, placement.panelY, placement.z))))
+    buttonModelEntity?.setComponent(Transform(Pose(Vector3(placement.x, placement.modelOriginY, placement.z))))
+    buttonContactTargets.forEach { target ->
+      target.entity.setComponent(
+          Transform(
+              Pose(
+                  Vector3(
+                      placement.x + target.spec.offsetX,
+                      placement.contactCenterY + target.spec.offsetY,
+                      placement.z + target.spec.offsetZ,
+                  )
+              )
+          )
+      )
+    }
+    buttonFallbackVisualTargets.forEach { target ->
+      target.entity.setComponent(
+          Transform(
+              Pose(
+                  Vector3(
+                      placement.x,
+                      placement.supportSurfaceY + target.yOffsetFromSupportSurfaceMeters,
+                      placement.z,
+                  )
+              )
+          )
+      )
+    }
+    updateButtonGlowMaterialLights(
+        if (buttonStimulusVisible && stageState.value == StudyStage.ConditionRunning) {
+          buttonHeartbeatPulseIntensityState.floatValue
+        } else {
+          0f
+        }
+    )
+  }
+
+  private fun findButtonSupportSurfaceCandidates(): ButtonSupportSurfaceSearch {
+    return try {
+      val model = getDataModel()
+      val candidates = mutableListOf<ButtonSupportSurfaceCandidate>()
+      val entityIds = model.queryAll(intArrayOf(ScenePlane.id, Transform.id), intArrayOf()) ?: LongArray(0)
+      for (entityId in entityIds) {
+        val entity = Entity(model, entityId)
+        val plane = entity.tryGetComponent<ScenePlane>() ?: continue
+        val transform = entity.tryGetComponent<Transform>() ?: continue
+        val surfaceCenter = transform.transform.times(plane.offset)
+        val extents = plane.extents
+        val score =
+            scoreButtonSupportSurfaceCandidate(
+                surfaceName = plane.name,
+                surfaceType = plane.type,
+                centerX = surfaceCenter.x,
+                centerZ = surfaceCenter.z,
+                supportSurfaceY = surfaceCenter.y,
+                extentX = extents.x,
+                extentY = extents.y,
+                extentZ = extents.z,
+                reachTargetZ = BUTTON_DISTANCE_FROM_HEAD_METERS,
+                minSupportY = BUTTON_SUPPORT_SURFACE_MIN_Y_METERS,
+                maxSupportY = BUTTON_SUPPORT_SURFACE_MAX_Y_METERS,
+                reachMargin = BUTTON_SUPPORT_SURFACE_REACH_MARGIN_METERS,
+                minHalfExtent = BUTTON_SUPPORT_SURFACE_MIN_HALF_EXTENT_METERS,
+            )
+                ?: continue
+        candidates.add(
+            ButtonSupportSurfaceCandidate(
+                supportSurfaceY = surfaceCenter.y,
+                surfaceName = plane.name.ifBlank { "unnamed_scene_plane" },
+                surfaceType = plane.type.ifBlank { "scene_plane" },
+                surfaceEntityId = entityId,
+                surfaceExtentsM = extents,
+                score = score,
+            )
+        )
+      }
+      ButtonSupportSurfaceSearch(candidates, entityIds.size)
+    } catch (exception: Exception) {
+      Log.w(TAG, "BRB_BUTTON_SURFACE_PLACEMENT_QUERY_FAILED error=${exception.message}")
+      ButtonSupportSurfaceSearch(emptyList(), 0)
+    }
+  }
+
+  private fun formatVector3(vector: Vector3): String {
+    return "${"%.3f".format(Locale.US, vector.x)},${"%.3f".format(Locale.US, vector.y)},${"%.3f".format(Locale.US, vector.z)}"
+  }
+
   private fun createButtonModelEntity() {
+    val placement = currentButtonPlacement
     buttonModelEntity =
         Entity.create(
             Mesh(
@@ -6384,9 +7495,9 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             Transform(
                 Pose(
                     Vector3(
-                        0f,
-                        BUTTON_MODEL_ORIGIN_Y_METERS,
-                        BUTTON_DISTANCE_FROM_HEAD_METERS,
+                        placement.x,
+                        placement.modelOriginY,
+                        placement.z,
                     )
                 )
             ),
@@ -6414,6 +7525,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   }
 
   private fun createButtonContactColliderEntity() {
+    val placement = currentButtonPlacement
     buttonContactTargets.clear()
     buttonContactEntity = null
     capContactTargetSpecs().forEachIndexed { index, spec ->
@@ -6422,9 +7534,9 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
               Transform(
                   Pose(
                       Vector3(
-                          spec.offsetX,
-                          BUTTON_CONTACT_COLLIDER_Y_METERS,
-                          BUTTON_DISTANCE_FROM_HEAD_METERS + spec.offsetZ,
+                          placement.x + spec.offsetX,
+                          placement.contactCenterY + spec.offsetY,
+                          placement.z + spec.offsetZ,
                       )
                   )
               ),
@@ -6446,7 +7558,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     }
     Log.i(
         TAG,
-        "BRB_BUTTON_CONTACT_COLLIDER_READY source=dual_controller_hand_contact shape=multi_box_cap_plus_full_surface boxes=${buttonContactTargets.size} centerX=0 centerY=$BUTTON_CONTACT_COLLIDER_Y_METERS centerZ=$BUTTON_DISTANCE_FROM_HEAD_METERS capDiameterM=$BUTTON_VISUAL_DIAMETER_METERS centerSize=${BUTTON_CONTACT_CENTER_WIDTH_METERS}x${BUTTON_CONTACT_COLLIDER_HEIGHT_METERS}x$BUTTON_CONTACT_CENTER_DEPTH_METERS ringRadiusM=$BUTTON_CONTACT_RING_RADIUS_METERS ringBoxSize=${BUTTON_CONTACT_RING_BOX_WIDTH_METERS}x${BUTTON_CONTACT_RING_BOX_DEPTH_METERS} fullSurfaceSize=${BUTTON_CONTACT_FULL_SURFACE_WIDTH_METERS}x${BUTTON_CONTACT_FULL_SURFACE_HEIGHT_METERS}x$BUTTON_CONTACT_FULL_SURFACE_DEPTH_METERS handPinchRay=true tapAnyCapSurface=true controllerProofPreserved=true",
+        "BRB_BUTTON_CONTACT_COLLIDER_READY source=dual_controller_hand_contact shape=multi_box_cap_plus_full_surface boxes=${buttonContactTargets.size} sharedControllerTargets=${buttonContactTargets.count { it.spec.acceptsControllerContact }} handOnlyTargets=${buttonContactTargets.count { !it.spec.acceptsControllerContact && it.spec.acceptsHandContact }} centerX=${placement.x} centerY=${placement.contactCenterY} centerZ=${placement.z} capDiameterM=$BUTTON_VISUAL_DIAMETER_METERS centerSize=${BUTTON_CONTACT_CENTER_WIDTH_METERS}x${BUTTON_CONTACT_COLLIDER_HEIGHT_METERS}x$BUTTON_CONTACT_CENTER_DEPTH_METERS ringRadiusM=$BUTTON_CONTACT_RING_RADIUS_METERS ringBoxSize=${BUTTON_CONTACT_RING_BOX_WIDTH_METERS}x${BUTTON_CONTACT_RING_BOX_DEPTH_METERS} fullSurfaceSize=${BUTTON_CONTACT_FULL_SURFACE_WIDTH_METERS}x${BUTTON_CONTACT_FULL_SURFACE_HEIGHT_METERS}x$BUTTON_CONTACT_FULL_SURFACE_DEPTH_METERS handAssistSize=${BUTTON_HAND_ASSIST_WIDTH_METERS}x${BUTTON_HAND_ASSIST_HEIGHT_METERS}x$BUTTON_HAND_ASSIST_DEPTH_METERS handAssistFrontDepth=$BUTTON_HAND_ASSIST_FRONT_DEPTH_METERS handPinchRay=true tapAnyCapSurface=true handOnlyAssist=true controllerProofPreserved=true placementSource=${placement.source}",
     )
   }
 
@@ -6487,16 +7599,73 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             surfaceRole = "shared_full_surface_hand_tap",
         )
     )
+    specs.add(
+        ButtonContactTargetSpec(
+            name = "hand-assist-hover-cushion",
+            offsetX = 0f,
+            offsetY = BUTTON_HAND_ASSIST_Y_OFFSET_METERS,
+            offsetZ = 0f,
+            width = BUTTON_HAND_ASSIST_WIDTH_METERS,
+            height = BUTTON_HAND_ASSIST_HEIGHT_METERS,
+            depth = BUTTON_HAND_ASSIST_DEPTH_METERS,
+            surfaceRole = "hand_only_hover_cushion",
+            acceptsControllerContact = false,
+            acceptsHandContact = true,
+        )
+    )
+    specs.add(
+        ButtonContactTargetSpec(
+            name = "hand-assist-front-catch",
+            offsetX = 0f,
+            offsetY = BUTTON_HAND_ASSIST_Y_OFFSET_METERS,
+            offsetZ = -BUTTON_HAND_ASSIST_FRONT_OFFSET_METERS,
+            width = BUTTON_HAND_ASSIST_FRONT_WIDTH_METERS,
+            height = BUTTON_HAND_ASSIST_HEIGHT_METERS,
+            depth = BUTTON_HAND_ASSIST_FRONT_DEPTH_METERS,
+            surfaceRole = "hand_only_front_catch",
+            acceptsControllerContact = false,
+            acceptsHandContact = true,
+        )
+    )
+    specs.add(
+        ButtonContactTargetSpec(
+            name = "hand-assist-left-catch",
+            offsetX = -BUTTON_HAND_ASSIST_SIDE_OFFSET_METERS,
+            offsetY = BUTTON_HAND_ASSIST_Y_OFFSET_METERS,
+            offsetZ = 0f,
+            width = BUTTON_HAND_ASSIST_SIDE_WIDTH_METERS,
+            height = BUTTON_HAND_ASSIST_HEIGHT_METERS,
+            depth = BUTTON_HAND_ASSIST_SIDE_DEPTH_METERS,
+            surfaceRole = "hand_only_side_catch",
+            acceptsControllerContact = false,
+            acceptsHandContact = true,
+        )
+    )
+    specs.add(
+        ButtonContactTargetSpec(
+            name = "hand-assist-right-catch",
+            offsetX = BUTTON_HAND_ASSIST_SIDE_OFFSET_METERS,
+            offsetY = BUTTON_HAND_ASSIST_Y_OFFSET_METERS,
+            offsetZ = 0f,
+            width = BUTTON_HAND_ASSIST_SIDE_WIDTH_METERS,
+            height = BUTTON_HAND_ASSIST_HEIGHT_METERS,
+            depth = BUTTON_HAND_ASSIST_SIDE_DEPTH_METERS,
+            surfaceRole = "hand_only_side_catch",
+            acceptsControllerContact = false,
+            acceptsHandContact = true,
+        )
+    )
     return specs
   }
 
   private fun logButtonSpatialLayout() {
-    val verticalDropMeters = BUTTON_NOMINAL_SEATED_EYE_HEIGHT_METERS - BUTTON_CONTACT_COLLIDER_Y_METERS
+    val placement = currentButtonPlacement
+    val verticalDropMeters = BUTTON_NOMINAL_SEATED_EYE_HEIGHT_METERS - placement.contactCenterY
     val downwardAngleDegrees =
-        Math.toDegrees(atan((verticalDropMeters / BUTTON_DISTANCE_FROM_HEAD_METERS).toDouble()))
+        Math.toDegrees(atan((verticalDropMeters / placement.z).toDouble()))
     val angularDiameterDegrees =
         Math.toDegrees(
-            2.0 * atan((BUTTON_VISUAL_DIAMETER_METERS / 2.0 / BUTTON_DISTANCE_FROM_HEAD_METERS).toDouble())
+            2.0 * atan((BUTTON_VISUAL_DIAMETER_METERS / 2.0 / placement.z).toDouble())
         )
     val angleOk =
         downwardAngleDegrees >= BUTTON_ERGONOMIC_MIN_DOWNWARD_ANGLE_DEGREES &&
@@ -6505,7 +7674,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             angularDiameterDegrees <= BUTTON_ERGONOMIC_MAX_ANGULAR_DIAMETER_DEGREES
     Log.i(
         TAG,
-        "BRB_BUTTON_SPATIAL_LAYOUT facingParticipant=$angleOk distanceM=$BUTTON_DISTANCE_FROM_HEAD_METERS capCenterY=$BUTTON_CONTACT_COLLIDER_Y_METERS nominalEyeY=$BUTTON_NOMINAL_SEATED_EYE_HEIGHT_METERS downwardAngleDeg=${"%.1f".format(Locale.US, downwardAngleDegrees)} angularDiameterDeg=${"%.1f".format(Locale.US, angularDiameterDegrees)}",
+        "BRB_BUTTON_SPATIAL_LAYOUT facingParticipant=$angleOk distanceM=${"%.3f".format(Locale.US, placement.z)} capCenterY=${"%.3f".format(Locale.US, placement.contactCenterY)} nominalEyeY=$BUTTON_NOMINAL_SEATED_EYE_HEIGHT_METERS downwardAngleDeg=${"%.1f".format(Locale.US, downwardAngleDegrees)} angularDiameterDeg=${"%.1f".format(Locale.US, angularDiameterDegrees)} armsLength=true flatSurface=true supportSurfaceY=${"%.3f".format(Locale.US, placement.supportSurfaceY)} placementSource=${placement.source} sceneSurfaceUsed=${placement.surfaceEntityId != 0L} surfaceEntity=${placement.surfaceEntityId} scenePlaneCount=${placement.detectedSurfaceCount} supportCandidateCount=${placement.supportCandidateCount}",
     )
   }
 
@@ -6520,6 +7689,12 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
       system.registerObserver(buttonContactPointerObserver)
       isdkPointerObserverRegistered = true
     }
+    avatarSystem = avatarSystem ?: systemManager.tryFindSystem<AvatarSystem>()
+    avatarSystem?.setShowControllers(true)
+    setHandVisualsAllowed(
+        allowed = !controllersRecentlyActive(),
+        reason = "contact_input_configured",
+    )
     Log.i(TAG, "BRB_BUTTON_CONTACT_INPUT isdk=true active=${system.active} observer=registered")
     Log.i(
         TAG,
@@ -6535,6 +7710,14 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     val nowMs = SystemClock.elapsedRealtime()
     val wasActive = controllersRecentlyActive(nowMs)
     lastControllerInputRealtimeMs = nowMs
+    setHandVisualsAllowed(
+        allowed = false,
+        reason = "controller_${sanitizeKeyboardLogToken(source)}",
+    )
+    if (buttonStimulusVisible) {
+      setButtonContactTargetsInteractive(true, "controller_${sanitizeKeyboardLogToken(source)}")
+    }
+    scheduleHandVisualRestoreCheck()
     if (!wasActive) {
       Log.i(
           TAG,
@@ -6547,9 +7730,67 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     val nowMs = SystemClock.elapsedRealtime()
     lastHandInputRealtimeMs = nowMs
     val controllersActive = controllersRecentlyActive(nowMs)
+    if (!controllersActive) {
+      setHandVisualsAllowed(
+          allowed = true,
+          reason = "hands_only_${sanitizeKeyboardLogToken(source)}",
+      )
+      if (buttonStimulusVisible) {
+        setButtonContactTargetsInteractive(true, "hands_only_${sanitizeKeyboardLogToken(source)}")
+      }
+    }
     Log.i(
         TAG,
         "BRB_INTERACTION_MODE source=${sanitizeKeyboardLogToken(source)} controllersActive=$controllersActive handsOnly=${!controllersActive} handOutlineAllowed=${!controllersActive} controllerQuietWindowMs=$HAND_TRACKING_CONTROLLER_QUIET_MS",
+    )
+  }
+
+  private fun setHandVisualsAllowed(allowed: Boolean, reason: String) {
+    val system = avatarSystem ?: systemManager.tryFindSystem<AvatarSystem>()?.also { avatarSystem = it }
+    val shouldSuppress = !allowed
+    if (handVisualPolicyApplied && handVisualsSuppressedForController == shouldSuppress && system != null) {
+      return
+    }
+    handVisualsSuppressedForController = shouldSuppress
+    if (system == null) {
+      Log.w(
+          TAG,
+          "BRB_HAND_VISUAL_POLICY_APPLY reason=${sanitizeKeyboardLogToken(reason)} available=false showHands=$allowed showControllers=true",
+      )
+      return
+    }
+    system.setShowHands(allowed)
+    system.setShowControllers(true)
+    handVisualPolicyApplied = true
+    Log.i(
+        TAG,
+        "BRB_HAND_VISUAL_POLICY_APPLY reason=${sanitizeKeyboardLogToken(reason)} available=true showHands=$allowed showControllers=true handOutlineAllowed=$allowed controllerQuietWindowMs=$HAND_TRACKING_CONTROLLER_QUIET_MS",
+    )
+  }
+
+  private fun scheduleHandVisualRestoreCheck() {
+    val generation = ++handVisualRestoreGeneration
+    mainHandler.postDelayed(
+        {
+          if (generation != handVisualRestoreGeneration) {
+            return@postDelayed
+          }
+          val controllersActive = controllersRecentlyActive()
+          if (!controllersActive) {
+            setHandVisualsAllowed(
+                allowed = true,
+                reason = "controller_quiet_window_elapsed",
+            )
+            if (buttonStimulusVisible) {
+              setButtonContactTargetsInteractive(true, "controller_quiet_window_elapsed")
+            }
+          }
+          Log.i(
+              TAG,
+              "BRB_HAND_VISUAL_POLICY_RESTORE_CHECK generation=$generation controllersActive=$controllersActive showHands=${!controllersActive} controllerQuietWindowMs=$HAND_TRACKING_CONTROLLER_QUIET_MS",
+          )
+        },
+        HAND_TRACKING_CONTROLLER_QUIET_MS + HAND_TRACKING_VISUAL_RESTORE_GRACE_MS,
     )
   }
 
@@ -6583,27 +7824,47 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     }
     val controllersActive = controllersRecentlyActive(nowMs)
     val contactKey = event.source.id.toString()
+    val handOnlyAssist = !contactTarget.spec.acceptsControllerContact && contactTarget.spec.acceptsHandContact
+    val handSignalOnCollider =
+        handTracked && behavior == InteractionEventSourceBehavior.COLLIDER_HOVER_SIGNAL_ACTUATE
+    val physicalContact = behavior == InteractionEventSourceBehavior.COLLIDER_HOVER_CONTACT_ACTUATE
     Log.i(
         TAG,
-        "BRB_BUTTON_CONTACT_EVENT type=$eventType target=${contactTarget.spec.name} role=${contactTarget.spec.surfaceRole} behavior=$behavior pointer=${event.pointerType} semantic=${event.semanticType} sourceEntity=${event.source.id} handTracked=$handTracked hand=$hand controllersActive=$controllersActive handOutlineAllowed=${!controllersActive}",
+        "BRB_BUTTON_CONTACT_EVENT type=$eventType target=${contactTarget.spec.name} role=${contactTarget.spec.surfaceRole} handOnlyAssist=$handOnlyAssist acceptsController=${contactTarget.spec.acceptsControllerContact} acceptsHand=${contactTarget.spec.acceptsHandContact} behavior=$behavior pointer=${event.pointerType} semantic=${event.semanticType} sourceEntity=${event.source.id} handTracked=$handTracked hand=$hand controllersActive=$controllersActive handOutlineAllowed=${!controllersActive}",
     )
 
     if (event.type != PointerEventType.Select.id) {
+      if (handTracked) {
+        updateButtonHandPressPhysics(
+            event = event,
+            contactTarget = contactTarget,
+            actualContact = false,
+            triggerEvidence = "hand_tracking_pointer:${eventType.lowercase(Locale.US)}",
+        )
+      }
       if (buttonContactLatch.release(contactKey)) {
         Log.i(TAG, "BRB_BUTTON_CONTACT_LATCH state=rearmed key=$contactKey eventType=$eventType")
       }
       return
     }
-    val handSignalOnCollider =
-        handTracked && behavior == InteractionEventSourceBehavior.COLLIDER_HOVER_SIGNAL_ACTUATE
-    val physicalContact = behavior == InteractionEventSourceBehavior.COLLIDER_HOVER_CONTACT_ACTUATE
     val acceptedKind =
         when {
-          handTracked && (physicalContact || handSignalOnCollider) -> PRESS_SOURCE_HAND_CONTACT
-          physicalContact -> PRESS_SOURCE_CONTROLLER_CONTACT
+          handTracked &&
+              contactTarget.spec.acceptsHandContact &&
+              (physicalContact || handSignalOnCollider) -> PRESS_SOURCE_HAND_CONTACT
+          !handTracked && contactTarget.spec.acceptsControllerContact && physicalContact ->
+              PRESS_SOURCE_CONTROLLER_CONTACT
           else -> ""
         }
+    if (!handTracked && physicalContact && !contactTarget.spec.acceptsControllerContact) {
+      Log.i(
+          TAG,
+          "BRB_BUTTON_CONTACT_SELECT accepted=false reason=hand_only_assist_target target=${contactTarget.spec.name} role=${contactTarget.spec.surfaceRole} behavior=$behavior controllerProofPreserved=true",
+      )
+      return
+    }
     if (acceptedKind == PRESS_SOURCE_HAND_CONTACT && controllersActive) {
+      resetButtonHandPreloadState("controllers_active")
       Log.i(
           TAG,
           "BRB_BUTTON_CONTACT_SELECT accepted=false reason=controllers_active target=${contactTarget.spec.name} role=${contactTarget.spec.surfaceRole} behavior=$behavior handTracked=true handOutlineAllowed=false controllerQuietWindowMs=$HAND_TRACKING_CONTROLLER_QUIET_MS",
@@ -6611,6 +7872,14 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
       return
     }
     if (acceptedKind.isEmpty()) {
+      if (handTracked) {
+        updateButtonHandPressPhysics(
+            event = event,
+            contactTarget = contactTarget,
+            actualContact = false,
+            triggerEvidence = "hand_tracking_select:not_contact",
+        )
+      }
       Log.i(
           TAG,
           "BRB_BUTTON_CONTACT_SELECT accepted=false reason=not_contact target=${contactTarget.spec.name} role=${contactTarget.spec.surfaceRole} behavior=$behavior handTracked=$handTracked",
@@ -6626,23 +7895,232 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     }
     when {
       acceptedKind == PRESS_SOURCE_HAND_CONTACT -> {
+        val pressMechanics =
+            updateButtonHandPressPhysics(
+                event = event,
+                contactTarget = contactTarget,
+                actualContact = true,
+                triggerEvidence =
+                    "hand_contact:${behavior?.name?.lowercase(Locale.US) ?: "unknown_behavior"}:${contactTarget.spec.surfaceRole}",
+            )
         Log.i(
             TAG,
-            "BRB_BUTTON_HAND_CONTACT_SELECT accepted=true target=${contactTarget.spec.name} role=${contactTarget.spec.surfaceRole} key=$contactKey behavior=$behavior handOutlineAllowed=true",
+            "BRB_BUTTON_HAND_CONTACT_SELECT accepted=true target=${contactTarget.spec.name} role=${contactTarget.spec.surfaceRole} key=$contactKey behavior=$behavior handOutlineAllowed=true ${pressMechanicsLogFields(pressMechanics)}",
         )
-        recordButtonPress(PRESS_SOURCE_HAND_CONTACT)
+        recordButtonPress(PRESS_SOURCE_HAND_CONTACT, pressMechanics)
+        resetButtonHandPreloadState("accepted_hand_contact")
       }
       acceptedKind == PRESS_SOURCE_CONTROLLER_CONTACT -> {
+        val pressMechanics =
+            ButtonPressMechanics(
+                predictionMode = ButtonPressPhysicsModel.PREDICTION_MODE_NONE,
+                phase = ButtonPressPhysicsPhase.IMPACT,
+                impactVelocityMetersPerSecond = 0f,
+                predictedTimeToImpactMs = -1L,
+                confidence01 = 1f,
+                compressionPeak01 = 1f,
+                actuationTravel01 = 0.469f,
+                actuationDelayMs = 30L,
+                snapTravel01 = 0.450f,
+                snapDurationMs = 16L,
+                bottomOutDelayMs = 64L,
+                releaseDurationMs = 132L,
+                triggerEvidence =
+                    "controller_contact:${behavior?.name?.lowercase(Locale.US) ?: "unknown_behavior"}:${contactTarget.spec.surfaceRole}",
+            )
         Log.i(
             TAG,
-            "BRB_BUTTON_CONTROLLER_CONTACT_SELECT accepted=true target=${contactTarget.spec.name} role=${contactTarget.spec.surfaceRole} key=$contactKey behavior=$behavior",
+            "BRB_BUTTON_CONTROLLER_CONTACT_SELECT accepted=true target=${contactTarget.spec.name} role=${contactTarget.spec.surfaceRole} key=$contactKey behavior=$behavior ${pressMechanicsLogFields(pressMechanics)}",
         )
-        recordButtonPress(PRESS_SOURCE_CONTROLLER_CONTACT)
+        recordButtonPress(PRESS_SOURCE_CONTROLLER_CONTACT, pressMechanics)
       }
     }
   }
 
-  private fun playButtonPressedAnimation() {
+  private fun updateButtonHandPressPhysics(
+      event: PointerEvent,
+      contactTarget: ButtonContactTarget,
+      actualContact: Boolean,
+      triggerEvidence: String,
+  ): ButtonPressMechanics {
+    if (!contactTarget.spec.acceptsHandContact) {
+      resetButtonHandPreloadState("target_rejects_hand")
+      return ButtonPressMechanics()
+    }
+    val sample = buttonHandMotionSample(event, actualContact)
+    if (sample != null) {
+      buttonHandMotionSamples.addLast(sample)
+      while (buttonHandMotionSamples.size > BUTTON_HAND_MOTION_SAMPLE_LIMIT) {
+        buttonHandMotionSamples.removeFirst()
+      }
+    }
+    val nowNs = sample?.elapsedRealtimeNs ?: SystemClock.elapsedRealtimeNanos()
+    val state =
+        buttonPressPhysicsModel.evaluate(
+            samples = buttonHandMotionSamples.toList(),
+            actualContact = actualContact,
+            triggerEvidence = triggerEvidence,
+            nowElapsedRealtimeNs = nowNs,
+        )
+    if (actualContact) {
+      return state.mechanics
+    }
+    if (state.shouldPreloadVisual && canApplyButtonHandPreloadVisual()) {
+      applyButtonHandPreloadVisual(
+          mechanics = state.mechanics,
+          contactTarget = contactTarget,
+          sample = sample,
+      )
+    } else if (handPreloadActive && state.phase != ButtonPressPhysicsPhase.PRELOAD) {
+      resetButtonHandPreloadState("prediction_lost")
+    }
+    return state.mechanics
+  }
+
+  private fun buttonHandMotionSample(
+      event: PointerEvent,
+      actualContact: Boolean,
+  ): ButtonPressPhysicsSample? {
+    return try {
+      val point = event.hitInfo.point
+      val placement = currentButtonPlacement
+      val dx = point.x - placement.x
+      val dz = point.z - placement.z
+      val lateralDistanceMeters = sqrt(dx * dx + dz * dz)
+      val hitDistanceMeters = event.hitInfo.distance
+      val verticalDistanceMeters = (point.y - placement.contactCenterY).coerceAtLeast(0f)
+      val signedDistanceMeters =
+          when {
+            actualContact -> 0f
+            hitDistanceMeters.isFinite() &&
+                hitDistanceMeters >= 0f &&
+                hitDistanceMeters <= BUTTON_HAND_PRELOAD_DISTANCE_FALLBACK_METERS -> hitDistanceMeters
+            else -> verticalDistanceMeters.coerceIn(0f, BUTTON_HAND_PRELOAD_DISTANCE_FALLBACK_METERS)
+          }
+      ButtonPressPhysicsSample(
+          elapsedRealtimeNs = SystemClock.elapsedRealtimeNanos(),
+          signedDistanceMeters = signedDistanceMeters,
+          lateralDistanceMeters = lateralDistanceMeters,
+      )
+    } catch (exception: Exception) {
+      Log.w(TAG, "BRB_BUTTON_HAND_MOTION_SAMPLE_FAILED error=${exception.message}")
+      null
+    }
+  }
+
+  private fun canApplyButtonHandPreloadVisual(): Boolean {
+    val nowMs = SystemClock.elapsedRealtime()
+    val stage = stageState.value
+    if (!buttonStimulusVisible || (stage != StudyStage.ConditionRunning && stage != StudyStage.FinalExtraPresses)) {
+      return false
+    }
+    if (controllersRecentlyActive(nowMs)) {
+      return false
+    }
+    if (nowMs < nextAllowedPressRealtimeMs) {
+      return false
+    }
+    if (lastButtonPressMotionStartRealtimeMs != Long.MIN_VALUE &&
+        nowMs - lastButtonPressMotionStartRealtimeMs < BUTTON_PRESS_MOTION_RESTART_GUARD_MS) {
+      return false
+    }
+    return true
+  }
+
+  private fun applyButtonHandPreloadVisual(
+      mechanics: ButtonPressMechanics,
+      contactTarget: ButtonContactTarget,
+      sample: ButtonPressPhysicsSample?,
+  ) {
+    val nowMs = SystemClock.elapsedRealtime()
+    if (handPreloadActive &&
+        nowMs - lastHandPreloadVisualRealtimeMs < BUTTON_HAND_PRELOAD_VISUAL_MIN_INTERVAL_MS) {
+      return
+    }
+    applyStableButtonModelVisibility()
+    val pausedMs =
+        (mechanics.compressionPeak01 * BUTTON_HAND_PRELOAD_MAX_PAUSED_TIME_MS)
+            .roundToLong()
+            .coerceIn(0L, BUTTON_HAND_PRELOAD_MAX_PAUSED_TIME_MS)
+    buttonHandPreloadReleaseSequence += 1
+    setButtonPreloadAnimationComponent(buttonModelEntity, pausedMs.toFloat() / 1000f)
+    handPreloadActive = true
+    lastHandPreloadPausedMs = pausedMs
+    lastHandPreloadVisualRealtimeMs = nowMs
+    Log.i(
+        TAG,
+        "BRB_BUTTON_HAND_IMPACT_PREDICTED target=${contactTarget.spec.name} role=${contactTarget.spec.surfaceRole} distanceM=${formatFloat(sample?.signedDistanceMeters ?: 0f)} lateralM=${formatFloat(sample?.lateralDistanceMeters ?: 0f)} normalVelocityMps=${mechanics.impactVelocityLog()} lateralVelocityMps=${mechanics.lateralVelocityLog()} predictedLateralAtImpactM=${mechanics.predictedLateralAtImpactLog()} trajectoryFit=${mechanics.trajectoryFitLog()} approachAngleDeg=${mechanics.approachAngleLog()} approachAlignment=${mechanics.approachAlignmentLog()} timeToImpactMs=${mechanics.predictedTimeToImpactMs} confidence=${mechanics.confidenceLog()} impactEnergyJ=${mechanics.impactEnergyLog()} springCompressionM=${mechanics.springCompressionLog()} dampingRatio=${mechanics.dampingRatioLog()} normalImpulseNewtonSeconds=${mechanics.normalImpulseLog()} estimatedPeakForceN=${mechanics.estimatedPeakForceLog()} estimatedContactPressureKPa=${mechanics.estimatedContactPressureLog()} estimatedContactPatchAreaM2=${mechanics.estimatedContactPatchAreaLog()} compressionPeak=${mechanics.compressionPeakLog()} actuationTravel=${mechanics.actuationTravelLog()} actuationDelayMs=${mechanics.actuationDelayMs} snapTravel=${mechanics.snapTravelLog()} snapDurationMs=${mechanics.snapDurationMs} phase=${mechanics.phase.name.lowercase(Locale.US)} predictivePreload=true counted=false sound=false",
+    )
+  }
+
+  private fun resetButtonHandPreloadState(reason: String) {
+    val wasActive = handPreloadActive
+    val pausedMs = lastHandPreloadPausedMs
+    handPreloadActive = false
+    lastHandPreloadVisualRealtimeMs = Long.MIN_VALUE
+    lastHandPreloadPausedMs = 0L
+    buttonHandMotionSamples.clear()
+    buttonPressPhysicsModel.reset()
+    if (wasActive && shouldReleaseButtonHandPreloadVisual(reason, pausedMs)) {
+      releaseButtonHandPreloadVisual(reason, pausedMs)
+    } else {
+      buttonHandPreloadReleaseSequence += 1
+    }
+    if (wasActive) {
+      Log.i(
+          TAG,
+          "BRB_BUTTON_HAND_PRELOAD_RESET reason=${sanitizeKeyboardLogToken(reason)} fromPausedMs=$pausedMs counted=false sound=false",
+      )
+    }
+  }
+
+  private fun shouldReleaseButtonHandPreloadVisual(reason: String, pausedMs: Long): Boolean {
+    if (pausedMs <= 0L) {
+      return false
+    }
+    if (reason == "accepted_hand_contact" || reason.startsWith("press_motion_reset_")) {
+      return false
+    }
+    val stage = stageState.value
+    return buttonStimulusVisible && (stage == StudyStage.ConditionRunning || stage == StudyStage.FinalExtraPresses)
+  }
+
+  private fun releaseButtonHandPreloadVisual(reason: String, pausedMs: Long) {
+    val sequence = ++buttonHandPreloadReleaseSequence
+    val sanitizedReason = sanitizeKeyboardLogToken(reason)
+    val startPausedMs = pausedMs.coerceIn(0L, BUTTON_HAND_PRELOAD_MAX_PAUSED_TIME_MS)
+    applyStableButtonModelVisibility()
+    Log.i(
+        TAG,
+        "BRB_BUTTON_HAND_PRELOAD_RELEASE state=started reason=$sanitizedReason fromPausedMs=$startPausedMs releaseDurationMs=$BUTTON_HAND_PRELOAD_RELEASE_DURATION_MS steps=$BUTTON_HAND_PRELOAD_RELEASE_STEPS counted=false sound=false",
+    )
+    for (step in 1..BUTTON_HAND_PRELOAD_RELEASE_STEPS) {
+      val delayMs =
+          (BUTTON_HAND_PRELOAD_RELEASE_DURATION_MS.toFloat() * step / BUTTON_HAND_PRELOAD_RELEASE_STEPS)
+              .roundToLong()
+      mainHandler.postDelayed(
+          {
+            if (sequence != buttonHandPreloadReleaseSequence || handPreloadActive) {
+              return@postDelayed
+            }
+            val remaining01 =
+                (1f - step.toFloat() / BUTTON_HAND_PRELOAD_RELEASE_STEPS.toFloat())
+                    .coerceIn(0f, 1f)
+            val easedPausedMs = (startPausedMs * remaining01 * remaining01).roundToLong()
+            setButtonPreloadAnimationComponent(buttonModelEntity, easedPausedMs.toFloat() / 1000f)
+            if (step == BUTTON_HAND_PRELOAD_RELEASE_STEPS) {
+              Log.i(
+                  TAG,
+                  "BRB_BUTTON_HAND_PRELOAD_RELEASE state=completed reason=$sanitizedReason finalPausedMs=$easedPausedMs counted=false sound=false",
+              )
+            }
+          },
+          delayMs,
+      )
+    }
+  }
+
+  private fun playButtonPressedAnimation(pressMechanics: ButtonPressMechanics = ButtonPressMechanics()) {
     val nowMs = SystemClock.elapsedRealtime()
     val previousStartMs = lastButtonPressMotionStartRealtimeMs
     val sincePreviousMs =
@@ -6664,6 +8142,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
           deferred = false,
           scheduledDelayMs = 0L,
           sincePreviousMs = if (previousStartMs == Long.MIN_VALUE) -1L else sincePreviousMs,
+          pressMechanics = pressMechanics,
       )
       return
     }
@@ -6686,6 +8165,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
               deferred = true,
               scheduledDelayMs = delayedNowMs - nowMs,
               sincePreviousMs = delayedNowMs - previousStartMs,
+              pressMechanics = pressMechanics,
           )
         },
         restartDelayMs,
@@ -6697,6 +8177,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
       deferred: Boolean,
       scheduledDelayMs: Long,
       sincePreviousMs: Long,
+      pressMechanics: ButtonPressMechanics,
   ) {
     val stage = stageState.value
     val canShowMotion =
@@ -6712,10 +8193,19 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     applyStableButtonModelVisibility()
     val startRealtimeMs = SystemClock.elapsedRealtime()
     lastButtonPressMotionStartRealtimeMs = startRealtimeMs
-    setButtonPressedAnimationComponent(buttonModelEntity, System.currentTimeMillis())
+    val visualStartOffsetMs = pressMechanics.visualStartOffsetMs.coerceIn(0L, BUTTON_PRESS_ANIMATION_CLIP_MS / 2)
+    val motionProfile =
+        if (pressMechanics.predictionMode == ButtonPressPhysicsModel.PREDICTION_MODE_VISUAL_PRELOAD ||
+            pressMechanics.compressionPeak01 > 0f) {
+          "physics_grounded_preload"
+        } else {
+          "native_pressed_clip"
+        }
+    setButtonPressedAnimationComponent(buttonModelEntity, System.currentTimeMillis() - visualStartOffsetMs)
+    scheduleButtonPressMechanicsPhaseLogs(sequence, startRealtimeMs, pressMechanics)
     Log.i(
         TAG,
-        "BRB_BUTTON_MODEL_ANIMATION name=$BUTTON_MODEL_PRESS_ANIMATION state=started sequence=$sequence target=stable_idle_model playback=clamp motionProfile=native_pressed_clip clipDurationMs=$BUTTON_PRESS_ANIMATION_CLIP_MS visualRestartGuardMs=$BUTTON_PRESS_MOTION_RESTART_GUARD_MS deferred=$deferred scheduledDelayMs=$scheduledDelayMs sincePreviousMs=$sincePreviousMs acceptedPressImmediate=true countSoundImmediate=true heartbeatGlowMotion=false glowGeometrySwap=false futureSfxAlignment=button_press_noise_profile",
+        "BRB_BUTTON_MODEL_ANIMATION name=$BUTTON_MODEL_PRESS_ANIMATION state=started sequence=$sequence target=stable_idle_model playback=clamp motionProfile=$motionProfile clipDurationMs=$BUTTON_PRESS_ANIMATION_CLIP_MS visualRestartGuardMs=$BUTTON_PRESS_MOTION_RESTART_GUARD_MS deferred=$deferred scheduledDelayMs=$scheduledDelayMs sincePreviousMs=$sincePreviousMs acceptedPressImmediate=true countSoundImmediate=true heartbeatGlowMotion=false glowGeometrySwap=false futureSfxAlignment=button_press_noise_profile ${pressMechanicsLogFields(pressMechanics)}",
     )
   }
 
@@ -6732,9 +8222,78 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     )
   }
 
+  private fun setButtonPreloadAnimationComponent(entity: Entity?, pausedTimeSeconds: Float) {
+    entity?.setComponent(
+        Animated(
+            startTime = System.currentTimeMillis(),
+            pausedTime = pausedTimeSeconds.coerceIn(0f, BUTTON_HAND_PRELOAD_MAX_PAUSED_TIME_MS.toFloat() / 1000f),
+            playbackState = PlaybackState.PAUSED,
+            playbackType = PlaybackType.CLAMP,
+            track = 0,
+            animationName = BUTTON_MODEL_PRESS_ANIMATION,
+        )
+    )
+  }
+
+  private fun scheduleButtonPressMechanicsPhaseLogs(
+      sequence: Int,
+      startRealtimeMs: Long,
+      mechanics: ButtonPressMechanics,
+  ) {
+    val actuationDelayMs = mechanics.actuationDelayMs
+    if (mechanics.snapTravel01 > 0f && actuationDelayMs >= 0L) {
+      mainHandler.postDelayed(
+          {
+            if (sequence == buttonPressMotionSequence) {
+              val elapsedMs = SystemClock.elapsedRealtime() - startRealtimeMs
+              Log.i(
+                  TAG,
+                  "BRB_BUTTON_PRESS_MECHANICS_PHASE sequence=$sequence phase=actuation elapsedMs=$elapsedMs ${pressMechanicsLogFields(mechanics)}",
+              )
+            }
+          },
+          actuationDelayMs,
+      )
+    }
+    val bottomOutDelayMs = mechanics.bottomOutDelayMs
+    if (bottomOutDelayMs > 0L) {
+      mainHandler.postDelayed(
+          {
+            if (sequence == buttonPressMotionSequence) {
+              val elapsedMs = SystemClock.elapsedRealtime() - startRealtimeMs
+              Log.i(
+                  TAG,
+                  "BRB_BUTTON_PRESS_MECHANICS_PHASE sequence=$sequence phase=bottom_out elapsedMs=$elapsedMs ${pressMechanicsLogFields(mechanics)}",
+              )
+            }
+          },
+          bottomOutDelayMs,
+      )
+    }
+    val releaseDelayMs = mechanics.bottomOutDelayMs + mechanics.releaseDurationMs
+    if (releaseDelayMs > 0L) {
+      mainHandler.postDelayed(
+          {
+            if (sequence == buttonPressMotionSequence) {
+              val elapsedMs = SystemClock.elapsedRealtime() - startRealtimeMs
+              Log.i(
+                  TAG,
+                  "BRB_BUTTON_PRESS_MECHANICS_PHASE sequence=$sequence phase=release elapsedMs=$elapsedMs ${pressMechanicsLogFields(mechanics)}",
+              )
+            }
+          },
+          releaseDelayMs,
+      )
+    }
+  }
+
+  private fun pressMechanicsLogFields(mechanics: ButtonPressMechanics): String =
+      "predictionMode=${mechanics.predictionMode} phase=${mechanics.phase.name.lowercase(Locale.US)} impactVelocityMps=${mechanics.impactVelocityLog()} predictedTimeToImpactMs=${mechanics.predictedTimeToImpactMs} preloadLeadMs=${mechanics.preloadLeadMs} confidence=${mechanics.confidenceLog()} lateralVelocityMps=${mechanics.lateralVelocityLog()} predictedLateralAtImpactM=${mechanics.predictedLateralAtImpactLog()} trajectoryFit=${mechanics.trajectoryFitLog()} approachAngleDeg=${mechanics.approachAngleLog()} approachAlignment=${mechanics.approachAlignmentLog()} impactEnergyJ=${mechanics.impactEnergyLog()} springCompressionM=${mechanics.springCompressionLog()} dampingRatio=${mechanics.dampingRatioLog()} normalImpulseNewtonSeconds=${mechanics.normalImpulseLog()} estimatedPeakForceN=${mechanics.estimatedPeakForceLog()} estimatedContactPressureKPa=${mechanics.estimatedContactPressureLog()} estimatedContactPatchAreaM2=${mechanics.estimatedContactPatchAreaLog()} compressionPeak=${mechanics.compressionPeakLog()} actuationTravel=${mechanics.actuationTravelLog()} actuationDelayMs=${mechanics.actuationDelayMs} snapTravel=${mechanics.snapTravelLog()} snapDurationMs=${mechanics.snapDurationMs} bottomOutDelayMs=${mechanics.bottomOutDelayMs} releaseDurationMs=${mechanics.releaseDurationMs} visualStartOffsetMs=${mechanics.visualStartOffsetMs} triggerEvidence=${sanitizeKeyboardLogToken(mechanics.triggerEvidence)}"
+
   private fun resetButtonPressMotionState(reason: String) {
     buttonPressMotionSequence += 1
     lastButtonPressMotionStartRealtimeMs = Long.MIN_VALUE
+    resetButtonHandPreloadState("press_motion_reset_$reason")
     Log.i(
         TAG,
         "BRB_BUTTON_MODEL_ANIMATION_RESET reason=$reason activeSequence=$buttonPressMotionSequence visualRestartGuardMs=$BUTTON_PRESS_MOTION_RESTART_GUARD_MS",
@@ -6800,14 +8359,15 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   }
 
   private fun buttonGlowLightPositions(): List<Vector3> {
-    val y = BUTTON_CONTACT_COLLIDER_Y_METERS + BUTTON_GLOW_LIGHT_Y_OFFSET_METERS
-    val z = BUTTON_DISTANCE_FROM_HEAD_METERS
+    val placement = currentButtonPlacement
+    val y = placement.contactCenterY + BUTTON_GLOW_LIGHT_Y_OFFSET_METERS
+    val z = placement.z
     val radius = BUTTON_GLOW_LIGHT_SURFACE_RADIUS_METERS
     return listOf(
-        Vector3(-radius, y, z),
-        Vector3(radius, y, z),
-        Vector3(0f, y, z - radius),
-        Vector3(0f, y, z + radius),
+        Vector3(placement.x - radius, y, z),
+        Vector3(placement.x + radius, y, z),
+        Vector3(placement.x, y, z - radius),
+        Vector3(placement.x, y, z + radius),
     )
   }
 
@@ -6823,14 +8383,16 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   }
 
   private fun createProceduralButtonFallbackObjects() {
+    val placement = currentButtonPlacement
     val sceneObjectSystem = systemManager.findSystem<SceneObjectSystem>()
+    buttonFallbackVisualTargets.clear()
     val redMaterial = solidSceneMaterial(0.95f, 0.03f, 0.04f, 1.0f, unlit = false)
     val darkRedMaterial = solidSceneMaterial(0.42f, 0.02f, 0.02f, 1.0f, unlit = false)
     val baseMaterial = solidSceneMaterial(0.24f, 0.22f, 0.20f, 1.0f, unlit = false)
 
     val baseEntity =
         Entity.create(
-            Transform(Pose(Vector3(0f, BUTTON_BASE_Y_METERS, BUTTON_DISTANCE_FROM_HEAD_METERS))),
+            Transform(Pose(Vector3(placement.x, placement.baseY, placement.z))),
             Visible(false),
         )
     val baseMesh =
@@ -6839,11 +8401,17 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             Vector3(0.22f, 0.045f, 0.22f),
             baseMaterial,
         )
-    addButtonSceneObject(sceneObjectSystem, baseEntity, baseMesh, "brb-button-base")
+    addButtonSceneObject(
+        sceneObjectSystem,
+        baseEntity,
+        baseMesh,
+        "brb-button-base",
+        BUTTON_BASE_ABOVE_SURFACE_METERS,
+    )
 
     val bevelEntity =
         Entity.create(
-            Transform(Pose(Vector3(0f, BUTTON_BEVEL_Y_METERS, BUTTON_DISTANCE_FROM_HEAD_METERS))),
+            Transform(Pose(Vector3(placement.x, placement.bevelY, placement.z))),
             Visible(false),
         )
     val bevelMesh =
@@ -6852,15 +8420,27 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             Vector3(0.18f, 0.025f, 0.18f),
             darkRedMaterial,
         )
-    addButtonSceneObject(sceneObjectSystem, bevelEntity, bevelMesh, "brb-button-red-bevel")
+    addButtonSceneObject(
+        sceneObjectSystem,
+        bevelEntity,
+        bevelMesh,
+        "brb-button-red-bevel",
+        BUTTON_BEVEL_ABOVE_SURFACE_METERS,
+    )
 
     val domeEntity =
         Entity.create(
-            Transform(Pose(Vector3(0f, BUTTON_DOME_Y_METERS, BUTTON_DISTANCE_FROM_HEAD_METERS))),
+            Transform(Pose(Vector3(placement.x, placement.domeY, placement.z))),
             Visible(false),
         )
     val domeMesh = SceneMesh.dome(0.165f, redMaterial)
-    addButtonSceneObject(sceneObjectSystem, domeEntity, domeMesh, "brb-button-red-dome")
+    addButtonSceneObject(
+        sceneObjectSystem,
+        domeEntity,
+        domeMesh,
+        "brb-button-red-dome",
+        BUTTON_DOME_ABOVE_SURFACE_METERS,
+    )
   }
 
   private fun addButtonSceneObject(
@@ -6868,6 +8448,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
       entity: Entity,
       mesh: SceneMesh,
       name: String,
+      yOffsetFromSupportSurfaceMeters: Float,
   ) {
     val sceneObject = SceneObject(scene, mesh, name, entity)
     sceneObject.addInputListener(
@@ -6883,6 +8464,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         CompletableFuture<SceneObject>().apply { complete(sceneObject) },
     )
     buttonVisualEntities.add(entity)
+    buttonFallbackVisualTargets.add(ButtonFallbackVisualTarget(entity, yOffsetFromSupportSurfaceMeters))
     buttonSceneObjects.add(sceneObject)
   }
 
@@ -6903,6 +8485,10 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
   }
 
   override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+    if (isDemographicsHandednessNarrationBlocking()) {
+      Log.i(TAG, "BRB_HANDEDNESS_NARRATION_GATE input=key_down keyCode=$keyCode consumed=true")
+      return true
+    }
     val direction =
         when (keyCode) {
           KeyEvent.KEYCODE_DPAD_LEFT -> "left"
@@ -6955,11 +8541,15 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     rednessConversionChoreographyToken += 1
     finalExtraPromptToken += 1
     priorButtonExperiencePromptToken += 1
+    demographicsHandednessNarrationToken += 1
     rednessConversionChoreographyState.value = null
     finalExtraPromptVisibleState.value = false
+    demographicsHandednessNarrationBlockingState.value = false
     releasePlayer()
     releasePanelChimePlayer()
+    releaseSpontaneousRemarkPlayer("activity_destroy")
     releaseCuePlayers()
+    releaseButtonPressSoundPool("activity_destroy")
     destroyButtonGlowLights()
     polarClient?.stop()
     polarClient = null
@@ -6971,15 +8561,19 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     rednessConversionChoreographyToken += 1
     finalExtraPromptToken += 1
     priorButtonExperiencePromptToken += 1
+    demographicsHandednessNarrationToken += 1
     rednessConversionChoreographyState.value = null
     finalExtraPromptVisibleState.value = false
+    demographicsHandednessNarrationBlockingState.value = false
     if (isdkPointerObserverRegistered) {
       isdkSystem?.unregisterObserver(buttonContactPointerObserver)
       isdkPointerObserverRegistered = false
     }
     releasePlayer()
     releasePanelChimePlayer()
+    releaseSpontaneousRemarkPlayer("spatial_shutdown")
     releaseCuePlayers()
+    releaseButtonPressSoundPool("spatial_shutdown")
     destroyButtonGlowLights()
     polarClient?.stop()
     polarClient = null
@@ -6995,6 +8589,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     private const val LOCALIZED_AUDIO_MANIFEST_ASSET = "localized/manifest.json"
     private const val AUDIO_ID_CONDITION_1 = "aud_0100"
     private const val AUDIO_ID_CONDITION_2 = "aud_0110"
+    private const val AUDIO_ID_HANDEDNESS_CONTROLLER_SELECTION = "aud_0190"
     private const val AUDIO_ID_PRIOR_QUESTION = "aud_0200"
     private const val AUDIO_ID_PRIOR_YES = "aud_0210"
     private const val AUDIO_ID_PRIOR_NO = "aud_0220"
@@ -7006,6 +8601,73 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     private const val AUDIO_ID_FINAL_END_QUESTION = "aud_0500"
     private const val AUDIO_ID_FINAL_END_10_FEEDBACK = "aud_0510"
     private const val AUDIO_ID_FINAL_EXTRA_PRESSES = "aud_0600"
+    private const val VAS_REMARK_BUCKET_LOW = "low"
+    private const val VAS_REMARK_BUCKET_LOW_MID = "low_mid"
+    private const val VAS_REMARK_BUCKET_MID = "mid"
+    private const val VAS_REMARK_BUCKET_HIGH_MID = "high_mid"
+    private const val VAS_REMARK_BUCKET_HIGH = "high"
+    private const val VAS_REMARK_BUCKET_MAX = "max"
+    private const val VAS_SPONTANEOUS_REMARK_MIN_PAUSE_MS = 5000L
+    private const val VAS_SPONTANEOUS_REMARK_MAX_PAUSE_MS = 10000L
+    private val AGE_SOFT_PRIVACY_REMARK =
+        QuestionnaireSpontaneousRemark("aud_0700", "age_soft_privacy", "age")
+    private val VAS_SPONTANEOUS_LOW_REMARKS =
+        listOf(
+            QuestionnaireSpontaneousRemark("aud_0710", "vas_low_01", VAS_REMARK_BUCKET_LOW),
+            QuestionnaireSpontaneousRemark("aud_0711", "vas_low_02", VAS_REMARK_BUCKET_LOW),
+            QuestionnaireSpontaneousRemark("aud_0712", "vas_low_03", VAS_REMARK_BUCKET_LOW),
+            QuestionnaireSpontaneousRemark("aud_0713", "vas_low_04", VAS_REMARK_BUCKET_LOW),
+            QuestionnaireSpontaneousRemark("aud_0714", "vas_low_05", VAS_REMARK_BUCKET_LOW),
+        )
+    private val VAS_SPONTANEOUS_LOW_MID_REMARKS =
+        listOf(
+            QuestionnaireSpontaneousRemark("aud_0720", "vas_low_mid_01", VAS_REMARK_BUCKET_LOW_MID),
+            QuestionnaireSpontaneousRemark("aud_0721", "vas_low_mid_02", VAS_REMARK_BUCKET_LOW_MID),
+            QuestionnaireSpontaneousRemark("aud_0722", "vas_low_mid_03", VAS_REMARK_BUCKET_LOW_MID),
+            QuestionnaireSpontaneousRemark("aud_0723", "vas_low_mid_04", VAS_REMARK_BUCKET_LOW_MID),
+            QuestionnaireSpontaneousRemark("aud_0724", "vas_low_mid_05", VAS_REMARK_BUCKET_LOW_MID),
+        )
+    private val VAS_SPONTANEOUS_MID_REMARKS =
+        listOf(
+            QuestionnaireSpontaneousRemark("aud_0730", "vas_mid_01", VAS_REMARK_BUCKET_MID),
+            QuestionnaireSpontaneousRemark("aud_0731", "vas_mid_02", VAS_REMARK_BUCKET_MID),
+            QuestionnaireSpontaneousRemark("aud_0732", "vas_mid_03", VAS_REMARK_BUCKET_MID),
+            QuestionnaireSpontaneousRemark("aud_0733", "vas_mid_04", VAS_REMARK_BUCKET_MID),
+            QuestionnaireSpontaneousRemark("aud_0734", "vas_mid_05", VAS_REMARK_BUCKET_MID),
+        )
+    private val VAS_SPONTANEOUS_HIGH_MID_REMARKS =
+        listOf(
+            QuestionnaireSpontaneousRemark("aud_0740", "vas_high_mid_01", VAS_REMARK_BUCKET_HIGH_MID),
+            QuestionnaireSpontaneousRemark("aud_0741", "vas_high_mid_02", VAS_REMARK_BUCKET_HIGH_MID),
+            QuestionnaireSpontaneousRemark("aud_0742", "vas_high_mid_03", VAS_REMARK_BUCKET_HIGH_MID),
+            QuestionnaireSpontaneousRemark("aud_0743", "vas_high_mid_04", VAS_REMARK_BUCKET_HIGH_MID),
+            QuestionnaireSpontaneousRemark("aud_0744", "vas_high_mid_05", VAS_REMARK_BUCKET_HIGH_MID),
+        )
+    private val VAS_SPONTANEOUS_HIGH_REMARKS =
+        listOf(
+            QuestionnaireSpontaneousRemark("aud_0750", "vas_high_01", VAS_REMARK_BUCKET_HIGH),
+            QuestionnaireSpontaneousRemark("aud_0751", "vas_high_02", VAS_REMARK_BUCKET_HIGH),
+            QuestionnaireSpontaneousRemark("aud_0752", "vas_high_03", VAS_REMARK_BUCKET_HIGH),
+            QuestionnaireSpontaneousRemark("aud_0753", "vas_high_04", VAS_REMARK_BUCKET_HIGH),
+            QuestionnaireSpontaneousRemark("aud_0754", "vas_high_05", VAS_REMARK_BUCKET_HIGH),
+        )
+    private val VAS_SPONTANEOUS_MAX_REMARKS =
+        listOf(
+            QuestionnaireSpontaneousRemark("aud_0760", "vas_max_01", VAS_REMARK_BUCKET_MAX),
+            QuestionnaireSpontaneousRemark("aud_0761", "vas_max_02", VAS_REMARK_BUCKET_MAX),
+            QuestionnaireSpontaneousRemark("aud_0762", "vas_max_03", VAS_REMARK_BUCKET_MAX),
+            QuestionnaireSpontaneousRemark("aud_0763", "vas_max_04", VAS_REMARK_BUCKET_MAX),
+            QuestionnaireSpontaneousRemark("aud_0764", "vas_max_05", VAS_REMARK_BUCKET_MAX),
+        )
+    private val VAS_SPONTANEOUS_REMARKS_BY_BUCKET =
+        mapOf(
+            VAS_REMARK_BUCKET_LOW to VAS_SPONTANEOUS_LOW_REMARKS,
+            VAS_REMARK_BUCKET_LOW_MID to VAS_SPONTANEOUS_LOW_MID_REMARKS,
+            VAS_REMARK_BUCKET_MID to VAS_SPONTANEOUS_MID_REMARKS,
+            VAS_REMARK_BUCKET_HIGH_MID to VAS_SPONTANEOUS_HIGH_MID_REMARKS,
+            VAS_REMARK_BUCKET_HIGH to VAS_SPONTANEOUS_HIGH_REMARKS,
+            VAS_REMARK_BUCKET_MAX to VAS_SPONTANEOUS_MAX_REMARKS,
+        )
     private const val SHARED_AUDIO_ID_QUESTIONNAIRE_INTRO_GLITCH = "raw_0400"
     private const val SHARED_AUDIO_ID_QUESTIONNAIRE_OUTRO_GLITCH = "raw_0410"
     private const val SHARED_AUDIO_ID_QUESTIONNAIRE_CHOICE = "sfx_9000"
@@ -7015,6 +8677,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         "localized/en_us/aud_0100_condition_1_instructions__en_us.mp3"
     private const val LOCALIZED_EN_CONDITION_2_AUDIO =
         "localized/en_us/aud_0110_condition_2_instructions__en_us.mp3"
+    private const val LOCALIZED_EN_HANDEDNESS_CONTROLLER_SELECTION_AUDIO =
+        "localized/en_us/aud_0190_handedness_controller_selection__en_us.mp3"
     private const val LOCALIZED_EN_PRIOR_QUESTION_AUDIO =
         "localized/en_us/aud_0200_prior_experience_question__en_us.mp3"
     private const val LOCALIZED_EN_PRIOR_YES_AUDIO =
@@ -7041,6 +8705,8 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         "localized/ja_jp/aud_0100_condition_1_instructions__ja_jp.mp3"
     private const val LOCALIZED_JA_CONDITION_2_AUDIO =
         "localized/ja_jp/aud_0110_condition_2_instructions__ja_jp.mp3"
+    private const val LOCALIZED_JA_HANDEDNESS_CONTROLLER_SELECTION_AUDIO =
+        "localized/ja_jp/aud_0190_handedness_controller_selection__ja_jp.mp3"
     private const val LOCALIZED_JA_PRIOR_QUESTION_AUDIO =
         "localized/ja_jp/aud_0200_prior_experience_question__ja_jp.mp3"
     private const val LOCALIZED_JA_PRIOR_YES_AUDIO =
@@ -7071,6 +8737,23 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
         "localized/shared/questionnaire_ui/sfx_9000_questionnaire_choice_blip.wav"
     private const val SHARED_QUESTIONNAIRE_NAVIGATION_AUDIO =
         "localized/shared/questionnaire_ui/sfx_9010_questionnaire_navigation_blip.wav"
+    private val LOCALIZED_AUDIO_CLIP_KEYS =
+        mapOf(
+            AUDIO_ID_CONDITION_1 to "condition_1_instructions",
+            AUDIO_ID_CONDITION_2 to "condition_2_instructions",
+            AUDIO_ID_HANDEDNESS_CONTROLLER_SELECTION to "handedness_controller_selection",
+            AUDIO_ID_PRIOR_QUESTION to "prior_experience_question",
+            AUDIO_ID_PRIOR_YES to "prior_experience_yes_feedback",
+            AUDIO_ID_PRIOR_NO to "prior_experience_no_feedback",
+            AUDIO_ID_PRE_START to "pre_start_instructions",
+            AUDIO_ID_REDNESS_VAS_TO_LIKERT to "redness_vas_to_likert_changeover",
+            AUDIO_ID_REDNESS_LIKERT_TO_VAS to "redness_likert_to_vas_changeover",
+            AUDIO_ID_IPQ_HISTORY_PART_1 to "ipq_history_part1",
+            AUDIO_ID_IPQ_HISTORY_PART_2 to "ipq_history_part2",
+            AUDIO_ID_FINAL_END_QUESTION to "final_end_confirmation_question",
+            AUDIO_ID_FINAL_END_10_FEEDBACK to "final_end_confirmation_10_feedback",
+            AUDIO_ID_FINAL_EXTRA_PRESSES to "final_extra_presses_prompt",
+        )
     private const val EXPORT_DIR_NAME = "BigRedButtonFirstStudyExports"
     private const val EXPERIMENT_RESULTS_DIR_NAME = "ExperimentResults"
     private const val AUTO_VALIDATION_EXTRA = "brb.autoValidation"
@@ -7095,15 +8778,15 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     private const val AUTO_VALIDATION_START_DELAY_MS = 1200L
     private const val AUTO_VALIDATION_POST_CONDITION_DELAY_MS = 1200L
     private const val FAST_CONTROLLER_FLOW_START_DELAY_MS = 700L
-    private const val FAST_CONTROLLER_POST_CONDITION_DELAY_MS = 450L
-    private const val FAST_CONDITION_AUDIO_SHORTCUT_MS = 2200L
+    private const val FAST_CONTROLLER_POST_CONDITION_DELAY_MS = 5400L
+    private const val FAST_CONDITION_AUDIO_SHORTCUT_MS = 1400L
     private const val PRIOR_BUTTON_EXPERIENCE_QUESTION_AUDIO_DURATION_MS = 10527L
     private const val PRIOR_BUTTON_EXPERIENCE_QUESTION_HOLD_MS = 10800L
     private const val PRIOR_BUTTON_EXPERIENCE_YES_AUDIO_DURATION_MS = 5251L
     private const val PRIOR_BUTTON_EXPERIENCE_YES_HOLD_MS = 5500L
     private const val PRIOR_BUTTON_EXPERIENCE_NO_AUDIO_DURATION_MS = 4284L
     private const val PRIOR_BUTTON_EXPERIENCE_NO_HOLD_MS = 4550L
-    private const val PRIOR_BUTTON_EXPERIENCE_FEEDBACK_TO_PRE_START_PAUSE_MS = 4000L
+    private const val PRIOR_BUTTON_EXPERIENCE_FEEDBACK_TO_PRE_START_PAUSE_MS = 15000L
     private const val PRIOR_BUTTON_EXPERIENCE_PRE_START_AUDIO_DURATION_MS = 34273L
     private const val PRIOR_BUTTON_EXPERIENCE_PRE_START_HOLD_MS = 34600L
     private const val FINAL_END_CONFIRMATION_QUESTION_AUDIO_DURATION_MS = 5146L
@@ -7124,6 +8807,39 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     private const val JA_FINAL_END_CONFIRMATION_QUESTION_AUDIO_DURATION_MS = 8359L
     private const val JA_FINAL_END_CONFIRMATION_10_FEEDBACK_AUDIO_DURATION_MS = 10371L
     private const val JA_FINAL_EXTRA_PRESSES_PROMPT_AUDIO_DURATION_MS = 49084L
+    private const val DE_PRIOR_BUTTON_EXPERIENCE_QUESTION_AUDIO_DURATION_MS = 11912L
+    private const val DE_PRIOR_BUTTON_EXPERIENCE_YES_AUDIO_DURATION_MS = 8072L
+    private const val DE_PRIOR_BUTTON_EXPERIENCE_NO_AUDIO_DURATION_MS = 8882L
+    private const val DE_PRIOR_BUTTON_EXPERIENCE_PRE_START_AUDIO_DURATION_MS = 43912L
+    private const val DE_FIRST_REDNESS_CHANGE_AUDIO_DURATION_MS = 28891L
+    private const val DE_SECOND_REDNESS_CHANGE_AUDIO_DURATION_MS = 25130L
+    private const val DE_FINAL_END_CONFIRMATION_QUESTION_AUDIO_DURATION_MS = 7288L
+    private const val DE_FINAL_END_CONFIRMATION_10_FEEDBACK_AUDIO_DURATION_MS = 16405L
+    private const val DE_FINAL_EXTRA_PRESSES_PROMPT_AUDIO_DURATION_MS = 49032L
+    private val JA_LOCALIZED_CUE_DURATIONS_MS =
+        mapOf(
+            AUDIO_ID_PRIOR_QUESTION to JA_PRIOR_BUTTON_EXPERIENCE_QUESTION_AUDIO_DURATION_MS,
+            AUDIO_ID_PRIOR_YES to JA_PRIOR_BUTTON_EXPERIENCE_YES_AUDIO_DURATION_MS,
+            AUDIO_ID_PRIOR_NO to JA_PRIOR_BUTTON_EXPERIENCE_NO_AUDIO_DURATION_MS,
+            AUDIO_ID_PRE_START to JA_PRIOR_BUTTON_EXPERIENCE_PRE_START_AUDIO_DURATION_MS,
+            AUDIO_ID_REDNESS_VAS_TO_LIKERT to JA_FIRST_REDNESS_CHANGE_AUDIO_DURATION_MS,
+            AUDIO_ID_REDNESS_LIKERT_TO_VAS to JA_SECOND_REDNESS_CHANGE_AUDIO_DURATION_MS,
+            AUDIO_ID_FINAL_END_QUESTION to JA_FINAL_END_CONFIRMATION_QUESTION_AUDIO_DURATION_MS,
+            AUDIO_ID_FINAL_END_10_FEEDBACK to JA_FINAL_END_CONFIRMATION_10_FEEDBACK_AUDIO_DURATION_MS,
+            AUDIO_ID_FINAL_EXTRA_PRESSES to JA_FINAL_EXTRA_PRESSES_PROMPT_AUDIO_DURATION_MS,
+        )
+    private val DE_LOCALIZED_CUE_DURATIONS_MS =
+        mapOf(
+            AUDIO_ID_PRIOR_QUESTION to DE_PRIOR_BUTTON_EXPERIENCE_QUESTION_AUDIO_DURATION_MS,
+            AUDIO_ID_PRIOR_YES to DE_PRIOR_BUTTON_EXPERIENCE_YES_AUDIO_DURATION_MS,
+            AUDIO_ID_PRIOR_NO to DE_PRIOR_BUTTON_EXPERIENCE_NO_AUDIO_DURATION_MS,
+            AUDIO_ID_PRE_START to DE_PRIOR_BUTTON_EXPERIENCE_PRE_START_AUDIO_DURATION_MS,
+            AUDIO_ID_REDNESS_VAS_TO_LIKERT to DE_FIRST_REDNESS_CHANGE_AUDIO_DURATION_MS,
+            AUDIO_ID_REDNESS_LIKERT_TO_VAS to DE_SECOND_REDNESS_CHANGE_AUDIO_DURATION_MS,
+            AUDIO_ID_FINAL_END_QUESTION to DE_FINAL_END_CONFIRMATION_QUESTION_AUDIO_DURATION_MS,
+            AUDIO_ID_FINAL_END_10_FEEDBACK to DE_FINAL_END_CONFIRMATION_10_FEEDBACK_AUDIO_DURATION_MS,
+            AUDIO_ID_FINAL_EXTRA_PRESSES to DE_FINAL_EXTRA_PRESSES_PROMPT_AUDIO_DURATION_MS,
+        )
     const val FINAL_EXTRA_BUTTON_PRESS_REQUIREMENT = 1000
     private const val VISUAL_GLOW_VALIDATION_FAST_CONDITION_HOLD_MS = 12000L
     private const val PANEL_TRANSITION_LANGUAGE_SELECTION = "language_selection"
@@ -7132,7 +8848,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     private const val PANEL_TRANSITION_BEFORE_CONDITION_2 = "before_condition_2"
     private const val PANEL_TRANSITION_FINAL_END = "final_end_confirmation"
     private const val PANEL_TRANSITION_FINAL_EXTRA_PRESSES = "final_extra_button_presses"
-  private const val PANEL_TRANSITION_COMPLETE = "complete"
+    private const val PANEL_TRANSITION_COMPLETE = "complete"
     private const val PANEL_TRANSITION_START_DELAY_MS = 350L
     private const val PANEL_GLITCH_FRAME_MS = 70L
     private const val QUESTIONNAIRE_INTRO_FALLBACK_MS = 2400L
@@ -7144,17 +8860,21 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     private const val QUESTIONNAIRE_PANEL_Z_METERS = QUESTIONNAIRE_PANEL_RADIAL_DISTANCE_METERS
     private const val QUESTIONNAIRE_PANEL_WIDTH_METERS = 1.55f
     private const val QUESTIONNAIRE_PANEL_HEIGHT_METERS = 1.05f
-    private const val NAME_KEYBOARD_PANEL_RADIAL_ANGLE_DEGREES = -22f
-    private const val NAME_KEYBOARD_PANEL_RADIAL_DISTANCE_METERS = 0.92f
+    private const val NAME_KEYBOARD_PANEL_RADIAL_ANGLE_DEGREES = -20f
+    private const val NAME_KEYBOARD_PANEL_RADIAL_DISTANCE_METERS = 0.86f
     private val NAME_KEYBOARD_PANEL_X_METERS =
         sin(NAME_KEYBOARD_PANEL_RADIAL_ANGLE_DEGREES * PI.toFloat() / 180f) * NAME_KEYBOARD_PANEL_RADIAL_DISTANCE_METERS
-    private const val NAME_KEYBOARD_PANEL_Y_METERS = 1.00f
+    private const val NAME_KEYBOARD_PANEL_Y_METERS = 1.30f
     private val NAME_KEYBOARD_PANEL_Z_METERS =
         cos(NAME_KEYBOARD_PANEL_RADIAL_ANGLE_DEGREES * PI.toFloat() / 180f) * NAME_KEYBOARD_PANEL_RADIAL_DISTANCE_METERS
-    private const val NAME_KEYBOARD_PANEL_WIDTH_METERS = 0.66f
-    private const val NAME_KEYBOARD_PANEL_HEIGHT_METERS = 0.245f
-    private const val NAME_KEYBOARD_PANEL_DISPLAY_WIDTH_DP = 960f
-    private const val NAME_KEYBOARD_PANEL_DISPLAY_HEIGHT_DP = 356f
+    private const val NAME_KEYBOARD_PANEL_WIDTH_METERS = 0.64f
+    private const val NAME_KEYBOARD_PANEL_HEIGHT_METERS = 0.25f
+    private const val NAME_KEYBOARD_PANEL_DISPLAY_WIDTH_DP = 1040f
+    private const val NAME_KEYBOARD_PANEL_DISPLAY_HEIGHT_DP = 406f
+    private const val NAME_KEYBOARD_PANEL_MIN_RADIAL_ANGLE_DEGREES = -42f
+    private const val NAME_KEYBOARD_PANEL_MAX_RADIAL_ANGLE_DEGREES = -6f
+    private const val NAME_KEYBOARD_PANEL_MIN_Y_METERS = 1.08f
+    private const val NAME_KEYBOARD_PANEL_MAX_Y_METERS = 1.42f
     private const val BUTTON_MODEL_ASSET_URI = "apk:///models/BigRedButton.glb"
     private const val BUTTON_MODEL_PRESS_ANIMATION = "pressed"
     private const val BUTTON_MODEL_SHA256 =
@@ -7182,12 +8902,40 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     private const val BUTTON_CONTACT_FULL_SURFACE_WIDTH_METERS = 0.34f
     private const val BUTTON_CONTACT_FULL_SURFACE_HEIGHT_METERS = 0.12f
     private const val BUTTON_CONTACT_FULL_SURFACE_DEPTH_METERS = 0.34f
+    private const val BUTTON_HAND_ASSIST_Y_OFFSET_METERS = 0.035f
+    private const val BUTTON_HAND_ASSIST_WIDTH_METERS = 0.46f
+    private const val BUTTON_HAND_ASSIST_HEIGHT_METERS = 0.22f
+    private const val BUTTON_HAND_ASSIST_DEPTH_METERS = 0.46f
+    private const val BUTTON_HAND_ASSIST_FRONT_OFFSET_METERS = 0.18f
+    private const val BUTTON_HAND_ASSIST_FRONT_WIDTH_METERS = 0.42f
+    private const val BUTTON_HAND_ASSIST_FRONT_DEPTH_METERS = 0.22f
+    private const val BUTTON_HAND_ASSIST_SIDE_OFFSET_METERS = 0.20f
+    private const val BUTTON_HAND_ASSIST_SIDE_WIDTH_METERS = 0.16f
+    private const val BUTTON_HAND_ASSIST_SIDE_DEPTH_METERS = 0.36f
     private const val BUTTON_CONTACT_LATCH_FORCE_REARM_MS = 1200L
     private const val HAND_TRACKING_CONTROLLER_QUIET_MS = 2200L
+    private const val HAND_TRACKING_VISUAL_RESTORE_GRACE_MS = 100L
     private const val BUTTON_PANEL_Y_METERS = 1.05f
     private const val BUTTON_BASE_Y_METERS = 0.95f
     private const val BUTTON_BEVEL_Y_METERS = 0.995f
     private const val BUTTON_DOME_Y_METERS = 1.04f
+    private const val BUTTON_SUPPORT_SURFACE_FALLBACK_Y_METERS = BUTTON_MODEL_ORIGIN_Y_METERS
+    private const val BUTTON_MODEL_ORIGIN_ABOVE_SURFACE_METERS =
+        BUTTON_MODEL_ORIGIN_Y_METERS - BUTTON_SUPPORT_SURFACE_FALLBACK_Y_METERS
+    private const val BUTTON_CONTACT_CENTER_ABOVE_SURFACE_METERS =
+        BUTTON_CONTACT_COLLIDER_Y_METERS - BUTTON_SUPPORT_SURFACE_FALLBACK_Y_METERS
+    private const val BUTTON_PANEL_ABOVE_SURFACE_METERS =
+        BUTTON_PANEL_Y_METERS - BUTTON_SUPPORT_SURFACE_FALLBACK_Y_METERS
+    private const val BUTTON_BASE_ABOVE_SURFACE_METERS =
+        BUTTON_BASE_Y_METERS - BUTTON_SUPPORT_SURFACE_FALLBACK_Y_METERS
+    private const val BUTTON_BEVEL_ABOVE_SURFACE_METERS =
+        BUTTON_BEVEL_Y_METERS - BUTTON_SUPPORT_SURFACE_FALLBACK_Y_METERS
+    private const val BUTTON_DOME_ABOVE_SURFACE_METERS =
+        BUTTON_DOME_Y_METERS - BUTTON_SUPPORT_SURFACE_FALLBACK_Y_METERS
+    private const val BUTTON_SUPPORT_SURFACE_MIN_Y_METERS = 0.62f
+    private const val BUTTON_SUPPORT_SURFACE_MAX_Y_METERS = 1.02f
+    private const val BUTTON_SUPPORT_SURFACE_REACH_MARGIN_METERS = 0.08f
+    private const val BUTTON_SUPPORT_SURFACE_MIN_HALF_EXTENT_METERS = 0.16f
     private const val BUTTON_GLOW_MODEL_LEVEL_COUNT = 32
     private const val BUTTON_GLOW_MODEL_ASSET_PATTERN = "apk:///models/glow/BigRedButtonGlowLevel%02d.glb"
     private const val BUTTON_GLOW_MIN_VISIBLE_INTENSITY = 0.03f
@@ -7217,6 +8965,12 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     private const val BUTTON_PRESS_COOLDOWN_MS = 180L
     private const val BUTTON_PRESS_ANIMATION_CLIP_MS = 160L
     private const val BUTTON_PRESS_MOTION_RESTART_GUARD_MS = 240L
+    private const val BUTTON_HAND_MOTION_SAMPLE_LIMIT = 8
+    private const val BUTTON_HAND_PRELOAD_VISUAL_MIN_INTERVAL_MS = 24L
+    private const val BUTTON_HAND_PRELOAD_MAX_PAUSED_TIME_MS = 56L
+    private const val BUTTON_HAND_PRELOAD_RELEASE_DURATION_MS = 72L
+    private const val BUTTON_HAND_PRELOAD_RELEASE_STEPS = 3
+    private const val BUTTON_HAND_PRELOAD_DISTANCE_FALLBACK_METERS = 0.30f
     private const val BUTTON_PRESS_ANIMATION_STRESS_PRESS_COUNT = 3
     private const val BUTTON_PRESS_ANIMATION_STRESS_INTERVAL_MS = 200L
     private const val BUTTON_PRESS_ANIMATION_STRESS_ARM_MARGIN_MS = 60L
@@ -7230,6 +8984,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
     private const val PRESS_SOURCE_CONTROLLER_EMULATED_VALIDATION = "controller_emulated_validation"
     private const val PRESS_SOURCE_AUDIO_RIG_STRESS = "audio_rig_stress"
     private const val PRESS_SOURCE_UNSPECIFIED = "unspecified"
+    private const val BUTTON_PRESS_SFX_PLACEHOLDER_DURATION_MS = 123L
     private const val BUTTON_PRESS_SFX_ASSET =
         "localized/shared/button_press/sfx_9020_button_press_placeholder_kenney_bong.ogg"
     private const val REDNESS_ORDER_VAS_THEN_LIKERT = "vas_then_likert"
@@ -7279,23 +9034,7 @@ class BigRedButtonStudyActivity : AppSystemActivity(), PolarH10HeartRateClient.L
             "query_all_packages",
             "system_alert_window",
         )
-    private val QUESTIONNAIRE_STAGE_SEQUENCE =
-        listOf(
-            "language_selection",
-            "consent_demographics",
-            "prior_big_red_button_experience",
-            "condition_1",
-            "post_condition_1_pictographic",
-            "post_condition_1_presence_questionnaire",
-            "post_condition_1_lost_opportunity",
-            "condition_2",
-            "post_condition_2_pictographic",
-            "post_condition_2_presence_questionnaire",
-            "post_condition_2_lost_opportunity",
-            "final_end_confirmation",
-            "final_extra_presses_optional",
-            "complete_export_summary",
-        )
+    private val QUESTIONNAIRE_STAGE_SEQUENCE = StudyFlowController.stageSequenceIds
     private val QUESTIONNAIRE_VALIDATION_SHORTCUT_MODES =
         listOf(
             "auto_validation",
@@ -7896,7 +9635,7 @@ fun StudyPanel(activity: BigRedButtonStudyActivity) {
 @Composable
 private fun LanguageSelectionScreen(activity: BigRedButtonStudyActivity) {
   val focusIndex by activity.languageSelectionFocusIndexState
-  val options = listOf(StudyLanguage.English, StudyLanguage.Japanese)
+  val options = StudyLanguage.values().toList()
   Column(
       modifier = Modifier.fillMaxSize(),
       horizontalAlignment = Alignment.CenterHorizontally,
@@ -7942,7 +9681,7 @@ private fun LanguageSelectionScreen(activity: BigRedButtonStudyActivity) {
         ) {
           Text(
               language.label,
-              fontSize = 26.sp,
+              fontSize = 24.sp,
               fontWeight = FontWeight.Black,
               fontFamily = if (language == StudyLanguage.Japanese) BrbSans else BrbMono,
               textAlign = TextAlign.Center,
@@ -7961,6 +9700,7 @@ private fun ConsentDemographicsScreen(activity: BigRedButtonStudyActivity) {
   var handedness by activity.demographicsDraftHandednessState
   var signature by activity.demographicsDraftSignatureState
   var consent by activity.demographicsDraftConsentState
+  val handednessNarrationBlocking by activity.demographicsHandednessNarrationBlockingState
 
   LaunchedEffect(Unit) {
     activity.logDemographicsTextFieldContract()
@@ -8038,12 +9778,12 @@ private fun ConsentDemographicsScreen(activity: BigRedButtonStudyActivity) {
             HandednessChoice(
                 activity = activity,
                 selected = handedness,
-                onSelect = { handedness = it },
-                onChoiceCue = {
+                onSelect = { selectedHandedness ->
                   SpatialActivityManager.executeOnVrActivity<BigRedButtonStudyActivity> {
-                    it.playQuestionnaireChoiceCue()
+                    it.selectDemographicsHandedness(selectedHandedness, "xr_button")
                   }
                 },
+                onChoiceCue = {},
                 modifier = Modifier.weight(1f),
             )
           }
@@ -8073,6 +9813,16 @@ private fun ConsentDemographicsScreen(activity: BigRedButtonStudyActivity) {
           it.submitDemographics(name, age, gender, handedness, signature, consent)
         }
       }
+    }
+    if (handednessNarrationBlocking) {
+      Box(
+          modifier =
+              Modifier.matchParentSize()
+                  .clickable(
+                      interactionSource = remember { MutableInteractionSource() },
+                      indication = null,
+                  ) {},
+      )
     }
   }
 }
@@ -8438,6 +10188,11 @@ private fun PictographicScreen(activity: BigRedButtonStudyActivity) {
         left = activity.t("very_close"),
         right = activity.t("very_distant"),
         onChange = { activity.pictographicClosenessState.floatValue = 100f - it },
+        onFinished = { value ->
+          if (!activity.triggerVasSpontaneousRemark("pictographic_closeness", value, "participant_vas_release")) {
+            activity.playQuestionnaireNavigationCue()
+          }
+        },
         modifier = pictographicScaleModifier,
     )
     ScaleSlider(
@@ -8446,6 +10201,11 @@ private fun PictographicScreen(activity: BigRedButtonStudyActivity) {
         left = activity.t("small_presence"),
         right = activity.t("large_presence"),
         onChange = { activity.pictographicPresenceState.floatValue = it },
+        onFinished = { value ->
+          if (!activity.triggerVasSpontaneousRemark("pictographic_presence", value, "participant_vas_release")) {
+            activity.playQuestionnaireNavigationCue()
+          }
+        },
         modifier = pictographicScaleModifier,
     )
     RednessResponseControl(
@@ -8461,12 +10221,14 @@ private fun PictographicScreen(activity: BigRedButtonStudyActivity) {
             it.setRednessVas(value, "participant_vas_drag")
           }
         },
-        onVasFinished = {
+        onVasFinished = { finalValue ->
           SpatialActivityManager.executeOnVrActivity<BigRedButtonStudyActivity> {
             if (condition == 1) {
               it.convertRednessVasToLikert("participant_vas_release")
             } else {
-              it.playQuestionnaireNavigationCue()
+              if (!it.triggerVasSpontaneousRemark("pictographic_redness", finalValue, "participant_vas_release")) {
+                it.playQuestionnaireNavigationCue()
+              }
             }
           }
         },
@@ -8492,7 +10254,7 @@ private fun RednessResponseControl(
     choreography: RednessConversionChoreography?,
     modifier: Modifier,
     onVasChange: (Float) -> Unit,
-    onVasFinished: () -> Unit,
+    onVasFinished: (Float) -> Unit,
     onLikertSelect: (Int) -> Unit,
 ) {
   var elapsedMs by remember(choreography?.startedElapsedMs) { mutableStateOf(0L) }
@@ -8966,6 +10728,11 @@ private fun LostOpportunityScreen(activity: BigRedButtonStudyActivity) {
         left = activity.t("not_at_all_likely"),
         right = activity.t("extremely_likely"),
         onChange = { activity.lostOpportunityState.floatValue = it },
+        onFinished = { value ->
+          if (!activity.triggerVasSpontaneousRemark("lost_opportunity", value, "participant_vas_release")) {
+            activity.playQuestionnaireNavigationCue()
+          }
+        },
     )
     Text(
         score.toInt().toString(),
@@ -9939,7 +11706,7 @@ private fun ScaleSlider(
     left: String,
     right: String,
     onChange: (Float) -> Unit,
-    onFinished: (() -> Unit)? = null,
+    onFinished: ((Float) -> Unit)? = null,
     modifier: Modifier = Modifier.fillMaxWidth(),
 ) {
   val boundedValue = value.coerceIn(0f, 100f)
@@ -9983,7 +11750,7 @@ private fun ScaleSlider(
           value = boundedValue,
           onValueChange = { onChange(it.coerceIn(0f, 100f)) },
           onValueChangeFinished = {
-            onFinished?.invoke()
+            onFinished?.invoke(boundedValue)
                 ?: SpatialActivityManager.executeOnVrActivity<BigRedButtonStudyActivity> {
                   it.playQuestionnaireNavigationCue()
                 }
@@ -10166,6 +11933,67 @@ private fun LabeledTextField(
 }
 
 @Composable
+private fun NameKeyboardDragHandle(activity: BigRedButtonStudyActivity, modifier: Modifier = Modifier) {
+  val dragging by activity.demographicsNameKeyboardDraggingState
+  val density = LocalDensity.current
+  val handleShape = RoundedCornerShape(6.dp)
+  Box(
+      modifier =
+          modifier
+              .height(28.dp)
+              .clip(handleShape)
+              .background(
+                  if (dragging) BrbRed.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.62f),
+                  handleShape,
+              )
+              .border(1.dp, if (dragging) BrbRedDeep else BrbLineSoft, handleShape)
+              .pointerInput(density) {
+                detectDragGestures(
+                    onDragStart = {
+                      SpatialActivityManager.executeOnVrActivity<BigRedButtonStudyActivity> {
+                        it.beginNameKeyboardPanelDrag("controller_beam_drag")
+                      }
+                    },
+                    onDragEnd = {
+                      SpatialActivityManager.executeOnVrActivity<BigRedButtonStudyActivity> {
+                        it.endNameKeyboardPanelDrag("controller_beam_drag")
+                      }
+                    },
+                    onDragCancel = {
+                      SpatialActivityManager.executeOnVrActivity<BigRedButtonStudyActivity> {
+                        it.cancelNameKeyboardPanelDrag("controller_beam_drag")
+                      }
+                    },
+                ) { change, dragAmount ->
+                  change.consume()
+                  val deltaXDp = with(density) { dragAmount.x.toDp().value }
+                  val deltaYDp = with(density) { dragAmount.y.toDp().value }
+                  SpatialActivityManager.executeOnVrActivity<BigRedButtonStudyActivity> {
+                    it.dragNameKeyboardPanelByDisplayDp(deltaXDp, deltaYDp, "controller_beam_drag")
+                  }
+                }
+              },
+      contentAlignment = Alignment.Center,
+  ) {
+    Canvas(modifier = Modifier.width(96.dp).height(18.dp)) {
+      val lineColor = if (dragging) BrbRedDeep else BrbMuted.copy(alpha = 0.78f)
+      val stroke = 3.dp.toPx()
+      val gap = size.height / 4f
+      repeat(3) { index ->
+        val y = gap * (index + 1)
+        drawLine(
+            color = lineColor,
+            start = Offset(size.width * 0.18f, y),
+            end = Offset(size.width * 0.82f, y),
+            strokeWidth = stroke,
+            cap = StrokeCap.Round,
+        )
+      }
+    }
+  }
+}
+
+@Composable
 private fun NameKeyboardPopupPanel(activity: BigRedButtonStudyActivity) {
   val visible by activity.demographicsNameKeyboardVisibleState
   val name by activity.demographicsDraftNameState
@@ -10183,6 +12011,7 @@ private fun NameKeyboardPopupPanel(activity: BigRedButtonStudyActivity) {
                   .padding(10.dp),
           verticalArrangement = Arrangement.spacedBy(8.dp),
       ) {
+        NameKeyboardDragHandle(activity = activity, modifier = Modifier.fillMaxWidth())
         Box(
             modifier =
                 Modifier.fillMaxWidth()

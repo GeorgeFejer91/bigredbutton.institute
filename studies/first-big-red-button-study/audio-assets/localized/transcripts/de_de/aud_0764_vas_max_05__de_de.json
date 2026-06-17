@@ -1,0 +1,43 @@
+{
+  "text": " Die Skala salutiert seiner Begrät-Button intensität.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 4.24,
+      "text": " Die Skala salutiert seiner Begrät-Button intensität.",
+      "tokens": [
+        50364,
+        3229,
+        7324,
+        5159,
+        1845,
+        325,
+        4859,
+        23114,
+        879,
+        861,
+        3628,
+        12,
+        7835,
+        1756,
+        14056,
+        14053,
+        13,
+        50576
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.5555789847122995,
+      "compression_ratio": 0.8852459016393442,
+      "no_speech_prob": 0.005629464518278837
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0764",
+  "clipKey": "vas_max_05",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0764_vas_max_05__de_de.mp3"
+}

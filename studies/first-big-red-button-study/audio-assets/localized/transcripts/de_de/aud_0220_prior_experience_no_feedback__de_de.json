@@ -1,0 +1,66 @@
+{
+  "text": " Nein, dann erwartet sie etwas Besonderes. Du bist wissenschaftlich gesehen, noch ungetrückt.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 3.2,
+      "text": " Nein, dann erwartet sie etwas Besonderes.",
+      "tokens": [
+        50364,
+        18878,
+        11,
+        3594,
+        21715,
+        32347,
+        2804,
+        9569,
+        8190,
+        8548,
+        279,
+        13,
+        50524
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.38790321350097656,
+      "compression_ratio": 1.0568181818181819,
+      "no_speech_prob": 0.00552136916667223
+    },
+    {
+      "id": 1,
+      "seek": 0,
+      "start": 4.2,
+      "end": 7.8,
+      "text": " Du bist wissenschaftlich gesehen, noch ungetrückt.",
+      "tokens": [
+        50574,
+        5153,
+        18209,
+        261,
+        26657,
+        1739,
+        21535,
+        11,
+        3514,
+        517,
+        847,
+        81,
+        37532,
+        13,
+        50754
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.38790321350097656,
+      "compression_ratio": 1.0568181818181819,
+      "no_speech_prob": 0.00552136916667223
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0220",
+  "clipKey": "prior_experience_no_feedback",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0220_prior_experience_no_feedback__de_de.mp3"
+}

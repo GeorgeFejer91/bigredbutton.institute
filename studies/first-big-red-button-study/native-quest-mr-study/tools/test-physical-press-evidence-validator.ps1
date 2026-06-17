@@ -203,16 +203,21 @@ function New-Case {
         [string]$Name,
         [string]$Mode
     )
-    $caseRoot = Join-Path $OutDir $Name
+    $nameToken = ($Name -replace '[^A-Za-z0-9]+', '').ToLowerInvariant()
+    $caseRoot = Join-Path $OutDir ('c_' + $nameToken.Substring(0, [Math]::Min(12, $nameToken.Length)))
     $exportRoot = Join-Path $caseRoot 'BigRedButtonFirstStudyExports'
-    New-Item -ItemType Directory -Force -Path $exportRoot | Out-Null
+    $sessionFolder = '20260609-120000Z_p_s'
+    $sessionDir = Join-Path $exportRoot $sessionFolder
+    New-Item -ItemType Directory -Force -Path $sessionDir | Out-Null
     $sessionId = "s-$Name"
     $participantId = 'p'
-    $jsonPath = Join-Path $exportRoot 'brb_first_study_p_case.json'
-    $pressPath = Join-Path $exportRoot 'brb_first_study_p_case_press_events.csv'
-    $ecgBlinkPath = Join-Path $exportRoot 'brb_first_study_p_case_ecg_blink_events.csv'
-    $ecgTimeSeriesPath = Join-Path $exportRoot 'brb_first_study_p_case_ecg_timeseries.csv'
-    $polarRrPath = Join-Path $exportRoot 'brb_first_study_p_case_polar_rr_events.csv'
+    $jsonPath = Join-Path $sessionDir 'brb_first_study_p_case.json'
+    $pressPath = Join-Path $sessionDir 'brb_first_study_p_case_press_events.csv'
+    $ecgBlinkPath = Join-Path $sessionDir 'brb_first_study_p_case_ecg_blink_events.csv'
+    $ecgTimeSeriesPath = Join-Path $sessionDir 'brb_first_study_p_case_ecg_timeseries.csv'
+    $polarRrPath = Join-Path $sessionDir 'brb_first_study_p_case_polar_rr_events.csv'
+    $manifestPath = Join-Path $sessionDir 'session-manifest.json'
+    $indexPath = Join-Path $exportRoot 'session-index.jsonl'
     $logPath = Join-Path $caseRoot 'logcat-filtered.txt'
     $summaryPath = Join-Path $caseRoot 'physical-evidence-summary.json'
 
@@ -306,6 +311,43 @@ function New-Case {
         $ecgTimeSeriesRows.Add("$sessionId,$participantId,$($sample.conditionNumber),$($sample.sampleIndex),$($sample.source),$($sample.elapsedMs),$($sample.elapsedNs),$($sample.audioWindowStartMs),$($sample.audioWindowEndMs),$($sample.audioWindowDurationMs),$($sample.unixTimeMs),$($sample.isoTimestamp),$($sample.sensorTimestampNs),$($sample.microVolts),$($sample.sampleRateHz),$($sample.frameIndex),$($sample.frameType),$($sample.packageSizeBytes),$($sample.requestedMtu),$($sample.negotiatedMtu)")
     }
     $ecgTimeSeriesRows | Set-Content -LiteralPath $ecgTimeSeriesPath -Encoding UTF8
+
+    [ordered]@{
+        schema = 'bigredbutton.session_manifest.v1'
+        sessionId = $sessionId
+        participantId = $participantId
+        safeParticipantId = $participantId
+        sessionFolder = $sessionFolder
+        sessionStartIso = '2026-06-09T12:00:00Z'
+        exportedIso = '2026-06-09T12:10:27Z'
+        primaryRootName = 'BigRedButtonFirstStudyExports'
+        mirrorRootName = 'ExperimentResults'
+        manifestFilename = 'session-manifest.json'
+        files = @(
+            [IO.Path]::GetFileName($jsonPath),
+            [IO.Path]::GetFileName($pressPath),
+            [IO.Path]::GetFileName($ecgBlinkPath),
+            [IO.Path]::GetFileName($ecgTimeSeriesPath),
+            [IO.Path]::GetFileName($polarRrPath),
+            'session-manifest.json'
+        )
+    } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
+    [ordered]@{
+        schema = 'bigredbutton.session_index.v1'
+        sessionId = $sessionId
+        participantId = $participantId
+        safeParticipantId = $participantId
+        sessionStartIso = '2026-06-09T12:00:00Z'
+        exportedIso = '2026-06-09T12:10:27Z'
+        timestampIso = '2026-06-09T12:10:27Z'
+        sessionFolder = $sessionFolder
+        manifest = "$sessionFolder/session-manifest.json"
+        json = "$sessionFolder/$([IO.Path]::GetFileName($jsonPath))"
+        pressEventsCsv = "$sessionFolder/$([IO.Path]::GetFileName($pressPath))"
+        ecgBlinkEventsCsv = "$sessionFolder/$([IO.Path]::GetFileName($ecgBlinkPath))"
+        ecgTimeSeriesCsv = "$sessionFolder/$([IO.Path]::GetFileName($ecgTimeSeriesPath))"
+        polarRrEventsCsv = "$sessionFolder/$([IO.Path]::GetFileName($polarRrPath))"
+    } | ConvertTo-Json -Compress | Set-Content -LiteralPath $indexPath -Encoding UTF8
 
     $logLines = New-Object System.Collections.Generic.List[string]
     foreach ($event in @($condition1PressEvents + $condition2PressEvents)) {

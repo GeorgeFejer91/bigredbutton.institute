@@ -1,0 +1,43 @@
+{
+  "text": " in der große und beinahe Terminale Knopfmenge.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 3.84,
+      "text": " in der große und beinahe Terminale Knopfmenge.",
+      "tokens": [
+        50364,
+        294,
+        1163,
+        19691,
+        674,
+        312,
+        259,
+        545,
+        68,
+        19835,
+        259,
+        1220,
+        10519,
+        21828,
+        2558,
+        432,
+        13,
+        50556
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.6720995652048212,
+      "compression_ratio": 0.8703703703703703,
+      "no_speech_prob": 0.0021278471685945988
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0763",
+  "clipKey": "vas_max_04",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0763_vas_max_04__de_de.mp3"
+}

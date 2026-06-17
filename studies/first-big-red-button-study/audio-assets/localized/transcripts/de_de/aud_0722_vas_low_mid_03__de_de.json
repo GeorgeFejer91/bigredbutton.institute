@@ -1,0 +1,40 @@
+{
+  "text": " Eine kleine juristisch erkennbare Knopfmänger.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 3.2,
+      "text": " Eine kleine juristisch erkennbare Knopfmänger.",
+      "tokens": [
+        50364,
+        17664,
+        22278,
+        12721,
+        468,
+        5494,
+        31879,
+        1857,
+        30682,
+        10519,
+        21828,
+        76,
+        35174,
+        13,
+        50524
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.47796761989593506,
+      "compression_ratio": 0.8867924528301887,
+      "no_speech_prob": 0.0029160347767174244
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0722",
+  "clipKey": "vas_low_mid_03",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0722_vas_low_mid_03__de_de.mp3"
+}

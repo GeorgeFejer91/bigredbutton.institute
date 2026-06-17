@@ -1,0 +1,42 @@
+{
+  "text": " Der große Rote Knopf bleibt weitgehend und beschuldigt.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 4.0,
+      "text": " Der große Rote Knopf bleibt weitgehend und beschuldigt.",
+      "tokens": [
+        50364,
+        5618,
+        19691,
+        497,
+        1370,
+        10519,
+        21828,
+        24814,
+        15306,
+        27057,
+        521,
+        674,
+        17498,
+        13432,
+        5828,
+        13,
+        50564
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.3024522728390164,
+      "compression_ratio": 0.9032258064516129,
+      "no_speech_prob": 0.017254924401640892
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0712",
+  "clipKey": "vas_low_03",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0712_vas_low_03__de_de.mp3"
+}

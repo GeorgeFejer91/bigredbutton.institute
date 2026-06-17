@@ -13,6 +13,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+. (Join-Path $PSScriptRoot 'export-session-layout.ps1')
 if ([string]::IsNullOrWhiteSpace($ApkPath)) {
     $ApkPath = Join-Path $projectRoot 'app\build\outputs\apk\debug\app-debug.apk'
 }
@@ -25,9 +26,9 @@ $runId = Get-Date -Format 'yyyyMMdd-HHmmss'
 $outDir = Join-Path $projectRoot "artifacts\qkv\$runId"
 $deviceExportDir = "/sdcard/Android/data/$package/files/BigRedButtonFirstStudyExports"
 $deviceResultsDir = "/sdcard/Android/data/$package/files/ExperimentResults"
-$pullDir = Join-Path $outDir 'pulled'
-$legacyPullDir = Join-Path $pullDir 'BigRedButtonFirstStudyExports'
-$resultsPullDir = Join-Path $pullDir 'ExperimentResults'
+$pullDir = Join-Path $outDir 'p'
+$legacyPullDir = Join-Path $pullDir 'b'
+$resultsPullDir = Join-Path $pullDir 'e'
 
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 New-Item -ItemType Directory -Force -Path $legacyPullDir | Out-Null
@@ -73,6 +74,17 @@ function Test-TargetForeground {
     return (($foregroundLines -join "`n") -match [regex]::Escape($package))
 }
 
+function Get-ExpectedStudyLanguageRoute {
+    param([string]$Language)
+    if ($Language -match '^(ja|ja-JP|jp|japanese)$') {
+        return [pscustomobject]@{ LocaleSegment = 'ja_jp'; LanguageCode = 'ja-JP' }
+    }
+    if ($Language -match '^(de|de-DE|german|deutsch)$') {
+        return [pscustomobject]@{ LocaleSegment = 'de_de'; LanguageCode = 'de-DE' }
+    }
+    return [pscustomobject]@{ LocaleSegment = 'en_us'; LanguageCode = 'en-US' }
+}
+
 function Start-KeyeventValidationActivity {
     $launchArgs = @('shell', 'am', 'start', '-n', $activity, '--ez', 'brb.keyeventValidation', 'true')
     if (-not [string]::IsNullOrWhiteSpace($StudyLanguage)) {
@@ -97,8 +109,8 @@ function Ensure-TargetForeground {
     $foregroundPackage = Get-ForegroundPackage $foregroundDump
     if (-not [string]::IsNullOrWhiteSpace($foregroundPackage) -and
         $foregroundPackage -ne $package -and
-        $foregroundPackage -notlike 'com.oculus.*' -and
-        $foregroundPackage -notlike 'android.*') {
+        ($foregroundPackage -eq 'com.oculus.systemux' -or
+            ($foregroundPackage -notlike 'com.oculus.*' -and $foregroundPackage -notlike 'android.*'))) {
         Write-Host "Foreground is $foregroundPackage, force-stopping it once before relaunching $package."
         Invoke-Adb shell am force-stop $foregroundPackage | Out-Null
         Start-Sleep -Seconds 1
@@ -173,7 +185,7 @@ function Send-Sequence {
 function Pull-DeviceFolder {
     param([string]$DeviceDir, [string]$LocalDir)
     New-Item -ItemType Directory -Force -Path $LocalDir | Out-Null
-    $filesRaw = Invoke-Adb shell ls -1 $DeviceDir
+    $filesRaw = Invoke-Adb shell find $DeviceDir -type f
     if ($LASTEXITCODE -ne 0) {
         throw "Could not list $DeviceDir"
     }
@@ -187,41 +199,35 @@ function Pull-DeviceFolder {
     }
     $shortPullRoot = Join-Path $env:TEMP ('brb-keyevent-pull-' + [IO.Path]::GetRandomFileName())
     New-Item -ItemType Directory -Force -Path $shortPullRoot | Out-Null
+    $pathMap = @{}
     try {
         $index = 0
-        foreach ($file in $files) {
+        foreach ($remoteFile in $files) {
             $index += 1
             $tmp = Join-Path $shortPullRoot "file-$index.tmp"
-            Invoke-Adb pull "$DeviceDir/$file" $tmp | Tee-Object -Append -FilePath (Join-Path $outDir 'pull.txt') | Out-Host
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to pull $DeviceDir/$file"
+            $relative = "$remoteFile"
+            if ($relative.StartsWith($DeviceDir, [StringComparison]::Ordinal)) {
+                $relative = $relative.Substring($DeviceDir.Length).TrimStart('/')
+            } else {
+                $relative = Split-Path -Leaf $relative
             }
-            $safeFile =
-                if ($file -eq 'session-index.jsonl') {
-                    'session-index.jsonl'
-                } elseif ($file -like '*_final_extra_button_presses.csv') {
-                    'brb_first_study_keyevent_final_extra_button_presses.csv'
-                } elseif ($file -like '*_press_events.csv') {
-                    'brb_first_study_keyevent_press_events.csv'
-                } elseif ($file -like '*_ecg_blink_events.csv') {
-                    'brb_first_study_keyevent_ecg_blink_events.csv'
-                } elseif ($file -like '*_ecg_timeseries.csv') {
-                    'brb_first_study_keyevent_ecg_timeseries.csv'
-                } elseif ($file -like '*_ecg_detector_events.csv') {
-                    'brb_first_study_keyevent_ecg_detector_events.csv'
-                } elseif ($file -like '*_polar_rr_events.csv') {
-                    'brb_first_study_keyevent_polar_rr_events.csv'
-                } elseif ($file -like '*_external_signal_samples.csv') {
-                    'brb_first_study_keyevent_external_signal_samples.csv'
-                } elseif ($file -like '*_summary.csv') {
-                    'brb_first_study_keyevent_summary.csv'
-                } elseif ($file -like 'brb_first_study_*.json') {
-                    'brb_first_study_keyevent.json'
+            $relativeParts = @($relative -split '/')
+            $localRelative =
+                if ($relativeParts.Count -gt 1) {
+                    (($relativeParts[0..($relativeParts.Count - 2)] + (Get-BrbShortExportFileName -FileName $relativeParts[-1] -Prefix 'brb_first_study_keyevent')) -join '/')
                 } else {
-                    "export-$index.dat"
+                    Get-BrbShortExportFileName -FileName $relativeParts[-1] -Prefix 'brb_first_study_keyevent'
                 }
-            Move-Item -LiteralPath $tmp -Destination (Join-Path $LocalDir $safeFile) -Force
+            $pathMap[$relative] = $localRelative
+            $localPath = Join-Path $LocalDir ($localRelative -replace '/', '\')
+            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $localPath) | Out-Null
+            Invoke-Adb pull "$remoteFile" $tmp | Tee-Object -Append -FilePath (Join-Path $outDir 'pull.txt') | Out-Host
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to pull $remoteFile"
+            }
+            Move-Item -LiteralPath $tmp -Destination $localPath -Force
         }
+        Update-BrbPulledExportMetadata -LocalDir $LocalDir -PathMap $pathMap
     } finally {
         if (Test-Path $shortPullRoot) {
             Remove-Item -Recurse -Force -LiteralPath $shortPullRoot
@@ -236,20 +242,21 @@ function Compare-ExportMirror {
         [string]$OutPath
     )
 
-    $primaryFiles = @(Get-ChildItem -LiteralPath $PrimaryDir -File | Sort-Object Name)
-    $mirrorFiles = @(Get-ChildItem -LiteralPath $MirrorDir -File | Sort-Object Name)
+    $primaryFiles = @(Get-BrbRecursiveFileRows -RootDir $PrimaryDir)
+    $mirrorFiles = @(Get-BrbRecursiveFileRows -RootDir $MirrorDir)
     $mirrorByName = @{}
-    foreach ($file in $mirrorFiles) {
-        $mirrorByName[$file.Name] = $file
+    foreach ($row in $mirrorFiles) {
+        $mirrorByName[$row.RelativePath] = $row.File
     }
 
     $rows = New-Object System.Collections.Generic.List[object]
-    foreach ($primary in $primaryFiles) {
-        $mirror = $mirrorByName[$primary.Name]
+    foreach ($primaryRow in $primaryFiles) {
+        $primary = $primaryRow.File
+        $mirror = $mirrorByName[$primaryRow.RelativePath]
         $primaryHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $primary.FullName).Hash
         $mirrorHash = if ($null -ne $mirror) { (Get-FileHash -Algorithm SHA256 -LiteralPath $mirror.FullName).Hash } else { '' }
         $rows.Add([pscustomobject]@{
-            fileName = $primary.Name
+            fileName = $primaryRow.RelativePath
             primaryPath = $primary.FullName
             mirrorPath = if ($null -ne $mirror) { $mirror.FullName } else { '' }
             primarySizeBytes = $primary.Length
@@ -259,11 +266,12 @@ function Compare-ExportMirror {
             matched = ($null -ne $mirror -and $primary.Length -eq $mirror.Length -and $primaryHash -eq $mirrorHash)
         })
     }
-    $primaryNames = @($primaryFiles | ForEach-Object { $_.Name })
-    foreach ($mirror in $mirrorFiles) {
-        if ($primaryNames -notcontains $mirror.Name) {
+    $primaryNames = @($primaryFiles | ForEach-Object { $_.RelativePath })
+    foreach ($mirrorRow in $mirrorFiles) {
+        $mirror = $mirrorRow.File
+        if ($primaryNames -notcontains $mirrorRow.RelativePath) {
             $rows.Add([pscustomobject]@{
-                fileName = $mirror.Name
+                fileName = $mirrorRow.RelativePath
                 primaryPath = ''
                 mirrorPath = $mirror.FullName
                 primarySizeBytes = $null
@@ -351,6 +359,8 @@ try {
     Wait-LogPattern 'BRB_CONDITION_START condition=1' 'condition 1 start after prior-experience prompt'
     Wait-LogPattern 'BRB_CONDITION_END condition=1' 'condition 1 shortcut end'
     Wait-LogPattern 'BRB_QUESTIONNAIRE_INTRO_CUE trigger=post_condition_1' 'condition 1 questionnaire intro'
+    Wait-LogPattern 'BRB_SPONTANEOUS_REMARK_CUE kind=vas .*scale=pictographic_.*audioId=aud_07.*noOverlap=true .*randomOrder=true' 'condition 1 VAS spontaneous remark cue'
+    Wait-LogPattern 'BRB_SPONTANEOUS_REMARK_COOLDOWN kind=vas .*audioId=aud_07.*minMs=5000 .*maxMs=10000 .*reason=' 'condition 1 VAS spontaneous remark cooldown'
 
     Wait-LogPattern 'BRB_PICTOGRAPHIC_SAVED condition=1' 'condition 1 pictographic save'
     Wait-LogPattern 'BRB_IPQ_HISTORY_NARRATION_CUE condition=1 .*cue=ipq_history_part1 .*audioId=aud_0320 .*blocking=false' 'condition 1 IPQ history narration cue'
@@ -359,12 +369,16 @@ try {
     Wait-LogPattern 'BRB_LOST_OPPORTUNITY_SAVED condition=1' 'condition 1 additional-time save'
     Wait-LogPattern 'BRB_CONDITION_START condition=2' 'condition 2 start after outro'
     Wait-LogPattern 'BRB_CONDITION_END condition=2' 'condition 2 shortcut end'
+    Wait-LogPattern 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=post_condition_2_pictographic condition=2' 'condition 2 post-condition pictographic stage opens'
     Wait-LogPattern 'BRB_QUESTIONNAIRE_INTRO_CUE trigger=post_condition_2' 'condition 2 questionnaire intro'
     Wait-LogPattern 'BRB_PICTOGRAPHIC_SAVED condition=2' 'condition 2 pictographic save'
+    Wait-LogPattern 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=post_condition_2_presence_questionnaire condition=2' 'condition 2 post-condition presence stage opens'
     Wait-LogPattern 'BRB_IPQ_HISTORY_NARRATION_CUE condition=2 .*cue=ipq_history_part2 .*audioId=aud_0330 .*blocking=false' 'condition 2 IPQ history narration cue'
     Wait-LogPattern 'BRB_SFX_PLAY cue=ipq_history_part2 audioId=aud_0330 asset=.*aud_0330_ipq_history_part2__.*\.mp3 .*durationMs=' 'condition 2 IPQ history narration playback'
     Wait-LogPattern 'BRB_IPQ_SAVED condition=2' 'condition 2 ratings save'
+    Wait-LogPattern 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=post_condition_2_lost_opportunity condition=2' 'condition 2 post-condition lost-opportunity stage opens'
     Wait-LogPattern 'BRB_LOST_OPPORTUNITY_SAVED condition=2' 'condition 2 additional-time save'
+    Wait-LogPattern 'BRB_QUESTIONNAIRE_STAGE_COMPLETE stageId=post_condition_2_lost_opportunity condition=2 nextStageId=final_end_confirmation' 'condition 2 post-condition block completes before final confirmation'
     Wait-LogPattern 'BRB_FINAL_END_CONFIRMATION_SHOWN' 'final end-confirmation questionnaire shown'
     Wait-LogPattern 'BRB_FINAL_END_CONFIRMATION_OPTIONS_READY .*optionsVisible=true' 'final end-confirmation options ready before replay'
     Wait-LogPattern 'BRB_KEYEVENT_REPLAY_STEP condition=0 stage=final_end_confirmation direction=right' 'final end-confirmation right-select replay'
@@ -399,27 +413,15 @@ try {
         throw "ExperimentResults export schema validation failed with exit code $LASTEXITCODE"
     }
 
-    $jsonFile = Get-ChildItem -LiteralPath $resultsPullDir -Filter 'brb_first_study_*.json' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-    $summaryFile = Get-ChildItem -LiteralPath $resultsPullDir -Filter '*_summary.csv' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-    $pressFile = Get-ChildItem -LiteralPath $resultsPullDir -Filter '*_press_events.csv' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-    $finalExtraPressFile = Get-ChildItem -LiteralPath $resultsPullDir -Filter '*_final_extra_button_presses.csv' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-    $ecgBlinkFile = Get-ChildItem -LiteralPath $resultsPullDir -Filter '*_ecg_blink_events.csv' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-    $ecgTimeSeriesFile = Get-ChildItem -LiteralPath $resultsPullDir -Filter '*_ecg_timeseries.csv' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-    $polarRrFile = Get-ChildItem -LiteralPath $resultsPullDir -Filter '*_polar_rr_events.csv' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
+    $resultsSession = Resolve-BrbExportSession -ExportDir $resultsPullDir
+    $resultsSessionDir = $resultsSession.SessionDir
+    $jsonFile = Get-BrbExportSessionFile -SessionDir $resultsSessionDir -Filter 'brb_first_study_*.json'
+    $summaryFile = Get-BrbExportSessionFile -SessionDir $resultsSessionDir -Filter '*_summary.csv'
+    $pressFile = Get-BrbExportSessionFile -SessionDir $resultsSessionDir -Filter '*_press_events.csv'
+    $finalExtraPressFile = Get-BrbExportSessionFile -SessionDir $resultsSessionDir -Filter '*_final_extra_button_presses.csv'
+    $ecgBlinkFile = Get-BrbExportSessionFile -SessionDir $resultsSessionDir -Filter '*_ecg_blink_events.csv'
+    $ecgTimeSeriesFile = Get-BrbExportSessionFile -SessionDir $resultsSessionDir -Filter '*_ecg_timeseries.csv'
+    $polarRrFile = Get-BrbExportSessionFile -SessionDir $resultsSessionDir -Filter '*_polar_rr_events.csv'
 
     $exportJson = Get-Content -Raw -LiteralPath $jsonFile.FullName | ConvertFrom-Json
     $runLogText = $logText
@@ -474,8 +476,9 @@ try {
         ($exportJson.ecgProtocol.assignmentOrder -eq 'real_then_simulated' -and $c1.feedbackSource -eq 'real_polar_h10' -and $c2.feedbackSource -eq 'simulated_neurokit2') -or
         ($exportJson.ecgProtocol.assignmentOrder -eq 'simulated_then_real' -and $c1.feedbackSource -eq 'simulated_neurokit2' -and $c2.feedbackSource -eq 'real_polar_h10')
     $row = @($summaryCsv)[0]
-    $expectedIpqLocaleSegment = if ($StudyLanguage -match '^(ja|ja-JP|jp|japanese)$') { 'ja_jp' } else { 'en_us' }
-    $expectedIpqLanguageCode = if ($expectedIpqLocaleSegment -eq 'ja_jp') { 'ja-JP' } else { 'en-US' }
+    $expectedStudyLanguageRoute = Get-ExpectedStudyLanguageRoute $StudyLanguage
+    $expectedIpqLocaleSegment = $expectedStudyLanguageRoute.LocaleSegment
+    $expectedIpqLanguageCode = $expectedStudyLanguageRoute.LanguageCode
     $uniquePriorExperiencePromptLines = @(
         $runLogText -split "`r?`n" |
             Where-Object { $_ -match 'BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN' } |
@@ -483,7 +486,7 @@ try {
     )
     $comparisons = New-Object System.Collections.Generic.List[object]
 
-    Add-Comparison $comparisons 'participant id generated under hood' 'KEYEVENT_VALIDATION_' ($exportJson.demographics.participantId.Substring(0, [Math]::Min(20, $exportJson.demographics.participantId.Length))) 'JSON demographics.participantId'
+    Add-Comparison $comparisons 'participant id generated under hood' 'QKV_' ($exportJson.demographics.participantId.Substring(0, [Math]::Min(4, $exportJson.demographics.participantId.Length))) 'JSON demographics.participantId'
     Add-Comparison $comparisons 'name text exported' 'Keyevent Validation' $exportJson.demographics.name 'JSON demographics.name'
     Add-Comparison $comparisons 'age selector value exported' '33' $exportJson.demographics.age 'JSON demographics.age'
     Add-Comparison $comparisons 'gender four-choice exported' 'prefer_not_to_say' $exportJson.demographics.gender 'JSON demographics.gender'
@@ -696,6 +699,16 @@ try {
         $runLogText -match 'BRB_QUESTIONNAIRE_STAGE_COMPLETE stageId=post_condition_2_lost_opportunity .*nextStageId=final_end_confirmation .*answersLogged=false' -and
         $runLogText -match 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=complete_export_summary .*answersLogged=false'
     ) 'logcat'
+    Add-Comparison $comparisons 'condition 2 post-condition questionnaire chain observed' $true (
+        $runLogText -match 'BRB_QUESTIONNAIRE_STAGE_COMPLETE stageId=condition_2 .*nextStageId=post_condition_2_pictographic .*answersLogged=false' -and
+        $runLogText -match 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=post_condition_2_pictographic .*condition=2 .*answersLogged=false' -and
+        $runLogText -match 'BRB_PICTOGRAPHIC_SAVED condition=2' -and
+        $runLogText -match 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=post_condition_2_presence_questionnaire .*condition=2 .*answersLogged=false' -and
+        $runLogText -match 'BRB_IPQ_SAVED condition=2' -and
+        $runLogText -match 'BRB_QUESTIONNAIRE_STAGE_OPEN stageId=post_condition_2_lost_opportunity .*condition=2 .*answersLogged=false' -and
+        $runLogText -match 'BRB_LOST_OPPORTUNITY_SAVED condition=2' -and
+        $runLogText -match 'BRB_QUESTIONNAIRE_STAGE_COMPLETE stageId=post_condition_2_lost_opportunity .*nextStageId=final_end_confirmation .*answersLogged=false'
+    ) 'logcat'
     Add-Comparison $comparisons 'external signal diagnostic marker observed' $true (
         $runLogText -match 'BRB_LSL status=disabled .*role=diagnostic_only .*streamName=HRV_Biofeedback .*streamType=HRV .*drivesButtonPresses=false'
     ) 'logcat'
@@ -711,6 +724,12 @@ try {
     ) 'logcat'
     Add-Comparison $comparisons 'age is not an IME target' $true (-not ($runLogText -match 'BRB_SOFT_KEYBOARD_REQUEST reason=field_age')) 'logcat'
     Add-Comparison $comparisons 'startup app-owned name keyboard uses text mode' $true ($runLogText -match 'BRB_NAME_APP_KEYBOARD_CONTRACT field=name .*keyboardMode=text') 'logcat'
+    Add-Comparison $comparisons 'VAS spontaneous remark cue observed' $true (
+        $runLogText -match 'BRB_SPONTANEOUS_REMARK_CUE kind=vas .*scale=pictographic_.*audioId=aud_07.*noOverlap=true .*randomOrder=true'
+    ) 'logcat'
+    Add-Comparison $comparisons 'VAS spontaneous remark cooldown observed' $true (
+        $runLogText -match 'BRB_SPONTANEOUS_REMARK_COOLDOWN kind=vas .*audioId=aud_07.*cooldownMs=\d+ .*minMs=5000 .*maxMs=10000 .*reason='
+    ) 'logcat'
     Add-Comparison $comparisons 'redness conversion cue observed' $true (
         $runLogText -match 'BRB_REDNESS_SCALE_CONVERSION condition=1 .*from=vas to=likert' -and
         $runLogText -match 'BRB_REDNESS_SCALE_CONVERSION condition=2 .*from=likert to=vas' -and
@@ -757,7 +776,7 @@ try {
         exportMirrorMatched = ($mirrorComparison.status -eq 'pass')
         exportMirrorFileCount = $mirrorComparison.primaryFileCount
         comparisons = $comparisons
-        note = 'Fast directional questionnaire validation. It shortcuts instruction-audio waiting, replays bounded up/down/left/right/enter-equivalent commands through the app controller-direction/submit handlers, validates app-owned Name keyboard evidence, Age slider evidence, redness VAS/Likert conversion markers, panel-exit hide markers, glitch markers, questionnaire protocol metadata, and disabled diagnostic-only external signal protocol metadata, pulls both export folders, and compares exported values against expected outcomes. Raw ADB Name keyevent transport is validated separately by run-quest-demographics-direct-keyboard-validation.ps1. This is not physical controller-contact evidence.'
+        note = 'Fast directional questionnaire validation. It shortcuts instruction-audio waiting, replays bounded up/down/left/right/enter-equivalent commands through the app controller-direction/submit handlers, validates app-owned Name keyboard evidence, Age slider evidence, randomized VAS spontaneous remark cue/cooldown evidence, redness VAS/Likert conversion markers, panel-exit hide markers, glitch markers, questionnaire protocol metadata, and disabled diagnostic-only external signal protocol metadata, pulls both export folders, and compares exported values against expected outcomes. Raw ADB Name keyevent transport is validated separately by run-quest-demographics-direct-keyboard-validation.ps1. This is not physical controller-contact evidence.'
     }
     $summaryPath = Join-Path $outDir 'quest-keyevent-questionnaire-validation-summary.json'
     $summary | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $summaryPath -Encoding UTF8

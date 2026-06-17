@@ -1,0 +1,39 @@
+{
+  "text": " Nicht nichts, aber knopfmäßig, nicht dramatisch.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 5.0,
+      "text": " Nicht nichts, aber knopfmäßig, nicht dramatisch.",
+      "tokens": [
+        50364,
+        22629,
+        13004,
+        11,
+        4340,
+        444,
+        21828,
+        43132,
+        11,
+        1979,
+        42749,
+        5494,
+        13,
+        50614
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.4219614664713542,
+      "compression_ratio": 0.9615384615384616,
+      "no_speech_prob": 0.025540770962834358
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0721",
+  "clipKey": "vas_low_mid_02",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0721_vas_low_mid_02__de_de.mp3"
+}

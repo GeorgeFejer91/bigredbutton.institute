@@ -1,0 +1,43 @@
+{
+  "text": " Dieser BigQuery-Batten-Schieber reistet mit Absicht.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 3.2,
+      "text": " Dieser BigQuery-Batten-Schieber reistet mit Absicht.",
+      "tokens": [
+        50364,
+        39609,
+        43422,
+        12,
+        33,
+        32733,
+        12,
+        31560,
+        414,
+        607,
+        319,
+        468,
+        302,
+        2194,
+        5813,
+        1405,
+        13,
+        50524
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.5751084779438219,
+      "compression_ratio": 0.8813559322033898,
+      "no_speech_prob": 0.007454506121575832
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0754",
+  "clipKey": "vas_high_05",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0754_vas_high_05__de_de.mp3"
+}

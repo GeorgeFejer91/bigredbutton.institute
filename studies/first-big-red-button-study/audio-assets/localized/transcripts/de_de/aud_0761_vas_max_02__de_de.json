@@ -1,0 +1,42 @@
+{
+  "text": " Das ist dem Gründe, der gibt für das Knopfberges.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 2.72,
+      "text": " Das ist dem Gründe, der gibt für das Knopfberges.",
+      "tokens": [
+        50364,
+        2846,
+        1418,
+        1371,
+        2606,
+        25596,
+        11,
+        1163,
+        6089,
+        2959,
+        1482,
+        10519,
+        21828,
+        6873,
+        279,
+        13,
+        50500
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.44226376215616864,
+      "compression_ratio": 0.8947368421052632,
+      "no_speech_prob": 0.004004505462944508
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0761",
+  "clipKey": "vas_max_02",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0761_vas_max_02__de_de.mp3"
+}

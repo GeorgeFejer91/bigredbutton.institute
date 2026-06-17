@@ -1,0 +1,39 @@
+{
+  "text": " Der große Rote Knopf hat einen Rückgemacht.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 3.0,
+      "text": " Der große Rote Knopf hat einen Rückgemacht.",
+      "tokens": [
+        50364,
+        5618,
+        19691,
+        497,
+        1370,
+        10519,
+        21828,
+        2385,
+        4891,
+        35001,
+        26322,
+        3589,
+        13,
+        50514
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.4479795455932617,
+      "compression_ratio": 0.8490566037735849,
+      "no_speech_prob": 0.004447183571755886
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0742",
+  "clipKey": "vas_high_mid_03",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0742_vas_high_mid_03__de_de.mp3"
+}

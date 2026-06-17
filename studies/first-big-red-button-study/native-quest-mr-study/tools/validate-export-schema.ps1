@@ -8,6 +8,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+. (Join-Path $PSScriptRoot 'export-session-layout.ps1')
 $requiredSummaryColumns = @(
     'session_id',
     'participant_id',
@@ -51,6 +52,8 @@ $conditionColumns = @(
     'button_press_count',
     'controller_contact_press_count',
     'hand_contact_press_count',
+    'hand_predictive_preload_press_count',
+    'hand_contact_mean_impact_velocity_mps',
     'interim_panel_press_count',
     'scene_object_fallback_press_count',
     'validation_automation_press_count',
@@ -135,6 +138,33 @@ $requiredPressColumns = @(
     'validation_automation',
     'feedback_source',
     'physiology_source',
+    'press_mechanics_prediction_mode',
+    'press_mechanics_phase',
+    'press_mechanics_impact_velocity_mps',
+    'press_mechanics_predicted_time_to_impact_ms',
+    'press_mechanics_preload_lead_ms',
+    'press_mechanics_confidence_0_1',
+    'press_mechanics_lateral_velocity_mps',
+    'press_mechanics_predicted_lateral_at_impact_m',
+    'press_mechanics_trajectory_fit_0_1',
+    'press_mechanics_approach_angle_deg',
+    'press_mechanics_approach_alignment_0_1',
+    'press_mechanics_impact_energy_j',
+    'press_mechanics_spring_compression_m',
+    'press_mechanics_damping_ratio',
+    'press_mechanics_normal_impulse_n_s',
+    'press_mechanics_estimated_peak_force_n',
+    'press_mechanics_estimated_contact_pressure_kpa',
+    'press_mechanics_estimated_contact_patch_area_m2',
+    'press_mechanics_compression_peak_0_1',
+    'press_mechanics_actuation_travel_0_1',
+    'press_mechanics_actuation_delay_ms',
+    'press_mechanics_snap_travel_0_1',
+    'press_mechanics_snap_duration_ms',
+    'press_mechanics_bottom_out_delay_ms',
+    'press_mechanics_release_duration_ms',
+    'press_mechanics_visual_start_offset_ms',
+    'press_mechanics_trigger_evidence',
     'nearest_ecg_sample_index',
     'nearest_ecg_elapsed_ns',
     'nearest_ecg_delta_ns'
@@ -247,21 +277,25 @@ function Get-CsvHeader {
 }
 
 function New-SyntheticExport {
-    $outDir = Join-Path $projectRoot ('artifacts\export-schema-validation\synthetic-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+    $rootDir = Join-Path $projectRoot ('artifacts\xv\s-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+    $sessionFolder = '20260609-115900Z_synthetic_participant_syntheti'
+    $outDir = Join-Path $rootDir $sessionFolder
+    $baseName = 'brb_first_study_p_s'
     New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
     $sessionId = 'brb-synthetic-session'
     $participantId = 'synthetic_participant'
-    $jsonPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session.json'
-    $summaryPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_summary.csv'
-    $pressPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_press_events.csv'
-    $finalExtraPressPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_final_extra_button_presses.csv'
-    $ecgBlinkPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_ecg_blink_events.csv'
-    $ecgTimeSeriesPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_ecg_timeseries.csv'
-    $ecgDetectorPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_ecg_detector_events.csv'
-    $polarRrPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_polar_rr_events.csv'
-    $externalSignalPath = Join-Path $outDir 'brb_first_study_synthetic_participant_brb-synthetic-session_external_signal_samples.csv'
-    $indexPath = Join-Path $outDir 'session-index.jsonl'
+    $jsonPath = Join-Path $outDir "$baseName.json"
+    $summaryPath = Join-Path $outDir "${baseName}_summary.csv"
+    $pressPath = Join-Path $outDir "${baseName}_press_events.csv"
+    $finalExtraPressPath = Join-Path $outDir "${baseName}_final_extra_button_presses.csv"
+    $ecgBlinkPath = Join-Path $outDir "${baseName}_ecg_blink_events.csv"
+    $ecgTimeSeriesPath = Join-Path $outDir "${baseName}_ecg_timeseries.csv"
+    $ecgDetectorPath = Join-Path $outDir "${baseName}_ecg_detector_events.csv"
+    $polarRrPath = Join-Path $outDir "${baseName}_polar_rr_events.csv"
+    $externalSignalPath = Join-Path $outDir "${baseName}_external_signal_samples.csv"
+    $manifestPath = Join-Path $outDir 'session-manifest.json'
+    $indexPath = Join-Path $rootDir 'session-index.jsonl'
 
     $conditions = @()
     foreach ($condition in 1..2) {
@@ -433,6 +467,35 @@ function New-SyntheticExport {
                     validationAutomation = $true
                     feedbackSource = $feedbackSource
                     physiologySource = 'real_polar_h10'
+                    pressMechanics = [ordered]@{
+                        predictionMode = 'none'
+                        phase = 'impact'
+                        impactVelocityMetersPerSecond = 0.0
+                        predictedTimeToImpactMs = -1
+                        preloadLeadMs = 0
+                        confidence01 = 1.0
+                        lateralVelocityMetersPerSecond = 0.0
+                        predictedLateralAtImpactMeters = 0.0
+                        trajectoryFit01 = 0.0
+                        approachAngleDegrees = 0.0
+                        approachAlignment01 = 1.0
+                        impactEnergyJoules = 0.0
+                        springCompressionMeters = 0.0
+                        dampingRatio = 0.55
+                        normalImpulseNewtonSeconds = 0.0
+                        estimatedPeakForceNewtons = 1.35
+                        estimatedContactPressureKilopascals = 2.08
+                        estimatedContactPatchAreaSquareMeters = 0.00065
+                        compressionPeak01 = 1.0
+                        actuationTravel01 = 0.469
+                        actuationDelayMs = 30
+                        snapTravel01 = 0.450
+                        snapDurationMs = 16
+                        bottomOutDelayMs = 64
+                        releaseDurationMs = 132
+                        visualStartOffsetMs = 0
+                        triggerEvidence = 'auto_validation'
+                    }
                     nearestEcgSampleIndex = 2
                     nearestEcgElapsedNs = 7692308
                     nearestEcgDeltaNs = 0
@@ -485,6 +548,17 @@ function New-SyntheticExport {
         appVersion = '0.1.0'
         sessionId = $sessionId
         exportedAtIso = '2026-06-09T12:09:00Z'
+        exportLayout = [ordered]@{
+            schema = 'bigredbutton.session_folder_export.v1'
+            sessionFolderName = $sessionFolder
+            primaryRootName = 'BigRedButtonFirstStudyExports'
+            mirrorRootName = 'ExperimentResults'
+            sessionStartIso = '2026-06-09T11:59:00Z'
+            exportedIso = '2026-06-09T12:09:00Z'
+            manifestFilename = 'session-manifest.json'
+            jsonFilename = [IO.Path]::GetFileName($jsonPath)
+            summaryCsvFilename = [IO.Path]::GetFileName($summaryPath)
+        }
         validationMode = 'participant'
         participantPhysiologyEvidenceRequired = $true
         demographics = [ordered]@{
@@ -732,8 +806,8 @@ function New-SyntheticExport {
 
     Set-Content -LiteralPath $pressPath -Encoding UTF8 -Value @(
         ($requiredPressColumns -join ','),
-        "$sessionId,$participantId,1,1,7,7692308,7692308,0,1781006400008,2026-06-09T12:00:00.008Z,auto_validation,true,simulated_neurokit2,real_polar_h10,2,7692308,0",
-        "$sessionId,$participantId,2,1,7,7692308,7692308,0,1781006700008,2026-06-09T12:05:00.008Z,auto_validation,true,real_polar_h10,real_polar_h10,2,7692308,0"
+        "$sessionId,$participantId,1,1,7,7692308,7692308,0,1781006400008,2026-06-09T12:00:00.008Z,auto_validation,true,simulated_neurokit2,real_polar_h10,none,impact,0.000,-1,0,1.000,0.000,0.000,0.000,0.0,1.000,0.0000,0.0000,0.550,0.0000,1.350,2.08,0.000650,1.000,0.469,30,0.450,16,64,132,0,auto_validation,2,7692308,0",
+        "$sessionId,$participantId,2,1,7,7692308,7692308,0,1781006700008,2026-06-09T12:05:00.008Z,auto_validation,true,real_polar_h10,real_polar_h10,none,impact,0.000,-1,0,1.000,0.000,0.000,0.000,0.0,1.000,0.0000,0.0000,0.550,0.0000,1.350,2.08,0.000650,1.000,0.469,30,0.450,16,64,132,0,auto_validation,2,7692308,0"
     )
     Set-Content -LiteralPath $finalExtraPressPath -Encoding UTF8 -Value @(
         ($requiredFinalExtraPressColumns -join ',')
@@ -765,53 +839,102 @@ function New-SyntheticExport {
     Set-Content -LiteralPath $externalSignalPath -Encoding UTF8 -Value @(
         ($requiredExternalSignalColumns -join ',')
     )
-    Add-Content -LiteralPath $indexPath -Encoding UTF8 -Value (@{
+    $sessionFileNames = @(
+        [IO.Path]::GetFileName($jsonPath),
+        [IO.Path]::GetFileName($summaryPath),
+        [IO.Path]::GetFileName($pressPath),
+        [IO.Path]::GetFileName($finalExtraPressPath),
+        [IO.Path]::GetFileName($ecgBlinkPath),
+        [IO.Path]::GetFileName($polarRrPath),
+        [IO.Path]::GetFileName($ecgTimeSeriesPath),
+        [IO.Path]::GetFileName($ecgDetectorPath),
+        [IO.Path]::GetFileName($externalSignalPath),
+        'session-manifest.json'
+    )
+    [ordered]@{
+        schema = 'bigredbutton.session_manifest.v1'
         sessionId = $sessionId
         participantId = $participantId
+        safeParticipantId = $participantId
+        sessionFolder = $sessionFolder
+        sessionStartIso = '2026-06-09T11:59:00Z'
+        exportedIso = '2026-06-09T12:09:00Z'
+        primaryRootName = 'BigRedButtonFirstStudyExports'
+        mirrorRootName = 'ExperimentResults'
+        manifestFilename = 'session-manifest.json'
+        files = $sessionFileNames
+    } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
+    Add-Content -LiteralPath $indexPath -Encoding UTF8 -Value (@{
+        schema = 'bigredbutton.session_index.v1'
+        sessionId = $sessionId
+        participantId = $participantId
+        safeParticipantId = $participantId
+        sessionStartIso = '2026-06-09T11:59:00Z'
+        exportedIso = '2026-06-09T12:09:00Z'
         timestampIso = '2026-06-09T12:09:00Z'
-        json = [IO.Path]::GetFileName($jsonPath)
-        summaryCsv = [IO.Path]::GetFileName($summaryPath)
-        pressEventsCsv = [IO.Path]::GetFileName($pressPath)
-        finalExtraButtonPressesCsv = [IO.Path]::GetFileName($finalExtraPressPath)
-        ecgBlinkEventsCsv = [IO.Path]::GetFileName($ecgBlinkPath)
-        ecgTimeSeriesCsv = [IO.Path]::GetFileName($ecgTimeSeriesPath)
-        ecgDetectorEventsCsv = [IO.Path]::GetFileName($ecgDetectorPath)
-        polarRrEventsCsv = [IO.Path]::GetFileName($polarRrPath)
-        externalSignalSamplesCsv = [IO.Path]::GetFileName($externalSignalPath)
+        sessionFolder = $sessionFolder
+        manifest = "$sessionFolder/session-manifest.json"
+        json = "$sessionFolder/$([IO.Path]::GetFileName($jsonPath))"
+        summaryCsv = "$sessionFolder/$([IO.Path]::GetFileName($summaryPath))"
+        pressEventsCsv = "$sessionFolder/$([IO.Path]::GetFileName($pressPath))"
+        finalExtraButtonPressesCsv = "$sessionFolder/$([IO.Path]::GetFileName($finalExtraPressPath))"
+        ecgBlinkEventsCsv = "$sessionFolder/$([IO.Path]::GetFileName($ecgBlinkPath))"
+        ecgTimeSeriesCsv = "$sessionFolder/$([IO.Path]::GetFileName($ecgTimeSeriesPath))"
+        ecgDetectorEventsCsv = "$sessionFolder/$([IO.Path]::GetFileName($ecgDetectorPath))"
+        polarRrEventsCsv = "$sessionFolder/$([IO.Path]::GetFileName($polarRrPath))"
+        externalSignalSamplesCsv = "$sessionFolder/$([IO.Path]::GetFileName($externalSignalPath))"
     } | ConvertTo-Json -Compress)
-    return $outDir
+    return $rootDir
 }
 
 if ($Synthetic -or [string]::IsNullOrWhiteSpace($ExportDir)) {
     $ExportDir = New-SyntheticExport
 }
 $ExportDir = (Resolve-Path $ExportDir).Path
+$exportSession = Resolve-BrbExportSession -ExportDir $ExportDir
+$ExportSessionDir = $exportSession.SessionDir
 
-$jsonFile = Get-ChildItem -LiteralPath $ExportDir -Filter 'brb_first_study_*.json' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-$summaryFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_summary.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-$pressFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_press_events.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-$finalExtraPressFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_final_extra_button_presses.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-$ecgBlinkFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_ecg_blink_events.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-$ecgTimeSeriesFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_ecg_timeseries.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-$ecgDetectorFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_ecg_detector_events.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-$polarRrFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_polar_rr_events.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-$externalSignalFile = Get-ChildItem -LiteralPath $ExportDir -Filter '*_external_signal_samples.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-$indexFile = Join-Path $ExportDir 'session-index.jsonl'
+$jsonFile = Get-BrbExportSessionFile -SessionDir $ExportSessionDir -Filter 'brb_first_study_*.json'
+$summaryFile = Get-BrbExportSessionFile -SessionDir $ExportSessionDir -Filter '*_summary.csv'
+$pressFile = Get-BrbExportSessionFile -SessionDir $ExportSessionDir -Filter '*_press_events.csv'
+$finalExtraPressFile = Get-BrbExportSessionFile -SessionDir $ExportSessionDir -Filter '*_final_extra_button_presses.csv'
+$ecgBlinkFile = Get-BrbExportSessionFile -SessionDir $ExportSessionDir -Filter '*_ecg_blink_events.csv'
+$ecgTimeSeriesFile = Get-BrbExportSessionFile -SessionDir $ExportSessionDir -Filter '*_ecg_timeseries.csv'
+$ecgDetectorFile = Get-BrbExportSessionFile -SessionDir $ExportSessionDir -Filter '*_ecg_detector_events.csv'
+$polarRrFile = Get-BrbExportSessionFile -SessionDir $ExportSessionDir -Filter '*_polar_rr_events.csv'
+$externalSignalFile = Get-BrbExportSessionFile -SessionDir $ExportSessionDir -Filter '*_external_signal_samples.csv'
+$indexFile = $exportSession.IndexPath
+$manifestFile = $exportSession.ManifestPath
 
-Assert-Condition ($null -ne $jsonFile) "Missing JSON export in $ExportDir"
-Assert-Condition ($null -ne $summaryFile) "Missing summary CSV export in $ExportDir"
-Assert-Condition ($null -ne $pressFile) "Missing press-events CSV export in $ExportDir"
-Assert-Condition ($null -ne $finalExtraPressFile) "Missing final extra button presses CSV export in $ExportDir"
-Assert-Condition ($null -ne $ecgBlinkFile) "Missing ECG blink-events CSV export in $ExportDir"
-Assert-Condition ($null -ne $ecgTimeSeriesFile) "Missing ECG time-series CSV export in $ExportDir"
-Assert-Condition ($null -ne $ecgDetectorFile) "Missing ECG detector-events CSV export in $ExportDir"
-Assert-Condition ($null -ne $polarRrFile) "Missing Polar RR events CSV export in $ExportDir"
-Assert-Condition ($null -ne $externalSignalFile) "Missing external signal samples CSV export in $ExportDir"
-Assert-Condition (Test-Path $indexFile) "Missing session-index.jsonl in $ExportDir"
+Assert-Condition ($null -ne $jsonFile) "Missing JSON export in $ExportSessionDir"
+Assert-Condition ($null -ne $summaryFile) "Missing summary CSV export in $ExportSessionDir"
+Assert-Condition ($null -ne $pressFile) "Missing press-events CSV export in $ExportSessionDir"
+Assert-Condition ($null -ne $finalExtraPressFile) "Missing final extra button presses CSV export in $ExportSessionDir"
+Assert-Condition ($null -ne $ecgBlinkFile) "Missing ECG blink-events CSV export in $ExportSessionDir"
+Assert-Condition ($null -ne $ecgTimeSeriesFile) "Missing ECG time-series CSV export in $ExportSessionDir"
+Assert-Condition ($null -ne $ecgDetectorFile) "Missing ECG detector-events CSV export in $ExportSessionDir"
+Assert-Condition ($null -ne $polarRrFile) "Missing Polar RR events CSV export in $ExportSessionDir"
+Assert-Condition ($null -ne $externalSignalFile) "Missing external signal samples CSV export in $ExportSessionDir"
+Assert-Condition (-not [string]::IsNullOrWhiteSpace($manifestFile) -and (Test-Path -LiteralPath $manifestFile)) "Missing session-manifest.json in $ExportSessionDir"
+Assert-Condition (Test-Path -LiteralPath $indexFile) "Missing session-index.jsonl in $($exportSession.RootDir)"
 
 $exportJson = Get-Content -Raw -LiteralPath $jsonFile.FullName | ConvertFrom-Json
+$manifestJson = Get-Content -Raw -LiteralPath $manifestFile | ConvertFrom-Json
 Assert-Condition ($exportJson.schema -eq 'bigredbutton.first_study.v1') 'JSON schema mismatch'
 Assert-Condition ($exportJson.appPackage -eq 'org.bigredbutton.firststudy') 'JSON package mismatch'
+Assert-Condition ($null -ne $exportJson.exportLayout) 'Missing exportLayout metadata'
+Assert-Condition ($exportJson.exportLayout.schema -eq 'bigredbutton.session_folder_export.v1') 'exportLayout schema mismatch'
+Assert-Condition ($exportJson.exportLayout.sessionFolderName -eq $exportSession.SessionFolder) 'exportLayout session folder mismatch'
+Assert-Condition ($exportJson.exportLayout.manifestFilename -eq 'session-manifest.json') 'exportLayout manifest filename mismatch'
+Assert-Condition ($manifestJson.schema -eq 'bigredbutton.session_manifest.v1') 'Session manifest schema mismatch'
+Assert-Condition ($manifestJson.sessionFolder -eq $exportSession.SessionFolder) 'Session manifest folder mismatch'
+Assert-Condition (@($manifestJson.files) -contains $jsonFile.Name) 'Session manifest does not list JSON export'
+$indexRows = @(Get-Content -LiteralPath $indexFile | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_ | ConvertFrom-Json })
+$matchingIndexRows = @($indexRows | Where-Object { $_.sessionFolder -eq $exportSession.SessionFolder })
+Assert-Condition ($matchingIndexRows.Count -gt 0) 'Root session-index.jsonl does not reference selected session folder'
+$latestIndexRow = $matchingIndexRows[-1]
+Assert-Condition ("$($latestIndexRow.json)" -eq "$($exportSession.SessionFolder)/$($jsonFile.Name)") 'Root index JSON path does not point to selected session folder'
+Assert-Condition ("$($latestIndexRow.summaryCsv)" -eq "$($exportSession.SessionFolder)/$($summaryFile.Name)") 'Root index summary CSV path does not point to selected session folder'
 Assert-Condition ($exportJson.demographics.participantId.Length -gt 0) 'Missing demographics.participantId'
 Assert-Condition ($exportJson.demographics.signature -match 'brb_signature_strokes_v1') 'Signature must use stroke JSON format'
 Assert-Condition ($null -ne $exportJson.priorBigRedButtonExperience) 'Missing priorBigRedButtonExperience'
@@ -821,11 +944,11 @@ Assert-Condition ($exportJson.priorBigRedButtonExperience.shownBeforeCondition -
 Assert-Condition ($exportJson.priorBigRedButtonExperience.displayLocation -eq 'button_counter_panel') 'priorBigRedButtonExperience display location mismatch'
 Assert-Condition ($exportJson.priorBigRedButtonExperience.question.Length -gt 0) 'priorBigRedButtonExperience localized question text missing'
 Assert-Condition ($exportJson.priorBigRedButtonExperience.sourceQuestionEnglish -match 'experience with pressing big red buttons') 'priorBigRedButtonExperience English source question mismatch'
-Assert-Condition ($exportJson.priorBigRedButtonExperience.languageCode -in @('en-US', 'ja-JP')) 'priorBigRedButtonExperience language code mismatch'
+Assert-Condition ($exportJson.priorBigRedButtonExperience.languageCode -in @('en-US', 'ja-JP', 'de-DE')) 'priorBigRedButtonExperience language code mismatch'
 Assert-Condition ($null -ne $exportJson.finalEndConfirmation) 'Missing finalEndConfirmation'
 Assert-Condition ($exportJson.finalEndConfirmation.question.Length -gt 0) 'finalEndConfirmation localized question text missing'
 Assert-Condition ($exportJson.finalEndConfirmation.sourceQuestionEnglish -eq 'How sure are you that you want to end the experiment, on a scale of 1 to 10?') 'finalEndConfirmation English source question mismatch'
-Assert-Condition ($exportJson.finalEndConfirmation.languageCode -in @('en-US', 'ja-JP')) 'finalEndConfirmation language code mismatch'
+Assert-Condition ($exportJson.finalEndConfirmation.languageCode -in @('en-US', 'ja-JP', 'de-DE')) 'finalEndConfirmation language code mismatch'
 Assert-Condition ($exportJson.finalEndConfirmation.scale -eq '1-10') 'finalEndConfirmation scale mismatch'
 Assert-Condition ($exportJson.finalEndConfirmation.rating1To10 -ge 1 -and $exportJson.finalEndConfirmation.rating1To10 -le 10) 'finalEndConfirmation rating out of range'
 Assert-Condition ($null -ne $exportJson.finalEndConfirmation.immediateEnd) 'finalEndConfirmation immediateEnd missing'
@@ -1024,6 +1147,34 @@ foreach ($condition in @($exportJson.conditions)) {
         Assert-Condition ($event.PSObject.Properties.Name -contains 'nearestEcgSampleIndex') "Condition $($condition.conditionNumber) press event missing nearestEcgSampleIndex"
         Assert-Condition ($event.PSObject.Properties.Name -contains 'nearestEcgElapsedNs') "Condition $($condition.conditionNumber) press event missing nearestEcgElapsedNs"
         Assert-Condition ($event.PSObject.Properties.Name -contains 'nearestEcgDeltaNs') "Condition $($condition.conditionNumber) press event missing nearestEcgDeltaNs"
+        Assert-Condition ($event.PSObject.Properties.Name -contains 'pressMechanics') "Condition $($condition.conditionNumber) press event missing pressMechanics"
+        Assert-Condition (-not [string]::IsNullOrWhiteSpace($event.pressMechanics.predictionMode)) "Condition $($condition.conditionNumber) press mechanics missing predictionMode"
+        Assert-Condition (-not [string]::IsNullOrWhiteSpace($event.pressMechanics.phase)) "Condition $($condition.conditionNumber) press mechanics missing phase"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'impactVelocityMetersPerSecond') "Condition $($condition.conditionNumber) press mechanics missing impact velocity"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'predictedTimeToImpactMs') "Condition $($condition.conditionNumber) press mechanics missing predicted time-to-impact"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'preloadLeadMs') "Condition $($condition.conditionNumber) press mechanics missing preload lead"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'confidence01') "Condition $($condition.conditionNumber) press mechanics missing confidence"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'lateralVelocityMetersPerSecond') "Condition $($condition.conditionNumber) press mechanics missing lateral velocity"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'predictedLateralAtImpactMeters') "Condition $($condition.conditionNumber) press mechanics missing predicted lateral-at-impact"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'trajectoryFit01') "Condition $($condition.conditionNumber) press mechanics missing trajectory fit"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'approachAngleDegrees') "Condition $($condition.conditionNumber) press mechanics missing approach angle"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'approachAlignment01') "Condition $($condition.conditionNumber) press mechanics missing approach alignment"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'impactEnergyJoules') "Condition $($condition.conditionNumber) press mechanics missing impact energy"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'springCompressionMeters') "Condition $($condition.conditionNumber) press mechanics missing spring compression"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'dampingRatio') "Condition $($condition.conditionNumber) press mechanics missing damping ratio"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'normalImpulseNewtonSeconds') "Condition $($condition.conditionNumber) press mechanics missing normal impulse"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'estimatedPeakForceNewtons') "Condition $($condition.conditionNumber) press mechanics missing estimated peak force"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'estimatedContactPressureKilopascals') "Condition $($condition.conditionNumber) press mechanics missing estimated contact pressure"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'estimatedContactPatchAreaSquareMeters') "Condition $($condition.conditionNumber) press mechanics missing estimated contact patch area"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'compressionPeak01') "Condition $($condition.conditionNumber) press mechanics missing compression peak"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'actuationTravel01') "Condition $($condition.conditionNumber) press mechanics missing actuation travel"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'actuationDelayMs') "Condition $($condition.conditionNumber) press mechanics missing actuation timing"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'snapTravel01') "Condition $($condition.conditionNumber) press mechanics missing snap travel"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'snapDurationMs') "Condition $($condition.conditionNumber) press mechanics missing snap duration"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'bottomOutDelayMs') "Condition $($condition.conditionNumber) press mechanics missing bottom-out timing"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'releaseDurationMs') "Condition $($condition.conditionNumber) press mechanics missing release timing"
+        Assert-Condition ($event.pressMechanics.PSObject.Properties.Name -contains 'visualStartOffsetMs') "Condition $($condition.conditionNumber) press mechanics missing visual-start offset"
+        Assert-Condition (-not [string]::IsNullOrWhiteSpace($event.pressMechanics.triggerEvidence)) "Condition $($condition.conditionNumber) press mechanics missing triggerEvidence"
     }
     Assert-Condition ($null -ne $condition.pictographic) "Condition $($condition.conditionNumber) missing pictographic"
     Assert-Condition ($condition.pictographic.rednessVas0To100 -ge 0 -and $condition.pictographic.rednessVas0To100 -le 100) "Condition $($condition.conditionNumber) redness VAS out of range"

@@ -1,0 +1,41 @@
+{
+  "text": " Jetzt leiste die Knopfskala-Sichtbare Arbeit.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 3.44,
+      "text": " Jetzt leiste die Knopfskala-Sichtbare Arbeit.",
+      "tokens": [
+        50364,
+        12592,
+        476,
+        8375,
+        978,
+        10519,
+        21828,
+        5161,
+        5159,
+        12,
+        50,
+        1405,
+        30682,
+        18604,
+        13,
+        50536
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.40753089680391197,
+      "compression_ratio": 0.8490566037735849,
+      "no_speech_prob": 0.005781513638794422
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0743",
+  "clipKey": "vas_high_mid_04",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0743_vas_high_mid_04__de_de.mp3"
+}

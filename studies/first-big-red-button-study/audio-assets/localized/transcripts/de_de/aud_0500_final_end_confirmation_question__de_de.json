@@ -1,0 +1,51 @@
+{
+  "text": " Die sicher sind sie, dass du das Experiment beenden möchtest, auf einer Skala von 1 bis 10.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 6.32,
+      "text": " Die sicher sind sie, dass du das Experiment beenden möchtest, auf einer Skala von 1 bis 10.",
+      "tokens": [
+        50364,
+        3229,
+        18623,
+        3290,
+        2804,
+        11,
+        2658,
+        1581,
+        1482,
+        37933,
+        312,
+        8896,
+        7667,
+        4701,
+        377,
+        11,
+        2501,
+        6850,
+        7324,
+        5159,
+        2957,
+        502,
+        7393,
+        1266,
+        13,
+        50680
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.420586868568703,
+      "compression_ratio": 1.0222222222222221,
+      "no_speech_prob": 0.004336133133620024
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0500",
+  "clipKey": "final_end_confirmation_question",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0500_final_end_confirmation_question__de_de.mp3"
+}

@@ -3,6 +3,7 @@ param(
     [string]$JavaHome = 'D:\GithubVR\Immersive video player 0.0.6\.toolchain\jdk-17',
     [string]$AndroidSdkRoot = 'D:\GithubVR\Immersive video player 0.0.6\.toolchain\android-sdk',
     [string]$GradleUserHome = 'D:\GithubVR\Immersive video player 0.0.6\.toolchain\gradle-home',
+    [switch]$SideBySideInstall,
     [switch]$Clean
 )
 
@@ -36,7 +37,12 @@ try {
         }
     }
 
-    & $gradlew ':app:assembleDebug'
+    $gradleArgs = @(':app:assembleDebug')
+    if ($SideBySideInstall) {
+        $gradleArgs += '-PbrbSideBySideInstall=true'
+    }
+
+    & $gradlew @gradleArgs
     if ($LASTEXITCODE -ne 0) {
         throw "Gradle assembleDebug failed with exit code $LASTEXITCODE"
     }
@@ -50,3 +56,7 @@ if (-not (Test-Path $apk)) {
 }
 
 Write-Host "Built APK: $apk"
+if ($SideBySideInstall) {
+    Write-Host "Side-by-side package: org.bigredbutton.firststudy.second"
+    Write-Host "Launcher label: Big Red Button First Study 2"
+}

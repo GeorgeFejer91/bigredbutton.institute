@@ -1,0 +1,39 @@
+{
+  "text": " Das ist ziemlich viel für den großen roten Knopf.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 4.0,
+      "text": " Das ist ziemlich viel für den großen roten Knopf.",
+      "tokens": [
+        50364,
+        2846,
+        1418,
+        28901,
+        5891,
+        2959,
+        1441,
+        23076,
+        4297,
+        268,
+        10519,
+        21828,
+        13,
+        50564
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.38109461466471356,
+      "compression_ratio": 0.9107142857142857,
+      "no_speech_prob": 0.0008392016170546412
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0740",
+  "clipKey": "vas_high_mid_01",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0740_vas_high_mid_01__de_de.mp3"
+}

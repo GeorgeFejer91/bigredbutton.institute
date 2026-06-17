@@ -102,6 +102,15 @@ function Get-KotlinLongConst {
     return [int64]::Parse($match.Groups[1].Value, [Globalization.CultureInfo]::InvariantCulture)
 }
 
+function Get-AudioDurationMs {
+    param([string]$Path)
+    $raw = & ffprobe -v error -show_entries format=duration -of default=nokey=1:noprint_wrappers=1 $Path
+    if ($LASTEXITCODE -ne 0) {
+        throw "ffprobe failed for $Path"
+    }
+    return [int][math]::Round([double]::Parse($raw.Trim(), [Globalization.CultureInfo]::InvariantCulture) * 1000.0)
+}
+
 $manifest = Join-Path $projectRoot 'app\src\main\AndroidManifest.xml'
 $buildGradle = Join-Path $projectRoot 'app\build.gradle.kts'
 $activity = Join-Path $projectRoot 'app\src\main\java\org\bigredbutton\firststudy\BigRedButtonStudyActivity.kt'
@@ -127,11 +136,60 @@ $finalEndConfirmation10FeedbackSound = Join-Path $studyRoot 'audio-assets\locali
 $finalExtraPressPromptSound = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0600_final_extra_presses_prompt__en_us.mp3'
 $localizedAudioManifest = Join-Path $studyRoot 'audio-assets\localized\manifest.json'
 $audioScriptLookupTable = Join-Path $projectRoot 'docs\audio-script-lookup-table.csv'
+$handednessNarrationEnglishSound = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0190_handedness_controller_selection__en_us.mp3'
+$handednessNarrationJapaneseSound = Join-Path $studyRoot 'audio-assets\localized\ja_jp\aud_0190_handedness_controller_selection__ja_jp.mp3'
+$handednessNarrationGermanSound = Join-Path $studyRoot 'audio-assets\localized\de_de\aud_0190_handedness_controller_selection__de_de.mp3'
 $ipqHistoryPart1EnglishSound = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0320_ipq_history_part1__en_us.mp3'
 $ipqHistoryPart1JapaneseSound = Join-Path $studyRoot 'audio-assets\localized\ja_jp\aud_0320_ipq_history_part1__ja_jp.mp3'
+$ipqHistoryPart1GermanSound = Join-Path $studyRoot 'audio-assets\localized\de_de\aud_0320_ipq_history_part1__de_de.mp3'
 $ipqHistoryPart2EnglishSound = Join-Path $studyRoot 'audio-assets\localized\en_us\aud_0330_ipq_history_part2__en_us.mp3'
 $ipqHistoryPart2JapaneseSound = Join-Path $studyRoot 'audio-assets\localized\ja_jp\aud_0330_ipq_history_part2__ja_jp.mp3'
+$ipqHistoryPart2GermanSound = Join-Path $studyRoot 'audio-assets\localized\de_de\aud_0330_ipq_history_part2__de_de.mp3'
 $buttonPressSound = Join-Path $studyRoot 'audio-assets\localized\shared\button_press\sfx_9020_button_press_placeholder_kenney_bong.ogg'
+$spontaneousRemarkExpectedAssets = @(
+    @{ AudioId = 'aud_0700'; ClipKey = 'age_soft_privacy' },
+    @{ AudioId = 'aud_0710'; ClipKey = 'vas_low_01' },
+    @{ AudioId = 'aud_0711'; ClipKey = 'vas_low_02' },
+    @{ AudioId = 'aud_0712'; ClipKey = 'vas_low_03' },
+    @{ AudioId = 'aud_0713'; ClipKey = 'vas_low_04' },
+    @{ AudioId = 'aud_0714'; ClipKey = 'vas_low_05' },
+    @{ AudioId = 'aud_0720'; ClipKey = 'vas_low_mid_01' },
+    @{ AudioId = 'aud_0721'; ClipKey = 'vas_low_mid_02' },
+    @{ AudioId = 'aud_0722'; ClipKey = 'vas_low_mid_03' },
+    @{ AudioId = 'aud_0723'; ClipKey = 'vas_low_mid_04' },
+    @{ AudioId = 'aud_0724'; ClipKey = 'vas_low_mid_05' },
+    @{ AudioId = 'aud_0730'; ClipKey = 'vas_mid_01' },
+    @{ AudioId = 'aud_0731'; ClipKey = 'vas_mid_02' },
+    @{ AudioId = 'aud_0732'; ClipKey = 'vas_mid_03' },
+    @{ AudioId = 'aud_0733'; ClipKey = 'vas_mid_04' },
+    @{ AudioId = 'aud_0734'; ClipKey = 'vas_mid_05' },
+    @{ AudioId = 'aud_0740'; ClipKey = 'vas_high_mid_01' },
+    @{ AudioId = 'aud_0741'; ClipKey = 'vas_high_mid_02' },
+    @{ AudioId = 'aud_0742'; ClipKey = 'vas_high_mid_03' },
+    @{ AudioId = 'aud_0743'; ClipKey = 'vas_high_mid_04' },
+    @{ AudioId = 'aud_0744'; ClipKey = 'vas_high_mid_05' },
+    @{ AudioId = 'aud_0750'; ClipKey = 'vas_high_01' },
+    @{ AudioId = 'aud_0751'; ClipKey = 'vas_high_02' },
+    @{ AudioId = 'aud_0752'; ClipKey = 'vas_high_03' },
+    @{ AudioId = 'aud_0753'; ClipKey = 'vas_high_04' },
+    @{ AudioId = 'aud_0754'; ClipKey = 'vas_high_05' },
+    @{ AudioId = 'aud_0760'; ClipKey = 'vas_max_01' },
+    @{ AudioId = 'aud_0761'; ClipKey = 'vas_max_02' },
+    @{ AudioId = 'aud_0762'; ClipKey = 'vas_max_03' },
+    @{ AudioId = 'aud_0763'; ClipKey = 'vas_max_04' },
+    @{ AudioId = 'aud_0764'; ClipKey = 'vas_max_05' }
+)
+$spontaneousRemarkHashExpectations = @{
+    'en_us/aud_0700_age_soft_privacy__en_us.mp3' = '00D3A829522617FE818BED09D32FC90FE9A45E08183368BE6BFEC73DA0C67EB4'
+    'ja_jp/aud_0700_age_soft_privacy__ja_jp.mp3' = 'D8406B1C4157CA47F81917AB99404379C7C3B0FC65A9A213ABCEAA48337EDE2C'
+    'de_de/aud_0700_age_soft_privacy__de_de.mp3' = 'B09279EF80EB0781FAC77728F4859243C5333663DBA40FFBF3A28C56EA40E7B5'
+    'en_us/aud_0710_vas_low_01__en_us.mp3' = '7C2286D06A440381A7B650470A35776B619499D4C4664E0FCD68397410E96A04'
+    'ja_jp/aud_0710_vas_low_01__ja_jp.mp3' = '3BC752AE89A007595EBC792E8457FFEA42CEF8DD6234152A830D796F50513393'
+    'de_de/aud_0710_vas_low_01__de_de.mp3' = '5E30E67E938686529B53204D6BDCD6084C2621531CDFC518C11CE628EE592928'
+    'en_us/aud_0764_vas_max_05__en_us.mp3' = '090C5B2BCD55DF822B61B314B445B5EBD27E22DDE9BC47684AE3AE626DBA2DC0'
+    'ja_jp/aud_0764_vas_max_05__ja_jp.mp3' = 'F9E431F593917AA0FCE674ACA42BE84550C47F06CC7865F21ABC23441109C004'
+    'de_de/aud_0764_vas_max_05__de_de.mp3' = '16D6FB82FDF1C211BB938991566408FD8402C0EA532B132DA0898D9849ADE1C8'
+}
 $simulatedRrAsset = Join-Path $projectRoot 'app\src\main\assets\ecg\neurokit2_simulated_rr_intervals_ms.csv'
 $polarClient = Join-Path $projectRoot 'app\src\main\java\org\bigredbutton\firststudy\PolarH10HeartRateClient.kt'
 $glowVariantGenerator = Join-Path $projectRoot 'tools\create-button-glow-variants.py'
@@ -157,10 +215,34 @@ Add-Check 'final end confirmation 10 feedback sound exists' (Test-Path $finalEnd
 Add-Check 'final extra presses prompt sound exists' (Test-Path $finalExtraPressPromptSound) $finalExtraPressPromptSound
 Add-Check 'localized audio manifest exists' (Test-Path $localizedAudioManifest) $localizedAudioManifest
 Add-Check 'audio script lookup table exists' (Test-Path $audioScriptLookupTable) $audioScriptLookupTable
+Add-Check 'handedness narration English sound exists' (Test-Path $handednessNarrationEnglishSound) $handednessNarrationEnglishSound
+Add-Check 'handedness narration Japanese sound exists' (Test-Path $handednessNarrationJapaneseSound) $handednessNarrationJapaneseSound
+Add-Check 'handedness narration German sound exists' (Test-Path $handednessNarrationGermanSound) $handednessNarrationGermanSound
 Add-Check 'IPQ history part 1 English sound exists' (Test-Path $ipqHistoryPart1EnglishSound) $ipqHistoryPart1EnglishSound
 Add-Check 'IPQ history part 1 Japanese sound exists' (Test-Path $ipqHistoryPart1JapaneseSound) $ipqHistoryPart1JapaneseSound
+Add-Check 'IPQ history part 1 German sound exists' (Test-Path $ipqHistoryPart1GermanSound) $ipqHistoryPart1GermanSound
 Add-Check 'IPQ history part 2 English sound exists' (Test-Path $ipqHistoryPart2EnglishSound) $ipqHistoryPart2EnglishSound
 Add-Check 'IPQ history part 2 Japanese sound exists' (Test-Path $ipqHistoryPart2JapaneseSound) $ipqHistoryPart2JapaneseSound
+Add-Check 'IPQ history part 2 German sound exists' (Test-Path $ipqHistoryPart2GermanSound) $ipqHistoryPart2GermanSound
+$spontaneousRemarkAudioPaths = @()
+foreach ($expectedAsset in $spontaneousRemarkExpectedAssets) {
+    foreach ($locale in @('en_us', 'ja_jp', 'de_de')) {
+        $fileName = '{0}_{1}__{2}.mp3' -f $expectedAsset.AudioId, $expectedAsset.ClipKey, $locale
+        $spontaneousRemarkAudioPaths += Join-Path $studyRoot ("audio-assets\localized\{0}\{1}" -f $locale, $fileName)
+    }
+}
+$missingSpontaneousRemarkAudioPaths = @($spontaneousRemarkAudioPaths | Where-Object { -not (Test-Path -LiteralPath $_) })
+Add-Check 'spontaneous questionnaire remark trilingual sounds exist' (
+    $spontaneousRemarkAudioPaths.Count -eq 93 -and
+    $missingSpontaneousRemarkAudioPaths.Count -eq 0
+) ("expected=93 observed={0} missing={1}" -f $spontaneousRemarkAudioPaths.Count, ($missingSpontaneousRemarkAudioPaths -join '; '))
+foreach ($relativeAudioPath in $spontaneousRemarkHashExpectations.Keys) {
+    $absoluteAudioPath = Join-Path $studyRoot ("audio-assets\localized\{0}" -f $relativeAudioPath)
+    Add-Check "spontaneous remark hash preserved $relativeAudioPath" (
+        (Test-Path -LiteralPath $absoluteAudioPath) -and
+        ((Get-FileHash -Algorithm SHA256 -LiteralPath $absoluteAudioPath).Hash -eq $spontaneousRemarkHashExpectations[$relativeAudioPath])
+    ) $relativeAudioPath
+}
 Add-Check 'button press sound placeholder exists' (Test-Path $buttonPressSound) $buttonPressSound
 Add-Check 'simulated NeuroKit2 RR asset exists' (Test-Path $simulatedRrAsset) $simulatedRrAsset
 Add-Check 'Polar H10 BLE client exists' (Test-Path $polarClient) $polarClient
@@ -186,6 +268,24 @@ if (Test-Path $audio2) {
     Add-Check 'condition 2 audio nonempty' ((Get-Item $audio2).Length -gt 100000) ((Get-Item $audio2).Length.ToString())
     Add-Check 'condition 2 audio hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $audio2).Hash -eq 'E52E53640DF5398FEC3DFE328877CBE429EDD3F5D3AB60E5A19FB1C6EBAD48A7') 'original final MP3 SHA256'
 }
+if (Test-Path $handednessNarrationEnglishSound) {
+    $durationMs = Get-AudioDurationMs $handednessNarrationEnglishSound
+    Add-Check 'handedness narration English sound nonempty' ((Get-Item $handednessNarrationEnglishSound).Length -gt 100000) ((Get-Item $handednessNarrationEnglishSound).Length.ToString())
+    Add-Check 'handedness narration English duration intentionally expanded' ($durationMs -ge 30000 -and $durationMs -le 90000) "observed=${durationMs}ms"
+    Add-Check 'handedness narration English sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $handednessNarrationEnglishSound).Hash -eq '06A275FBC70EB28ACE37D9794B02AB103B4DD9EBE54761767988D68A696842D2') 'aud_0190 English MP3 SHA256'
+}
+if (Test-Path $handednessNarrationJapaneseSound) {
+    $durationMs = Get-AudioDurationMs $handednessNarrationJapaneseSound
+    Add-Check 'handedness narration Japanese sound nonempty' ((Get-Item $handednessNarrationJapaneseSound).Length -gt 100000) ((Get-Item $handednessNarrationJapaneseSound).Length.ToString())
+    Add-Check 'handedness narration Japanese duration intentionally expanded' ($durationMs -ge 30000 -and $durationMs -le 90000) "observed=${durationMs}ms"
+    Add-Check 'handedness narration Japanese sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $handednessNarrationJapaneseSound).Hash -eq '3A615F6E9CE4ADF9367646D8950AE3B5375DF6DB64FC1766D5D18D0218E3E897') 'aud_0190 Japanese MP3 SHA256'
+}
+if (Test-Path $handednessNarrationGermanSound) {
+    $durationMs = Get-AudioDurationMs $handednessNarrationGermanSound
+    Add-Check 'handedness narration German sound nonempty' ((Get-Item $handednessNarrationGermanSound).Length -gt 100000) ((Get-Item $handednessNarrationGermanSound).Length.ToString())
+    Add-Check 'handedness narration German duration intentionally expanded' ($durationMs -ge 30000 -and $durationMs -le 90000) "observed=${durationMs}ms"
+    Add-Check 'handedness narration German sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $handednessNarrationGermanSound).Hash -eq '116E08D8F0FDA2C86A408D0CE55D1A07C258D78D3F0B08F0154974F4150B93A7') 'aud_0190 German MP3 SHA256'
+}
 if (Test-Path $ipqHistoryPart1EnglishSound) {
     Add-Check 'IPQ history part 1 English sound nonempty' ((Get-Item $ipqHistoryPart1EnglishSound).Length -gt 100000) ((Get-Item $ipqHistoryPart1EnglishSound).Length.ToString())
     Add-Check 'IPQ history part 1 English sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $ipqHistoryPart1EnglishSound).Hash -eq 'AAD3BDB00F1928D7688790567197C934629300CF038337D6BC66CA364F01C137') 'aud_0320 English MP3 SHA256'
@@ -194,6 +294,10 @@ if (Test-Path $ipqHistoryPart1JapaneseSound) {
     Add-Check 'IPQ history part 1 Japanese sound nonempty' ((Get-Item $ipqHistoryPart1JapaneseSound).Length -gt 100000) ((Get-Item $ipqHistoryPart1JapaneseSound).Length.ToString())
     Add-Check 'IPQ history part 1 Japanese sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $ipqHistoryPart1JapaneseSound).Hash -eq 'AAB46B0E6D8FF2E2CE00444E11F4963B309E152B007EBC185D9FCFB69869A0DC') 'aud_0320 Japanese MP3 SHA256'
 }
+if (Test-Path $ipqHistoryPart1GermanSound) {
+    Add-Check 'IPQ history part 1 German sound nonempty' ((Get-Item $ipqHistoryPart1GermanSound).Length -gt 100000) ((Get-Item $ipqHistoryPart1GermanSound).Length.ToString())
+    Add-Check 'IPQ history part 1 German sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $ipqHistoryPart1GermanSound).Hash -eq '91B914C4181DFE1DC18BA92731A2A8C07D9F5AC73B00E1A63562DC0606BB6030') 'aud_0320 German MP3 SHA256'
+}
 if (Test-Path $ipqHistoryPart2EnglishSound) {
     Add-Check 'IPQ history part 2 English sound nonempty' ((Get-Item $ipqHistoryPart2EnglishSound).Length -gt 100000) ((Get-Item $ipqHistoryPart2EnglishSound).Length.ToString())
     Add-Check 'IPQ history part 2 English sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $ipqHistoryPart2EnglishSound).Hash -eq '05F81ADFAD49EECEB9245DCBBF0656EE90C0B8ADE0D3856E9DBE40FB65087772') 'aud_0330 English MP3 SHA256'
@@ -201,6 +305,10 @@ if (Test-Path $ipqHistoryPart2EnglishSound) {
 if (Test-Path $ipqHistoryPart2JapaneseSound) {
     Add-Check 'IPQ history part 2 Japanese sound nonempty' ((Get-Item $ipqHistoryPart2JapaneseSound).Length -gt 100000) ((Get-Item $ipqHistoryPart2JapaneseSound).Length.ToString())
     Add-Check 'IPQ history part 2 Japanese sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $ipqHistoryPart2JapaneseSound).Hash -eq '6C05D79DC79F5FDAA2C776A0AFEBA00B1889D0027F2B4EB42A9EC82FAE255B63') 'aud_0330 Japanese MP3 SHA256'
+}
+if (Test-Path $ipqHistoryPart2GermanSound) {
+    Add-Check 'IPQ history part 2 German sound nonempty' ((Get-Item $ipqHistoryPart2GermanSound).Length -gt 100000) ((Get-Item $ipqHistoryPart2GermanSound).Length.ToString())
+    Add-Check 'IPQ history part 2 German sound hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $ipqHistoryPart2GermanSound).Hash -eq '77A8C6BC6C86F2C3326470062B4DC9BB505BD31CF8C797C5CCD8455058B42695') 'aud_0330 German MP3 SHA256'
 }
 if (Test-Path $buttonModel) {
     Add-Check 'Big Red Button model hash preserved' ((Get-FileHash -Algorithm SHA256 -LiteralPath $buttonModel).Hash -eq '4BA2C479EAE6A103ADCE0B7D0AB70C94A5F21A12435DD90ACD0071F66EF5F52B') 'smooth realistic BigRedButton.glb SHA256'
@@ -364,6 +472,11 @@ if (Test-Path $buildGradle) {
 
 if (Test-Path $activity) {
     $activityText = Get-Content -Raw -LiteralPath $activity
+    $sessionExportLayoutPath = Join-Path (Split-Path -Parent $activity) 'SessionExportLayout.kt'
+    $exportContractText =
+        $activityText +
+        "`n" +
+        $(if (Test-Path $sessionExportLayoutPath) { Get-Content -Raw -LiteralPath $sessionExportLayoutPath } else { '' })
     $idsText = if (Test-Path $ids) { Get-Content -Raw -LiteralPath $ids } else { '' }
     $ipqItemCount = ([regex]::Matches($activityText, 'PresenceItem\s*\(')).Count - 1
     Add-Check 'adapted IPQ item count' ($ipqItemCount -eq 14) "count=$ipqItemCount"
@@ -374,6 +487,11 @@ if (Test-Path $activity) {
     Add-Check 'IPQ history narration cue wired' (
         $activityText.Contains('AUDIO_ID_IPQ_HISTORY_PART_1 = "aud_0320"') -and
         $activityText.Contains('AUDIO_ID_IPQ_HISTORY_PART_2 = "aud_0330"') -and
+        $activityText.Contains('LOCALIZED_AUDIO_CLIP_KEYS') -and
+        $activityText.Contains('AUDIO_ID_IPQ_HISTORY_PART_1 to "ipq_history_part1"') -and
+        $activityText.Contains('AUDIO_ID_IPQ_HISTORY_PART_2 to "ipq_history_part2"') -and
+        $activityText.Contains('"localized/$locale/${audioId}_${clipKey}__$locale.mp3"') -and
+        $activityText.Contains('language.assetLocale') -and
         $activityText.Contains('LOCALIZED_EN_IPQ_HISTORY_PART_1_AUDIO') -and
         $activityText.Contains('LOCALIZED_EN_IPQ_HISTORY_PART_2_AUDIO') -and
         $activityText.Contains('LOCALIZED_JA_IPQ_HISTORY_PART_1_AUDIO') -and
@@ -385,7 +503,7 @@ if (Test-Path $activity) {
         $activityText.Contains('localized/ja_jp/aud_0320_ipq_history_part1__ja_jp.mp3') -and
         $activityText.Contains('localized/en_us/aud_0330_ipq_history_part2__en_us.mp3') -and
         $activityText.Contains('localized/ja_jp/aud_0330_ipq_history_part2__ja_jp.mp3')
-    ) 'localized aud_0320/aud_0330 play when the presence questionnaire opens after each block'
+    ) 'localized aud_0320/aud_0330 play when the presence questionnaire opens after each block through the locale-aware audio lookup'
     Add-Check 'media completion ends condition' ($activityText.Contains('setOnCompletionListener { endConditionFromAudio() }')) 'MediaPlayer completion gate'
     Add-Check 'model-backed 3D button visual' ($activityText.Contains('buttonVisual=model-asset') -and $activityText.Contains('BUTTON_MODEL_ASSET_URI = "apk:///models/BigRedButton.glb"')) 'BigRedButton.glb model marker'
     Add-Check 'model material not flattened' (-not $activityText.Contains('defaultShaderOverride = SceneMaterial.UNLIT_SHADER')) 'model uses embedded/material PBR path instead of forced unlit shader'
@@ -420,6 +538,85 @@ if (Test-Path $activity) {
         $activityText.Contains('mainHandler.postDelayed(') -and
         -not $activityText.Contains('playButtonPressedAnimation(buttonModelEntity)')
     ) "press visual restart guard $pressRestartGuardMs ms is longer than cooldown $pressCooldownMs ms and clip $pressClipMs ms"
+    $buttonPressPhysicsPath = Join-Path $projectRoot 'app\src\main\java\org\bigredbutton\firststudy\ButtonPressPhysicsModel.kt'
+    $buttonPressPhysicsTestPath = Join-Path $projectRoot 'app\src\test\java\org\bigredbutton\firststudy\ButtonPressPhysicsModelTest.kt'
+    $buttonPressPhysicsText = if (Test-Path $buttonPressPhysicsPath) { Get-Content -Raw -LiteralPath $buttonPressPhysicsPath } else { '' }
+    $buttonPressPhysicsTestText = if (Test-Path $buttonPressPhysicsTestPath) { Get-Content -Raw -LiteralPath $buttonPressPhysicsTestPath } else { '' }
+    Add-Check 'button hand press physics model' (
+        (Test-Path $buttonPressPhysicsPath) -and
+        (Test-Path $buttonPressPhysicsTestPath) -and
+        $buttonPressPhysicsText.Contains('ButtonPressPhysicsPhase') -and
+        $buttonPressPhysicsText.Contains('PREDICTION_MODE_VISUAL_PRELOAD') -and
+        $buttonPressPhysicsText.Contains('maxPredictionHorizonMs') -and
+        $buttonPressPhysicsText.Contains('trajectoryFit01') -and
+        $buttonPressPhysicsText.Contains('predictedLateralAtImpactMeters') -and
+        $buttonPressPhysicsText.Contains('approachAngleDegrees') -and
+        $buttonPressPhysicsText.Contains('approachAlignment01') -and
+        $buttonPressPhysicsText.Contains('impactEnergyJoules') -and
+        $buttonPressPhysicsText.Contains('springCompressionMeters') -and
+        $buttonPressPhysicsText.Contains('virtualDampingRatio') -and
+        $buttonPressPhysicsText.Contains('normalImpulseNewtonSeconds') -and
+        $buttonPressPhysicsText.Contains('estimatedPeakForceNewtons') -and
+        $buttonPressPhysicsText.Contains('estimatedContactPressureKilopascals') -and
+        $buttonPressPhysicsText.Contains('estimatedContactPatchAreaSquareMeters') -and
+        $buttonPressPhysicsText.Contains('compressionPeak01') -and
+        $buttonPressPhysicsText.Contains('actuationTravel01') -and
+        $buttonPressPhysicsText.Contains('actuationDelayMs') -and
+        $buttonPressPhysicsText.Contains('snapTravel01') -and
+        $buttonPressPhysicsText.Contains('snapDurationMs') -and
+        $buttonPressPhysicsText.Contains('bottomOutDelayMs') -and
+        $buttonPressPhysicsTestText.Contains('stableApproachTriggersVisualPreloadOnly') -and
+        $buttonPressPhysicsTestText.Contains('convergingArcApproachTriggersPreload') -and
+        $buttonPressPhysicsTestText.Contains('divergingGlancingApproachDoesNotPreload') -and
+        $buttonPressPhysicsTestText.Contains('straightApproachHasSmallAngleAndUsableAlignment') -and
+        $buttonPressPhysicsTestText.Contains('lateralMissDoesNotPreload') -and
+        $buttonPressPhysicsTestText.Contains('slowHoverDoesNotPreload') -and
+        $buttonPressPhysicsTestText.Contains('actualContactCreatesAcceptedMechanicsPayloadAfterPreload') -and
+        $buttonPressPhysicsTestText.Contains('impactVelocityChangesBottomOutTimingAndDepth') -and
+        $buttonPressPhysicsTestText.Contains('impactEnergyFollowsVelocitySquared') -and
+        $buttonPressPhysicsTestText.Contains('estimatedImpulseForceAndPressureFollowImpactSpeed') -and
+        $buttonPressPhysicsTestText.Contains('acceptedSnapIsDerivedFromActuationTravelNotPredictivePreloadAlone')
+    ) 'pure Kotlin model and unit tests cover preload, misses, hover, accepted contact, and velocity-scaled impact'
+    Add-Check 'predictive hand preload remains visual-only' (
+        $activityText.Contains('BRB_BUTTON_HAND_IMPACT_PREDICTED') -and
+        $activityText.Contains('BRB_BUTTON_HAND_PRELOAD_RELEASE') -and
+        $activityText.Contains('predictivePreload=true counted=false sound=false') -and
+        $activityText.Contains('BUTTON_HAND_PRELOAD_RELEASE_DURATION_MS') -and
+        $activityText.Contains('BUTTON_HAND_PRELOAD_RELEASE_STEPS') -and
+        $activityText.Contains('setButtonPreloadAnimationComponent') -and
+        $activityText.Contains('shouldPreloadVisual') -and
+        $activityText.Contains('actualContact = true') -and
+        $activityText.Contains('recordButtonPress(PRESS_SOURCE_HAND_CONTACT, pressMechanics)') -and
+        $activityText.Contains('BRB_BUTTON_HAND_PRELOAD_RESET')
+    ) 'hand approach prediction can preload visual compression but cannot count or play sound without accepted contact evidence'
+    Add-Check 'accepted press mechanics are logged and exported' (
+        $activityText.Contains('pressMechanicsJson') -and
+        $activityText.Contains('pressMechanics') -and
+        $activityText.Contains('press_mechanics_prediction_mode') -and
+        $activityText.Contains('press_mechanics_impact_velocity_mps') -and
+        $activityText.Contains('press_mechanics_lateral_velocity_mps') -and
+        $activityText.Contains('press_mechanics_predicted_lateral_at_impact_m') -and
+        $activityText.Contains('press_mechanics_trajectory_fit_0_1') -and
+        $activityText.Contains('press_mechanics_approach_angle_deg') -and
+        $activityText.Contains('press_mechanics_approach_alignment_0_1') -and
+        $activityText.Contains('press_mechanics_impact_energy_j') -and
+        $activityText.Contains('press_mechanics_spring_compression_m') -and
+        $activityText.Contains('press_mechanics_damping_ratio') -and
+        $activityText.Contains('press_mechanics_normal_impulse_n_s') -and
+        $activityText.Contains('press_mechanics_estimated_peak_force_n') -and
+        $activityText.Contains('press_mechanics_estimated_contact_pressure_kpa') -and
+        $activityText.Contains('press_mechanics_estimated_contact_patch_area_m2') -and
+        $activityText.Contains('press_mechanics_actuation_travel_0_1') -and
+        $activityText.Contains('press_mechanics_actuation_delay_ms') -and
+        $activityText.Contains('press_mechanics_snap_travel_0_1') -and
+        $activityText.Contains('press_mechanics_snap_duration_ms') -and
+        $activityText.Contains('press_mechanics_trigger_evidence') -and
+        $activityText.Contains('condition_${condition}_hand_predictive_preload_press_count') -and
+        $activityText.Contains('condition_${condition}_hand_contact_mean_impact_velocity_mps') -and
+        $activityText.Contains('BRB_BUTTON_PRESS_MECHANICS') -and
+        $activityText.Contains('BRB_BUTTON_PRESS_MECHANICS_PHASE') -and
+        $activityText.Contains('phase=actuation')
+    ) 'JSON, press-event CSV, summary CSV, and logs carry paper-ready pressMechanics fields'
     Add-Check 'controller contact collider' (
         $activityText.Contains('IsdkBoxCollider') -and
         $activityText.Contains('shape=multi_box_cap_plus_full_surface') -and
@@ -442,6 +639,21 @@ if (Test-Path $activity) {
     Add-Check 'native scene dome fallback retained' ($activityText.Contains('SceneMesh.dome')) 'SceneMesh.dome fallback only'
     Add-Check 'button view origin reset' ($activityText.Contains('scene.setViewOrigin(0f, 0f, 0f, 0f)')) 'condition recenter/view-origin reset'
     Add-Check 'button distance matches source repo' ($activityText.Contains('BUTTON_DISTANCE_FROM_HEAD_METERS = 0.48f')) '0.48m from existing button runtime'
+    $buttonSurfacePlacementPath = Join-Path $projectRoot 'app\src\main\java\org\bigredbutton\firststudy\ButtonSurfacePlacement.kt'
+    $buttonSurfacePlacementText = if (Test-Path $buttonSurfacePlacementPath) { Get-Content -Raw -LiteralPath $buttonSurfacePlacementPath } else { '' }
+    Add-Check 'button uses MR flat-surface placement' (
+        (Test-Path $buttonSurfacePlacementPath) -and
+        $activityText.Contains('enableMrPlaneTracker(true)') -and
+        $activityText.Contains('BRB_BUTTON_SURFACE_TRACKING enabled=true') -and
+        $activityText.Contains('BRB_BUTTON_SURFACE_PLACEMENT') -and
+        $activityText.Contains('scene_plane_tabletop') -and
+        $activityText.Contains('fallback_seated_tabletop') -and
+        $activityText.Contains('BUTTON_SUPPORT_SURFACE_REACH_MARGIN_METERS') -and
+        $buttonSurfacePlacementText.Contains('scoreButtonSupportSurfaceCandidate') -and
+        $buttonSurfacePlacementText.Contains('"table", "desk", "counter", "surface", "platform"') -and
+        $buttonSurfacePlacementText.Contains('semantic.contains("wall")') -and
+        $buttonSurfacePlacementText.Contains('semantic.contains("floor")')
+    ) 'ScenePlane table/desk/counter surfaces covering the 0.48m reach target are preferred; floor/wall/out-of-reach planes are rejected'
     $buttonDistanceM = Get-KotlinFloatConst $activityText 'BUTTON_DISTANCE_FROM_HEAD_METERS'
     $buttonCapCenterY = Get-KotlinFloatConst $activityText 'BUTTON_CONTACT_COLLIDER_Y_METERS'
     $nominalEyeY = Get-KotlinFloatConst $activityText 'BUTTON_NOMINAL_SEATED_EYE_HEIGHT_METERS'
@@ -490,8 +702,17 @@ if (Test-Path $activity) {
     Add-Check 'Quest validation language override extra' (
         $activityText.Contains('STUDY_LANGUAGE_EXTRA = "brb.studyLanguage"') -and
         $activityText.Contains('studyLanguageFromIntent') -and
+        $activityText.Contains('German("de-DE", "Deutsch", "de_de")') -and
+        $activityText.Contains('"de", "de-de", "german", "deutsch" -> StudyLanguage.German') -and
         $activityText.Contains('launchLanguage ?: StudyLanguage.English')
-    ) 'brb.studyLanguage launch extra lets headset validation exercise English or Japanese without removing the participant-facing selector'
+    ) 'brb.studyLanguage launch extra lets headset validation exercise English, German, or Japanese without removing the participant-facing selector'
+    Add-Check 'trilingual selector navigation' (
+        $activityText.Contains('StudyStage.LanguageSelection') -and
+        $activityText.Contains('val optionCount = StudyLanguage.values().size') -and
+        $activityText.Contains('val options = StudyLanguage.values()') -and
+        $activityText.Contains('StudyLanguage.values().toList()') -and
+        $activityText.Contains('language.assetLocale')
+    ) 'language selector and localized audio lookup are enum/locale driven, not binary English/Japanese branches'
     Add-Check 'Quest physical press validation extra' ($activityText.Contains('PHYSICAL_PRESS_VALIDATION_EXTRA = "brb.physicalPressValidation"')) 'brb.physicalPressValidation launch extra'
     Add-Check 'Quest panel smoke validation extra' ($activityText.Contains('PANEL_SMOKE_EXTRA = "brb.panelSmoke"') -and $activityText.Contains('BRB_PANEL_SMOKE_PICTOGRAPHIC_READY')) 'brb.panelSmoke launch extra'
     Add-Check 'fast controller flow validation extra' ($activityText.Contains('FAST_CONTROLLER_FLOW_EXTRA = "brb.fastControllerFlow"') -and $activityText.Contains('BRB_FAST_CONTROLLER_FLOW_COMPLETE')) 'brb.fastControllerFlow launch extra'
@@ -515,7 +736,7 @@ if (Test-Path $activity) {
     Add-Check 'Quest physical press completion marker' ($activityText.Contains('BRB_PHYSICAL_VALIDATION_COMPLETE')) 'BRB_PHYSICAL_VALIDATION_COMPLETE'
     Add-Check 'JSON export directory' ($activityText.Contains('BigRedButtonFirstStudyExports')) 'BigRedButtonFirstStudyExports'
     Add-Check 'SideQuest experiment results directory' ($activityText.Contains('EXPERIMENT_RESULTS_DIR_NAME = "ExperimentResults"') -and $activityText.Contains('BRB_EXPERIMENT_RESULTS_FOLDER')) 'app external files/ExperimentResults mirror export'
-    Add-Check 'summary CSV button variable' ($activityText.Contains('button_press_count') -and $activityText.Contains('condition_${condition}_hand_contact_press_count')) 'condition_N_button_press_count plus source-specific hand_contact count'
+    Add-Check 'summary CSV button variable' ($activityText.Contains('button_press_count') -and $activityText.Contains('condition_${condition}_hand_contact_press_count') -and $activityText.Contains('condition_${condition}_hand_predictive_preload_press_count')) 'condition_N_button_press_count plus source-specific hand_contact and predictive-preload counts'
     Add-Check 'prior button experience logged variable' (
         $activityText.Contains('priorBigRedButtonExperienceJson') -and
         $activityText.Contains('priorBigRedButtonExperience') -and
@@ -581,15 +802,15 @@ if (Test-Path $activity) {
         $activityText.Contains('final_extra_button_press_requirement') -and
         $activityText.Contains('final_extra_button_press_count') -and
         $activityText.Contains('final_extra_button_press_completed') -and
-        $activityText.Contains('_final_extra_button_presses.csv') -and
+        $exportContractText.Contains('_final_extra_button_presses.csv') -and
         $activityText.Contains('finalExtraPressEventsCsvText') -and
-        $activityText.Contains('finalExtraButtonPressesCsv')
+        $exportContractText.Contains('finalExtraButtonPressesCsvFilename')
     ) 'final 10-point decision and optional 1000 extra press events are exported to JSON, summary CSV, session index, and a dedicated event CSV'
     Add-Check 'summary CSV ECG variables' ($activityText.Contains('ecg_assignment_order') -and $activityText.Contains('condition_${condition}_ecg_source') -and $activityText.Contains('condition_${condition}_feedback_source') -and $activityText.Contains('condition_${condition}_physiology_source') -and $activityText.Contains('condition_${condition}_ecg_blink_count') -and $activityText.Contains('condition_${condition}_ecg_timeseries_sample_count') -and $activityText.Contains('condition_${condition}_real_ecg_timeseries_sample_count') -and $activityText.Contains('condition_${condition}_polar_rr_event_count') -and $activityText.Contains('condition_${condition}_ecg_detector_event_count') -and $activityText.Contains('condition_${condition}_external_signal_sample_count') -and $activityText.Contains('condition_${condition}_ecg_capture_duration_ns') -and $activityText.Contains('condition_${condition}_ecg_audio_window_end_ms')) 'counterbalanced feedback source, real physiology source, blink count, raw time-series count, Polar RR count, detector count, optional external signal count, and exact audio-window columns'
-    Add-Check 'ECG blink events CSV export' ($activityText.Contains('_ecg_blink_events.csv') -and $activityText.Contains('ecgBlinkEventsCsvText') -and $activityText.Contains('ecgBlinkEventsCsv') -and $activityText.Contains('"pulse_intensity_0_1"') -and $activityText.Contains('"detector"')) 'SideQuest-readable ECG blink event CSV with pulse metadata'
-    Add-Check 'ECG raw time-series CSV export' ($activityText.Contains('_ecg_timeseries.csv') -and $activityText.Contains('ecgTimeSeriesCsvText') -and $activityText.Contains('ecgTimeSeriesCsv') -and $activityText.Contains('"elapsed_ns"') -and $activityText.Contains('"audio_window_duration_ms"')) 'SideQuest-readable raw 130 Hz ECG time-series CSV with nanosecond elapsed and audio-window fields'
-    Add-Check 'Polar RR events CSV export' ($activityText.Contains('_polar_rr_events.csv') -and $activityText.Contains('polarRrEventsCsvText') -and $activityText.Contains('polarRrEventsCsv') -and $activityText.Contains('"used_for_feedback"')) 'SideQuest-readable real Polar RR event CSV with feedback-use flag'
-    Add-Check 'ECG detector events CSV export' ($activityText.Contains('_ecg_detector_events.csv') -and $activityText.Contains('ecgDetectorEventsCsvText') -and $activityText.Contains('BRB_ECG_RPEAK_DETECTED') -and $activityText.Contains('native_threshold_uv800')) 'native threshold R-peak detector diagnostics are exported separately from the raw ECG stream'
+    Add-Check 'ECG blink events CSV export' ($exportContractText.Contains('_ecg_blink_events.csv') -and $activityText.Contains('ecgBlinkEventsCsvText') -and $exportContractText.Contains('ecgBlinkEventsCsvFilename') -and $activityText.Contains('"pulse_intensity_0_1"') -and $activityText.Contains('"detector"')) 'SideQuest-readable ECG blink event CSV with pulse metadata'
+    Add-Check 'ECG raw time-series CSV export' ($exportContractText.Contains('_ecg_timeseries.csv') -and $activityText.Contains('ecgTimeSeriesCsvText') -and $exportContractText.Contains('ecgTimeSeriesCsvFilename') -and $activityText.Contains('"elapsed_ns"') -and $activityText.Contains('"audio_window_duration_ms"')) 'SideQuest-readable raw 130 Hz ECG time-series CSV with nanosecond elapsed and audio-window fields'
+    Add-Check 'Polar RR events CSV export' ($exportContractText.Contains('_polar_rr_events.csv') -and $activityText.Contains('polarRrEventsCsvText') -and $exportContractText.Contains('polarRrEventsCsvFilename') -and $activityText.Contains('"used_for_feedback"')) 'SideQuest-readable real Polar RR event CSV with feedback-use flag'
+    Add-Check 'ECG detector events CSV export' ($exportContractText.Contains('_ecg_detector_events.csv') -and $activityText.Contains('ecgDetectorEventsCsvText') -and $exportContractText.Contains('ecgDetectorEventsCsvFilename') -and $activityText.Contains('BRB_ECG_RPEAK_DETECTED') -and $activityText.Contains('native_threshold_uv800')) 'native threshold R-peak detector diagnostics are exported separately from the raw ECG stream'
     Add-Check 'questionnaire protocol metadata and lifecycle markers' (
         $activityText.Contains('questionnaireProtocolJson') -and
         $activityText.Contains('bigredbutton.questionnaire_flow.v1') -and
@@ -615,7 +836,7 @@ if (Test-Path $activity) {
         $activityText.Contains('jniEnabled=false') -and
         $activityText.Contains('drivesHeartbeatBlink=false') -and
         $activityText.Contains('drivesButtonPresses=false') -and
-        $activityText.Contains('_external_signal_samples.csv') -and
+        $exportContractText.Contains('_external_signal_samples.csv') -and
         $activityText.Contains('externalSignalSamplesCsvText') -and
         -not (Test-Path (Join-Path $projectRoot 'app\src\main\jniLibs\arm64-v8a\liblsl.so')) -and
         -not $activityText.Contains('System.loadLibrary("lsl")')
@@ -765,6 +986,38 @@ if (Test-Path $activity) {
     Add-Check 'participant ID assigned under hood' ($activityText.Contains('participantIdSource=${if (participantIdOverride.isNullOrBlank()) "generated" else "validation_override"}') -and -not $activityText.Contains('LabeledTextField("Participant ID"')) 'participant ID is generated or validation-overridden, not typed by participant'
     Add-Check 'gender four-choice' ($activityText.Contains('GenderChoice') -and $activityText.Contains('"male" to activity.t("male")') -and $activityText.Contains('"female" to activity.t("female")') -and $activityText.Contains('"other" to activity.t("other")') -and $activityText.Contains('"prefer_not_to_say" to activity.t("prefer_not_to_say")')) 'Male/Female/Other/Prefer not to say choice buttons'
     Add-Check 'handedness tri-choice' ($activityText.Contains('HandednessChoice') -and $activityText.Contains('"left" to activity.t("left")') -and $activityText.Contains('"right" to activity.t("right")') -and $activityText.Contains('"ambidextrous" to activity.t("ambidextrous")')) 'Left/Right/Ambidextrous choice buttons'
+    Add-Check 'handedness narration blocks demographics input' (
+        $activityText.Contains('AUDIO_ID_HANDEDNESS_CONTROLLER_SELECTION = "aud_0190"') -and
+        $activityText.Contains('AUDIO_ID_HANDEDNESS_CONTROLLER_SELECTION to "handedness_controller_selection"') -and
+        $activityText.Contains('localizedAudioAssetPath(') -and
+        $activityText.Contains('language.assetLocale') -and
+        $activityText.Contains('localized/en_us/aud_0190_handedness_controller_selection__en_us.mp3') -and
+        $activityText.Contains('localized/ja_jp/aud_0190_handedness_controller_selection__ja_jp.mp3') -and
+        $activityText.Contains('selectDemographicsHandedness') -and
+        $activityText.Contains('"select_handedness_right" ->') -and
+        $activityText.Contains('playHandednessNarrationBlocking') -and
+        $activityText.Contains('BRB_HANDEDNESS_NARRATION_CUE') -and
+        $activityText.Contains('BRB_HANDEDNESS_NARRATION_GATE') -and
+        $activityText.Contains('demographicsHandednessNarrationBlockingState') -and
+        $activityText.Contains('isDemographicsHandednessNarrationBlocking()') -and
+        $activityText.Contains('setNameKeyboardVisible(false, "handedness_narration_gate")')
+    ) 'selecting handedness plays localized aud_0190 and consumes demographics/controller input until MediaPlayer completion'
+    Add-Check 'spontaneous questionnaire remark runtime no-overlap and cooldown' (
+        $activityText.Contains('QuestionnaireSpontaneousRemark') -and
+        $activityText.Contains('triggerAgeSoftPrivacyRemark') -and
+        $activityText.Contains('triggerVasSpontaneousRemark') -and
+        $activityText.Contains('VAS_SPONTANEOUS_REMARK_MIN_PAUSE_MS = 5000L') -and
+        $activityText.Contains('VAS_SPONTANEOUS_REMARK_MAX_PAUSE_MS = 10000L') -and
+        $activityText.Contains('BRB_SPONTANEOUS_REMARK_CUE') -and
+        $activityText.Contains('BRB_SPONTANEOUS_REMARK_COOLDOWN') -and
+        $activityText.Contains('BRB_SPONTANEOUS_REMARK_NO_OVERLAP') -and
+        $activityText.Contains('reason=audio_active noOverlap=true') -and
+        $activityText.Contains('isAnyNonSpontaneousAudioPlaying') -and
+        $activityText.Contains('releaseSpontaneousRemarkPlayer("preempted_by_') -and
+        $activityText.Contains('playQuestionnaireSpontaneousRemark(') -and
+        $activityText.Contains('aud_0700') -and
+        $activityText.Contains('aud_0764')
+    ) 'Age confirmation can play a one-shot soft privacy remark; VAS releases/controller changes can play randomized bucketed remarks without overlap and with a random 5-10s cooldown after completion'
     Add-Check 'app-owned Name keyboard and Age slider demographics hooks' (
         $activityText.Contains('NamePanelKeyboard') -and
         $activityText.Contains('NameKeyboardPopupPanel') -and
@@ -855,6 +1108,10 @@ if (Test-Path $activity) {
         $activityText.Contains('BRB_NAME_APP_KEYBOARD_FOCUS') -and
         $activityText.Contains('DEMOGRAPHICS_KEYBOARD_VALIDATION_EXTRA = "brb.demographicsKeyboardValidation"') -and
         $activityText.Contains('movablePanel=true') -and
+        $activityText.Contains('dragHandle=true') -and
+        $activityText.Contains('controllerBeamDraggable=true') -and
+        $activityText.Contains('BRB_NAME_APP_KEYBOARD_DRAG') -and
+        $activityText.Contains('dragNameKeyboardPanelByDisplayDp') -and
         $activityText.Contains('closeToParticipant=left_of_questionnaire_near_user') -and
         $activityText.Contains('placement=left_of_questionnaire_near_user') -and
         $activityText.Contains('radialReference=headset_center') -and
@@ -863,13 +1120,18 @@ if (Test-Path $activity) {
         $activityText.Contains('fovVisible=true') -and
         $activityText.Contains('NAME_KEYBOARD_PANEL_DISPLAY_WIDTH_DP') -and
         $activityText.Contains('NAME_KEYBOARD_PANEL_DISPLAY_HEIGHT_DP') -and
-        $activityText.Contains('NAME_KEYBOARD_PANEL_WIDTH_METERS = 0.66f') -and
-        $activityText.Contains('NAME_KEYBOARD_PANEL_HEIGHT_METERS = 0.245f') -and
-        $activityText.Contains('NAME_KEYBOARD_PANEL_DISPLAY_WIDTH_DP = 960f') -and
-        $activityText.Contains('NAME_KEYBOARD_PANEL_DISPLAY_HEIGHT_DP = 356f') -and
-        $activityText.Contains('NAME_KEYBOARD_PANEL_RADIAL_DISTANCE_METERS = 0.92f') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_WIDTH_METERS = 0.64f') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_HEIGHT_METERS = 0.25f') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_DISPLAY_WIDTH_DP = 1040f') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_DISPLAY_HEIGHT_DP = 406f') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_RADIAL_ANGLE_DEGREES = -20f') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_RADIAL_DISTANCE_METERS = 0.86f') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_Y_METERS = 1.30f') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_MIN_RADIAL_ANGLE_DEGREES = -42f') -and
+        $activityText.Contains('NAME_KEYBOARD_PANEL_MAX_RADIAL_ANGLE_DEGREES = -6f') -and
         $activityText.Contains('aspectMatched=true') -and
         $activityText.Contains('comfortableDistance=true') -and
+        $activityText.Contains('higherLargerCloser=true') -and
         $activityText.Contains('nativeLikeRows=true') -and
         $activityText.Contains('prerenderedPreview=true') -and
         -not $activityText.Contains('AndroidView(') -and
@@ -1017,7 +1279,7 @@ if (Test-Path $activity) {
         $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_QUESTION_AUDIO_DURATION_MS = 10527L') -and
         $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_YES_AUDIO_DURATION_MS = 5251L') -and
         $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_NO_AUDIO_DURATION_MS = 4284L') -and
-        $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_FEEDBACK_TO_PRE_START_PAUSE_MS = 4000L') -and
+        $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_FEEDBACK_TO_PRE_START_PAUSE_MS = 15000L') -and
         $activityText.Contains('preStartDelayMs=$PRIOR_BUTTON_EXPERIENCE_FEEDBACK_TO_PRE_START_PAUSE_MS') -and
         $activityText.Contains('PRIOR_BUTTON_EXPERIENCE_PRE_START_AUDIO_DURATION_MS = 34273L') -and
         $activityText.Contains('reason=question_audio_active') -and
@@ -1051,8 +1313,13 @@ if (Test-Path $activity) {
     Add-Check 'button press sound cue wired' (
         $activityText.Contains('playButtonPressCue()') -and
         $activityText.Contains('BUTTON_PRESS_SFX_ASSET') -and
-        $activityText.Contains('BRB_SFX_PLAY cue=$cueName audioId=$audioId asset=$assetPath')
-    ) 'accepted button press plays swappable asset sound'
+        $activityText.Contains('SoundPool.Builder()') -and
+        $activityText.Contains('CONTENT_TYPE_SONIFICATION') -and
+        $activityText.Contains('BRB_SFX_PRELOAD cue=button_press') -and
+        $activityText.Contains('BRB_SFX_PLAY cue=button_press audioId=$SHARED_AUDIO_ID_BUTTON_PRESS asset=$BUTTON_PRESS_SFX_ASSET') -and
+        $activityText.Contains('backend=sound_pool') -and
+        $activityText.Contains('fallback=media_player')
+    ) 'accepted button press plays swappable asset sound through preloaded SoundPool when available'
     Add-Check 'signature pad stores temporal stroke data' ($activityText.Contains('ConsentSignaturePad') -and $activityText.Contains('detectDragGestures') -and $activityText.Contains('brb_signature_strokes_v1') -and $activityText.Contains('tMs') -and $activityText.Contains('.height(142.dp)')) 'trigger/pointer signature pad replaces text signature field inside the compact no-scroll intake layout'
     Add-Check 'Polar H10 validity panel in first menu' (
         $activityText.Contains('PolarH10ValidityPanel') -and
@@ -1152,6 +1419,20 @@ if (Test-Path $activity) {
         $activityText.Contains('source=dual_controller_hand_contact') -and
         $activityText.Contains('condition_${condition}_hand_contact_press_count')
     ) 'button contact path accepts controller contact, allows hands-only collider/pinch selects, and suppresses hand mode while controllers are active'
+    Add-Check 'hand-only button assist preserves controller proof' (
+        $activityText.Contains('hand-assist-hover-cushion') -and
+        $activityText.Contains('hand-assist-front-catch') -and
+        $activityText.Contains('hand-assist-left-catch') -and
+        $activityText.Contains('hand-assist-right-catch') -and
+        $activityText.Contains('acceptsControllerContact = false') -and
+        $activityText.Contains('acceptsHandContact = true') -and
+        $activityText.Contains('handOnlyAssist=true') -and
+        $activityText.Contains('setButtonContactTargetsInteractive') -and
+        $activityText.Contains('handAssistTargetsVisible') -and
+        $activityText.Contains('target.spec.acceptsControllerContact || !controllersActive') -and
+        $activityText.Contains('reason=hand_only_assist_target') -and
+        $activityText.Contains('controllerProofPreserved=true')
+    ) 'larger invisible hand-only assist colliders make hand-tracked presses easier without expanding controller-contact proof'
     Add-Check 'controller direction questionnaire handler' ($activityText.Contains('handleControllerDirection') -and $activityText.Contains('BRB_CONTROLLER_DIRECTION') -and $activityText.Contains('KEYCODE_DPAD_LEFT') -and $activityText.Contains('KEYCODE_DPAD_RIGHT') -and $activityText.Contains('KEYCODE_DPAD_UP') -and $activityText.Contains('KEYCODE_DPAD_DOWN')) 'up/down/left/right questionnaire command route'
     Add-Check 'controller enter questionnaire submit handler' ($activityText.Contains('submitCurrentControllerStage') -and $activityText.Contains('KEYCODE_DPAD_CENTER') -and $activityText.Contains('KEYCODE_ENTER') -and $activityText.Contains('KEYCODE_BUTTON_A') -and $activityText.Contains('BRB_CONTROLLER_SUBMIT_REPLAY') -and $activityText.Contains('direction=enter')) 'enter/A button submit route is logged in fast replay evidence'
     Add-Check 'fast validation skips full audio wait' ($activityText.Contains('FAST_CONDITION_AUDIO_SHORTCUT_MS') -and $activityText.Contains('BRB_FAST_CONDITION_AUDIO_SHORTCUT')) 'fast controller flow reads MP3 duration but shortcuts wait'
@@ -1160,29 +1441,105 @@ if (Test-Path $activity) {
     Add-Check 'participant-facing rating instructions' ($activityText.Contains('where 0 means not at all and 6 means very much')) 'neutral response-set instruction'
     if (Test-Path $localizedAudioManifest) {
         $localizedAudioManifestText = Get-Content -Raw -LiteralPath $localizedAudioManifest
+        $localizedAudioManifestJson = $localizedAudioManifestText | ConvertFrom-Json
+        $handednessManifestEntry = $localizedAudioManifestJson.assets | Where-Object { $_.audioId -eq 'aud_0190' } | Select-Object -First 1
+        $ipqHistoryPart1ManifestEntry = $localizedAudioManifestJson.assets | Where-Object { $_.audioId -eq 'aud_0320' } | Select-Object -First 1
+        $ipqHistoryPart2ManifestEntry = $localizedAudioManifestJson.assets | Where-Object { $_.audioId -eq 'aud_0330' } | Select-Object -First 1
+        Add-Check 'handedness narration localized audio manifest entry' (
+            $handednessManifestEntry.stage -eq 'consent_demographics' -and
+            $handednessManifestEntry.role -eq 'handedness_controller_selection_narration' -and
+            $handednessManifestEntry.runtimeCue -eq 'playHandednessNarrationBlocking(trigger=handedness_choice)' -and
+            $handednessManifestEntry.tailSilenceMs -eq 1000 -and
+            $handednessManifestEntry.locales.'en-US'.path -eq 'en_us/aud_0190_handedness_controller_selection__en_us.mp3' -and
+            $handednessManifestEntry.locales.'ja-JP'.path -eq 'ja_jp/aud_0190_handedness_controller_selection__ja_jp.mp3' -and
+            $handednessManifestEntry.locales.'de-DE'.path -eq 'de_de/aud_0190_handedness_controller_selection__de_de.mp3' -and
+            $handednessManifestEntry.locales.'en-US'.durationMs -eq 59533 -and
+            $handednessManifestEntry.locales.'ja-JP'.durationMs -eq 73744 -and
+            $handednessManifestEntry.locales.'de-DE'.durationMs -eq 66011
+        ) 'localized manifest registers the English/Japanese/German aud_0190 handedness narration cue and blocking runtime hook'
         Add-Check 'IPQ history localized audio manifest entries' (
-            $localizedAudioManifestText.Contains('"audioId":  "aud_0320"') -and
-            $localizedAudioManifestText.Contains('"audioId":  "aud_0330"') -and
-            $localizedAudioManifestText.Contains('"role":  "ipq_history_condition_1_intro"') -and
-            $localizedAudioManifestText.Contains('"role":  "ipq_history_condition_2_intro"') -and
-            $localizedAudioManifestText.Contains('"translationPolicy":  "science_nerd_sarcasm_no_psychometric_spoilers"') -and
-            $localizedAudioManifestText.Contains('"tailSilenceMs":  1000') -and
-            $localizedAudioManifestText.Contains('"path":  "en_us/aud_0320_ipq_history_part1__en_us.mp3"') -and
-            $localizedAudioManifestText.Contains('"path":  "ja_jp/aud_0320_ipq_history_part1__ja_jp.mp3"') -and
-            $localizedAudioManifestText.Contains('"path":  "en_us/aud_0330_ipq_history_part2__en_us.mp3"') -and
-            $localizedAudioManifestText.Contains('"path":  "ja_jp/aud_0330_ipq_history_part2__ja_jp.mp3"')
-        ) 'localized manifest registers the English/Japanese IPQ history narration clips and policy'
+            $ipqHistoryPart1ManifestEntry.role -eq 'ipq_history_condition_1_intro' -and
+            $ipqHistoryPart2ManifestEntry.role -eq 'ipq_history_condition_2_intro' -and
+            $ipqHistoryPart1ManifestEntry.translationPolicy -eq 'science_nerd_sarcasm_no_psychometric_spoilers' -and
+            $ipqHistoryPart2ManifestEntry.translationPolicy -eq 'science_nerd_sarcasm_no_psychometric_spoilers' -and
+            $ipqHistoryPart1ManifestEntry.tailSilenceMs -eq 1000 -and
+            $ipqHistoryPart2ManifestEntry.tailSilenceMs -eq 1000 -and
+            $ipqHistoryPart1ManifestEntry.locales.'en-US'.path -eq 'en_us/aud_0320_ipq_history_part1__en_us.mp3' -and
+            $ipqHistoryPart1ManifestEntry.locales.'ja-JP'.path -eq 'ja_jp/aud_0320_ipq_history_part1__ja_jp.mp3' -and
+            $ipqHistoryPart1ManifestEntry.locales.'de-DE'.path -eq 'de_de/aud_0320_ipq_history_part1__de_de.mp3' -and
+            $ipqHistoryPart2ManifestEntry.locales.'en-US'.path -eq 'en_us/aud_0330_ipq_history_part2__en_us.mp3' -and
+            $ipqHistoryPart2ManifestEntry.locales.'ja-JP'.path -eq 'ja_jp/aud_0330_ipq_history_part2__ja_jp.mp3' -and
+            $ipqHistoryPart2ManifestEntry.locales.'de-DE'.path -eq 'de_de/aud_0330_ipq_history_part2__de_de.mp3'
+        ) 'localized manifest registers the English/Japanese/German IPQ history narration clips and policy'
+        $spontaneousManifestEntries = @($localizedAudioManifestJson.assets | Where-Object { $_.audioId -like 'aud_07*' })
+        $spontaneousManifestIds = @($spontaneousManifestEntries | Select-Object -ExpandProperty audioId -Unique)
+        $ageManifestEntry = $spontaneousManifestEntries | Where-Object { $_.audioId -eq 'aud_0700' } | Select-Object -First 1
+        $lowManifestEntry = $spontaneousManifestEntries | Where-Object { $_.audioId -eq 'aud_0710' } | Select-Object -First 1
+        $maxManifestEntry = $spontaneousManifestEntries | Where-Object { $_.audioId -eq 'aud_0764' } | Select-Object -First 1
+        Add-Check 'spontaneous questionnaire remarks localized audio manifest entries' (
+            $spontaneousManifestEntries.Count -eq 31 -and
+            $spontaneousManifestIds.Count -eq 31 -and
+            $ageManifestEntry.role -eq 'age_slider_soft_privacy_remark' -and
+            $ageManifestEntry.locales.'en-US'.sha256 -eq '00D3A829522617FE818BED09D32FC90FE9A45E08183368BE6BFEC73DA0C67EB4' -and
+            $ageManifestEntry.locales.'ja-JP'.sha256 -eq 'D8406B1C4157CA47F81917AB99404379C7C3B0FC65A9A213ABCEAA48337EDE2C' -and
+            $ageManifestEntry.locales.'de-DE'.sha256 -eq 'B09279EF80EB0781FAC77728F4859243C5333663DBA40FFBF3A28C56EA40E7B5' -and
+            $lowManifestEntry.role -eq 'vas_spontaneous_low_remark' -and
+            $lowManifestEntry.runtimeCue.Contains('cooldown=random_5_to_10_seconds_after_completion') -and
+            $lowManifestEntry.locales.'en-US'.path -eq 'en_us/aud_0710_vas_low_01__en_us.mp3' -and
+            $lowManifestEntry.locales.'ja-JP'.path -eq 'ja_jp/aud_0710_vas_low_01__ja_jp.mp3' -and
+            $lowManifestEntry.locales.'de-DE'.path -eq 'de_de/aud_0710_vas_low_01__de_de.mp3' -and
+            $maxManifestEntry.role -eq 'vas_spontaneous_max_remark' -and
+            $maxManifestEntry.locales.'en-US'.sha256 -eq '090C5B2BCD55DF822B61B314B445B5EBD27E22DDE9BC47684AE3AE626DBA2DC0' -and
+            $maxManifestEntry.locales.'ja-JP'.sha256 -eq 'F9E431F593917AA0FCE674ACA42BE84550C47F06CC7865F21ABC23441109C004' -and
+            $maxManifestEntry.locales.'de-DE'.sha256 -eq '16D6FB82FDF1C211BB938991566408FD8402C0EA532B132DA0898D9849ADE1C8' -and
+            $spontaneousManifestEntries[0].translationPolicy -eq 'neutral_spontaneous_remark_localized' -and
+            @($spontaneousManifestEntries | Where-Object { $_.tailSilenceMs -eq 1000 }).Count -eq 31
+        ) 'localized manifest registers the age one-shot and 30 randomized VAS spontaneous remarks in all three languages'
     }
     if (Test-Path $audioScriptLookupTable) {
         $audioScriptLookupTableText = Get-Content -Raw -LiteralPath $audioScriptLookupTable
+        $audioScriptLookupRows = Import-Csv -LiteralPath $audioScriptLookupTable
+        Add-Check 'handedness narration audio script lookup rows' (
+            $audioScriptLookupTableText.Contains('"aud_0190","handedness_controller_selection","en-US"') -and
+            $audioScriptLookupTableText.Contains('"aud_0190","handedness_controller_selection","ja-JP"') -and
+            $audioScriptLookupTableText.Contains('"aud_0190","handedness_controller_selection","de-DE"') -and
+            $audioScriptLookupTableText.Contains('BRB_HANDEDNESS_NARRATION_CUE') -and
+            $audioScriptLookupTableText.Contains('06A275FBC70EB28ACE37D9794B02AB103B4DD9EBE54761767988D68A696842D2') -and
+            $audioScriptLookupTableText.Contains('3A615F6E9CE4ADF9367646D8950AE3B5375DF6DB64FC1766D5D18D0218E3E897') -and
+            $audioScriptLookupTableText.Contains('116E08D8F0FDA2C86A408D0CE55D1A07C258D78D3F0B08F0154974F4150B93A7') -and
+            $audioScriptLookupTableText.Contains('The Edinburgh Handedness Inventory')
+        ) 'lookup table contains separate documented rows for the blocking handedness narration in all three languages'
         Add-Check 'IPQ history audio script lookup rows' (
             $audioScriptLookupTableText.Contains('"aud_0320","ipq_history_part1","en-US"') -and
             $audioScriptLookupTableText.Contains('"aud_0320","ipq_history_part1","ja-JP"') -and
+            $audioScriptLookupTableText.Contains('"aud_0320","ipq_history_part1","de-DE"') -and
             $audioScriptLookupTableText.Contains('"aud_0330","ipq_history_part2","en-US"') -and
             $audioScriptLookupTableText.Contains('"aud_0330","ipq_history_part2","ja-JP"') -and
+            $audioScriptLookupTableText.Contains('"aud_0330","ipq_history_part2","de-DE"') -and
             $audioScriptLookupTableText.Contains('science_nerd_sarcasm_no_psychometric_spoilers') -and
             -not $audioScriptLookupTableText.Contains('manifest.json"aud_0320"')
-        ) 'lookup table contains separate documented rows for both IPQ history clips in both languages'
+        ) 'lookup table contains separate documented rows for both IPQ history clips in all three languages'
+        $spontaneousLookupRows = @($audioScriptLookupRows | Where-Object { $_.audio_id -like 'aud_07*' })
+        $spontaneousLookupIds = @($spontaneousLookupRows | Select-Object -ExpandProperty audio_id -Unique)
+        Add-Check 'spontaneous questionnaire remark audio script lookup rows' (
+            $spontaneousLookupRows.Count -eq 93 -and
+            $spontaneousLookupIds.Count -eq 31 -and
+            @($spontaneousLookupRows | Where-Object { $_.audio_id -eq 'aud_0700' -and $_.locale -eq 'en-US' -and $_.role -eq 'age_slider_soft_privacy_remark' }).Count -eq 1 -and
+            @($spontaneousLookupRows | Where-Object { $_.audio_id -eq 'aud_0700' -and $_.locale -eq 'ja-JP' -and $_.role -eq 'age_slider_soft_privacy_remark' }).Count -eq 1 -and
+            @($spontaneousLookupRows | Where-Object { $_.audio_id -eq 'aud_0700' -and $_.locale -eq 'de-DE' -and $_.role -eq 'age_slider_soft_privacy_remark' }).Count -eq 1 -and
+            @($spontaneousLookupRows | Where-Object { $_.audio_id -eq 'aud_0764' -and $_.locale -eq 'en-US' -and $_.role -eq 'vas_spontaneous_max_remark' }).Count -eq 1 -and
+            @($spontaneousLookupRows | Where-Object { $_.audio_id -eq 'aud_0764' -and $_.locale -eq 'ja-JP' -and $_.role -eq 'vas_spontaneous_max_remark' }).Count -eq 1 -and
+            @($spontaneousLookupRows | Where-Object { $_.audio_id -eq 'aud_0764' -and $_.locale -eq 'de-DE' -and $_.role -eq 'vas_spontaneous_max_remark' }).Count -eq 1 -and
+            $audioScriptLookupTableText.Contains('BRB_SPONTANEOUS_REMARK_CUE kind=vas') -and
+            $audioScriptLookupTableText.Contains('BRB_SPONTANEOUS_REMARK_COOLDOWN') -and
+            $audioScriptLookupTableText.Contains('random 5-10 seconds') -and
+            $audioScriptLookupTableText.Contains('Big Red Button will not judge') -and
+            @($spontaneousLookupRows | Where-Object { $_.locale -eq 'en-US' }).Count -eq 31 -and
+            @($spontaneousLookupRows | Where-Object { $_.locale -eq 'ja-JP' }).Count -eq 31 -and
+            @($spontaneousLookupRows | Where-Object { $_.locale -eq 'de-DE' }).Count -eq 31 -and
+            $audioScriptLookupTableText.Contains('assets/localized/ja_jp/aud_0710_vas_low_01__ja_jp.mp3') -and
+            $audioScriptLookupTableText.Contains('assets/localized/de_de/aud_0710_vas_low_01__de_de.mp3')
+        ) 'lookup table contains separate documented rows for all age/VAS spontaneous remarks in English, Japanese, and German'
     }
 }
 
@@ -1240,9 +1597,10 @@ if (Test-Path $physicalValidationScript) {
         $physicalValidationText.Contains('Compare-ExportMirror') -and
         $physicalValidationText.Contains('export-mirror-comparison.json') -and
         $physicalValidationText.Contains('exportMirrorMatched') -and
+        $physicalValidationText.Contains('Get-BrbRecursiveFileRows') -and
         $physicalValidationText.Contains('primarySha256') -and
         $physicalValidationText.Contains('mirrorSha256')
-    ) 'final physical gate compares BigRedButtonFirstStudyExports and ExperimentResults byte-for-byte'
+    ) 'final physical gate compares BigRedButtonFirstStudyExports and ExperimentResults byte-for-byte by recursive relative path'
 }
 Add-Check 'physical press evidence validator script' (Test-Path (Join-Path $projectRoot 'tools\validate-physical-press-evidence.ps1')) 'tools\validate-physical-press-evidence.ps1'
 Add-Check 'physical press evidence validator tests' (Test-Path (Join-Path $projectRoot 'tools\test-physical-press-evidence-validator.ps1')) 'tools\test-physical-press-evidence-validator.ps1'
@@ -1318,6 +1676,38 @@ Add-Check 'export schema validator covers ECG detector and external signal expor
     ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('*_ecg_detector_events.csv')) -and
     ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('*_external_signal_samples.csv'))
 ) 'synthetic and pulled export schema validation includes detector, optional external signal CSVs, and native integration protocol metadata'
+Add-Check 'export schema validator covers press mechanics fields' (
+    (Test-Path $exportSchemaScript) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_prediction_mode')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_impact_velocity_mps')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_lateral_velocity_mps')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_predicted_lateral_at_impact_m')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_trajectory_fit_0_1')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_approach_angle_deg')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_approach_alignment_0_1')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_impact_energy_j')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_spring_compression_m')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_damping_ratio')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_normal_impulse_n_s')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_estimated_peak_force_n')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_estimated_contact_pressure_kpa')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_estimated_contact_patch_area_m2')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_actuation_travel_0_1')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_actuation_delay_ms')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_snap_travel_0_1')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_snap_duration_ms')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('press_mechanics_trigger_evidence')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('hand_predictive_preload_press_count')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('hand_contact_mean_impact_velocity_mps')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('pressMechanics'))
+) 'synthetic and pulled export schema validation requires accepted-press mechanics in JSON, press CSV, and summary CSV'
+Add-Check 'export schema validator covers session-folder layout' (
+    (Test-Path $exportSchemaScript) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('Resolve-BrbExportSession')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('session-manifest.json')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('bigredbutton.session_folder_export.v1')) -and
+    ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('Root session-index.jsonl does not reference selected session folder'))
+) 'synthetic and pulled export schema validation accepts roots/session folders and requires canonical manifest/index metadata'
 Add-Check 'export schema validator covers final end-confirmation branch' (
     (Test-Path $exportSchemaScript) -and
     ((Get-Content -Raw -LiteralPath $exportSchemaScript).Contains('requiredFinalExtraPressColumns')) -and
@@ -1506,18 +1896,22 @@ if (Test-Path $keyeventValidationScript) {
         $keyeventValidationText.Contains('brb.keyeventValidation') -and
         $keyeventValidationText.Contains('ExperimentResults') -and
         $keyeventValidationText.Contains('expected-vs-observed.csv') -and
-        $keyeventValidationText.Contains('brb_first_study_keyevent_final_extra_button_presses.csv') -and
+        $keyeventValidationText.Contains('find $DeviceDir -type f') -and
+        $keyeventValidationText.Contains('Resolve-BrbExportSession') -and
+        $keyeventValidationText.Contains('Get-BrbExportSessionFile') -and
+        $keyeventValidationText.Contains('*_final_extra_button_presses.csv') -and
         $keyeventValidationText.Contains('ecgTimeSeriesCsv') -and
-        $keyeventValidationText.Contains('brb_first_study_keyevent_ecg_detector_events.csv') -and
-        $keyeventValidationText.Contains('brb_first_study_keyevent_external_signal_samples.csv')
-    ) 'fast replay validates SideQuest-readable JSON/CSV data outputs'
+        $keyeventValidationText.Contains('validate-export-schema.ps1') -and
+        $keyeventValidationText.Contains('externalSignalProtocol')
+    ) 'fast replay validates SideQuest-readable JSON/CSV data outputs from canonical session folders'
     Add-Check 'Quest keyevent validation proves export mirror equality' (
         $keyeventValidationText.Contains('Compare-ExportMirror') -and
         $keyeventValidationText.Contains('export-mirror-comparison.json') -and
         $keyeventValidationText.Contains('exportMirrorMatched') -and
+        $keyeventValidationText.Contains('Get-BrbRecursiveFileRows') -and
         $keyeventValidationText.Contains('primarySha256') -and
         $keyeventValidationText.Contains('mirrorSha256')
-    ) 'fast replay checks BigRedButtonFirstStudyExports and ExperimentResults are byte-identical after pull'
+    ) 'fast replay checks BigRedButtonFirstStudyExports and ExperimentResults are byte-identical by recursive relative path after pull'
     Add-Check 'Quest keyevent validation proves native integration protocols' (
         $keyeventValidationText.Contains('BRB_QUESTIONNAIRE_CONTRACT schema=bigredbutton.questionnaire_flow.v1') -and
         $keyeventValidationText.Contains('BRB_AGENT_INTEGRATION_CONTRACT schema=bigredbutton.agent_integration.v1') -and
@@ -1550,6 +1944,15 @@ if (Test-Path $keyeventValidationScript) {
         $keyeventValidationText.Contains('enter submit replay observed') -and
         $keyeventValidationText.Contains('controller submit replay observed')
     ) 'fast replay now fails without app-owned Name keyboard, Age slider, panel-exit hide, and enter-submit markers'
+    Add-Check 'Quest keyevent validation proves VAS spontaneous remark cue cooldown' (
+        $keyeventValidationText.Contains('BRB_SPONTANEOUS_REMARK_CUE kind=vas') -and
+        $keyeventValidationText.Contains('BRB_SPONTANEOUS_REMARK_COOLDOWN kind=vas') -and
+        $keyeventValidationText.Contains('VAS spontaneous remark cue observed') -and
+        $keyeventValidationText.Contains('VAS spontaneous remark cooldown observed') -and
+        $keyeventValidationText.Contains('minMs=5000') -and
+        $keyeventValidationText.Contains('maxMs=10000') -and
+        $keyeventValidationText.Contains('randomized VAS spontaneous remark cue/cooldown evidence')
+    ) 'fast replay now fails unless randomized VAS spontaneous remarks produce a no-overlap cue and a 5-10s cooldown marker'
     Add-Check 'Quest keyevent validation proves prior button experience prompt' (
         $keyeventValidationText.Contains('BRB_PRIOR_BUTTON_EXPERIENCE_SHOWN') -and
         $keyeventValidationText.Contains('prior big-red-button experience JSON answer') -and
@@ -1564,10 +1967,12 @@ if (Test-Path $keyeventValidationScript) {
         $keyeventValidationText.Contains('BRB_SFX_PLAY cue=ipq_history_part1 audioId=aud_0320') -and
         $keyeventValidationText.Contains('BRB_SFX_PLAY cue=ipq_history_part2 audioId=aud_0330') -and
         $keyeventValidationText.Contains('StudyLanguage') -and
+        $keyeventValidationText.Contains('Get-ExpectedStudyLanguageRoute') -and
         $keyeventValidationText.Contains('expectedIpqLocaleSegment') -and
         $keyeventValidationText.Contains('studyLanguageOverride') -and
         $keyeventValidationText.Contains('condition 1 IPQ history narration cue observed') -and
-        $keyeventValidationText.Contains('condition 2 IPQ history narration cue observed')
+        $keyeventValidationText.Contains('condition 2 IPQ history narration cue observed') -and
+        $keyeventValidationText.Contains('condition 2 post-condition questionnaire chain observed')
     ) 'fast replay proves the aud_0320/aud_0330 IPQ narration cue and locale-specific MediaPlayer start markers after each pictographic submit'
     Add-Check 'Quest keyevent validation proves final end-confirmation branch' (
         $keyeventValidationText.Contains('BRB_FINAL_END_CONFIRMATION_SHOWN') -and
@@ -1614,8 +2019,9 @@ if (Test-Path $keyeventValidationScript) {
         $keyeventValidationText.Contains('foreground-after-launch.txt') -and
         $keyeventValidationText.Contains('foreground-after-relaunch.txt') -and
         $keyeventValidationText.Contains('Invoke-Adb shell am force-stop $package') -and
+        $keyeventValidationText.Contains("foregroundPackage -eq 'com.oculus.systemux'") -and
         $keyeventValidationText.Contains('force-stopping it once before relaunching')
-    ) 'fast qkv validation starts from a fresh singleTask activity, then force-stops stale non-Oculus foreground apps and relaunches the study once before waiting for markers'
+    ) 'fast qkv validation starts from a fresh singleTask activity, then force-stops stale non-Oculus foreground apps or the exact com.oculus.systemux blocker and relaunches the study once before waiting for markers'
 }
 $controllerContactSmokeScript = Join-Path $projectRoot 'tools\run-quest-controller-contact-smoke.ps1'
 Add-Check 'Quest controller contact smoke script' (Test-Path $controllerContactSmokeScript) 'tools\run-quest-controller-contact-smoke.ps1'
@@ -1693,6 +2099,9 @@ if (Test-Path $finalOperatorHandoffScript) {
     Add-Check 'final hardware operator handoff aggregates current audit chain' (
         $finalOperatorHandoffText.Contains('write-readiness-report.ps1') -and
         $finalOperatorHandoffText.Contains('write-goal-completion-audit.ps1') -and
+        $finalOperatorHandoffText.Contains('$readinessExitCode = $LASTEXITCODE') -and
+        $finalOperatorHandoffText.Contains('produced a readiness JSON for operator handoff') -and
+        $finalOperatorHandoffText.Contains('no fresh readiness-report.json was found') -and
         $finalOperatorHandoffText.Contains('final_hardware_postrun_audit_chain') -and
         $finalOperatorHandoffText.Contains('apkHashMatchesReadinessAndGoalAudit') -and
         $finalOperatorHandoffText.Contains('goalAuditBoundToSelectedReadiness') -and
@@ -1741,6 +2150,27 @@ if (Test-Path $finalHardwarePostRunAuditValidatorTestScript) {
 }
 Add-Check 'Quest panel glitch smoke script' (Test-Path (Join-Path $projectRoot 'tools\run-quest-panel-smoke.ps1')) 'tools\run-quest-panel-smoke.ps1'
 Add-Check 'Quest visual layout smoke script' (Test-Path (Join-Path $projectRoot 'tools\run-quest-visual-layout-smoke.ps1')) 'tools\run-quest-visual-layout-smoke.ps1'
+$buttonSurfaceBlinkRendererPath = Join-Path $projectRoot 'tools\render-button-surface-blink-proof.ps1'
+Add-Check 'button surface/blink proof renderer script' (Test-Path $buttonSurfaceBlinkRendererPath) 'tools\render-button-surface-blink-proof.ps1'
+if (Test-Path $buttonSurfaceBlinkRendererPath) {
+    $buttonSurfaceBlinkRendererText = Get-Content -Raw -LiteralPath $buttonSurfaceBlinkRendererPath
+    Add-Check 'button surface/blink proof renderer covers table placement and ECG assignment' (
+        $buttonSurfaceBlinkRendererText.Contains('System.Drawing') -and
+        $buttonSurfaceBlinkRendererText.Contains('button-surface-placement-proof.png') -and
+        $buttonSurfaceBlinkRendererText.Contains('ecg-blink-assignment-proof.png') -and
+        $buttonSurfaceBlinkRendererText.Contains('render-validation-summary.json') -and
+        $buttonSurfaceBlinkRendererText.Contains('scoreButtonSupportSurfaceCandidate') -and
+        $buttonSurfaceBlinkRendererText.Contains('tableAccepted') -and
+        $buttonSurfaceBlinkRendererText.Contains('tablePreferred') -and
+        $buttonSurfaceBlinkRendererText.Contains('floorRejected') -and
+        $buttonSurfaceBlinkRendererText.Contains('wallRejected') -and
+        $buttonSurfaceBlinkRendererText.Contains('outOfReachRejected') -and
+        $buttonSurfaceBlinkRendererText.Contains('qkvEvidenceRequired = $true') -and
+        $buttonSurfaceBlinkRendererText.Contains('BRB_ECG_BLINK_IGNORED') -and
+        $buttonSurfaceBlinkRendererText.Contains('simulatedHeartbeatFlashObserved') -and
+        $buttonSurfaceBlinkRendererText.Contains('badBlinkRows -eq 0')
+    ) 'bitmap renderer produces visual proof plus JSON checks for table support selection, source-gated ECG blink assignment, qkv export evidence, and pixel content'
+}
 Add-Check 'Quest button press animation stress script' (
     (Test-Path (Join-Path $projectRoot 'tools\run-quest-button-press-animation-stress.ps1')) -and
     ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-button-press-animation-stress.ps1')).Contains('button_press_animation_stress')) -and
@@ -1749,6 +2179,91 @@ Add-Check 'Quest button press animation stress script' (
     ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-button-press-animation-stress.ps1')).Contains('validationAutomation=true')) -and
     ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-button-press-animation-stress.ps1')).Contains('quest-button-press-animation-stress-summary.json'))
 ) 'on-device hidden stress verifies rapid accepted presses defer GLB visual replay without proving human controller contact'
+Add-Check 'Quest hand contact physics smoke script' (
+    (Test-Path (Join-Path $projectRoot 'tools\run-quest-hand-contact-physics-smoke.ps1')) -and
+    ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-hand-contact-physics-smoke.ps1')).Contains('BRB_BUTTON_HAND_IMPACT_PREDICTED')) -and
+    ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-hand-contact-physics-smoke.ps1')).Contains('BRB_BUTTON_HAND_CONTACT_SELECT accepted=true')) -and
+    ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-hand-contact-physics-smoke.ps1')).Contains('BRB_BUTTON_PRESS_MECHANICS')) -and
+    ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-hand-contact-physics-smoke.ps1')).Contains('handContactPresses')) -and
+    ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-hand-contact-physics-smoke.ps1')).Contains('validate-hand-contact-physics-evidence.ps1')) -and
+    ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-hand-contact-physics-smoke.ps1')).Contains('analyze-hand-contact-press-mechanics.ps1')) -and
+    ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-hand-contact-physics-smoke.ps1')).Contains('pressMechanicsAnalysisPath')) -and
+    ((Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-hand-contact-physics-smoke.ps1')).Contains('supplemental'))
+) 'on-device human hand-contact smoke checks predictive preload plus accepted hand_contact mechanics and export analysis without replacing controller proof'
+$handContactPhysicsEvidenceValidatorPath = Join-Path $projectRoot 'tools\validate-hand-contact-physics-evidence.ps1'
+$handContactPhysicsEvidenceValidatorTestPath = Join-Path $projectRoot 'tools\test-hand-contact-physics-evidence-validator.ps1'
+$handContactPhysicsEvidenceValidatorText = if (Test-Path $handContactPhysicsEvidenceValidatorPath) { Get-Content -Raw -LiteralPath $handContactPhysicsEvidenceValidatorPath } else { '' }
+$handContactPhysicsEvidenceValidatorTestText = if (Test-Path $handContactPhysicsEvidenceValidatorTestPath) { Get-Content -Raw -LiteralPath $handContactPhysicsEvidenceValidatorTestPath } else { '' }
+Add-Check 'hand contact physics evidence validator' (
+    (Test-Path $handContactPhysicsEvidenceValidatorPath) -and
+    (Test-Path $handContactPhysicsEvidenceValidatorTestPath) -and
+    $handContactPhysicsEvidenceValidatorText.Contains('BRB_BUTTON_HAND_IMPACT_PREDICTED') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('predictivePreload=true') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('counted=false') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('sound=false') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('BRB_BUTTON_HAND_CONTACT_SELECT accepted=true') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('BRB_BUTTON_PRESS condition=\d+ index=\d+ source=hand_contact') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('BRB_BUTTON_PRESS_MECHANICS') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('RequireExportEvidence') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_lateral_velocity_mps') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_predicted_lateral_at_impact_m') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_trajectory_fit_0_1') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_approach_angle_deg') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_approach_alignment_0_1') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_impact_energy_j') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_spring_compression_m') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_damping_ratio') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_normal_impulse_n_s') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_estimated_peak_force_n') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_estimated_contact_pressure_kpa') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_estimated_contact_patch_area_m2') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_actuation_travel_0_1') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_actuation_delay_ms') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_snap_travel_0_1') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_snap_duration_ms') -and
+    $handContactPhysicsEvidenceValidatorText.Contains('press_mechanics_trigger_evidence') -and
+    $handContactPhysicsEvidenceValidatorTestText.Contains('valid-log-and-export') -and
+    $handContactPhysicsEvidenceValidatorTestText.Contains('missing-preload') -and
+    $handContactPhysicsEvidenceValidatorTestText.Contains('preload-counted-true') -and
+    $handContactPhysicsEvidenceValidatorTestText.Contains('export-trigger-not-hand')
+) 'local validator and behavioral tests prove hand-contact smoke evidence requires visual-only preload, accepted hand_contact, mechanics logs, and optional export mechanics'
+$handContactPressMechanicsAnalysisPath = Join-Path $projectRoot 'tools\analyze-hand-contact-press-mechanics.ps1'
+$handContactPressMechanicsAnalysisTestPath = Join-Path $projectRoot 'tools\test-hand-contact-press-mechanics-analysis.ps1'
+$handContactPressMechanicsAnalysisText = if (Test-Path $handContactPressMechanicsAnalysisPath) { Get-Content -Raw -LiteralPath $handContactPressMechanicsAnalysisPath } else { '' }
+$handContactPressMechanicsAnalysisTestText = if (Test-Path $handContactPressMechanicsAnalysisTestPath) { Get-Content -Raw -LiteralPath $handContactPressMechanicsAnalysisTestPath } else { '' }
+Add-Check 'hand contact press mechanics analysis tool' (
+    (Test-Path $handContactPressMechanicsAnalysisPath) -and
+    (Test-Path $handContactPressMechanicsAnalysisTestPath) -and
+    $handContactPressMechanicsAnalysisText.Contains('Resolve-BrbExportSession') -and
+    $handContactPressMechanicsAnalysisText.Contains('publicationMetrics') -and
+    $handContactPressMechanicsAnalysisText.Contains('preloadUseRateAmongHandContact') -and
+    $handContactPressMechanicsAnalysisText.Contains('impactVelocityMps') -and
+    $handContactPressMechanicsAnalysisText.Contains('estimatedPeakForceN') -and
+    $handContactPressMechanicsAnalysisText.Contains('estimatedContactPressureKpa') -and
+    $handContactPressMechanicsAnalysisText.Contains('RequireHandContact') -and
+    $handContactPressMechanicsAnalysisTestText.Contains('mixed-export') -and
+    $handContactPressMechanicsAnalysisTestText.Contains('IncludeAutomation') -and
+    $handContactPressMechanicsAnalysisTestText.Contains('controller-only-export')
+) 'local analyzer converts pulled pressMechanics exports into publication-ready descriptive summaries and CSV rows'
+$handPhysicsCataloguePath = Join-Path $projectRoot 'For-AI\hand-tracking-button-press-physics-model.tex'
+$handPhysicsCatalogueText = if (Test-Path $handPhysicsCataloguePath) { Get-Content -Raw -LiteralPath $handPhysicsCataloguePath } else { '' }
+Add-Check 'hand tracking button physics research catalogue' (
+    (Test-Path $handPhysicsCataloguePath) -and
+    $handPhysicsCatalogueText.Contains('visual preload only') -and
+    $handPhysicsCatalogueText.Contains('controller\_contact') -and
+    $handPhysicsCatalogueText.Contains('Consensus MCP') -and
+    $handPhysicsCatalogueText.Contains('Manuscript Hypotheses And Claim Boundaries') -and
+    $handPhysicsCatalogueText.Contains('H1: Continuity') -and
+    $handPhysicsCatalogueText.Contains('H4: Safety of prediction') -and
+    $handPhysicsCatalogueText.Contains('\bibitem{kim2013virtualbutton}') -and
+    $handPhysicsCatalogueText.Contains('\bibitem{liao2020fdvv}') -and
+    $handPhysicsCatalogueText.Contains('\bibitem{kim2018impact}') -and
+    $handPhysicsCatalogueText.Contains('\bibitem{oulasvirta2018neuromechanics}') -and
+    $handPhysicsCatalogueText.Contains('\bibitem{kim2022pseudobutton}') -and
+    $handPhysicsCatalogueText.Contains('\bibitem{salvato2022prediction}') -and
+    $handPhysicsCatalogueText.Contains('\bibitem{diluca2019simultaneity}') -and
+    $handPhysicsCatalogueText.Contains('\bibitem{meta2026isdk}')
+) 'For-AI TeX catalogue records the implementation model, literature basis, and Consensus access gate'
 if (Test-Path (Join-Path $projectRoot 'tools\run-quest-visual-layout-smoke.ps1')) {
     $visualLayoutSmokeText = Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'tools\run-quest-visual-layout-smoke.ps1')
     Add-Check 'Quest visual layout smoke preserves logcat fallback evidence' (
@@ -1786,6 +2301,26 @@ Add-Check 'pictographic button thumbnail generator' (Test-Path (Join-Path $proje
 Add-Check 'retired panel chime generator retained' (Test-Path (Join-Path $projectRoot 'tools\create-retro-startup-chime.ps1')) 'legacy helper kept for provenance; active panel transitions use supplied intro/outro glitch MP3s'
 Add-Check 'press sound plan documentation' (Test-Path (Join-Path $projectRoot 'docs\button-press-sound-and-motion.md')) 'docs\button-press-sound-and-motion.md'
 Add-Check 'physical validation operator guide' (Test-Path (Join-Path $projectRoot 'docs\physical-validation-operator-guide.md')) 'docs\physical-validation-operator-guide.md'
+$handContactOperatorGuidePath = Join-Path $projectRoot 'docs\hand-contact-physics-operator-guide.md'
+$handContactOperatorHandoffPath = Join-Path $projectRoot 'tools\write-hand-contact-physics-operator-handoff.ps1'
+$handContactOperatorGuideText = if (Test-Path $handContactOperatorGuidePath) { Get-Content -Raw -LiteralPath $handContactOperatorGuidePath } else { '' }
+$handContactOperatorHandoffText = if (Test-Path $handContactOperatorHandoffPath) { Get-Content -Raw -LiteralPath $handContactOperatorHandoffPath } else { '' }
+Add-Check 'hand contact physics operator guide and handoff' (
+    (Test-Path $handContactOperatorGuidePath) -and
+    (Test-Path $handContactOperatorHandoffPath) -and
+    $handContactOperatorGuideText.Contains('run-quest-hand-contact-physics-smoke.ps1') -and
+    $handContactOperatorGuideText.Contains('validate-hand-contact-physics-evidence.ps1') -and
+    $handContactOperatorGuideText.Contains('predictivePreload=true counted=false sound=false') -and
+    $handContactOperatorGuideText.Contains('does not replace') -and
+    $handContactOperatorHandoffText.Contains('hand-contact-operator-handoff') -and
+    $handContactOperatorHandoffText.Contains('quickSmokeCommand') -and
+    $handContactOperatorHandoffText.Contains('exportEvidenceCommand') -and
+    $handContactOperatorHandoffText.Contains('latestHandEvidenceValidatorTest') -and
+    $handContactOperatorHandoffText.Contains('latestHandMechanicsAnalysisTest') -and
+    $handContactOperatorHandoffText.Contains('independentAnalysisCommand') -and
+    $handContactOperatorHandoffText.Contains('analyze-hand-contact-press-mechanics.ps1') -and
+    $handContactOperatorHandoffText.Contains('does not satisfy the final controller_contact proof gate')
+) 'hand-contact operator guide and APK-bound handoff preserve supplemental hand-contact evidence and analysis boundaries'
 $newAgentIntegrationAuditPath = Join-Path $projectRoot 'docs\new-agent-integration-audit.md'
 Add-Check 'new-agent integration audit documentation' (
     (Test-Path $newAgentIntegrationAuditPath) -and
@@ -1831,6 +2366,24 @@ if (Test-Path $demographicsKeyboardValidationScript) {
         -not $demographicsKeyboardValidationText.Contains('trigger dial') -and
         -not $demographicsKeyboardValidationText.Contains('AndroidView(EditText)')
     ) 'focused Quest smoke proves app-owned Name keyboard text/Next and Age 0-100 slider contracts, clamp behavior, then exact George Fejer/34 values'
+}
+$demographicsDirectionalKeyboardScript = Join-Path $projectRoot 'tools\run-quest-demographics-directional-keyboard-export-validation.ps1'
+Add-Check 'Quest demographics directional keyboard export validation script' (Test-Path $demographicsDirectionalKeyboardScript) 'tools\run-quest-demographics-directional-keyboard-export-validation.ps1'
+if (Test-Path $demographicsDirectionalKeyboardScript) {
+    $demographicsDirectionalKeyboardText = Get-Content -Raw -LiteralPath $demographicsDirectionalKeyboardScript
+    Add-Check 'Quest demographics directional validation covers handedness narration gate' (
+        $demographicsDirectionalKeyboardText.Contains("Invoke-DemographicsValidationCommand 'select_handedness_right'") -and
+        $demographicsDirectionalKeyboardText.Contains('BRB_HANDEDNESS_NARRATION_CUE') -and
+        $demographicsDirectionalKeyboardText.Contains('cue=handedness_controller_selection audioId=aud_0190') -and
+        $demographicsDirectionalKeyboardText.Contains('BRB_HANDEDNESS_NARRATION_GATE state=clear') -and
+        $demographicsDirectionalKeyboardText.Contains('handedness narration gate cleared before export')
+    ) 'directional Quest demographics/export smoke proves aud_0190 starts, blocks, and clears before demographic submission'
+    Add-Check 'Quest demographics directional validation covers soft age remark cue' (
+        $demographicsDirectionalKeyboardText.Contains('BRB_DEMOGRAPHICS_AGE_SLIDER_DONE source=activity_key_event value=34') -and
+        $demographicsDirectionalKeyboardText.Contains('BRB_SPONTANEOUS_REMARK_CUE kind=age scale=demographics_age value=34 bucket=age') -and
+        $demographicsDirectionalKeyboardText.Contains('audioId=aud_0700') -and
+        $demographicsDirectionalKeyboardText.Contains('soft age privacy remark cue observed')
+    ) 'directional Quest demographics/export smoke proves Age confirmation starts the one-shot aud_0700 soft privacy remark'
 }
 $demographicsKeypressStressScript = Join-Path $projectRoot 'tools\run-quest-demographics-keypress-stress.ps1'
 Add-Check 'Quest demographics keypress stress script' (Test-Path $demographicsKeypressStressScript) 'tools\run-quest-demographics-keypress-stress.ps1'

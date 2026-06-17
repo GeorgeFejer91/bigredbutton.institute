@@ -1,0 +1,41 @@
+{
+  "text": " Oh, kaum ein flüstern vom großen roten Knopf.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 5.0,
+      "text": " Oh, kaum ein flüstern vom großen roten Knopf.",
+      "tokens": [
+        50364,
+        876,
+        11,
+        36443,
+        1343,
+        932,
+        44244,
+        1248,
+        10135,
+        23076,
+        4297,
+        268,
+        10519,
+        21828,
+        13,
+        50614
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.4523312344270594,
+      "compression_ratio": 0.8703703703703703,
+      "no_speech_prob": 0.0036630802787840366
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0710",
+  "clipKey": "vas_low_01",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0710_vas_low_01__de_de.mp3"
+}

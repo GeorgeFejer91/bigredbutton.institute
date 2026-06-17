@@ -1,0 +1,45 @@
+{
+  "text": " Anbeschalten es kleines Herkchen für den großen roten Knopf.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 5.0,
+      "text": " Anbeschalten es kleines Herkchen für den großen roten Knopf.",
+      "tokens": [
+        50364,
+        1107,
+        6446,
+        339,
+        23276,
+        785,
+        9318,
+        1652,
+        3204,
+        74,
+        2470,
+        2959,
+        1441,
+        23076,
+        4297,
+        268,
+        10519,
+        21828,
+        13,
+        50614
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.4710165659586589,
+      "compression_ratio": 0.9841269841269841,
+      "no_speech_prob": 0.008754582144320011
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0711",
+  "clipKey": "vas_low_02",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0711_vas_low_02__de_de.mp3"
+}

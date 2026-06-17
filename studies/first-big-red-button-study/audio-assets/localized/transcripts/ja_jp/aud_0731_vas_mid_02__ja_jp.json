@@ -1,0 +1,9 @@
+{
+    "source":  "approved_script_stub",
+    "language":  "ja",
+    "note":  "Script-backed transcript stub; replace with Whisper transcript if auditory QA is required.",
+    "text":  "ああ、ボタン的に見事な中立です。",
+    "segments":  [
+
+                 ]
+}

@@ -101,7 +101,7 @@ try {
     }
 
     Invoke-PreflightStep 'validate-localized-audio-catalog' {
-        & (Join-Path $PSScriptRoot 'validate-localized-audio.ps1')
+        & (Join-Path $PSScriptRoot 'validate-localized-audio.ps1') -RequireJapaneseAudio -RequireGermanAudio
     }
 
     Invoke-PreflightStep 'validate-export-schema-synthetic' {

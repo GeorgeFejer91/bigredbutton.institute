@@ -21,6 +21,7 @@ Use this protocol when adding participant-facing speech elements to the native Q
    - Model: `eleven_v3`
    - Output format: `mp3_44100_128`
    - Japanese language code: `ja`
+   - German language code: `de` after an ElevenLabs smoke test accepts it
    - English language code: `en`
 3. Put punctuation and pauses directly into the script. Do not rely on a later runtime delay to create performance timing.
 4. Generate into `artifacts/<task-name>/`, then add the 1000 ms tail silence and record duration plus SHA-256.
@@ -32,9 +33,10 @@ For each approved speech element, copy files into the localized library:
 
 - English MP3: `..\audio-assets\localized\en_us\<audio_id>_<clip_key>__en_us.mp3`
 - Japanese MP3: `..\audio-assets\localized\ja_jp\<audio_id>_<clip_key>__ja_jp.mp3`
+- German MP3: `..\audio-assets\localized\de_de\<audio_id>_<clip_key>__de_de.mp3`
 - Script files: `..\audio-assets\localized\transcripts\<locale>\<audio_id>_<clip_key>__<locale>.script.txt`
 - Transcript JSON stubs: same folder with `.json`
-- Japanese back-translation: `..\audio-assets\localized\transcripts\ja_jp\<audio_id>_<clip_key>__ja_jp.backtranslation.txt`
+- Target-locale back-translation: `..\audio-assets\localized\transcripts\<locale>\<audio_id>_<clip_key>__<locale>.backtranslation.txt`
 
 For approved shared non-speech cues, copy files into a categorized shared folder:
 
@@ -48,7 +50,7 @@ Then update `..\audio-assets\localized\manifest.json` with:
 - `audioId`, `stage`, `role`, `participantFacing`, `translationPolicy`, and runtime cue.
 - `tailSilenceMs` when tail padding was added.
 - Per-locale `path`, `scriptPath`, `transcriptPath`, `ttsProvider`, `voiceId`, `modelId`, `languageCode`, `outputFormat`, `durationMs`, `observedDurationMs`, `status`, `sha256`, and `generatedAt`.
-- Japanese `backTranslationPath`.
+- Target-locale `backTranslationPath`.
 - For shared cues, `audioId`, `category`, `role`, `path`, `sha256`, `durationMs`, `participantFacing`, `activeRuntime`, and `translationPolicy`.
 
 Run `tools\update-localized-audio-manifest.ps1` after file promotion so hashes and durations are recalculated from disk.
@@ -64,7 +66,7 @@ Each row should include the runtime hook/log marker, package asset path, library
 For app-routed speech:
 
 - Add explicit Kotlin constants for audio IDs and asset paths.
-- Select English or Japanese by `selectedLanguageState`.
+- Select language by `StudyLanguage` metadata and locale-aware lookup tables. Avoid new binary English/Japanese branches once a third locale exists.
 - Use APK asset playback from `assets/localized/**` and provide an English fallback for missing localized assets.
 - Use shared `raw_*` or `sfx_*` audio IDs for non-speech cues. Keep those paths under `assets/localized/shared/<category>/`.
 - Log a stable marker with `condition`, `cue`, `audioId`, `asset`, `language`, `trigger`, and whether the clip gates participant action.
@@ -76,7 +78,7 @@ For app-routed speech:
 Before claiming the integration is ready:
 
 1. Run `tools\update-localized-audio-manifest.ps1`.
-2. Run `tools\validate-localized-audio.ps1 -RequireJapaneseAudio`.
+2. Run `tools\validate-localized-audio.ps1 -RequireJapaneseAudio -RequireGermanAudio`.
 3. Add or update `tools\validate-study.ps1` checks for new files, hashes, manifest rows, lookup-table rows, and runtime markers.
 4. Run `tools\validate-study.ps1 -SkipBuild`.
 5. Build the APK with `.\gradlew.bat :app:assembleDebug`.

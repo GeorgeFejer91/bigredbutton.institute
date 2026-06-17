@@ -1,0 +1,45 @@
+{
+  "text": " Das sind nicht schüchterne Begrät-Batten-Daten.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 4.24,
+      "text": " Das sind nicht schüchterne Begrät-Batten-Daten.",
+      "tokens": [
+        50364,
+        2846,
+        3290,
+        1979,
+        956,
+        774,
+        339,
+        391,
+        716,
+        879,
+        861,
+        3628,
+        12,
+        33,
+        32733,
+        12,
+        35,
+        7186,
+        13,
+        50576
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.6691420418875558,
+      "compression_ratio": 0.8909090909090909,
+      "no_speech_prob": 0.013933943584561348
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0744",
+  "clipKey": "vas_high_mid_05",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0744_vas_high_mid_05__de_de.mp3"
+}

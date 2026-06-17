@@ -1,0 +1,44 @@
+{
+  "text": " Oh, sehr viel in der Tat, großer Roter Knopf nuttiert.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 6.0,
+      "text": " Oh, sehr viel in der Tat, großer Roter Knopf nuttiert.",
+      "tokens": [
+        50364,
+        876,
+        11,
+        5499,
+        5891,
+        294,
+        1163,
+        19645,
+        11,
+        46220,
+        17681,
+        260,
+        10519,
+        21828,
+        5393,
+        83,
+        4859,
+        13,
+        50664
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.7205802440643311,
+      "compression_ratio": 0.9166666666666666,
+      "no_speech_prob": 0.009336955845355988
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0751",
+  "clipKey": "vas_high_02",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0751_vas_high_02__de_de.mp3"
+}

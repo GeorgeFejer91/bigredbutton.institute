@@ -80,20 +80,25 @@ function Draw-LanguageSelectionPreview {
     $c = New-Canvas
     $g = $c.Graphics
     Draw-Text $g 'Big Red Button Institute' 352 116 18 480 32 $true (Brush 95 103 117)
-    Draw-Text $g 'Choose experiment language' 228 168 31 760 58 $true
-    Draw-Text $g '実験の言語を選んでください' 302 226 28 640 50 $true
-    Draw-Text $g 'This controls participant-facing text and spoken audio. The experiment flow, physical 3D button task, and export contract stay unchanged.' 226 294 17 750 82 $false (Brush 95 103 117)
+    Draw-Text $g 'Choose experiment language' 228 158 31 760 58 $true
+    Draw-Text $g 'Bitte wählen Sie deine Sprache.' 282 215 23 640 40 $true
+    Draw-Text $g '実験の言語を選んでください' 302 254 24 640 44 $true
+    Draw-Text $g 'This controls participant-facing text and spoken audio. The experiment flow, physical 3D button task, and export contract stay unchanged.' 226 312 17 750 82 $false (Brush 95 103 117)
 
-    $englishRect = [Drawing.Rectangle]::new(250, 412, 300, 104)
-    $japaneseRect = [Drawing.Rectangle]::new(630, 412, 300, 104)
+    $englishRect = [Drawing.Rectangle]::new(138, 430, 260, 104)
+    $germanRect = [Drawing.Rectangle]::new(470, 430, 260, 104)
+    $japaneseRect = [Drawing.Rectangle]::new(802, 430, 260, 104)
     $g.FillRectangle((Brush 255 251 244), $englishRect)
     $g.DrawRectangle((Pen 201 193 176 3), $englishRect)
-    Draw-Text $g 'English' 340 446 27 160 46 $true
-    $g.FillRectangle((Brush 223 44 44), $japaneseRect)
-    $g.DrawRectangle((Pen 143 23 23 3), $japaneseRect)
-    Draw-Text $g '日本語' 728 444 28 160 48 $true (Brush 255 255 255)
-    Draw-Text $g 'Controller left/right changes focus; Enter selects language before intake.' 268 570 16 720 34 $false (Brush 95 103 117)
-    Draw-Text $g 'Preview shows Japanese focused state.' 418 612 13 380 24 $false (Brush 95 103 117)
+    Draw-Text $g 'English' 228 464 27 160 46 $true
+    $g.FillRectangle((Brush 223 44 44), $germanRect)
+    $g.DrawRectangle((Pen 143 23 23 3), $germanRect)
+    Draw-Text $g 'Deutsch' 550 464 27 170 46 $true (Brush 255 255 255)
+    $g.FillRectangle((Brush 255 251 244), $japaneseRect)
+    $g.DrawRectangle((Pen 201 193 176 3), $japaneseRect)
+    Draw-Text $g '日本語' 890 462 28 160 48 $true
+    Draw-Text $g 'Controller left/right changes focus; Enter selects language before intake.' 268 584 16 720 34 $false (Brush 95 103 117)
+    Draw-Text $g 'Preview shows German focused state.' 428 626 13 360 24 $false (Brush 95 103 117)
     return Save-Canvas $c 'language-selection-preview.png'
 }
 
@@ -545,16 +550,21 @@ function Draw-DemographicsAppOwnedKeyboardPreview {
     $g.DrawRectangle((Pen 143 23 23 3), $kbX, $kbY, $kbW, $kbH)
     Draw-Text $g 'keyboard_panel' ($kbX + 16) ($kbY + 12) 15 260 24 $true (Brush 143 23 23)
     Draw-Text $g 'left_of_questionnaire_near_user' ($kbX + 16) ($kbY + 38) 10 300 20 $false (Brush 95 103 117)
-    $g.FillRectangle((Brush 255 255 255 235), ($kbX + 16), ($kbY + 66), ($kbW - 32), 38)
-    $g.DrawRectangle((Pen 201 193 176 2), ($kbX + 16), ($kbY + 66), ($kbW - 32), 38)
-    Draw-Text $g 'George Fejer|' ($kbX + 28) ($kbY + 74) 13 280 24 $false (Brush 26 30 40)
+    $g.FillRectangle((Brush 255 255 255 168), ($kbX + 16), ($kbY + 66), ($kbW - 32), 24)
+    $g.DrawRectangle((Pen 201 193 176 2), ($kbX + 16), ($kbY + 66), ($kbW - 32), 24)
+    foreach ($offset in @(73, 78, 83)) {
+        $g.DrawLine((Pen 95 103 117 2 210), ($kbX + 122), ($kbY + $offset), ($kbX + 258), ($kbY + $offset))
+    }
+    $g.FillRectangle((Brush 255 255 255 235), ($kbX + 16), ($kbY + 104), ($kbW - 32), 38)
+    $g.DrawRectangle((Pen 201 193 176 2), ($kbX + 16), ($kbY + 104), ($kbW - 32), 38)
+    Draw-Text $g 'George Fejer|' ($kbX + 28) ($kbY + 112) 13 280 24 $false (Brush 26 30 40)
 
     $rows = @(
         @('Q','W','E','R','T','Y','U','I','O','P'),
         @('A','S','D','F','G','H','J','K','L'),
         @('Z','X','C','V','B','N','M')
     )
-    $keyY = $kbY + 126
+    $keyY = $kbY + 164
     foreach ($row in $rows) {
         $rowWidth = ($row.Count * 26) + (($row.Count - 1) * 6)
         $keyX = $kbX + [int](($kbW - $rowWidth) / 2)
@@ -567,7 +577,7 @@ function Draw-DemographicsAppOwnedKeyboardPreview {
         $keyY += 42
     }
 
-    $controlY = $kbY + 292
+    $controlY = $kbY + 330
     $controls = @(
         @{ Label = 'Clear'; W = 58; Selected = $false },
         @{ Label = 'Space'; W = 118; Selected = $false },
@@ -589,7 +599,7 @@ function Draw-DemographicsAppOwnedKeyboardPreview {
         $keyX += $control.W + 8
     }
 
-    Draw-Text $g 'Separate spatial keyboard_panel: headset-centered radial left, faces user, nonObstructing=true, fovVisible=true.' 58 656 13 1040 22 $true (Brush 143 23 23)
+    Draw-Text $g 'Separate spatial keyboard_panel: headset-centered radial left, faces user, controller-beam movable, nonObstructing=true, fovVisible=true.' 58 656 13 1040 22 $true (Brush 143 23 23)
     Draw-Text $g 'Validated by static, direct raw keyevent, D-pad-only export, focused smoke, stress, and qkv.' 58 684 12 1000 18 $false (Brush 95 103 117)
     return Save-Canvas $c 'demographics-app-owned-keyboard-preview.png'
 }

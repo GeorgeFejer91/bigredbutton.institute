@@ -10,7 +10,7 @@ The 3D button should face the participant as a seated, within-reach press target
 
 The final participant interaction must recreate the original controller-based Big Red Button behavior from the Unity reference: participants physically press the 3D button with a Quest controller. Do not replace this with gaze selection, Android taps, keyboard input, a flat visible 2D button, or app-triggered automation. Invisible helper colliders or panels are acceptable only when they are aligned to the 3D model and driven by controller contact.
 
-Hand-tracked pressing is now supported as an additional usability path for participants who press without the controller, but it must remain provenance-separated as `hand_contact`. It is not a substitute for the final controller-contact validation gate unless the study protocol is intentionally changed.
+Hand-tracked pressing is now supported as an additional usability path for participants who press without the controller, but it must remain provenance-separated as `hand_contact`. It is not a substitute for the final controller-contact validation gate unless the study protocol is intentionally changed. Hand tracking may visually preload button compression from stable approach velocity, time-to-impact estimates, and lateral trajectory convergence toward the cap, but prediction alone must never count a press, play the press sound, or satisfy final proof.
 
 Button press feedback currently plays a temporary CC0 placeholder sound on accepted presses and shows an old digital red press counter above the modeled button. Future final press-sound feedback should make the button movement trajectory match the selected button sound's audio characteristics. The final sound must be treated as a study stimulus, hash-locked, and validated before use in data collection.
 
@@ -47,6 +47,7 @@ One button/audio condition should be driven by actual Polar H10 RR events plus r
 - condition 1 and 2 press-event timing details
 - condition 1 and 2 press input provenance, sufficient to distinguish real controller-contact presses from validation automation
 - condition 1 and 2 hand-contact press counts, logged separately from controller-contact counts
+- condition 1 and 2 hand-contact mechanics fields for publication analysis: prediction mode, impact velocity, time-to-impact estimate, preload lead time, confidence, lateral velocity, predicted lateral-at-impact, trajectory fit, approach angle, approach alignment, impact energy, virtual spring compression, damping ratio, estimated normal impulse, estimated peak force, estimated contact pressure, assumed contact patch area, compression peak, actuation travel/delay, snap-through travel/duration, bottom-out timing, release timing, visual-start offset, and trigger evidence
 - condition 1 and 2 felt closeness
 - condition 1 and 2 self-button distance units
 - condition 1 and 2 felt button presence
@@ -65,6 +66,7 @@ Finish only when the standalone APK builds and the strongest available validatio
 - passthrough/MR launch path
 - 3D model Big Red Button placement, including the human-facing seated visual-angle contract
 - controller-based physical pressing of the 3D button, with accepted press counts matching logs and exports
+- hand-tracking press feel support that uses predictive visual preload only for visual continuity, with accepted `hand_contact` rows requiring contact/crossing evidence and remaining supplemental to controller-contact proof
 - one press-sound trigger per accepted button press; when the final sound replaces the placeholder, button cap motion should align to the sound's main transient/envelope
 - PMD-aware Polar H10 validity status, where the first-menu green check requires HR/RR plus raw PMD ECG samples streaming at 130 Hz; real Polar physiology recorded in both conditions; counterbalanced real-vs-sham feedback assignment; and heartbeat-driven button blinking
 - Polar PMD raw ECG capture/export at 130 Hz, with exported millisecond and nanosecond capture-window durations matching each instruction-audio duration

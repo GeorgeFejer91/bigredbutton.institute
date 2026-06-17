@@ -55,11 +55,11 @@ Add-Check 'press motion timing constants' (
 Add-Check 'accepted press keeps count and sound immediate' (
     [regex]::IsMatch(
         $activityText,
-        'run\.pressEvents\.add\(event\)(?s:.*?)buttonPressCountState\.intValue = run\.pressEvents\.size(?s:.*?)BRB_BUTTON_PRESS(?s:.*?)playButtonPressedAnimation\(\)(?s:.*?)playButtonPressCue\(\)(?s:.*?)nextAllowedPressRealtimeMs = nowRealtimeMs \+ BUTTON_PRESS_COOLDOWN_MS'
+        'run\.pressEvents\.add\(event\)(?s:.*?)buttonPressCountState\.intValue = run\.pressEvents\.size(?s:.*?)BRB_BUTTON_PRESS(?s:.*?)playButtonPressedAnimation\(event\.pressMechanics\)(?s:.*?)playButtonPressCue\(\)(?s:.*?)nextAllowedPressRealtimeMs = nowRealtimeMs \+ BUTTON_PRESS_COOLDOWN_MS'
     ) -and
     [regex]::IsMatch(
         $activityText,
-        'finalExtraPressEvents\.add\(event\)(?s:.*?)buttonPressCountState\.intValue = finalExtraPressEvents\.size(?s:.*?)BRB_FINAL_EXTRA_BUTTON_PRESS(?s:.*?)playButtonPressedAnimation\(\)(?s:.*?)playButtonPressCue\(\)(?s:.*?)nextAllowedPressRealtimeMs = nowRealtimeMs \+ BUTTON_PRESS_COOLDOWN_MS'
+        'finalExtraPressEvents\.add\(event\)(?s:.*?)buttonPressCountState\.intValue = finalExtraPressEvents\.size(?s:.*?)BRB_FINAL_EXTRA_BUTTON_PRESS(?s:.*?)playButtonPressedAnimation\(pressMechanics\)(?s:.*?)playButtonPressCue\(\)(?s:.*?)nextAllowedPressRealtimeMs = nowRealtimeMs \+ BUTTON_PRESS_COOLDOWN_MS'
     )
 ) 'visual restart guard does not delay accepted press accounting or press sound playback'
 
@@ -92,6 +92,52 @@ Add-Check 'press animation uses stable visible model' (
     -not $activityText.Contains('BRB_BUTTON_GLOW_MODEL_VARIANTS_READY') -and
     -not $activityText.Contains('modelGlow=glb_material_variant_swap')
 ) 'press motion targets the stable idle GLB while heartbeat glow stays light-only'
+
+Add-Check 'hand preload mechanics are visual-only until accepted contact' (
+    $activityText.Contains('ButtonPressPhysicsModel') -and
+    $activityText.Contains('buttonHandMotionSamples') -and
+    $activityText.Contains('BRB_BUTTON_HAND_IMPACT_PREDICTED') -and
+    $activityText.Contains('BRB_BUTTON_HAND_PRELOAD_RELEASE') -and
+    $activityText.Contains('trajectoryFit=') -and
+    $activityText.Contains('predictivePreload=true counted=false sound=false') -and
+    $activityText.Contains('counted=false sound=false') -and
+    $activityText.Contains('BUTTON_HAND_PRELOAD_RELEASE_DURATION_MS') -and
+    $activityText.Contains('setButtonPreloadAnimationComponent') -and
+    $activityText.Contains('shouldPreloadVisual') -and
+    $activityText.Contains('recordButtonPress(PRESS_SOURCE_HAND_CONTACT, pressMechanics)')
+) 'stable hand approach may visually preload and release visually if aborted, but accepted hand_contact still flows through contact-backed recordButtonPress'
+
+Add-Check 'press mechanics drive animation profile and phase logs' (
+    $activityText.Contains('BRB_BUTTON_PRESS_MECHANICS') -and
+    $activityText.Contains('BRB_BUTTON_PRESS_MECHANICS_PHASE') -and
+    $activityText.Contains('"physics_grounded_preload"') -and
+    $activityText.Contains('motionProfile=$motionProfile') -and
+    $activityText.Contains('visualStartOffsetMs') -and
+    $activityText.Contains('trajectoryFit') -and
+    $activityText.Contains('approachAngleDeg') -and
+    $activityText.Contains('approachAlignment') -and
+    $activityText.Contains('impactEnergyJ') -and
+    $activityText.Contains('springCompressionM') -and
+    $activityText.Contains('dampingRatio') -and
+    $activityText.Contains('normalImpulseNewtonSeconds') -and
+    $activityText.Contains('estimatedPeakForceN') -and
+    $activityText.Contains('estimatedContactPressureKPa') -and
+    $activityText.Contains('compressionPeak') -and
+    $activityText.Contains('actuationTravel') -and
+    $activityText.Contains('actuationDelayMs') -and
+    $activityText.Contains('snapTravel') -and
+    $activityText.Contains('snapDurationMs') -and
+    $activityText.Contains('phase=actuation') -and
+    $activityText.Contains('bottomOutDelayMs')
+) 'accepted press animation carries impact velocity, compression, bottom-out, and release mechanics into logs'
+
+Add-Check 'button press cue is preloaded through SoundPool' (
+    $activityText.Contains('SoundPool.Builder()') -and
+    $activityText.Contains('BRB_SFX_PRELOAD cue=button_press') -and
+    $activityText.Contains('CONTENT_TYPE_SONIFICATION') -and
+    $activityText.Contains('backend=sound_pool') -and
+    $activityText.Contains('fallback=media_player')
+) 'accepted press sound keeps the same asset but uses a low-latency preloaded path when available'
 
 Add-Check 'pending press motion resets when button hides' (
     $activityText.Contains('resetButtonPressMotionState("button_hidden")') -and

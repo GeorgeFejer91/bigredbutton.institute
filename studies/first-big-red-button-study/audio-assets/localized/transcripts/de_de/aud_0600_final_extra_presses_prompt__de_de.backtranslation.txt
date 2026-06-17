@@ -1,0 +1,1 @@
+The non-decimal answer is treated as a big red yes to continue pressing; end after 1000 more presses.

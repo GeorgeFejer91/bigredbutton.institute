@@ -46,7 +46,8 @@ foreach ($asset in @(Get-JsonPropertyValue $manifest 'assets')) {
     $durationMatchRequired = [bool](Get-JsonPropertyValue $asset 'durationMatchRequired')
     $locales = Get-JsonPropertyValue $asset 'locales'
 
-    foreach ($localeName in @('en-US', 'ja-JP')) {
+    $manifestLocales = @(Get-JsonPropertyValue $manifest 'locales')
+    foreach ($localeName in $manifestLocales) {
         $locale = Get-JsonPropertyValue $locales $localeName
         if ($null -eq $locale) { continue }
 
@@ -60,20 +61,27 @@ foreach ($asset in @(Get-JsonPropertyValue $manifest 'assets')) {
         $durationMs = Get-AudioDurationMs $fullPath
         Set-JsonPropertyValue $locale 'durationMs' $durationMs
 
-        if ($localeName -eq 'ja-JP') {
+        if ($localeName -ne 'en-US') {
+            $localeDirectories = Get-JsonPropertyValue (Get-JsonPropertyValue $manifest 'libraryLayout') 'localeDirectories'
+            $localeDirectory = Get-JsonPropertyValue $localeDirectories $localeName
+            if ([string]::IsNullOrWhiteSpace($localeDirectory)) { continue }
             $base = [IO.Path]::GetFileNameWithoutExtension($relativePath)
             if ([string]::IsNullOrWhiteSpace((Get-JsonPropertyValue $locale 'transcriptPath'))) {
-                Set-JsonPropertyValue $locale 'transcriptPath' "transcripts/ja_jp/$base.json"
+                Set-JsonPropertyValue $locale 'transcriptPath' "transcripts/$localeDirectory/$base.json"
             }
             if ([string]::IsNullOrWhiteSpace((Get-JsonPropertyValue $locale 'backTranslationPath'))) {
-                Set-JsonPropertyValue $locale 'backTranslationPath' "transcripts/ja_jp/$base.backtranslation.txt"
+                Set-JsonPropertyValue $locale 'backTranslationPath' "transcripts/$localeDirectory/$base.backtranslation.txt"
             }
             Set-JsonPropertyValue $locale 'observedDurationMs' $durationMs
             Set-JsonPropertyValue $locale 'status' $(if ($durationMatchRequired) { 'mixed' } else { 'generated' })
             Set-JsonPropertyValue $locale 'generatedAt' $updatedAt
             if ($durationMatchRequired) {
-                Set-JsonPropertyValue $locale 'mixTimingPolicy' 'pause_removal_then_subsecond_pad_trim'
-                Set-JsonPropertyValue $locale 'backgroundStemId' (Get-JsonPropertyValue $asset 'backgroundStemId')
+                if ([string]::IsNullOrWhiteSpace((Get-JsonPropertyValue $locale 'mixTimingPolicy'))) {
+                    Set-JsonPropertyValue $locale 'mixTimingPolicy' 'pause_removal_then_subsecond_pad_trim'
+                }
+                if ([string]::IsNullOrWhiteSpace((Get-JsonPropertyValue $locale 'backgroundStemId'))) {
+                    Set-JsonPropertyValue $locale 'backgroundStemId' (Get-JsonPropertyValue $asset 'backgroundStemId')
+                }
             }
         }
     }

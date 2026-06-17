@@ -1,0 +1,450 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{booktabs}
+
+\title{Hand-Tracked Big Red Button Press: Physics-Grounded Predictive Preload Model}
+\author{Big Red Button Institute Native Quest MR Study Notes}
+\date{2026-06-17}
+
+\begin{document}
+\maketitle
+
+\section{Scope}
+This note catalogues the research basis and implementation model for making hand-tracked Big Red Button presses feel mechanically continuous with the participant's hand motion. The chosen design is \textbf{visual preload only}: prediction may start visible button compression before an accepted press and may visually release that preload if the approach aborts, but prediction alone must not count as a press, play sound, or satisfy final validation. Accepted hand presses remain exported as \texttt{hand\_contact}; final participant proof remains \texttt{controller\_contact}.
+
+\section{Search Method}
+The requested Consensus MCP search could not be completed in this Codex session because the local Windows app blocked execution of \texttt{codex.exe} with \texttt{Access is denied}, and the unauthenticated MCP endpoint returned HTTP 401. The attached Consensus documentation was read, including \url{https://docs.consensus.app/llms.txt}, \url{https://docs.consensus.app/docs/mcp.md}, and \url{https://docs.consensus.app/reference/v1_quick_search.md}. The direct API requires an \texttt{x-api-key}; no API key was available in-session. A 2026-06-17 connector recheck found no callable Consensus namespace through Codex tool discovery, and the available-plugin install list did not include Consensus. Run \texttt{codex mcp add consensus --url https://mcp.consensus.app/mcp} and \texttt{codex mcp login consensus} from an external terminal, then restart Codex and refresh this catalogue with the resulting Consensus results.
+
+To keep the review moving, this catalogue uses primary scholarly sources and author/institution pages found through web search, prioritizing ACM, IEEE, Frontiers, Aalto/Stanford lab pages, PubMed/PMC records, author-hosted PDFs, and publisher metadata. Search strings included combinations of: \emph{virtual button force displacement haptic feedback}, \emph{button FDVV model}, \emph{impact activation button press}, \emph{neuromechanics of a button press}, \emph{minimum jerk reaching virtual reality}, \emph{time-to-collision tau visual control braking}, \emph{pseudo-haptic button mid-air VR}, \emph{pseudo-stiffness virtual reality}, \emph{hand object interaction prediction haptic feedback mixed reality}, \emph{visual haptic simultaneity VR contact}, \emph{encountered-type haptics dynamic redirection}, \emph{sparse haptic proxy}, \emph{haptic proxies success criteria taxonomy}, \emph{survey hand-based haptic interaction virtual reality}, \emph{wrist haptic feedback virtual button Tasbi}, \emph{pseudo-haptic controls mid-air interaction}, \emph{pseudo-haptic resistance knobs VR}, \emph{sense of agency hand-tracking visual congruence haptics}, \emph{intentional binding action outcome delay}, \emph{touch feedback simultaneity virtual button latency}, \emph{audio tactile delay virtual button}, \emph{multimodal feedback virtual buttons}, \emph{virtual hand deformation pseudo-haptic force feedback}, \emph{multisensory pseudo-haptics virtual buttons}, \emph{programmable soft haptic buttons}, \emph{pseudo-haptics survey extended reality}, \emph{audio-based pseudo-haptics review}, and \emph{industrial training VR pseudo-haptics}.
+
+\section{Systematic Review Protocol}
+The current review is a seeded systematic review, not a final PRISMA-complete review. It is designed so a future Consensus MCP pass can reproduce and extend the screening. The target research questions are:
+\begin{enumerate}
+  \item What mechanical features make a button press feel like a continuous hand-caused event?
+  \item What pseudo-haptic cues improve button, switch, knob, or machinery-control realism in controller-free or weak-haptic VR/MR?
+  \item What timing/prediction limits allow anticipatory feedback without breaking agency or creating false activations?
+  \item Which export measures should be recorded so a later CHI/HCI paper can analyze whether predictive preload improved felt causality and press realism?
+\end{enumerate}
+
+Inclusion criteria are peer-reviewed HCI, haptics, robotics, or XR papers; studies/reviews about virtual buttons, mid-air interaction, pseudo-haptics, encountered/passive haptics, prediction for contact, agency, visual-haptic timing, or machinery-like controls; and papers that provide design implications for timing, stiffness, vibration, force-displacement, motion remapping, or user perception. Exclusion criteria are non-interactive graphics-only animation, patents/commercial pages without empirical or technical detail, generic VR training papers without haptic/control findings, and papers whose only relevance is broad immersion without contact mechanics.
+
+When Consensus access is available, run these seed queries with \texttt{exclude\_preprints=true} where possible, then screen titles/abstracts against the criteria above:
+\begin{itemize}
+  \item \texttt{virtual button force displacement haptic feedback button press}
+  \item \texttt{pseudo-haptic button mid-air interaction virtual reality}
+  \item \texttt{pseudo-haptic stiffness weight resistance virtual reality hand tracking}
+  \item \texttt{hand object interaction prediction haptic feedback mixed reality}
+  \item \texttt{visual haptic simultaneity virtual reality contact}
+  \item \texttt{virtual reality machinery controls knobs switches buttons haptic feedback}
+  \item \texttt{sense of agency hand tracking virtual object haptic visual congruence}
+  \item \texttt{intentional binding action outcome delay virtual reality haptic feedback}
+  \item \texttt{virtual button audio tactile delay simultaneity perceived quality}
+  \item \texttt{multimodal feedback virtual buttons visual auditory haptic}
+  \item \texttt{virtual hand deformation pseudo haptic force feedback teleoperation}
+  \item \texttt{encountered type haptics passive proxy virtual reality contact}
+  \item \texttt{hand based haptic interaction virtual reality survey push buttons knobs}
+  \item \texttt{wrist haptic feedback virtual button knob squeeze vibration}
+\end{itemize}
+
+For each included paper, extract: interaction type, input modality, physical proxy or no-proxy condition, haptic/pseudo-haptic cues, contact trigger rule, timing horizon, movement-remapping magnitude, outcome measures, study size, limitations, and direct implication for the Big Red Button implementation.
+
+\section{Consensus From The Literature}
+\begin{enumerate}
+  \item Realistic button feel is not just a click event. Physical buttons have force-displacement structure across approach, slope/compression, snap/collapse, bottom-out, and release \cite{kim2013virtualbutton,liao2020fdvv}.
+  \item Velocity matters. FDVV models add vibration and velocity dependence to force-displacement curves, improving perceived realism and capturing snap/tactility features that simple FD models miss \cite{liao2020fdvv,liao2020pressem}. Button Simulator work reinforces that arbitrary force-displacement curves can be rendered and evaluated as full button designs, not just one click point \cite{liao2018buttonsim}.
+  \item Press activation and timing can be modeled around impact, not merely initial touch. Impact Activation found performance advantages when activation is aligned to the strongest impact moment during rapid pressing \cite{kim2018impact}.
+  \item Button pressing is neuromechanical: users regulate force and timing despite uncertainty about the mechanism. A convincing virtual model should support an internal model of "my motion caused the press" \cite{oulasvirta2018neuromechanics}.
+  \item Contact force should be treated as a dynamic estimate, not a binary state. Finger-pad contact mechanics show that contact area changes with compressive load, key-switch ergonomics studies show that make force/travel/overtravel alter peak exertion and muscle activity, and fingertip viscoelasticity work shows that loading history affects tactile encoding \cite{dzidek2017fingerpad,radwin1997activation,rempel1997keyswitch,saal2025viscoelasticity}.
+  \item Rigid-contact haptic rendering work supports adding an impact impulse term: crisp contact is associated with abrupt impulsive force at collision, while sustained contact can be modeled with penalty/spring-damper forces \cite{constantinescu2004impulsive}.
+  \item In mid-air/free-hand VR, pseudo-haptic features such as proximity feedback, protrusion, hit effect, and penetration blocking improve haptic illusion, embodiment, perceived reality, spatiotemporal perception, and satisfaction \cite{kim2022pseudobutton}.
+  \item Pseudo-haptic stiffness and weight work by small, plausible visual/proprioceptive discrepancies, especially control-display or hand/object motion manipulation. The Big Red Button implementation should therefore keep offsets small, short, and causally tied to hand approach \cite{samad2019pseudoweight,weiss2023pseudostiffness}.
+  \item Mid-air pseudo-haptic controls and button-specific studies argue for physical metaphors that move along a constrained axis, visually block implausible penetration, and combine hit/proximity effects sparingly so the user sees the button move as a continuation of the hand rather than as an unrelated animation \cite{speicher2019pseudocontrols,kim2022pseudobutton}.
+  \item Sense-of-agency work with hand tracking highlights visual congruence between the hand/avatar and the object as part of feeling that the user caused the outcome. This supports preserving provenance and avoiding hidden predictive presses that would make the button act before the participant can attribute the action to their own hand \cite{evangelou2023agency}.
+  \item Broader sense-of-agency work supports the same boundary: intentional binding and explicit agency depend on perceived action-outcome contiguity and delay. Delayed feedback generally weakens agency, while touch-free actions can still produce intentional binding when action and outcome cues remain temporally coherent \cite{haggard2002voluntary,wen2015delayagency,wen2019delayreview,liu2024intentionalbinding}. For this study, prediction should tighten the visual motion around real contact, not move the accepted outcome before contact evidence exists.
+  \item Prediction is useful for latency compensation, but must be bounded. Hand-object interaction prediction work focuses on short horizons around 100 ms to offset sensing/display/actuation delay \cite{salvato2022prediction}. This supports using time-to-impact for preloading visual response, not for accepting a press.
+  \item Visual-haptic simultaneity limits are asymmetric and task dependent; delayed haptic/visual cues can be tolerated within tens of milliseconds, while anticipatory cues need to be subtle and causally plausible \cite{diluca2019simultaneity}.
+  \item Multimodal virtual-button studies show that visual, auditory, and haptic cues interact rather than simply adding together; latency and ordering affect perceived quality and synchrony \cite{faeth2012modality,faeth2014emergent,kaaresoja2014temporallyperfect,brahimaj2023audiotactilebutton}. This supports preloading the press sound through \texttt{SoundPool} while still playing it only after accepted contact, so sound remains an outcome cue rather than a predictive false activation.
+  \item Human reaching literature supports smooth, goal-directed movement prediction rather than raw per-frame collision guessing. Minimum-jerk reaching models and VR redirected-reach evaluations motivate using trajectory fit and lateral convergence as confidence terms, while time-to-collision/tau theory motivates a short time-to-impact horizon \cite{flash1985minimumjerk,lee1976tau,gonzalez2019minjerk}.
+  \item Encountered-type and passive haptics literature shows that spatial retargeting and passive proxies can improve realism when visual and physical cues remain congruent \cite{gonzalez2020reachplus,cheng2017sparseproxy}. Proxy taxonomies highlight sufficient similarity, co-location, and compelling contact forces as separate success criteria \cite{nilsson2021hapticproxies}. For this app, there is no physical hand proxy, so the safe analogue is visual preload plus strict contact evidence.
+  \item Multisensory pseudo-haptics, wrist haptics, hand-based haptic surveys, and recent programmable-button hardware provide useful publication comparators: visual-only preload is the current software-safe layer, while future wrist/tactile/soft-button hardware could test whether adding force/vibration improves stiffness discrimination and press believability \cite{pezent2022tasbi,pezent2023multisensory,tong2023handhaptics,raegrant2024dynabuttons,youn2025hapticoil}.
+  \item Pseudo-haptic resistance work for knobs generalizes the same design lesson to machinery controls: resistance illusions should be below detection thresholds, tied to the intended mechanical degree of freedom, and validated with task-specific psychophysics before being treated as realistic machine feel \cite{feick2023turnitup}.
+  \item Survey papers converge on pseudo-haptics and VR haptic devices as flexible design spaces, but warn that effects depend on perceptual context, cue type, physicality, actuation level, and multisensory congruence. Audio can shape perceived haptic qualities, but for this study the sound remains post-acceptance because early sound would be too easy to misinterpret as counted activation \cite{bouzbib2021canitouch,ujitoko2021survey,xavier2024survey,abdo2024audio}.
+  \item Industrial-training and machinery-control papers support the same practical design target: combine motion-contingent pseudo-haptic delay/resistance with concise tactile or vibrotactile events when available, while keeping the mapping task-specific and measurable \cite{hwang2024industrial,matthews2023remapped,shi2024haptics}.
+  \item New hand-tracked XR work suggests audio-visual pseudo-haptics may function partly as affective feedback rather than literal touch replacement. This reinforces the decision to analyze not only press counts but also subjective agency, realism, satisfaction, and demand in the later study write-up \cite{david2026feelings}.
+  \item Virtual-hand deformation work in teleoperation suggests that visually deforming the represented hand can communicate force quickly and intuitively while preserving a close hand-target mapping \cite{hotta2024handdeformation}. The current study deliberately deforms the button rather than the participant's hand to avoid introducing body-ownership confounds, but the paper should treat virtual-hand deformation as a future comparator for force perception.
+  \item Meta Spatial SDK Interaction SDK converts hand/controller input into pointer events and supports direct touch interactions. This app should therefore consume ISDK pointer/contact samples as the authoritative signal, rather than building a parallel hidden input system \cite{meta2026isdk}.
+\end{enumerate}
+
+\section{Evidence-To-Mechanics Mapping}
+\begin{longtable}{p{0.24\linewidth}p{0.33\linewidth}p{0.33\linewidth}}
+\toprule
+Evidence Theme & Design Requirement & Current App Mechanic \\
+\midrule
+Force-displacement and FDVV button models & Button response should have staged travel rather than a binary click. & Five phases: \texttt{idle}, \texttt{preload}, \texttt{impact}, \texttt{bottom\_out}, and \texttt{release}; accepted impact velocity maps to kinetic energy, virtual spring compression, damping, estimated force/pressure, compression peak, actuation travel/delay, snap-through travel/duration, and bottom-out timing. \\
+Impact activation and neuromechanics & The accepted moment should feel tied to the hand's impact, not a delayed UI callback. & Contact/crossing evidence remains the trigger; preload only advances visual travel so accepted impact starts from a plausible state. \\
+Prediction for mixed-reality haptics & Prediction should be short-horizon latency compensation, not hidden automation. & Time-to-impact gate is limited to 0--160 ms and logs \texttt{counted=false}, \texttt{sound=false}. \\
+Human reaching and time-to-collision & Preload should match a plausible goal-directed hand trajectory, not just depth closure. & The model now estimates lateral velocity, projected lateral-at-impact, approach angle, approach alignment, and \texttt{trajectoryFit01}; diverging glancing paths do not preload. \\
+Visual-haptic simultaneity & Anticipatory visual cues must be subtle and causally plausible. & Preload is capped at 56 ms of the press clip and requires stable approach, lateral alignment, and confidence; if prediction is lost before contact, a short visual-only release ramp returns the cap toward idle. \\
+Pseudo-haptic controls/buttons & Motion should be constrained to the object's mechanical degree of freedom. & Button visual travel follows the cap's press axis; lateral misses and slow hover do not preload. \\
+Agency and visual congruence & The user must be able to believe "my hand made this happen." & Accepted events export \texttt{triggerEvidence}; hand and controller provenance remain separate. \\
+Action-outcome delay and intentional binding & Feedback should land close enough to accepted contact to preserve agency, but anticipation must not become the outcome itself. & Predictive preload is visual-only and capped; accepted sound/count/export wait for contact evidence; press mechanics export preload lead time and trigger evidence. \\
+Multimodal virtual-button timing & Audio/visual/haptic cues must be temporally organized as one button event. & The existing placeholder cue is preloaded through \texttt{SoundPool} for lower latency but remains post-acceptance; mechanics logs separate preload, actuation, bottom-out, and release phases. \\
+Machinery-control pseudo-haptics & Realism claims require task-specific evidence, not generic immersion claims. & Exported \texttt{pressMechanics} fields support later analysis of velocity, energy, preload lead, confidence, compression, actuation/snap timing, and trigger evidence. \\
+Spring-damper impact response & Impact should feel like hand energy entering a compliant mechanism, not a detached UI animation. & Accepted hand contact maps \(E=\frac{1}{2}mv^2\) into a virtual spring with travel, stiffness, and damping parameters; exported mechanics include energy, spring compression, damping ratio, normal impulse, estimated peak force, estimated contact pressure, and assumed contact area. \\
+Finger-pad contact mechanics & A rounded button press is perceived through changing contact area, pressure, and viscoelastic tissue deformation. & The model exports pressure only as a calibrated proxy \(p=F/A\) using an explicit assumed contact patch area; it is not treated as measured hand force. \\
+Hardware haptics comparators & Future extensions should separate visual-only, tactile, and multisensory versions. & The current build is a visual-only baseline with optional future sound/tactile hardware notes; press sound remains post-acceptance. \\
+Virtual-hand deformation pseudo-haptics & Force can be communicated by deforming the represented hand, but that changes embodiment and agency assumptions. & This implementation deforms the button cap instead of the hand; future studies can compare button-only deformation against hand-deformation overlays using the same exported force/pressure proxies. \\
+Haptic proxy success criteria & Realism should be judged separately for similarity, co-location, and contact-force plausibility. & This hand-only build does not claim physical proxy touch; it logs visual preload and accepted contact evidence so later analyses do not overstate the haptic mechanism. \\
+\bottomrule
+\end{longtable}
+
+\section{Implementation Model}
+The native app implements a pure Kotlin \texttt{ButtonPressPhysicsModel}. It consumes a short ring buffer of hand/contact samples:
+\[
+s_i = (t_i, d_i, r_i)
+\]
+where \(t_i\) is monotonic time, \(d_i\) is signed distance to the button cap/contact surface, and \(r_i\) is lateral distance from cap center. Approach velocity is estimated as:
+\[
+v_n = -\frac{d_n - d_0}{t_n - t_0}
+\]
+where positive \(v_n\) means the hand is moving into the button.
+The model also estimates lateral motion:
+\[
+v_r = \frac{r_n - r_0}{t_n - t_0}, \qquad \hat{r}_{impact} = r_n + v_r \hat{t}_{impact}
+\]
+where negative \(v_r\) means the hand is arcing inward toward the cap center. This keeps visual preload tied to a
+plausible reach trajectory rather than any hand path that merely reduces depth.
+The exported approach angle is:
+\[
+\theta = \tan^{-1}\left(\frac{|v_r|}{v_n}\right)
+\]
+and the approach-alignment score is the cosine-like alignment between the observed closing velocity \((v_n, \max(-v_r,0))\) and the remaining target vector \((d_n,r_n)\). This distinguishes a straight-in press, a converging arc toward the cap, and a diverging glancing pass.
+
+\subsection{Preload Gate}
+Visual preload is allowed only when all gates pass:
+\begin{itemize}
+  \item at least three recent samples show stable decreasing signed distance;
+  \item \(d \leq 0.09m\);
+  \item \(r \leq 0.19m\);
+  \item projected lateral distance at impact \(\hat{r}_{impact} \leq 0.19m\);
+  \item lateral divergence velocity is not above \(0.08m/s\);
+  \item \(v_n \geq 0.12m/s\);
+  \item estimated time-to-impact is between 0 and 160 ms;
+  \item trajectory fit is at least 0.50;
+  \item confidence is at least 0.55.
+\end{itemize}
+
+Confidence is a weighted blend of distance, lateral alignment at the current and projected impact points, normal velocity, time-to-impact horizon, approach stability, and trajectory fit. Preload maps to a paused frame of the native \texttt{pressed} animation, capped at 56 ms of the 160 ms clip. Preload logs \texttt{BRB\_BUTTON\_HAND\_IMPACT\_PREDICTED} with \texttt{counted=false} and \texttt{sound=false}. If the hand path loses prediction before contact, \texttt{BRB\_BUTTON\_HAND\_PRELOAD\_RELEASE} eases the paused frame back toward idle over 72 ms, still with \texttt{counted=false} and \texttt{sound=false}.
+
+\subsection{Accepted Contact}
+An accepted press still requires ISDK contact/crossing evidence from the existing button contact route. Once contact is accepted:
+\begin{itemize}
+  \item \texttt{recordButtonPress(...)} is called with provenance \texttt{hand\_contact} or \texttt{controller\_contact};
+  \item press sound plays only after acceptance;
+  \item \texttt{pressMechanics} is exported in JSON and flattened into press-event CSV columns;
+  \item impact velocity is converted into kinetic energy \(E=\frac{1}{2}mv^2\);
+  \item energy maps into virtual spring compression \(x=\sqrt{2E/k}\), clamped to a nominal 18 mm travel;
+  \item a damping ratio controls bottom-out timing and release duration;
+  \item estimated normal impulse is \(J=mv\), where \(m\) is an equivalent hand-contact mass;
+  \item damping coefficient is \(c=2\zeta\sqrt{km}\), and estimated peak force is \(F_{peak}=\max(F_{actuation}, kx + cv)\), clamped to a conservative maximum;
+  \item estimated contact pressure is \(p=F_{peak}/A\), where \(A\) is an explicit assumed hand/button contact patch area;
+  \item actuation travel is derived from the virtual make force \(D_{act}=F_{act}/(kD_{travel})\);
+  \item snap-through travel is the accepted compression beyond that actuation point, with a short velocity-scaled snap duration;
+  \item compression depth and visual start offset are derived from that response.
+\end{itemize}
+The force and pressure exports are therefore model-derived mechanics for relative analysis and animation design, not real sensor measurements.
+
+\subsection{Phases}
+The app records the following model phases:
+\begin{description}
+  \item[\texttt{idle}] no active approach.
+  \item[\texttt{preload}] stable hand approach produces visual compression only.
+  \item[\texttt{impact}] contact/crossing evidence accepted the press.
+  \item[\texttt{bottom\_out}] short post-impact interval where the button appears fully compressed.
+  \item[\texttt{release}] damped return toward idle.
+\end{description}
+
+\section{Export Fields}
+Each condition press event now has a \texttt{pressMechanics} object with:
+\begin{itemize}
+  \item \texttt{predictionMode}
+  \item \texttt{phase}
+  \item \texttt{impactVelocityMetersPerSecond}
+  \item \texttt{predictedTimeToImpactMs}
+  \item \texttt{preloadLeadMs}
+  \item \texttt{confidence01}
+  \item \texttt{lateralVelocityMetersPerSecond}
+  \item \texttt{predictedLateralAtImpactMeters}
+  \item \texttt{trajectoryFit01}
+  \item \texttt{approachAngleDegrees}
+  \item \texttt{approachAlignment01}
+  \item \texttt{impactEnergyJoules}
+  \item \texttt{springCompressionMeters}
+  \item \texttt{dampingRatio}
+  \item \texttt{normalImpulseNewtonSeconds}
+  \item \texttt{estimatedPeakForceNewtons}
+  \item \texttt{estimatedContactPressureKilopascals}
+  \item \texttt{estimatedContactPatchAreaSquareMeters}
+  \item \texttt{compressionPeak01}
+  \item \texttt{actuationTravel01}
+  \item \texttt{actuationDelayMs}
+  \item \texttt{snapTravel01}
+  \item \texttt{snapDurationMs}
+  \item \texttt{bottomOutDelayMs}
+  \item \texttt{releaseDurationMs}
+  \item \texttt{visualStartOffsetMs}
+  \item \texttt{triggerEvidence}
+\end{itemize}
+The press-event CSV uses the same fields with \texttt{press\_mechanics\_*} column names. The summary CSV adds per-condition \texttt{hand\_predictive\_preload\_press\_count} and \texttt{hand\_contact\_mean\_impact\_velocity\_mps}.
+
+\section{Publication Analysis Plan}
+The export is now paired with \texttt{tools/analyze-hand-contact-press-mechanics.ps1}. Given a pulled export folder or a hand-contact smoke evidence folder, the analyzer writes \texttt{press-mechanics-analysis.json} plus event-level \texttt{press-mechanics-events.csv}. Its default behavior excludes validation automation and can require at least one \texttt{hand\_contact} row. The summary groups press mechanics by input source, prediction mode, and condition, and computes descriptive statistics for impact velocity, preload lead, confidence, trajectory fit, approach angle/alignment, impact energy, spring compression, estimated peak force, estimated contact pressure, compression peak, actuation delay, snap duration, bottom-out delay, and release duration.
+
+For a later HCI paper, the planned manipulation checks and dependent variables are:
+\begin{itemize}
+  \item \textbf{Preload use rate}: proportion of accepted \texttt{hand\_contact} presses whose mechanics report \texttt{visual\_preload}; this checks whether real hand approaches actually entered the predictive pathway.
+  \item \textbf{Approach quality}: impact velocity, trajectory fit, approach alignment, approach angle, and predicted lateral-at-impact; these quantify whether accepted presses looked like intentional cap-directed movements rather than lateral misses.
+  \item \textbf{Mechanical response}: spring compression, compression peak, actuation delay, snap duration, bottom-out delay, release duration, estimated peak force, and estimated pressure; these support claims about velocity-scaled pseudo-physics.
+  \item \textbf{Agency timing}: preload lead, visual-start offset, accepted trigger evidence, and post-acceptance sound timing; these operationalize the literature constraint that prediction may tighten temporal continuity but must not become the outcome itself.
+  \item \textbf{Subjective correlates}: later analyses should relate the mechanics summary to presence, closeness, redness, lost-opportunity, and post-condition comments/ratings, while preserving \texttt{controller\_contact} as the final proof source.
+\end{itemize}
+
+\section{Manuscript Hypotheses And Claim Boundaries}
+The current implementation supports a preregistration-style analysis plan for a later HCI paper. It does not yet prove headset effectiveness because a human hand-contact smoke and final controller-contact gate remain open. The intended claims should be limited to what the exported evidence can support:
+\begin{description}
+  \item[H1: Continuity] Accepted \texttt{hand\_contact} presses with \texttt{visual\_preload} will have shorter visual-to-contact discontinuity than \texttt{contact\_only} hand presses, operationalized by positive preload lead, nonzero visual-start offset, and no early count/sound markers.
+  \item[H2: Movement causality] Higher approach quality should predict stronger subjective reports that the participant's hand caused the press. Approach quality is operationalized by trajectory fit, approach alignment, approach angle, predicted lateral-at-impact, and trigger evidence.
+  \item[H3: Velocity-scaled mechanics] Faster accepted hand approaches should produce larger spring compression, compression peak, impact energy, normal impulse, estimated peak force, and estimated pressure, while preserving plausible actuation and release timing.
+  \item[H4: Safety of prediction] Predictive preload should not increase false activations. The required evidence is that all preload and aborted-release logs remain \texttt{counted=false} and \texttt{sound=false}, and all accepted press rows have contact/crossing trigger evidence.
+  \item[H5: Provenance separation] Hand mechanics can be analyzed as supplemental usability evidence, but the final proof gate remains \texttt{controller\_contact}. Analyses must report hand and controller rows separately.
+\end{description}
+
+Recommended analyses are descriptive first, then mixed-effects or repeated-measures models only after headset data exist. Candidate fixed effects are prediction mode, impact velocity, preload lead, and condition; candidate random effects are participant and condition order. Primary subjective endpoints are agency/causality, realism, presence, closeness, satisfaction, and demand. Primary mechanics endpoints are preload use rate, impact velocity, trajectory fit, compression peak, estimated force/pressure, actuation delay, snap duration, and release duration.
+
+Suggested exclusion and audit rules:
+\begin{itemize}
+  \item Exclude \texttt{validationAutomation=true} rows from participant analyses unless explicitly auditing validation behavior.
+  \item Exclude \texttt{auto\_validation}, \texttt{transparent\_panel\_interim}, and fallback rows from claims about hand feel.
+  \item Treat force and pressure as model-derived estimates, not measured biomechanics.
+  \item Report the count of aborted preload release events separately from accepted presses.
+  \item Do not pool \texttt{hand\_contact} and \texttt{controller\_contact} in proof claims; use pooling only for explicitly labeled exploratory mechanics summaries.
+\end{itemize}
+
+\section{Implementation Status}
+As of 2026-06-17, \texttt{ButtonPressPhysicsModel.kt} and \texttt{ButtonPressPhysicsModelTest.kt} exist. The activity consumes hand pointer/contact samples, applies predictive visual preload with trajectory-fit and approach-arc gating, logs accepted spring-damper impact mechanics plus estimated impulse/force/pressure and actuation/snap timing, exports mechanics fields, and preloads the short button cue through \texttt{SoundPool}. Targeted unit tests, the press-animation stability check, synthetic export-schema validation, broad static validation, the press-mechanics analysis behavioral test, and the debug APK build pass with the repo-local JDK 17/Android SDK. The current debug APK bound by the hand-contact operator handoff has SHA-256 \texttt{3308B3D49F569DED6AB25DFFF821277C9E59599A79257EF0DB65FBF8533A094C} and size \texttt{178070738} bytes. Broad static validation passed at \texttt{artifacts/local-validation/validation-20260617-032127.json} with 352 checks and 0 failures. The Quest hand-contact smoke now delegates evidence checking to \texttt{validate-hand-contact-physics-evidence.ps1}, whose local behavioral test at \texttt{artifacts/hand-contact-physics-evidence-tests/t-20260617-030145/hand-contact-physics-evidence-validator-test-summary.json} rejects preload-as-count, missing mechanics, missing required export evidence, and non-hand trigger provenance. The smoke also analyzes export-backed mechanics through \texttt{analyze-hand-contact-press-mechanics.ps1}; its behavioral test at \texttt{artifacts/hand-contact-press-mechanics-analysis-tests/t-20260617-032022/hand-contact-press-mechanics-analysis-test-summary.json} proves automation filtering, hand-contact requirements, preload-use summaries, grouped mechanics statistics, and event-level CSV output. The current operator handoff is \texttt{artifacts/hand-contact-operator-handoff/handoff-20260617-032133/hand-contact-physics-operator-handoff.json}, status \texttt{ready\_for\_operator\_hand\_contact\_physics\_smoke}; it binds the APK, latest static validation, evidence-validator test, mechanics-analysis test, and ADB-ready Quest 3S serial \texttt{3487C10J0P01ZY}. Remaining gates are a human headset smoke for hand preload plus controller-contact preservation.
+
+\section{Bibliography Notes}
+\begin{longtable}{p{0.22\linewidth}p{0.68\linewidth}}
+\toprule
+Key & Relevance \\
+\midrule
+\cite{kim2013virtualbutton} & Full-travel button force-displacement curves: slope, jump/snap, bottom-out, release. \\
+\cite{liao2020fdvv} & FDVV: force, displacement, vibration, velocity dependence for richer button tactility. \\
+\cite{liao2018buttonsim} & Programmable rendering of arbitrary force-displacement curves motivates explicit actuation and snap timing fields. \\
+\cite{kim2018impact} & Activation at impact can improve rapid button pressing and timing. \\
+\cite{oulasvirta2018neuromechanics} & Button pressing as learned neuromechanical control under uncertainty. \\
+\cite{dzidek2017fingerpad} & Finger-pad contact area under compressive load motivates exporting assumed contact area and pressure proxy. \\
+\cite{radwin1997activation} & Key-switch activation force, travel, and overtravel affect peak exertion and speed during repeated pressing. \\
+\cite{rempel1997keyswitch} & Keyswitch make force affects applied fingertip force and flexor muscle activity during typing. \\
+\cite{saal2025viscoelasticity} & Fingertip viscoelastic state and loading history shape force-related tactile encoding. \\
+\cite{constantinescu2004impulsive} & Impulsive-force haptic rendering motivates separating impact impulse from sustained spring-damper contact. \\
+\cite{kim2022pseudobutton} & Mid-air VR button pseudo-haptics: proximity, protrusion, hit effect, penetration blocking. \\
+\cite{speicher2019pseudocontrols} & Mid-air pseudo-haptic controls based on physical metaphors and constrained motion. \\
+\cite{bermejo2021midairbuttons} & VR mid-air button designs and multimodal cues. \\
+\cite{ariza2022holitouch} & Combining pseudo-haptic, tactile, and proprioceptive cues for stiffness/contact/activation. \\
+\cite{samad2019pseudoweight} & Control-display manipulation induces perceived weight in VR. \\
+\cite{weiss2023pseudostiffness} & Visual/proprioceptive manipulation alters perceived stiffness in VR. \\
+\cite{ujitoko2021survey} & Pseudo-haptics survey: design/application taxonomy and limits. \\
+\cite{xavier2024survey} & XR/teleoperation pseudo-haptics survey emphasizing tactile, kinesthetic, and multimodal categories. \\
+\cite{abdo2024audio} & Review of audio-based pseudo-haptics and auditory cue design. \\
+\cite{evangelou2023agency} & Hand-tracking agency evidence: visual congruence and haptics affect user-object causality. \\
+\cite{haggard2002voluntary} & Classic intentional-binding result motivating action-outcome contiguity as an agency cue. \\
+\cite{wen2015delayagency} & Delay and arousal affect explicit agency and intentional binding. \\
+\cite{wen2019delayreview} & Review evidence that increasing feedback delay generally decreases sense of agency. \\
+\cite{liu2024intentionalbinding} & Touch-free actions can still show intentional binding across sensory modalities when cues remain coherent. \\
+\cite{salvato2022prediction} & Short-horizon hand-object prediction for latency compensation. \\
+\cite{diluca2019simultaneity} & Visual-haptic simultaneity limits for virtual contact. \\
+\cite{faeth2012modality} & Virtual button performance depends on visual, auditory, and haptic feedback combinations. \\
+\cite{faeth2014emergent} & Multimodal virtual-button feedback can have emergent effects on performance and ratings. \\
+\cite{kaaresoja2014temporallyperfect} & Touch-feedback simultaneity and perceived quality provide latency design constraints for virtual buttons. \\
+\cite{brahimaj2023audiotactilebutton} & Audio-tactile delay thresholds for virtual buttons constrain sound/tactile cue ordering. \\
+\cite{flash1985minimumjerk} & Minimum-jerk reaching model for smooth, goal-directed hand movement. \\
+\cite{lee1976tau} & Time-to-collision/tau theory motivating bounded time-to-impact estimates. \\
+\cite{gonzalez2019minjerk} & VR redirected-reach evaluation showing trajectory prediction matters and can degrade with redirection. \\
+\cite{gonzalez2020reachplus} & Dynamic redirection for encountered-type haptic devices and perceived realism. \\
+\cite{cheng2017sparseproxy} & Passive haptic proxies and hand redirection to align touch with virtual objects. \\
+\cite{nilsson2021hapticproxies} & Haptic proxy success criteria: similarity, co-location, and compelling contact forces. \\
+\cite{bouzbib2021canitouch} & VR haptic-solution survey organizing systems by physicality and actuation. \\
+\cite{tong2023handhaptics} & Hand-based haptic VR survey for tracking, feedback, and simulation components. \\
+\cite{pezent2022tasbi} & Wrist squeeze/vibration feedback examples for virtual push buttons and knobs. \\
+\cite{pezent2023multisensory} & Multisensory pseudo-haptics for stiffness discrimination with virtual buttons. \\
+\cite{feick2023turnitup} & Pseudo-haptic resistance thresholds for virtual machinery controls such as knobs. \\
+\cite{hwang2024industrial} & Industrial VR training with pseudo-haptic delay plus vibrotactile stimulation. \\
+\cite{matthews2023remapped} & Remapped physical-virtual interfaces and state synchronization for tangible controls. \\
+\cite{shi2024haptics} & Broad VR haptic sensing/feedback review for future hardware comparisons. \\
+\cite{david2026feelings} & Hand-tracked XR audio-visual pseudo-haptics as affective feedback. \\
+\cite{hotta2024handdeformation} & Virtual-hand deformation as visual pseudo-force feedback and future comparator for hand-contact force perception. \\
+\cite{okamura2001vibration} & Reality-based vibration models for impact/tapping events. \\
+\cite{raegrant2024dynabuttons} & Recent soft physical button work with analog control; useful for future hardware-grounded comparisons. \\
+\cite{youn2025hapticoil} & Recent soft programmable button hardware with sensing and wide-band haptic output. \\
+\bottomrule
+\end{longtable}
+
+\begin{thebibliography}{99}
+\bibitem{kim2013virtualbutton}
+Sunjun Kim and Geehyuk Lee. 2013. Haptic Feedback Design for a Virtual Button Along Force-Displacement Curves. In UIST 2013. DOI: \href{https://doi.org/10.1145/2501988.2502041}{10.1145/2501988.2502041}.
+
+\bibitem{liao2020fdvv}
+Yi-Chi Liao, Sunjun Kim, Byungjoo Lee, and Antti Oulasvirta. 2020. Button Simulation and Design via FDVV Models. In CHI 2020. DOI: \href{https://doi.org/10.1145/3313831.3376262}{10.1145/3313831.3376262}.
+
+\bibitem{liao2018buttonsim}
+Yi-Chi Liao, Sunjun Kim, and Antti Oulasvirta. 2018. Button Simulator: Rendering Arbitrary Force-Displacement Curves. In UIST 2018 Adjunct. DOI: \href{https://doi.org/10.1145/3266037.3266118}{10.1145/3266037.3266118}.
+
+\bibitem{liao2020pressem}
+Yi-Chi Liao, Sunjun Kim, Byungjoo Lee, and Antti Oulasvirta. 2020. Press'Em: Simulating Varying Button Tactility via FDVV Models. In CHI EA 2020. DOI: \href{https://doi.org/10.1145/3334480.3383161}{10.1145/3334480.3383161}.
+
+\bibitem{kim2018impact}
+Sunjun Kim, Byungjoo Lee, and Antti Oulasvirta. 2018. Impact Activation Improves Rapid Button Pressing. In CHI 2018. DOI: \href{https://doi.org/10.1145/3173574.3174145}{10.1145/3173574.3174145}.
+
+\bibitem{oulasvirta2018neuromechanics}
+Antti Oulasvirta, Sunjun Kim, and Byungjoo Lee. 2018. Neuromechanics of a Button Press. In CHI 2018. DOI: \href{https://doi.org/10.1145/3173574.3174082}{10.1145/3173574.3174082}.
+
+\bibitem{dzidek2017fingerpad}
+Brygida M. Dzidek, Michael J. Adams, James W. Andrews, Zhibing Zhang, and Simon A. Johnson. 2017. Contact Mechanics of the Human Finger Pad Under Compressive Loads. Journal of the Royal Society Interface 14(127), 20160935. DOI: \href{https://doi.org/10.1098/rsif.2016.0935}{10.1098/rsif.2016.0935}.
+
+\bibitem{radwin1997activation}
+Robert G. Radwin and One-Jang Jeng. 1997. Activation Force and Travel Effects on Overexertion in Repetitive Key Tapping. Human Factors 39(1), 130--140. DOI: \href{https://doi.org/10.1518/001872097778940605}{10.1518/001872097778940605}.
+
+\bibitem{rempel1997keyswitch}
+David Rempel, Elaine Serina, Edward Klinenberg, Bernard J. Martin, Thomas J. Armstrong, James A. Foulke, and Sivakumaran Natarajan. 1997. The Effect of Keyboard Keyswitch Make Force on Applied Force and Finger Flexor Muscle Activity. Ergonomics 40(8), 800--808. DOI: \href{https://doi.org/10.1080/001401397187793}{10.1080/001401397187793}.
+
+\bibitem{saal2025viscoelasticity}
+Hannes P. Saal, Ingvars Birznieks, and Roland S. Johansson. 2025. Fingertip Viscoelasticity Enables Human Tactile Neurons to Encode Loading History Alongside Current Force. eLife 12, RP89616. DOI: \href{https://doi.org/10.7554/eLife.89616.3}{10.7554/eLife.89616.3}.
+
+\bibitem{constantinescu2004impulsive}
+Daniela Constantinescu, Septimiu E. Salcudean, and Elizabeth A. Croft. 2004. Impulsive Forces for Haptic Rendering of Rigid Contacts. In Proceedings of ISR 2004. \url{https://www.engr.uvic.ca/~danielac/constantinescu_isr2004.pdf}.
+
+\bibitem{kim2022pseudobutton}
+Woojoo Kim and Shuping Xiong. 2022. Pseudo-Haptic Button for Improving User Experience of Mid-Air Interaction in VR. International Journal of Human-Computer Studies. DOI: \href{https://doi.org/10.1016/j.ijhcs.2022.102907}{10.1016/j.ijhcs.2022.102907}.
+
+\bibitem{speicher2019pseudocontrols}
+Marco Speicher, Jan Ehrlich, Vito Gentile, Donald Degraen, Salvatore Sorce, and Antonio Kruger. 2019. Pseudo-Haptic Controls for Mid-Air Finger-Based Menu Interaction. In CHI EA 2019. DOI: \href{https://doi.org/10.1145/3290607.3312927}{10.1145/3290607.3312927}.
+
+\bibitem{bermejo2021midairbuttons}
+Carlos Bermejo, Lik-Hang Lee, Paul Chojecki, D. Przewozny, and Pan Hui. 2021. Exploring Button Designs for Mid-air Interaction in Virtual Reality: A Hexa-metric Evaluation of Key Representations and Multi-modal Cues. Proceedings of the ACM on Human-Computer Interaction 5(EICS), Article 194. DOI: \href{https://doi.org/10.1145/3457141}{10.1145/3457141}.
+
+\bibitem{ariza2022holitouch}
+Oscar Javier Ariza Nunez, Andre Zenner, Frank Steinicke, Florian Daiber, and Antonio Kruger. 2022. Holitouch: Conveying Holistic Touch Illusions by Combining Pseudo-Haptics With Tactile and Proprioceptive Feedback During Virtual Interaction With 3DUIs. Frontiers in Virtual Reality. DOI: \href{https://doi.org/10.3389/frvir.2022.879845}{10.3389/frvir.2022.879845}.
+
+\bibitem{samad2019pseudoweight}
+Majed Samad, Elia Gatti, Anne Hermes, Hrvoje Benko, and Cesare Parise. 2019. Pseudo-Haptic Weight: Changing the Perceived Weight of Virtual Objects By Manipulating Control-Display Ratio. In CHI 2019. DOI: \href{https://doi.org/10.1145/3290605.3300550}{10.1145/3290605.3300550}.
+
+\bibitem{weiss2023pseudostiffness}
+Yannick Weiss, Steeven Villa, Albrecht Schmidt, Sven Mayer, and Florian Mueller. 2023. Using Pseudo-Stiffness to Enrich the Haptic Experience in Virtual Reality. In CHI 2023. DOI: \href{https://doi.org/10.1145/3544548.3581223}{10.1145/3544548.3581223}.
+
+\bibitem{ujitoko2021survey}
+Yusuke Ujitoko and Yuki Ban. 2021. Survey of Pseudo-Haptics: Haptic Feedback Design and Application Proposals. IEEE Transactions on Haptics 14(4), 699--711. DOI: \href{https://doi.org/10.1109/TOH.2021.3077619}{10.1109/TOH.2021.3077619}.
+
+\bibitem{xavier2024survey}
+Rui Xavier, Jose Luis Silva, Rodrigo Ventura, and Joaquim Jorge. 2024. Pseudo-Haptics Survey: Human-Computer Interaction in Extended Reality and Teleoperation. IEEE Access. DOI: \href{https://doi.org/10.1109/ACCESS.2024.3409449}{10.1109/ACCESS.2024.3409449}.
+
+\bibitem{abdo2024audio}
+Sandy Abdo, Bill Kapralos, KC Collins, and Adam Dubrowski. 2024. A Review of Recent Literature on Audio-Based Pseudo-Haptics. Applied Sciences 14(14), 6020. DOI: \href{https://doi.org/10.3390/app14146020}{10.3390/app14146020}.
+
+\bibitem{evangelou2023agency}
+Georgios Evangelou, Orestis Georgiou, and James W. Moore. 2023. Using Virtual Objects With Hand-Tracking: The Effects of Visual Congruence and Mid-Air Haptics on Sense of Agency. IEEE Transactions on Haptics 16, 580--585. DOI: \href{https://doi.org/10.1109/TOH.2023.3274304}{10.1109/TOH.2023.3274304}.
+
+\bibitem{haggard2002voluntary}
+Patrick Haggard, Sam Clark, and Jeri Kalogeras. 2002. Voluntary Action and Conscious Awareness. Nature Neuroscience 5(4), 382--385. DOI: \href{https://doi.org/10.1038/nn827}{10.1038/nn827}.
+
+\bibitem{wen2015delayagency}
+Wen Wen, Atsushi Yamashita, and Hajime Asama. 2015. The Influence of Action-Outcome Delay and Arousal on Sense of Agency and the Intentional Binding Effect. Consciousness and Cognition 36, 87--95. DOI: \href{https://doi.org/10.1016/j.concog.2015.06.004}{10.1016/j.concog.2015.06.004}.
+
+\bibitem{wen2019delayreview}
+Wen Wen. 2019. Does Delay in Feedback Diminish Sense of Agency? A Review. Consciousness and Cognition 73, 102759. DOI: \href{https://doi.org/10.1016/j.concog.2019.05.007}{10.1016/j.concog.2019.05.007}.
+
+\bibitem{liu2024intentionalbinding}
+Jiajia Liu, Lihan Chen, Jingjin Gu, Tatia Buidze, Ke Zhao, Chang Hong Liu, Yuanmeng Zhang, Jan Glascher, and Xiaolan Fu. 2024. Common Intentional Binding Effects Across Diverse Sensory Modalities in Touch-Free Voluntary Actions. Consciousness and Cognition 123, 103727. DOI: \href{https://doi.org/10.1016/j.concog.2024.103727}{10.1016/j.concog.2024.103727}.
+
+\bibitem{salvato2022prediction}
+M. Salvato, Negin Heravi, Allison M. Okamura, and Jeannette Bohg. 2022. Predicting Hand-Object Interaction for Improved Haptic Feedback in Mixed Reality. IEEE Robotics and Automation Letters 7(2). DOI: \href{https://doi.org/10.1109/LRA.2022.3148458}{10.1109/LRA.2022.3148458}.
+
+\bibitem{diluca2019simultaneity}
+Massimiliano Di Luca and Arash Mahnan. 2019. Perceptual Limits of Visual-Haptic Simultaneity in Virtual Reality Interactions. IEEE World Haptics Conference. DOI: \href{https://doi.org/10.1109/WHC.2019.8816173}{10.1109/WHC.2019.8816173}.
+
+\bibitem{faeth2012modality}
+Adam Faeth and Chris Harding. 2012. Effects of Modality on Virtual Button Motion and Performance. In ICMI 2012. DOI: \href{https://doi.org/10.1145/2388676.2388704}{10.1145/2388676.2388704}.
+
+\bibitem{faeth2014emergent}
+Adam Faeth and Chris Harding. 2014. Emergent Effects in Multimodal Feedback from Virtual Buttons. ACM Transactions on Computer-Human Interaction 21(1), Article 3. DOI: \href{https://doi.org/10.1145/2535923}{10.1145/2535923}.
+
+\bibitem{kaaresoja2014temporallyperfect}
+Topi Kaaresoja, Stephen Brewster, and Vuokko Lantz. 2014. Towards the Temporally Perfect Virtual Button: Touch-Feedback Simultaneity and Perceived Quality in Mobile Touchscreen Press Interactions. ACM Transactions on Applied Perception 11(2), Article 9. DOI: \href{https://doi.org/10.1145/2611387}{10.1145/2611387}.
+
+\bibitem{brahimaj2023audiotactilebutton}
+Detjon Brahimaj, Mondher Ouari, Anis Kaci, Frederic Giraud, Christophe Giraud-Audine, and Betty Semail. 2023. Temporal Detection Threshold of Audio-Tactile Delays With Virtual Button. IEEE Transactions on Haptics 16(4), 491--496. DOI: \href{https://doi.org/10.1109/TOH.2023.3268842}{10.1109/TOH.2023.3268842}.
+
+\bibitem{flash1985minimumjerk}
+Tamar Flash and Neville Hogan. 1985. The Coordination of Arm Movements: An Experimentally Confirmed Mathematical Model. Journal of Neuroscience 5(7), 1688--1703. DOI: \href{https://doi.org/10.1523/JNEUROSCI.05-07-01688.1985}{10.1523/JNEUROSCI.05-07-01688.1985}.
+
+\bibitem{lee1976tau}
+David N. Lee. 1976. A Theory of Visual Control of Braking Based on Information About Time-to-Collision. Perception 5(4), 437--459. DOI: \href{https://doi.org/10.1068/p050437}{10.1068/p050437}.
+
+\bibitem{gonzalez2019minjerk}
+Eric J. Gonzalez, Parastoo Abtahi, and Sean Follmer. 2019. Evaluating the Minimum Jerk Motion Model for Redirected Reach in Virtual Reality. In UIST 2019 Adjunct. DOI: \href{https://doi.org/10.1145/3332167.3357096}{10.1145/3332167.3357096}.
+
+\bibitem{gonzalez2020reachplus}
+Eric J. Gonzalez, Parastoo Abtahi, and Sean Follmer. 2020. REACH+: Extending the Reachability of Encountered-type Haptics Devices through Dynamic Redirection in VR. In UIST 2020. DOI: \href{https://doi.org/10.1145/3379337.3415870}{10.1145/3379337.3415870}.
+
+\bibitem{cheng2017sparseproxy}
+Lung-Pan Cheng, Eyal Ofek, Christian Holz, Hrvoje Benko, and Andrew D. Wilson. 2017. Sparse Haptic Proxy: Touch Feedback in Virtual Environments Using a General Passive Prop. In CHI 2017. DOI: \href{https://doi.org/10.1145/3025453.3025753}{10.1145/3025453.3025753}.
+
+\bibitem{nilsson2021hapticproxies}
+Niels Christian Nilsson, Andre Zenner, Adalberto L. Simeone, Donald Degraen, and Florian Daiber. 2021. Haptic Proxies for Virtual Reality: Success Criteria and Taxonomy. In Workshop on Everyday Proxy Objects for Virtual Reality at CHI 2021.
+
+\bibitem{bouzbib2021canitouch}
+Elodie Bouzbib, Gilles Bailly, Sinan Haliyo, and Pascal Frey. 2021. ``Can I Touch This?'': Survey of Virtual Reality Interactions via Haptic Solutions. In IHM 2020/2021. DOI: \href{https://doi.org/10.1145/3450522.3451323}{10.1145/3450522.3451323}.
+
+\bibitem{tong2023handhaptics}
+Qianqian Tong, Wenxuan Wei, Yuru Zhang, Jing Xiao, and Dangxiao Wang. 2023. Survey on Hand-Based Haptic Interaction for Virtual Reality. IEEE Transactions on Haptics 16(2), 154--170. DOI: \href{https://doi.org/10.1109/TOH.2023.3266199}{10.1109/TOH.2023.3266199}.
+
+\bibitem{pezent2022tasbi}
+Evan Pezent, Aakar Gupta, Hank Duhaime, Marcia K. O'Malley, Ali Israr, Majed Samad, Shea Robinson, Priyanshu Agarwal, Hrvoje Benko, and Nicholas Colonnese. 2022. Explorations of Wrist Haptic Feedback for AR/VR Interactions with Tasbi. In UIST 2022 Adjunct. DOI: \href{https://doi.org/10.1145/3526114.3558658}{10.1145/3526114.3558658}.
+
+\bibitem{pezent2023multisensory}
+Evan Pezent, Alix Macklin, Jeffrey M. Yau, Nicholas Colonnese, and Marcia K. O'Malley. 2023. Multisensory Pseudo-Haptics for Rendering Manual Interactions With Virtual Objects. Advanced Intelligent Systems 5(5), 2200303. DOI: \href{https://doi.org/10.1002/aisy.202200303}{10.1002/aisy.202200303}.
+
+\bibitem{feick2023turnitup}
+Martin Feick, Andre Zenner, Oscar Ariza, Anthony Tang, Cihan Biyikli, and Antonio Kruger. 2023. Turn-It-Up: Rendering Resistance for Knobs in Virtual Reality Through Undetectable Pseudo-Haptics. In UIST 2023. DOI: \href{https://doi.org/10.1145/3586183.3606787}{10.1145/3586183.3606787}.
+
+\bibitem{hwang2024industrial}
+Chiwoong Hwang, Tiare Feuchtner, Ian Oakley, and Kaj Gronbaek. 2024. Enriching Industrial Training Experience in Virtual Reality with Pseudo-Haptics and Vibrotactile Stimulation. In VRST 2024. DOI: \href{https://doi.org/10.1145/3641825.3687728}{10.1145/3641825.3687728}.
+
+\bibitem{matthews2023remapped}
+Brandon J. Matthews, Bruce H. Thomas, Stewart Von Itzstein, and Ross T. Smith. 2023. Towards Applied Remapped Physical-Virtual Interfaces: Synchronization Methods for Resolving Control State Conflicts. In CHI 2023. DOI: \href{https://doi.org/10.1145/3544548.3580723}{10.1145/3544548.3580723}.
+
+\bibitem{shi2024haptics}
+Yuxiang Shi and Guozhen Shen. 2024. Haptic Sensing and Feedback Techniques Toward Virtual Reality. Research 7, 0333. DOI: \href{https://doi.org/10.34133/research.0333}{10.34133/research.0333}.
+
+\bibitem{david2026feelings}
+Kristian Paolo David, Tyrone Justin Sta Maria, Mikkel Dominic Gamboa, and Jordan Aiko Deja. 2026. Feelings, Not Feel: Affective Audio-Visual Pseudo-Haptics in Hand-Tracked XR. In CHI EA 2026. DOI: \href{https://doi.org/10.1145/3772363.3798401}{10.1145/3772363.3798401}.
+
+\bibitem{hotta2024handdeformation}
+Tomoki Hotta, Yuto Kato, Kazuki Takashima, and Yoshifumi Kitamura. 2024. Virtual Hand Deformation-Based Pseudo-Haptic Feedback for Enhanced Force Perception and Task Performance in Physically Constrained Teleoperation. In IEEE World Haptics Conference 2024. DOI: \href{https://doi.org/10.1109/WHC59922.2024.10544807}{10.1109/WHC59922.2024.10544807}.
+
+\bibitem{okamura2001vibration}
+Allison M. Okamura, Mark R. Cutkosky, and Jack T. Dennerlein. 2001. Reality-Based Models for Vibration Feedback in Virtual Environments. IEEE/ASME Transactions on Mechatronics 6(3), 245--252. DOI: \href{https://doi.org/10.1109/3516.951362}{10.1109/3516.951362}.
+
+\bibitem{raegrant2024dynabuttons}
+Tucker Rae-Grant, Chris Harrison, and Craig Shultz. 2024. DynaButtons: Fast Interactive Soft Buttons with Analog Control. IEEE Haptics Symposium 2024, 366--371. DOI: \href{https://doi.org/10.1109/HAPTICS59260.2024.10520864}{10.1109/HAPTICS59260.2024.10520864}.
+
+\bibitem{youn2025hapticoil}
+Jung-Hwan Youn, Seung Heon Lee, and Craig Shultz. 2025. HaptiCoil: Soft Programmable Buttons with Hydraulically Coupled Haptic Feedback and Sensing. In CHI 2025. DOI: \href{https://doi.org/10.1145/3706598.3713175}{10.1145/3706598.3713175}.
+
+\bibitem{meta2026isdk}
+Meta Horizon OS Developers. 2026. Interaction SDK feature overview for Meta Spatial SDK. \url{https://developers.meta.com/horizon/documentation/spatial-sdk/spatial-sdk-isdk-overview/}.
+\end{thebibliography}
+
+\end{document}

@@ -16,6 +16,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+. (Join-Path $PSScriptRoot 'export-session-layout.ps1')
 if ([string]::IsNullOrWhiteSpace($ApkPath)) {
     $ApkPath = Join-Path $projectRoot 'app\build\outputs\apk\debug\app-debug.apk'
 }
@@ -26,9 +27,9 @@ $package = 'org.bigredbutton.firststudy'
 $activity = 'org.bigredbutton.firststudy/.BigRedButtonStudyActivity'
 $runId = Get-Date -Format 'yyyyMMdd-HHmmss'
 $outDir = Join-Path $projectRoot "artifacts\qpv\$runId"
-$exportPullDir = Join-Path $outDir 'pulled-exports'
-$pulledExportRoot = Join-Path $exportPullDir 'BigRedButtonFirstStudyExports'
-$pulledExperimentResultsRoot = Join-Path $exportPullDir 'ExperimentResults'
+$exportPullDir = Join-Path $outDir 'x'
+$pulledExportRoot = Join-Path $exportPullDir 'b'
+$pulledExperimentResultsRoot = Join-Path $exportPullDir 'e'
 $deviceExportDir = "/sdcard/Android/data/$package/files/BigRedButtonFirstStudyExports"
 $deviceExperimentResultsDir = "/sdcard/Android/data/$package/files/ExperimentResults"
 $operatorChecklistPath = Join-Path $outDir 'operator-checklist.txt'
@@ -95,7 +96,7 @@ function Pull-DeviceExportFolder {
     )
 
     New-Item -ItemType Directory -Force -Path $DestinationDir | Out-Null
-    $deviceFilesRaw = Invoke-Adb shell ls -1 $DeviceDir
+    $deviceFilesRaw = Invoke-Adb shell find $DeviceDir -type f
     if ($LASTEXITCODE -ne 0) {
         throw "adb export listing failed for $DeviceDir with exit code $LASTEXITCODE"
     }
@@ -111,19 +112,35 @@ function Pull-DeviceExportFolder {
     $shortPullRoot = Join-Path ([IO.Path]::GetTempPath()) ("brb-physical-pull-$runId-$TempTag")
     Remove-SafeTempTree -Path $shortPullRoot
     New-Item -ItemType Directory -Force -Path $shortPullRoot | Out-Null
+    $pathMap = @{}
     try {
         $fileIndex = 0
-        foreach ($deviceFile in $deviceFiles) {
+        foreach ($remoteFile in $deviceFiles) {
             $fileIndex += 1
-            $remoteFile = "$DeviceDir/$deviceFile"
             $shortLocalFile = Join-Path $shortPullRoot ("export-$fileIndex.tmp")
-            $localFile = Join-Path $DestinationDir $deviceFile
+            $relative = "$remoteFile"
+            if ($relative.StartsWith($DeviceDir, [StringComparison]::Ordinal)) {
+                $relative = $relative.Substring($DeviceDir.Length).TrimStart('/')
+            } else {
+                $relative = Split-Path -Leaf $relative
+            }
+            $relativeParts = @($relative -split '/')
+            $localRelative =
+                if ($relativeParts.Count -gt 1) {
+                    (($relativeParts[0..($relativeParts.Count - 2)] + (Get-BrbShortExportFileName -FileName $relativeParts[-1] -Prefix 'brb_first_study_physical')) -join '/')
+                } else {
+                    Get-BrbShortExportFileName -FileName $relativeParts[-1] -Prefix 'brb_first_study_physical'
+                }
+            $pathMap[$relative] = $localRelative
+            $localFile = Join-Path $DestinationDir ($localRelative -replace '/', '\')
+            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $localFile) | Out-Null
             Invoke-Adb pull $remoteFile $shortLocalFile | Tee-Object -Append -FilePath $PullLogPath | Out-Host
             if ($LASTEXITCODE -ne 0) {
                 throw "adb export pull failed for $remoteFile with exit code $LASTEXITCODE"
             }
             Move-Item -LiteralPath $shortLocalFile -Destination $localFile -Force
         }
+        Update-BrbPulledExportMetadata -LocalDir $DestinationDir -PathMap $pathMap
     } finally {
         Remove-SafeTempTree -Path $shortPullRoot
     }
@@ -142,20 +159,21 @@ function Compare-ExportMirror {
         [string]$OutPath
     )
 
-    $primaryFiles = @(Get-ChildItem -LiteralPath $PrimaryDir -File | Sort-Object Name)
-    $mirrorFiles = @(Get-ChildItem -LiteralPath $MirrorDir -File | Sort-Object Name)
+    $primaryFiles = @(Get-BrbRecursiveFileRows -RootDir $PrimaryDir)
+    $mirrorFiles = @(Get-BrbRecursiveFileRows -RootDir $MirrorDir)
     $mirrorByName = @{}
-    foreach ($file in $mirrorFiles) {
-        $mirrorByName[$file.Name] = $file
+    foreach ($row in $mirrorFiles) {
+        $mirrorByName[$row.RelativePath] = $row.File
     }
 
     $rows = New-Object System.Collections.Generic.List[object]
-    foreach ($primary in $primaryFiles) {
-        $mirror = $mirrorByName[$primary.Name]
+    foreach ($primaryRow in $primaryFiles) {
+        $primary = $primaryRow.File
+        $mirror = $mirrorByName[$primaryRow.RelativePath]
         $primaryHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $primary.FullName).Hash
         $mirrorHash = if ($null -ne $mirror) { (Get-FileHash -Algorithm SHA256 -LiteralPath $mirror.FullName).Hash } else { '' }
         $rows.Add([pscustomobject]@{
-            fileName = $primary.Name
+            fileName = $primaryRow.RelativePath
             primaryPath = $primary.FullName
             mirrorPath = if ($null -ne $mirror) { $mirror.FullName } else { '' }
             primarySizeBytes = $primary.Length
@@ -165,11 +183,12 @@ function Compare-ExportMirror {
             matched = ($null -ne $mirror -and $primary.Length -eq $mirror.Length -and $primaryHash -eq $mirrorHash)
         })
     }
-    $primaryNames = @($primaryFiles | ForEach-Object { $_.Name })
-    foreach ($mirror in $mirrorFiles) {
-        if ($primaryNames -notcontains $mirror.Name) {
+    $primaryNames = @($primaryFiles | ForEach-Object { $_.RelativePath })
+    foreach ($mirrorRow in $mirrorFiles) {
+        $mirror = $mirrorRow.File
+        if ($primaryNames -notcontains $mirrorRow.RelativePath) {
             $rows.Add([pscustomobject]@{
-                fileName = $mirror.Name
+                fileName = $mirrorRow.RelativePath
                 primaryPath = ''
                 mirrorPath = $mirror.FullName
                 primarySizeBytes = $null
@@ -463,20 +482,14 @@ try {
         throw "ExperimentResults physical press evidence validation failed with exit code $LASTEXITCODE"
     }
 
-    $jsonFile = Get-ChildItem -LiteralPath $pulledExportRoot -Filter 'brb_first_study_*.json' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-    $pressFile = Get-ChildItem -LiteralPath $pulledExportRoot -Filter '*_press_events.csv' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
+    $primarySession = Resolve-BrbExportSession -ExportDir $pulledExportRoot
+    $experimentResultsSession = Resolve-BrbExportSession -ExportDir $pulledExperimentResultsRoot
+    $jsonFile = Get-BrbExportSessionFile -SessionDir $primarySession.SessionDir -Filter 'brb_first_study_*.json'
+    $pressFile = Get-BrbExportSessionFile -SessionDir $primarySession.SessionDir -Filter '*_press_events.csv'
     $script:jsonFilePath = $jsonFile.FullName
     $script:pressEventsCsvPath = $pressFile.FullName
-    $experimentResultsJsonFile = Get-ChildItem -LiteralPath $pulledExperimentResultsRoot -Filter 'brb_first_study_*.json' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-    $experimentResultsPressFile = Get-ChildItem -LiteralPath $pulledExperimentResultsRoot -Filter '*_press_events.csv' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
+    $experimentResultsJsonFile = Get-BrbExportSessionFile -SessionDir $experimentResultsSession.SessionDir -Filter 'brb_first_study_*.json'
+    $experimentResultsPressFile = Get-BrbExportSessionFile -SessionDir $experimentResultsSession.SessionDir -Filter '*_press_events.csv'
     $script:experimentResultsJsonFilePath = $experimentResultsJsonFile.FullName
     $script:experimentResultsPressEventsCsvPath = $experimentResultsPressFile.FullName
     $exportJson = Get-Content -Raw -LiteralPath $jsonFile.FullName | ConvertFrom-Json

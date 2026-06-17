@@ -1,0 +1,44 @@
+{
+  "text": " Bei einer Mikroskopisch, das Knopfgefühle betrifft.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 3.84,
+      "text": " Bei einer Mikroskopisch, das Knopfgefühle betrifft.",
+      "tokens": [
+        50364,
+        16188,
+        6850,
+        16380,
+        2635,
+        43855,
+        5494,
+        11,
+        1482,
+        10519,
+        21828,
+        13529,
+        7254,
+        306,
+        778,
+        22575,
+        844,
+        13,
+        50556
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.42757372856140136,
+      "compression_ratio": 0.8666666666666667,
+      "no_speech_prob": 0.007063903380185366
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0713",
+  "clipKey": "vas_low_04",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0713_vas_low_04__de_de.mp3"
+}

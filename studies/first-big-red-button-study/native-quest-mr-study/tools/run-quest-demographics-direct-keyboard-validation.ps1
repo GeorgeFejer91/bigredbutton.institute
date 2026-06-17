@@ -41,6 +41,7 @@ $remoteScreenshot = '/sdcard/Download/brb_demographics_direct_keyboard.png'
 
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 $comparisons = New-Object System.Collections.Generic.List[object]
+$observedLogSnapshots = New-Object System.Collections.Generic.List[string]
 
 function Invoke-Adb {
     & $AdbPath -s $Serial @args
@@ -50,10 +51,43 @@ function Get-LogText {
     return (Invoke-Adb logcat -d -v time | Out-String)
 }
 
+function Get-ForegroundDump {
+    return (Invoke-Adb shell dumpsys activity activities) -join "`n"
+}
+
+function Get-ForegroundPackage {
+    param([string]$Dump)
+    $foregroundLines =
+        ($Dump -split "`n") |
+        Where-Object { $_ -match 'mCurrentFocus|mFocusedApp|ResumedActivity|topResumedActivity' }
+    $foregroundText = $foregroundLines -join "`n"
+    $matches = [regex]::Matches($foregroundText, '([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)+)/')
+    foreach ($match in $matches) {
+        $candidate = $match.Groups[1].Value
+        if ($candidate -notlike 'com.oculus.*' -and $candidate -notlike 'android.*') {
+            return $candidate
+        }
+    }
+    if ($matches.Count -gt 0) {
+        return $matches[0].Groups[1].Value
+    }
+    return ''
+}
+
+function Test-TargetForeground {
+    param([string]$Dump)
+    $foregroundLines =
+        ($Dump -split "`n") |
+        Where-Object { $_ -match 'mCurrentFocus|mFocusedApp|ResumedActivity|topResumedActivity' }
+    return (($foregroundLines -join "`n") -match [regex]::Escape($package))
+}
+
 function Save-FilteredLog {
     param([string]$Name)
     $path = Join-Path $outDir "$Name-logcat-filtered.txt"
-    (Get-LogText) -split "`r?`n" |
+    $latestLog = Get-LogText
+    $combinedLog = (($script:observedLogSnapshots | ForEach-Object { $_ }) -join "`n") + "`n" + $latestLog
+    $combinedLog -split "`r?`n" |
         Select-String -Pattern 'BigRedButtonStudy|BRB_|FATAL EXCEPTION|E/AndroidRuntime' |
         ForEach-Object { $_.Line } |
         Set-Content -LiteralPath $path -Encoding UTF8
@@ -75,6 +109,7 @@ function Wait-LogPattern {
             throw "Fatal runtime marker while waiting for $Description. See $path"
         }
         if ($log -match $Pattern) {
+            $script:observedLogSnapshots.Add($log) | Out-Null
             return
         }
     }
@@ -115,6 +150,45 @@ function Invoke-DemographicsValidationCommand {
     Start-Sleep -Milliseconds 350
 }
 
+function Start-DemographicsValidationActivity {
+    Invoke-Adb shell am start -n $activity --ez brb.demographicsKeyboardValidation true --es brb.demographicsKeyboardValidationSession $runId |
+        Tee-Object -FilePath (Join-Path $outDir 'launch.txt') |
+        Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        throw "adb launch failed with exit code $LASTEXITCODE"
+    }
+}
+
+function Ensure-TargetForeground {
+    Start-Sleep -Seconds 3
+    $foregroundDump = Get-ForegroundDump
+    $foregroundDump | Set-Content -LiteralPath (Join-Path $outDir 'foreground-after-launch.txt') -Encoding UTF8
+    if (Test-TargetForeground $foregroundDump) {
+        return
+    }
+
+    $foregroundPackage = Get-ForegroundPackage $foregroundDump
+    if (-not [string]::IsNullOrWhiteSpace($foregroundPackage) -and
+        $foregroundPackage -ne $package -and
+        $foregroundPackage -notlike 'com.oculus.*' -and
+        $foregroundPackage -notlike 'android.*') {
+        Write-Host "Foreground is $foregroundPackage, force-stopping it once before relaunching $package."
+        Invoke-Adb shell am force-stop $foregroundPackage | Out-Null
+        Start-Sleep -Seconds 1
+    } else {
+        Write-Host "Target package not foreground after launch; retrying $package once."
+    }
+
+    Start-DemographicsValidationActivity
+    Start-Sleep -Seconds 3
+    $retryDump = Get-ForegroundDump
+    $retryDump | Set-Content -LiteralPath (Join-Path $outDir 'foreground-after-relaunch.txt') -Encoding UTF8
+    if (-not (Test-TargetForeground $retryDump)) {
+        $retryPackage = Get-ForegroundPackage $retryDump
+        throw "Target package $package was not foreground after relaunch. Current foreground package: $retryPackage"
+    }
+}
+
 function Send-KeyCode {
     param([int]$KeyCode, [string]$Name)
     Invoke-Adb shell input keyevent $KeyCode | Out-Null
@@ -152,12 +226,8 @@ try {
 
     Invoke-Adb shell am force-stop $package | Out-Null
     Invoke-Adb logcat -c | Out-Null
-    Invoke-Adb shell am start -n $activity --ez brb.demographicsKeyboardValidation true --es brb.demographicsKeyboardValidationSession $runId |
-        Tee-Object -FilePath (Join-Path $outDir 'launch.txt') |
-        Out-Host
-    if ($LASTEXITCODE -ne 0) {
-        throw "adb launch failed with exit code $LASTEXITCODE"
-    }
+    Start-DemographicsValidationActivity
+    Ensure-TargetForeground
 
     Wait-LogPattern 'BRB_STUDY_CREATED .*demographicsKeyboardValidation=true' 'validation launch extra'
     Wait-LogPattern "BRB_DEMOGRAPHICS_VALIDATION_SESSION session=$logRunId accepted=true state=start" 'validation session marker'

@@ -1,0 +1,42 @@
+{
+  "text": " Der große Rote Knopf erhält ein mittleres Urteil.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 3.6,
+      "text": " Der große Rote Knopf erhält ein mittleres Urteil.",
+      "tokens": [
+        50364,
+        5618,
+        19691,
+        497,
+        1370,
+        10519,
+        21828,
+        1189,
+        28068,
+        1343,
+        19130,
+        1918,
+        279,
+        9533,
+        30766,
+        13,
+        50544
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.35320671399434406,
+      "compression_ratio": 0.864406779661017,
+      "no_speech_prob": 0.00859087985008955
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0733",
+  "clipKey": "vas_mid_04",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0733_vas_mid_04__de_de.mp3"
+}

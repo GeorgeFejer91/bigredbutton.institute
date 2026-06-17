@@ -1,0 +1,43 @@
+{
+  "text": " Ein ausgewogenes, kleines Begrätbutten datum.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 4.48,
+      "text": " Ein ausgewogenes, kleines Begrätbutten datum.",
+      "tokens": [
+        50364,
+        6391,
+        3437,
+        21306,
+        8799,
+        279,
+        11,
+        9318,
+        1652,
+        879,
+        861,
+        3628,
+        5955,
+        1147,
+        1137,
+        449,
+        13,
+        50588
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.5761400523938631,
+      "compression_ratio": 0.8679245283018868,
+      "no_speech_prob": 0.0007264334126375616
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0732",
+  "clipKey": "vas_mid_03",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0732_vas_mid_03__de_de.mp3"
+}

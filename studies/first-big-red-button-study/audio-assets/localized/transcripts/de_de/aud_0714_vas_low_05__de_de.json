@@ -1,0 +1,41 @@
+{
+  "text": " Eine sehr zurückhalten der Antwort für den großen Roten Knopf.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 4.0,
+      "text": " Eine sehr zurückhalten der Antwort für den großen Roten Knopf.",
+      "tokens": [
+        50364,
+        17664,
+        5499,
+        15089,
+        15022,
+        1163,
+        34693,
+        2959,
+        1441,
+        23076,
+        17681,
+        268,
+        10519,
+        21828,
+        13,
+        50564
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.35489965887630687,
+      "compression_ratio": 0.9420289855072463,
+      "no_speech_prob": 0.005007187370210886
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0714",
+  "clipKey": "vas_low_05",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0714_vas_low_05__de_de.mp3"
+}

@@ -1,0 +1,60 @@
+{
+  "text": " Ein selbstbewusster Schieber für den großen roten Knopf. Ja.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 4.8,
+      "text": " Ein selbstbewusster Schieber für den großen roten Knopf.",
+      "tokens": [
+        50364,
+        6391,
+        13053,
+        47465,
+        301,
+        3120,
+        2065,
+        414,
+        607,
+        2959,
+        1441,
+        23076,
+        4297,
+        268,
+        10519,
+        21828,
+        13,
+        50604
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.43794652690058167,
+      "compression_ratio": 0.9393939393939394,
+      "no_speech_prob": 0.0037265473511070013
+    },
+    {
+      "id": 1,
+      "seek": 0,
+      "start": 4.8,
+      "end": 5.8,
+      "text": " Ja.",
+      "tokens": [
+        50604,
+        3530,
+        13,
+        50654
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.43794652690058167,
+      "compression_ratio": 0.9393939393939394,
+      "no_speech_prob": 0.0037265473511070013
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0741",
+  "clipKey": "vas_high_mid_02",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0741_vas_high_mid_02__de_de.mp3"
+}

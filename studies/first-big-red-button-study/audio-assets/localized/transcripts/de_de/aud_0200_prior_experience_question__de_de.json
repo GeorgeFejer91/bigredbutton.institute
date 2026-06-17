@@ -1,0 +1,100 @@
+{
+  "text": " Oh, warten Sie. Wir haben noch genau eine Frage für dich. Hast du Erfahrung damit, große Rote knapp für zu drücken?",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 2.0,
+      "text": " Oh, warten Sie.",
+      "tokens": [
+        50364,
+        876,
+        11,
+        46907,
+        3559,
+        13,
+        50464
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.37070910995071,
+      "compression_ratio": 1.043859649122807,
+      "no_speech_prob": 0.012161229737102985
+    },
+    {
+      "id": 1,
+      "seek": 0,
+      "start": 2.0,
+      "end": 5.0,
+      "text": " Wir haben noch genau eine Frage für dich.",
+      "tokens": [
+        50464,
+        4347,
+        3084,
+        3514,
+        12535,
+        3018,
+        13685,
+        2959,
+        10390,
+        13,
+        50614
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.37070910995071,
+      "compression_ratio": 1.043859649122807,
+      "no_speech_prob": 0.012161229737102985
+    },
+    {
+      "id": 2,
+      "seek": 0,
+      "start": 6.0,
+      "end": 8.0,
+      "text": " Hast du Erfahrung damit,",
+      "tokens": [
+        50664,
+        30987,
+        1581,
+        49318,
+        9479,
+        11,
+        50764
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.37070910995071,
+      "compression_ratio": 1.043859649122807,
+      "no_speech_prob": 0.012161229737102985
+    },
+    {
+      "id": 3,
+      "seek": 0,
+      "start": 8.0,
+      "end": 11.0,
+      "text": " große Rote knapp für zu drücken?",
+      "tokens": [
+        50764,
+        19691,
+        497,
+        1370,
+        40979,
+        2959,
+        2164,
+        1224,
+        26037,
+        30,
+        50914
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.37070910995071,
+      "compression_ratio": 1.043859649122807,
+      "no_speech_prob": 0.012161229737102985
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0200",
+  "clipKey": "prior_experience_question",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0200_prior_experience_question__de_de.mp3"
+}

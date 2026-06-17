@@ -1,0 +1,39 @@
+{
+  "text": " Der große Rote Knopf wurde maximal bemerkt.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 4.48,
+      "text": " Der große Rote Knopf wurde maximal bemerkt.",
+      "tokens": [
+        50364,
+        5618,
+        19691,
+        497,
+        1370,
+        10519,
+        21828,
+        11191,
+        49336,
+        312,
+        936,
+        2320,
+        13,
+        50588
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.4165435473124186,
+      "compression_ratio": 0.8461538461538461,
+      "no_speech_prob": 0.007394573651254177
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0762",
+  "clipKey": "vas_max_03",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0762_vas_max_03__de_de.mp3"
+}

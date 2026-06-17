@@ -1,0 +1,51 @@
+{
+  "text": " Ein erfahrener Nutzer, genau die Art Teilnehmer, die wir für ihre kleine Knopfkarriere brauchen.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 7.0,
+      "text": " Ein erfahrener Nutzer, genau die Art Teilnehmer, die wir für ihre kleine Knopfkarriere brauchen.",
+      "tokens": [
+        50364,
+        6391,
+        49472,
+        260,
+        19861,
+        4527,
+        11,
+        12535,
+        978,
+        5735,
+        16357,
+        38370,
+        11,
+        978,
+        1987,
+        2959,
+        14280,
+        22278,
+        10519,
+        21828,
+        12303,
+        470,
+        323,
+        19543,
+        13,
+        50714
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.3745513845373083,
+      "compression_ratio": 1.0543478260869565,
+      "no_speech_prob": 0.0035740730818361044
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0210",
+  "clipKey": "prior_experience_yes_feedback",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0210_prior_experience_yes_feedback__de_de.mp3"
+}

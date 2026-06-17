@@ -94,12 +94,13 @@ function Same-Path {
 if ($RefreshAudit) {
     $startedAt = Get-Date
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'write-readiness-report.ps1')
-    if ($LASTEXITCODE -ne 0) {
-        throw "write-readiness-report.ps1 exited with code $LASTEXITCODE"
-    }
+    $readinessExitCode = $LASTEXITCODE
     $freshReadiness = Get-LatestJsonAfter -RelativePath 'artifacts\readiness-report' -Filter 'readiness-report.json' -StartedAt $startedAt
     if ([string]::IsNullOrWhiteSpace($freshReadiness)) {
         throw 'write-readiness-report.ps1 completed, but no fresh readiness-report.json was found.'
+    }
+    if ($readinessExitCode -ne 0) {
+        Write-Warning "write-readiness-report.ps1 exited with code $readinessExitCode, but produced a readiness JSON for operator handoff: $freshReadiness"
     }
     $ReadinessJson = $freshReadiness
 

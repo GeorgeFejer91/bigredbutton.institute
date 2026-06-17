@@ -1,6 +1,8 @@
 [CmdletBinding()]
 param(
     [switch]$RequireJapaneseAudio,
+    [switch]$RequireGermanAudio,
+    [string[]]$RequireLocales = @(),
     [string]$Ffprobe = 'ffprobe'
 )
 
@@ -46,11 +48,37 @@ function Add-Check {
     })
 }
 
+function Get-LocaleLabel {
+    param([string]$Locale)
+    switch ($Locale) {
+        'en-US' { return 'English' }
+        'ja-JP' { return 'Japanese' }
+        'de-DE' { return 'German' }
+        default { return $Locale }
+    }
+}
+
+$requiredLocaleSet = [ordered]@{}
+foreach ($locale in $RequireLocales) {
+    if (-not [string]::IsNullOrWhiteSpace($locale)) {
+        $requiredLocaleSet[$locale] = $true
+    }
+}
+if ($RequireJapaneseAudio) { $requiredLocaleSet['ja-JP'] = $true }
+if ($RequireGermanAudio) { $requiredLocaleSet['de-DE'] = $true }
+$requiredLocalizedLocales = @($requiredLocaleSet.Keys)
+
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
 $checks = New-Object System.Collections.Generic.List[object]
 
 Add-Check 'localized audio schema' ((Get-JsonPropertyValue $manifest 'schema') -eq 'bigredbutton.localized_audio.v1') (Get-JsonPropertyValue $manifest 'schema')
 Add-Check 'localized audio default locale' ((Get-JsonPropertyValue $manifest 'defaultLocale') -eq 'en-US') (Get-JsonPropertyValue $manifest 'defaultLocale')
+
+$declaredLocales = @(Get-JsonPropertyValue $manifest 'locales')
+foreach ($locale in @('en-US') + $requiredLocalizedLocales) {
+    Add-Check "localized audio manifest declares $locale" ($declaredLocales -contains $locale) (($declaredLocales -join ','))
+}
+
 $libraryLayout = Get-JsonPropertyValue $manifest 'libraryLayout'
 Add-Check 'localized audio library layout declared' ($null -ne $libraryLayout) ''
 if ($null -ne $libraryLayout) {
@@ -60,10 +88,18 @@ if ($null -ne $libraryLayout) {
 }
 
 $ttsPolicy = Get-JsonPropertyValue $manifest 'ttsPolicy'
-Add-Check 'Japanese TTS uses eleven_v3' ((Get-JsonPropertyValue $ttsPolicy 'modelId') -eq 'eleven_v3') (Get-JsonPropertyValue $ttsPolicy 'modelId')
-Add-Check 'Japanese TTS voice ID preserved' ((Get-JsonPropertyValue $ttsPolicy 'voiceId') -eq 'IVxgxz5EgbHtWNcgBjOV') (Get-JsonPropertyValue $ttsPolicy 'voiceId')
-Add-Check 'Japanese TTS language code' ((Get-JsonPropertyValue $ttsPolicy 'languageCode') -eq 'ja') (Get-JsonPropertyValue $ttsPolicy 'languageCode')
-Add-Check 'Japanese TTS output format' ((Get-JsonPropertyValue $ttsPolicy 'outputFormat') -eq 'mp3_44100_128') (Get-JsonPropertyValue $ttsPolicy 'outputFormat')
+$localeLanguageCodes = Get-JsonPropertyValue $ttsPolicy 'localeLanguageCodes'
+Add-Check 'localized TTS uses eleven_v3' ((Get-JsonPropertyValue $ttsPolicy 'modelId') -eq 'eleven_v3') (Get-JsonPropertyValue $ttsPolicy 'modelId')
+Add-Check 'localized TTS voice ID preserved' ((Get-JsonPropertyValue $ttsPolicy 'voiceId') -eq 'IVxgxz5EgbHtWNcgBjOV') (Get-JsonPropertyValue $ttsPolicy 'voiceId')
+Add-Check 'localized TTS output format' ((Get-JsonPropertyValue $ttsPolicy 'outputFormat') -eq 'mp3_44100_128') (Get-JsonPropertyValue $ttsPolicy 'outputFormat')
+if ($requiredLocalizedLocales -contains 'ja-JP') {
+    Add-Check 'Japanese TTS language code' ((Get-JsonPropertyValue $localeLanguageCodes 'ja-JP') -eq 'ja') (Get-JsonPropertyValue $localeLanguageCodes 'ja-JP')
+}
+if ($requiredLocalizedLocales -contains 'de-DE') {
+    Add-Check 'German TTS language code smoke accepted' ((Get-JsonPropertyValue $localeLanguageCodes 'de-DE') -eq 'de') (Get-JsonPropertyValue $localeLanguageCodes 'de-DE')
+    $germanSmokeTest = Get-JsonPropertyValue $ttsPolicy 'germanSmokeTest'
+    Add-Check 'German TTS smoke test recorded' ((Get-JsonPropertyValue $germanSmokeTest 'acceptedLanguageCode') -eq 'de') (Get-JsonPropertyValue $germanSmokeTest 'acceptedLanguageCode')
+}
 
 $backgroundStem = Get-JsonPropertyValue (Get-JsonPropertyValue $manifest 'stems') 'backgroundMusic'
 $backgroundPath = Join-Path $localizedRoot (Get-JsonPropertyValue $backgroundStem 'path')
@@ -75,6 +111,55 @@ if (Test-Path $backgroundPath) {
     Add-Check 'background music stem duration preserved' ($backgroundDuration -eq [int](Get-JsonPropertyValue $backgroundStem 'durationMs')) "observed=$backgroundDuration expected=$([int](Get-JsonPropertyValue $backgroundStem 'durationMs'))"
 }
 
+function Test-LocaleAsset {
+    param(
+        $Asset,
+        [string]$AudioId,
+        [string]$Locale,
+        $LocaleEntry,
+        [bool]$RequireScriptArtifacts
+    )
+
+    $label = Get-LocaleLabel $Locale
+    Add-Check "$AudioId has $label locale" ($null -ne $LocaleEntry) ''
+    if ($null -eq $LocaleEntry) { return }
+
+    $relativePath = Get-JsonPropertyValue $LocaleEntry 'path'
+    $audioPath = Join-Path $localizedRoot $relativePath
+    Add-Check "$AudioId $label file exists" (Test-Path $audioPath) $audioPath
+    if (Test-Path $audioPath) {
+        $duration = Get-AudioDurationMs $audioPath
+        $manifestHash = Get-JsonPropertyValue $LocaleEntry 'sha256'
+        if (-not [string]::IsNullOrWhiteSpace($manifestHash)) {
+            $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $audioPath).Hash
+            Add-Check "$AudioId $label hash matches manifest" ($hash -eq $manifestHash) $hash
+        }
+        $manifestDuration = Get-JsonPropertyValue $LocaleEntry 'durationMs'
+        if ($null -ne $manifestDuration) {
+            Add-Check "$AudioId $label duration matches manifest" ($duration -eq [int]$manifestDuration) "observed=$duration manifest=$([int]$manifestDuration)"
+        }
+        $durationMatchRequired = [bool](Get-JsonPropertyValue $Asset 'durationMatchRequired')
+        if ($durationMatchRequired) {
+            $targetDuration = [int](Get-JsonPropertyValue $Asset 'targetDurationMs')
+            Add-Check "$AudioId $label duration matches exact target" ($duration -eq $targetDuration) "observed=$duration target=$targetDuration"
+        }
+    }
+
+    $status = Get-JsonPropertyValue $LocaleEntry 'status'
+    if ($Locale -ne 'en-US') {
+        Add-Check "$AudioId $label generation status complete" (@('generated', 'mixed') -contains $status) $status
+    }
+
+    if ($RequireScriptArtifacts) {
+        $scriptPath = Get-JsonPropertyValue $LocaleEntry 'scriptPath'
+        Add-Check "$AudioId $label script exists" (Test-Path (Join-Path $localizedRoot $scriptPath)) $scriptPath
+        $transcriptPath = Get-JsonPropertyValue $LocaleEntry 'transcriptPath'
+        Add-Check "$AudioId $label transcript exists" (Test-Path (Join-Path $localizedRoot $transcriptPath)) $transcriptPath
+        $backTranslationPath = Get-JsonPropertyValue $LocaleEntry 'backTranslationPath'
+        Add-Check "$AudioId $label back-translation exists" (Test-Path (Join-Path $localizedRoot $backTranslationPath)) $backTranslationPath
+    }
+}
+
 $assets = @(Get-JsonPropertyValue $manifest 'assets')
 Add-Check 'participant-facing speech assets listed' ($assets.Count -ge 11) "count=$($assets.Count)"
 
@@ -82,53 +167,10 @@ foreach ($asset in $assets) {
     $audioId = Get-JsonPropertyValue $asset 'audioId'
     $participantFacing = [bool](Get-JsonPropertyValue $asset 'participantFacing')
     $locales = Get-JsonPropertyValue $asset 'locales'
-    $en = Get-JsonPropertyValue $locales 'en-US'
-    $ja = Get-JsonPropertyValue $locales 'ja-JP'
-    Add-Check "$audioId has English locale" ($null -ne $en) ''
-    Add-Check "$audioId has Japanese locale" ($null -ne $ja) ''
-    if ($null -ne $en) {
-        $enPath = Join-Path $localizedRoot (Get-JsonPropertyValue $en 'path')
-        Add-Check "$audioId English file exists" (Test-Path $enPath) $enPath
-        if (Test-Path $enPath) {
-            $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $enPath).Hash
-            $duration = Get-AudioDurationMs $enPath
-            Add-Check "$audioId English hash matches manifest" ($hash -eq (Get-JsonPropertyValue $en 'sha256')) $hash
-            Add-Check "$audioId English duration matches manifest" ($duration -eq [int](Get-JsonPropertyValue $en 'durationMs')) "observed=$duration expected=$([int](Get-JsonPropertyValue $en 'durationMs'))"
-        }
-    }
-    if ($participantFacing -and $RequireJapaneseAudio) {
-        $jaPath = Join-Path $localizedRoot (Get-JsonPropertyValue $ja 'path')
-        Add-Check "$audioId Japanese file exists" (Test-Path $jaPath) $jaPath
-        if (Test-Path $jaPath) {
-            $duration = Get-AudioDurationMs $jaPath
-            $manifestHash = Get-JsonPropertyValue $ja 'sha256'
-            if (-not [string]::IsNullOrWhiteSpace($manifestHash)) {
-                $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $jaPath).Hash
-                Add-Check "$audioId Japanese hash matches manifest" ($hash -eq $manifestHash) $hash
-            }
-            $manifestDuration = Get-JsonPropertyValue $ja 'durationMs'
-            if ($null -ne $manifestDuration) {
-                Add-Check "$audioId Japanese duration matches manifest" ($duration -eq [int]$manifestDuration) "observed=$duration manifest=$([int]$manifestDuration)"
-            }
-            $durationMatchRequired = [bool](Get-JsonPropertyValue $asset 'durationMatchRequired')
-            if ($durationMatchRequired) {
-                $targetDuration = [int](Get-JsonPropertyValue $asset 'targetDurationMs')
-                Add-Check "$audioId Japanese duration matches exact target" ($duration -eq $targetDuration) "observed=$duration target=$targetDuration"
-            }
-            $status = Get-JsonPropertyValue $ja 'status'
-            Add-Check "$audioId Japanese generation status complete" (@('generated', 'mixed') -contains $status) $status
-        }
-        $scriptPath = Join-Path $localizedRoot (Get-JsonPropertyValue $ja 'scriptPath')
-        Add-Check "$audioId Japanese script exists" (Test-Path $scriptPath) $scriptPath
-        $transcriptPath = Get-JsonPropertyValue $ja 'transcriptPath'
-        if (-not [string]::IsNullOrWhiteSpace($transcriptPath)) {
-            $fullTranscriptPath = Join-Path $localizedRoot $transcriptPath
-            Add-Check "$audioId Japanese transcript exists" (Test-Path $fullTranscriptPath) $fullTranscriptPath
-        }
-        $backTranslationPath = Get-JsonPropertyValue $ja 'backTranslationPath'
-        if (-not [string]::IsNullOrWhiteSpace($backTranslationPath)) {
-            $fullBackTranslationPath = Join-Path $localizedRoot $backTranslationPath
-            Add-Check "$audioId Japanese back-translation exists" (Test-Path $fullBackTranslationPath) $fullBackTranslationPath
+    Test-LocaleAsset -Asset $asset -AudioId $audioId -Locale 'en-US' -LocaleEntry (Get-JsonPropertyValue $locales 'en-US') -RequireScriptArtifacts:$false
+    if ($participantFacing) {
+        foreach ($locale in $requiredLocalizedLocales) {
+            Test-LocaleAsset -Asset $asset -AudioId $audioId -Locale $locale -LocaleEntry (Get-JsonPropertyValue $locales $locale) -RequireScriptArtifacts:$true
         }
     }
 }
@@ -159,6 +201,8 @@ $summaryPath = Join-Path $outRoot ("localized-audio-validation-" + (Get-Date -Fo
     generatedAt = (Get-Date).ToString('o')
     status = if ($failed.Count -eq 0) { 'pass' } else { 'fail' }
     requireJapaneseAudio = [bool]$RequireJapaneseAudio
+    requireGermanAudio = [bool]$RequireGermanAudio
+    requiredLocales = $requiredLocalizedLocales
     manifest = $manifestPath
     checks = $checks
 } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $summaryPath -Encoding UTF8

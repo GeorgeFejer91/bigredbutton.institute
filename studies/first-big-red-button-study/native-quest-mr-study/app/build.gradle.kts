@@ -6,11 +6,20 @@ plugins {
 }
 
 val stagedLocalizedAudioAssets = layout.buildDirectory.dir("generated/localized-audio-assets")
+val brbSideBySideInstall = providers.gradleProperty("brbSideBySideInstall")
+    .map { it.equals("true", ignoreCase = true) }
+    .getOrElse(false)
+val brbLauncherLabel = if (brbSideBySideInstall) {
+    "Big Red Button First Study 2"
+} else {
+    "Big Red Button First Study"
+}
 val stageLocalizedAudioAssets =
     tasks.register<Sync>("stageLocalizedAudioAssets") {
       from(layout.projectDirectory.dir("../../audio-assets/localized")) {
         include("manifest.json")
         include("en_us/**")
+        include("de_de/**")
         include("ja_jp/**")
         include("shared/**")
         include("stems/**")
@@ -24,10 +33,14 @@ android {
 
   defaultConfig {
     applicationId = "org.bigredbutton.firststudy"
+    if (brbSideBySideInstall) {
+      applicationId = "org.bigredbutton.firststudy.second"
+    }
     minSdk = 34
     targetSdk = 34
     versionCode = 1
     versionName = "0.1.0"
+    manifestPlaceholders["brbAppLabel"] = brbLauncherLabel
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     ndkVersion = "27.0.12077973"

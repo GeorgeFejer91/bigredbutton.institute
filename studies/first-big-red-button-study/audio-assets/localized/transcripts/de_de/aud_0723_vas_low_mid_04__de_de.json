@@ -1,0 +1,41 @@
+{
+  "text": " Der große Rote Knopf wurde sanft berücksichtigt.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 4.0,
+      "text": " Der große Rote Knopf wurde sanft berücksichtigt.",
+      "tokens": [
+        50364,
+        5618,
+        19691,
+        497,
+        1370,
+        10519,
+        21828,
+        11191,
+        6645,
+        844,
+        5948,
+        41687,
+        1405,
+        5828,
+        13,
+        50564
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.3681472610024845,
+      "compression_ratio": 0.8620689655172413,
+      "no_speech_prob": 0.04507838562130928
+    }
+  ],
+  "language": "German",
+  "transcriptSource": "openai_whisper_tiny_cli",
+  "audioId": "aud_0723",
+  "clipKey": "vas_low_mid_04",
+  "locale": "de-DE",
+  "languageCode": "de",
+  "audioPath": "de_de/aud_0723_vas_low_mid_04__de_de.mp3"
+}

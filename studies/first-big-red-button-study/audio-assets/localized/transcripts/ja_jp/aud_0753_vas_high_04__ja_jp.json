@@ -1,0 +1,9 @@
+{
+    "source":  "approved_script_stub",
+    "language":  "ja",
+    "note":  "Script-backed transcript stub; replace with Whisper transcript if auditory QA is required.",
+    "text":  "強いボタン反応が、実験室に入りました。",
+    "segments":  [
+
+                 ]
+}

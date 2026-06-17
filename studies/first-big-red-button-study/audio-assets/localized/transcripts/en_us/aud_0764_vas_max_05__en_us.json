@@ -1,0 +1,9 @@
+{
+    "source":  "approved_script_stub",
+    "language":  "en",
+    "note":  "Script-backed transcript stub; replace with Whisper transcript if auditory QA is required.",
+    "text":  "The scale salutes your Big Red Button intensity.",
+    "segments":  [
+
+                 ]
+}

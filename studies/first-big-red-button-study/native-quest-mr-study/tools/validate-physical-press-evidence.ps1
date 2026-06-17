@@ -20,6 +20,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+. (Join-Path $PSScriptRoot 'export-session-layout.ps1')
 $ExportDir = (Resolve-Path $ExportDir).Path
 $LogcatPath = (Resolve-Path $LogcatPath).Path
 if ([string]::IsNullOrWhiteSpace($OutPath)) {
@@ -367,32 +368,20 @@ function Validate-RealPolarCondition {
     }
 }
 
-$jsonFile =
-    Get-ChildItem -LiteralPath $ExportDir -Filter 'brb_first_study_*.json' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-$pressFile =
-    Get-ChildItem -LiteralPath $ExportDir -Filter '*_press_events.csv' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-$ecgBlinkFile =
-    Get-ChildItem -LiteralPath $ExportDir -Filter '*_ecg_blink_events.csv' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-$ecgTimeSeriesFile =
-    Get-ChildItem -LiteralPath $ExportDir -Filter '*_ecg_timeseries.csv' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-$polarRrFile =
-    Get-ChildItem -LiteralPath $ExportDir -Filter '*_polar_rr_events.csv' |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
+$exportSession = Resolve-BrbExportSession -ExportDir $ExportDir
+$ExportSessionDir = $exportSession.SessionDir
 
-Assert-Condition ($null -ne $jsonFile) "Missing JSON export in $ExportDir"
-Assert-Condition ($null -ne $pressFile) "Missing press-events CSV export in $ExportDir"
-Assert-Condition ($null -ne $ecgBlinkFile) "Missing ECG blink-events CSV export in $ExportDir"
-Assert-Condition ($null -ne $ecgTimeSeriesFile) "Missing ECG time-series CSV export in $ExportDir"
-Assert-Condition ($null -ne $polarRrFile) "Missing Polar RR events CSV export in $ExportDir"
+$jsonFile = Get-BrbExportSessionFile -SessionDir $ExportSessionDir -Filter 'brb_first_study_*.json'
+$pressFile = Get-BrbExportSessionFile -SessionDir $ExportSessionDir -Filter '*_press_events.csv'
+$ecgBlinkFile = Get-BrbExportSessionFile -SessionDir $ExportSessionDir -Filter '*_ecg_blink_events.csv'
+$ecgTimeSeriesFile = Get-BrbExportSessionFile -SessionDir $ExportSessionDir -Filter '*_ecg_timeseries.csv'
+$polarRrFile = Get-BrbExportSessionFile -SessionDir $ExportSessionDir -Filter '*_polar_rr_events.csv'
+
+Assert-Condition ($null -ne $jsonFile) "Missing JSON export in $ExportSessionDir"
+Assert-Condition ($null -ne $pressFile) "Missing press-events CSV export in $ExportSessionDir"
+Assert-Condition ($null -ne $ecgBlinkFile) "Missing ECG blink-events CSV export in $ExportSessionDir"
+Assert-Condition ($null -ne $ecgTimeSeriesFile) "Missing ECG time-series CSV export in $ExportSessionDir"
+Assert-Condition ($null -ne $polarRrFile) "Missing Polar RR events CSV export in $ExportSessionDir"
 
 $exportJson = Get-Content -Raw -LiteralPath $jsonFile.FullName | ConvertFrom-Json
 $conditions = @($exportJson.conditions)
