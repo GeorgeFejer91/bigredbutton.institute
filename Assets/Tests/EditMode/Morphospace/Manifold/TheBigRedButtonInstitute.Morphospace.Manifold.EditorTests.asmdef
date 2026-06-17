@@ -1,0 +1,21 @@
+{
+    "name": "TheBigRedButtonInstitute.Morphospace.Manifold.EditorTests",
+    "rootNamespace": "TheBigRedButtonInstitute.Morphospace.Manifold.Tests",
+    "references": [
+        "TheBigRedButtonInstitute.Morphospace.Manifold"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}
